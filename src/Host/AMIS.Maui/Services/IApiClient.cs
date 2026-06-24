@@ -190,4 +190,9 @@ public interface IApiClient
     Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default);
     Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default);
     Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default);
+
+    // ── Chat ──
+    Task<List<ChatChannelDto>> GetChatChannelsAsync(CancellationToken ct = default);
+    Task<ChatMessagePageDto> GetChatMessagesAsync(Guid channelId, Guid? before, int? take, CancellationToken ct = default);
+    Task<ChatMessageDto?> SendChatMessageAsync(Guid channelId, string content, CancellationToken ct = default);
 }

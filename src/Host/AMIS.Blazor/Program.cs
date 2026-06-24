@@ -190,6 +190,9 @@ builder.Services.AddScoped(sp =>
 
 builder.Services.AddApiClients(builder.Configuration, builder.Environment);
 
+// Circuit-scoped SignalR client for the app-wide chat/realtime hub (one connection per circuit).
+builder.Services.AddScoped<AMIS.Blazor.Services.Chat.ChatHubClient>();
+
 // Register MasterData service for Supplier and Category operations
 builder.Services.AddScoped<MasterDataService>();
 builder.Services.AddScoped<IAssetRegisterReportsClient, AssetRegisterReportsClient>();

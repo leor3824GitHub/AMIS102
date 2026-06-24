@@ -30,6 +30,7 @@ internal static class ChatMappers
             message.Id,
             message.ChannelId,
             message.SenderId,
+            message.SenderName,
             message.IsDeleted ? null : message.Content,
             message.ParentMessageId,
             message.ReplyCount,

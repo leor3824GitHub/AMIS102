@@ -14,6 +14,7 @@ internal sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.Property(m => m.Id).ValueGeneratedNever();
 
         builder.Property(m => m.SenderId).HasMaxLength(64).IsRequired();
+        builder.Property(m => m.SenderName).HasMaxLength(200);
         builder.Property(m => m.Content).HasMaxLength(4000).IsRequired();
         builder.Property(m => m.TenantId).HasMaxLength(64);
         builder.Property(m => m.PinnedBy).HasMaxLength(64);

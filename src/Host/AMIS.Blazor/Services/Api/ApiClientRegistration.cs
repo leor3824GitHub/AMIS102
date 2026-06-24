@@ -271,6 +271,10 @@ internal static class ApiClientRegistration
         services.AddTransient<ILocationClient>(sp =>
             new LocationClient(ResolveClient(sp)));
 
+        // Chat module manual client
+        services.AddTransient<IChatClient>(sp =>
+            new ChatClient(ResolveClient(sp)));
+
         return services;
     }
 }

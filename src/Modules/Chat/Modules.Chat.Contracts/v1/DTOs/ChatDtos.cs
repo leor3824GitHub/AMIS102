@@ -26,6 +26,7 @@ public sealed record MessageDto(
     Guid Id,
     Guid ChannelId,
     string SenderId,
+    string? SenderName,
     string? Content,
     Guid? ParentMessageId,
     int ReplyCount,
@@ -41,6 +42,15 @@ public sealed record MessageReactionDto(
     string Emoji,
     int Count,
     IReadOnlyList<string> UserIds);
+
+/// <summary>
+/// A mentionable user for the chat mention picker. <see cref="UserName"/> is what gets inserted as
+/// <c>@username</c> (it matches the server mention parser); <see cref="DisplayName"/> is shown to the user.
+/// </summary>
+public sealed record ChatUserDto(
+    string Id,
+    string UserName,
+    string DisplayName);
 
 /// <summary>
 /// A keyset (cursor) page of messages, newest first. The client passes <see cref="NextCursor"/>

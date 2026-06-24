@@ -1,5 +1,6 @@
 ﻿@using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
+@using AMIS.Modules.Chat.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -299,9 +300,12 @@
         <!-- Communication Section -->
         <div class="AMIS-nav-section-title">Communication</div>
 
-        <MudNavLink Href="/chat" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Chat">
-            Chat
-        </MudNavLink>
+        @if (UserProfileState.Permissions.Contains(ChatPermissions.Channels.View))
+        {
+            <MudNavLink Href="/chat" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Chat">
+                Chat
+            </MudNavLink>
+        }
 
         <MudNavLink Href="/notifications" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Notifications">
             Notifications

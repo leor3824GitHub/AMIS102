@@ -1,0 +1,810 @@
+@page "/chat"
+@implements IAsyncDisposable
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services.Chat
+@using AMIS.Modules.Chat.Contracts.v1.DTOs
+@using AMIS.Modules.Chat.Contracts.Permissions
+@inject IChatClient Chat
+@inject ChatHubClient Hub
+@inject IUserProfileState UserProfileState
+@inject AuthenticationStateProvider AuthProvider
+@inject ISnackbar Snackbar
+
+<AMISPageHeader Title="Chat" Description="Office channels, direct messages, and the NFA-wide global channel" />
+
+@if (!_canView)
+{
+    <MudAlert Severity="Severity.Warning">You don't have permission to view chat.</MudAlert>
+}
+else
+{
+    <div class="d-flex gap-3" style="height: calc(100vh - 230px); min-height: 360px;">
+
+        @* ---- Channel rail ---- *@
+        <MudPaper Elevation="1" Class="d-flex flex-column pa-2" Style="width: 280px; min-width: 240px;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.subtitle1" Class="flex-grow-1 fw-700">Channels</MudText>
+                @if (_canCreate)
+                {
+                    <AMISIconButton Icon="@Icons.Material.Filled.Add" Title="New channel"
+                                    Color="Color.Primary" OnClick="OpenCreateDialog" />
+                }
+            </MudStack>
+
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                     Icon="@(Hub.IsConnected ? Icons.Material.Filled.Wifi : Icons.Material.Filled.WifiOff)"
+                     Color="@(Hub.IsConnected ? Color.Success : Color.Default)">
+                @(Hub.IsConnected ? "Live" : "Connecting…")
+            </MudChip>
+
+            <MudDivider Class="my-2" />
+
+            <div style="overflow-y: auto;" class="flex-grow-1">
+                @if (_channels.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="text-muted pa-2">No channels yet.</MudText>
+                }
+                else
+                {
+                    @foreach (var c in _channels)
+                    {
+                        <div class="@ChannelRowClass(c)" style="cursor:pointer; border-radius:6px;"
+                             @onclick="@(() => SelectChannelAsync(c))">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="pa-2">
+                                <MudIcon Icon="@ChannelIcon(c)" Size="Size.Small" />
+                                <MudText Typo="Typo.body2" Class="flex-grow-1">@ChannelTitle(c)</MudText>
+                            </MudStack>
+                        </div>
+                    }
+                }
+            </div>
+        </MudPaper>
+
+        @* ---- Conversation ---- *@
+        <MudPaper Elevation="1" Class="d-flex flex-column flex-grow-1 pa-0" Style="min-width: 0;">
+            @if (_selected is null)
+            {
+                <div class="d-flex flex-grow-1 align-center justify-center">
+                    <MudText Typo="Typo.body1" Class="text-muted">Select a channel to start chatting.</MudText>
+                </div>
+            }
+            else
+            {
+                @* Conversation header *@
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="pa-3" Style="border-bottom:1px solid var(--mud-palette-divider);">
+                    <MudIcon Icon="@ChannelIcon(_selected)" />
+                    <MudStack Spacing="0" Class="flex-grow-1">
+                        <MudText Typo="Typo.subtitle1" Class="fw-700">@ChannelTitle(_selected)</MudText>
+                        @if (!string.IsNullOrWhiteSpace(_selected.Topic))
+                        {
+                            <MudText Typo="Typo.caption" Class="text-muted">@_selected.Topic</MudText>
+                        }
+                    </MudStack>
+
+                    <MudTextField T="string" @bind-Value="_searchTerm" Placeholder="Search…" Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" Dense="true" Immediate="true" Style="max-width: 200px;"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  OnAdornmentClick="RunSearchAsync"
+                                  OnKeyDown="@(e => { if (e.Key == "Enter") _ = RunSearchAsync(); })" />
+
+                    <MudTooltip Text="Pinned messages">
+                        <AMISIconButton Icon="@Icons.Material.Filled.PushPin" OnClick="OpenPinnedAsync" Title="Pinned" />
+                    </MudTooltip>
+                </MudStack>
+
+                @if (_searchActive)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="px-3 pt-2">
+                        <MudText Typo="Typo.body2" Class="flex-grow-1">
+                            Search results for “@_activeSearchTerm” (@_searchResults.Count)
+                        </MudText>
+                        <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Close"
+                                   OnClick="ClearSearch">Back to conversation</MudButton>
+                    </MudStack>
+                }
+
+                @* Message list (column-reverse keeps the newest pinned to the bottom without JS) *@
+                <div class="flex-grow-1 px-3" style="overflow-y:auto; display:flex; flex-direction:column-reverse;">
+                    @if (_loadingMessages)
+                    {
+                        <MudProgressLinear Indeterminate="true" Class="my-2" />
+                    }
+
+                    @{
+                        var view = _searchActive ? _searchResults : _messages;
+                    }
+                    @foreach (var m in ((IEnumerable<MessageDto>)view).Reverse())
+                    {
+                        <div class="py-1" @key="m.Id">
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start">
+                                <MudAvatar Size="Size.Small" Color="Color.Primary">@Initial(m)</MudAvatar>
+                                <div class="flex-grow-1" style="min-width:0;">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudText Typo="Typo.body2" Class="fw-700">@DisplayName(m)</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-muted">@FormatTime(m.CreatedOnUtc)</MudText>
+                                        @if (m.EditedOnUtc is not null && !m.IsDeleted)
+                                        {
+                                            <MudText Typo="Typo.caption" Class="text-muted">(edited)</MudText>
+                                        }
+                                        @if (m.IsPinned && !m.IsDeleted)
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Filled.PushPin" Size="Size.Small" Color="Color.Secondary" />
+                                        }
+                                    </MudStack>
+
+                                    @if (m.IsDeleted)
+                                    {
+                                        <MudText Typo="Typo.body2" Class="text-muted fst-italic">message deleted</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2" Style="white-space:pre-wrap; word-break:break-word;">@m.Content</MudText>
+
+                                        @if (m.Reactions.Count > 0)
+                                        {
+                                            <MudStack Row="true" Spacing="1" Class="mt-1" Wrap="Wrap.Wrap">
+                                                @foreach (var r in m.Reactions)
+                                                {
+                                                    <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                                                               Color="@(IReacted(r) ? Color.Primary : Color.Default)"
+                                                               OnClick="@(() => ToggleReactionAsync(m, r.Emoji))">
+                                                        @r.Emoji @r.Count
+                                                    </MudButton>
+                                                }
+                                            </MudStack>
+                                        }
+                                    }
+                                </div>
+
+                                @if (!m.IsDeleted && !_searchActive)
+                                {
+                                    <MudMenu Dense="true">
+                                        <ActivatorContent>
+                                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
+                                        </ActivatorContent>
+                                        <ChildContent>
+                                            @foreach (var emoji in _quickEmojis)
+                                            {
+                                                <MudMenuItem OnClick="@(() => ToggleReactionAsync(m, emoji))">@emoji React</MudMenuItem>
+                                            }
+                                            <MudDivider />
+                                            <MudMenuItem Icon="@(m.IsPinned ? Icons.Material.Filled.PushPin : Icons.Material.Outlined.PushPin)"
+                                                         OnClick="@(() => TogglePinAsync(m))">@(m.IsPinned ? "Unpin" : "Pin")</MudMenuItem>
+                                            @if (IsMine(m) && _canEditOwn)
+                                            {
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditDialog(m))">Edit</MudMenuItem>
+                                            }
+                                            @if (IsMine(m) && _canDeleteOwn)
+                                            {
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error"
+                                                             OnClick="@(() => DeleteAsync(m))">Delete</MudMenuItem>
+                                            }
+                                        </ChildContent>
+                                    </MudMenu>
+                                }
+                            </MudStack>
+                        </div>
+                    }
+
+                    @if (!_searchActive && _hasMore)
+                    {
+                        <div class="d-flex justify-center py-2">
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="_loadingMessages"
+                                       OnClick="LoadOlderAsync">Load older messages</MudButton>
+                        </div>
+                    }
+                </div>
+
+                @* Typing indicator *@
+                <div style="height: 20px;" class="px-3">
+                    @if (_someoneTyping)
+                    {
+                        <MudText Typo="Typo.caption" Class="text-muted">Someone is typing…</MudText>
+                    }
+                </div>
+
+                @* Composer *@
+                @if (_canSend)
+                {
+                    @if (_mentionOpen)
+                    {
+                        <div class="px-3 pt-2">
+                            <MudAutocomplete T="ChatUserDto" Placeholder="Search people to mention…"
+                                             SearchFunc="SearchUsersAsync"
+                                             ToStringFunc="@(u => u is null ? string.Empty : u.DisplayName)"
+                                             ValueChanged="OnMentionPicked"
+                                             Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                                             ResetValueOnEmptyText="true" Clearable="true" />
+                        </div>
+                    }
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="pa-3" Style="border-top:1px solid var(--mud-palette-divider);">
+                        <MudTooltip Text="Mention someone">
+                            <AMISIconButton Icon="@Icons.Material.Filled.AlternateEmail" Title="Mention"
+                                            Color="@(_mentionOpen ? Color.Primary : Color.Default)"
+                                            OnClick="@(() => _mentionOpen = !_mentionOpen)" />
+                        </MudTooltip>
+                        <MudTextField T="string" @bind-Value="_draft" Placeholder="@ComposerPlaceholder"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Immediate="true"
+                                      Class="flex-grow-1" OnKeyDown="OnComposerKeyDown" Disabled="_sending" />
+                        <AMISButton StartIcon="@Icons.Material.Filled.Send" OnClick="SendAsync"
+                                    Disabled="@(_sending || string.IsNullOrWhiteSpace(_draft))">Send</AMISButton>
+                    </MudStack>
+                }
+            }
+        </MudPaper>
+    </div>
+}
+
+@* ---- Create channel dialog ---- *@
+<MudDialog @bind-Visible="_createOpen" Options="_dialogOptions">
+    <TitleContent>Create channel</TitleContent>
+    <DialogContent>
+        <MudTextField T="string" @bind-Value="_newName" Label="Name" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Dense="true" Immediate="true" Required="true" />
+        <MudTextField T="string" @bind-Value="_newTopic" Label="Topic (optional)" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Dense="true" Lines="2" Class="mt-2" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="@(() => _createOpen = false)">Cancel</MudButton>
+        <AMISButton OnClick="CreateChannelAsync" Disabled="@(_creating || string.IsNullOrWhiteSpace(_newName))">Create</AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@* ---- Edit message dialog ---- *@
+<MudDialog @bind-Visible="_editOpen" Options="_dialogOptions">
+    <TitleContent>Edit message</TitleContent>
+    <DialogContent>
+        <MudTextField T="string" @bind-Value="_editContent" Label="Message" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Dense="true" Lines="3" Immediate="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="@(() => _editOpen = false)">Cancel</MudButton>
+        <AMISButton OnClick="SaveEditAsync" Disabled="@(_savingEdit || string.IsNullOrWhiteSpace(_editContent))">Save</AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@* ---- Pinned messages dialog ---- *@
+<MudDialog @bind-Visible="_pinnedOpen" Options="_dialogOptions">
+    <TitleContent>Pinned messages</TitleContent>
+    <DialogContent>
+        @if (_pinned.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="text-muted">No pinned messages.</MudText>
+        }
+        else
+        {
+            @foreach (var m in _pinned)
+            {
+                <MudStack Spacing="0" Class="mb-2">
+                    <MudText Typo="Typo.caption" Class="text-muted">@DisplayName(m) · @FormatTime(m.CreatedOnUtc)</MudText>
+                    <MudText Typo="Typo.body2" Style="white-space:pre-wrap;">@m.Content</MudText>
+                    <MudDivider Class="mt-1" />
+                </MudStack>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="@(() => _pinnedOpen = false)">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const string ComposerPlaceholder = "Write a message…  Use @username to mention";
+    private static readonly string[] _quickEmojis = ["👍", "❤️", "😄", "🎉", "👀"];
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+
+    private string? _currentUserId;
+
+    private readonly List<ChannelDto> _channels = [];
+    private ChannelDto? _selected;
+
+    private readonly List<MessageDto> _messages = [];   // ascending: oldest → newest
+    private Guid? _nextCursor;
+    private bool _hasMore;
+    private bool _loadingMessages;
+
+    private string _draft = "";
+    private bool _sending;
+    private bool _mentionOpen;
+    private DateTimeOffset _lastTypingSentUtc = DateTimeOffset.MinValue;
+
+    private bool _someoneTyping;
+    private CancellationTokenSource? _typingResetCts;
+
+    // Search
+    private string _searchTerm = "";
+    private string _activeSearchTerm = "";
+    private bool _searchActive;
+    private readonly List<MessageDto> _searchResults = [];
+
+    // Create dialog
+    private bool _createOpen;
+    private bool _creating;
+    private string _newName = "";
+    private string _newTopic = "";
+
+    // Edit dialog
+    private bool _editOpen;
+    private bool _savingEdit;
+    private MessageDto? _editing;
+    private string _editContent = "";
+
+    // Pinned dialog
+    private bool _pinnedOpen;
+    private readonly List<MessageDto> _pinned = [];
+
+    private bool _canView => UserProfileState.Permissions.Contains(ChatPermissions.Channels.View);
+    private bool _canCreate => UserProfileState.Permissions.Contains(ChatPermissions.Channels.Create);
+    private bool _canSend => UserProfileState.Permissions.Contains(ChatPermissions.Messages.Send);
+    private bool _canEditOwn => UserProfileState.Permissions.Contains(ChatPermissions.Messages.EditOwn);
+    private bool _canDeleteOwn => UserProfileState.Permissions.Contains(ChatPermissions.Messages.DeleteOwn);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_canView)
+        {
+            return;
+        }
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        _currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? authState.User.FindFirst("sub")?.Value;
+
+        Hub.MessageCreated += OnMessageCreated;
+        Hub.TypingStarted += OnTypingStarted;
+        Hub.ConnectionStateChanged += OnConnectionStateChanged;
+
+        await Hub.StartAsync();
+
+        try
+        {
+            var channels = await Chat.ListMyChannelsAsync();
+            _channels.AddRange(channels);
+            var first = _channels.FirstOrDefault();
+            if (first is not null)
+            {
+                await SelectChannelAsync(first);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load channels: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SelectChannelAsync(ChannelDto channel)
+    {
+        _selected = channel;
+        ClearSearch();
+        _messages.Clear();
+        _nextCursor = null;
+        _hasMore = false;
+        _someoneTyping = false;
+        _loadingMessages = true;
+
+        await Hub.JoinChannelAsync(channel.Id);
+
+        try
+        {
+            var page = await Chat.ListMessagesAsync(channel.Id, before: null, take: 30);
+            if (page is not null)
+            {
+                _messages.AddRange(page.Items.Reverse());   // store ascending
+                _nextCursor = page.NextCursor;
+                _hasMore = page.HasMore;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load messages: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingMessages = false;
+        }
+    }
+
+    private async Task LoadOlderAsync()
+    {
+        if (_selected is null || _nextCursor is null || _loadingMessages)
+        {
+            return;
+        }
+
+        _loadingMessages = true;
+        try
+        {
+            var page = await Chat.ListMessagesAsync(_selected.Id, before: _nextCursor, take: 30);
+            if (page is not null)
+            {
+                _messages.InsertRange(0, page.Items.Reverse());   // older go to the front (top)
+                _nextCursor = page.NextCursor;
+                _hasMore = page.HasMore;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load older messages: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingMessages = false;
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_draft) || _sending)
+        {
+            return;
+        }
+
+        _sending = true;
+        var content = _draft.Trim();
+        try
+        {
+            var sent = await Chat.SendMessageAsync(_selected.Id, content, parentMessageId: null);
+            if (sent is not null)
+            {
+                AddOrUpdateMessage(sent);   // hub echo (if any) is de-duped by id
+                _draft = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not send message: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private async Task OnComposerKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendAsync();
+            return;
+        }
+
+        // Throttle typing signals to roughly one per 2s (server also throttles to 3s).
+        if (_selected is not null && (DateTimeOffset.UtcNow - _lastTypingSentUtc).TotalSeconds >= 2)
+        {
+            _lastTypingSentUtc = DateTimeOffset.UtcNow;
+            await Hub.TypingAsync(_selected.Id);
+        }
+    }
+
+    // ---- Mention picker ----
+
+    private async Task<IEnumerable<ChatUserDto>> SearchUsersAsync(string value, CancellationToken token)
+    {
+        try
+        {
+            return await Chat.SearchUsersAsync(value, token);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnMentionPicked(ChatUserDto? user)
+    {
+        if (user is null)
+        {
+            return;
+        }
+
+        // Insert @username (matches the server mention parser); the picker shows the friendlier display name.
+        var prefix = string.IsNullOrEmpty(_draft) || _draft.EndsWith(' ') ? _draft : _draft + " ";
+        _draft = $"{prefix}@{user.UserName} ";
+        _mentionOpen = false;
+    }
+
+    // ---- Realtime handlers (run off the render thread → marshal with InvokeAsync) ----
+
+    private void OnMessageCreated(MessageDto message)
+    {
+        if (_selected is null || message.ChannelId != _selected.Id)
+        {
+            return;
+        }
+
+        InvokeAsync(() =>
+        {
+            AddOrUpdateMessage(message);
+            StateHasChanged();
+        });
+    }
+
+    private void OnTypingStarted(TypingNotification notification)
+    {
+        if (_selected is null || notification.ChannelId != _selected.Id)
+        {
+            return;
+        }
+
+        if (_currentUserId is not null && string.Equals(notification.UserId.ToString(), _currentUserId, StringComparison.OrdinalIgnoreCase))
+        {
+            return;   // ignore our own typing echo
+        }
+
+        _typingResetCts?.Cancel();
+        _typingResetCts = new CancellationTokenSource();
+        var token = _typingResetCts.Token;
+
+        InvokeAsync(() =>
+        {
+            _someoneTyping = true;
+            StateHasChanged();
+        });
+
+        _ = ClearTypingAfterDelayAsync(token);
+    }
+
+    private async Task ClearTypingAfterDelayAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(4), token);
+            await InvokeAsync(() =>
+            {
+                _someoneTyping = false;
+                StateHasChanged();
+            });
+        }
+        catch (TaskCanceledException)
+        {
+            // a newer typing signal reset the timer
+        }
+    }
+
+    private void OnConnectionStateChanged() => InvokeAsync(StateHasChanged);
+
+    // ---- Message actions ----
+
+    private async Task ToggleReactionAsync(MessageDto message, string emoji)
+    {
+        try
+        {
+            var existing = message.Reactions.FirstOrDefault(r => r.Emoji == emoji);
+            var reacted = existing is not null && _currentUserId is not null && existing.UserIds.Contains(_currentUserId);
+            var updated = reacted
+                ? await Chat.RemoveReactionAsync(message.Id, emoji)
+                : await Chat.AddReactionAsync(message.Id, emoji);
+            if (updated is not null)
+            {
+                AddOrUpdateMessage(updated);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Reaction failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task TogglePinAsync(MessageDto message)
+    {
+        try
+        {
+            var updated = message.IsPinned
+                ? await Chat.UnpinMessageAsync(message.Id)
+                : await Chat.PinMessageAsync(message.Id);
+            if (updated is not null)
+            {
+                AddOrUpdateMessage(updated);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Pin failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OpenEditDialog(MessageDto message)
+    {
+        _editing = message;
+        _editContent = message.Content ?? "";
+        _editOpen = true;
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_editing is null || string.IsNullOrWhiteSpace(_editContent))
+        {
+            return;
+        }
+
+        _savingEdit = true;
+        try
+        {
+            var updated = await Chat.EditMessageAsync(_editing.Id, _editContent.Trim());
+            if (updated is not null)
+            {
+                AddOrUpdateMessage(updated);
+            }
+            _editOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Edit failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _savingEdit = false;
+        }
+    }
+
+    private async Task DeleteAsync(MessageDto message)
+    {
+        try
+        {
+            var updated = await Chat.DeleteMessageAsync(message.Id);
+            if (updated is not null)
+            {
+                AddOrUpdateMessage(updated);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenPinnedAsync()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _pinned.Clear();
+            _pinned.AddRange(await Chat.GetPinnedAsync(_selected.Id));
+            _pinnedOpen = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load pinned messages: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // ---- Search ----
+
+    private async Task RunSearchAsync()
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            return;
+        }
+
+        try
+        {
+            var page = await Chat.SearchMessagesAsync(_selected.Id, _searchTerm.Trim(), before: null, take: 50);
+            _searchResults.Clear();
+            if (page is not null)
+            {
+                _searchResults.AddRange(page.Items.Reverse());
+            }
+            _activeSearchTerm = _searchTerm.Trim();
+            _searchActive = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ClearSearch()
+    {
+        _searchActive = false;
+        _searchTerm = "";
+        _activeSearchTerm = "";
+        _searchResults.Clear();
+    }
+
+    // ---- Create channel ----
+
+    private void OpenCreateDialog()
+    {
+        _newName = "";
+        _newTopic = "";
+        _createOpen = true;
+    }
+
+    private async Task CreateChannelAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newName))
+        {
+            return;
+        }
+
+        _creating = true;
+        try
+        {
+            var created = await Chat.CreateChannelAsync(_newName.Trim(), string.IsNullOrWhiteSpace(_newTopic) ? null : _newTopic.Trim(), memberUserIds: null);
+            if (created is not null)
+            {
+                _channels.Insert(0, created);
+                _createOpen = false;
+                await SelectChannelAsync(created);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not create channel: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    // ---- Helpers ----
+
+    private void AddOrUpdateMessage(MessageDto message)
+    {
+        var index = _messages.FindIndex(m => m.Id == message.Id);
+        if (index >= 0)
+        {
+            _messages[index] = message;
+        }
+        else
+        {
+            _messages.Add(message);   // newest arrives last (ascending order)
+        }
+    }
+
+    private bool IsMine(MessageDto m) =>
+        _currentUserId is not null && string.Equals(m.SenderId, _currentUserId, StringComparison.OrdinalIgnoreCase);
+
+    private bool IReacted(MessageReactionDto r) =>
+        _currentUserId is not null && r.UserIds.Contains(_currentUserId);
+
+    private string DisplayName(MessageDto m) =>
+        IsMine(m) ? "You" : (!string.IsNullOrWhiteSpace(m.SenderName) ? m.SenderName! : ShortId(m.SenderId));
+
+    private static string ShortId(string id) => id.Length <= 8 ? id : id[..8];
+
+    private string Initial(MessageDto m)
+    {
+        if (IsMine(m))
+        {
+            return "Y";
+        }
+
+        var name = !string.IsNullOrWhiteSpace(m.SenderName) ? m.SenderName! : m.SenderId;
+        return name.Length > 0 ? name[..1].ToUpperInvariant() : "?";
+    }
+
+    private static string FormatTime(DateTimeOffset utc) => utc.ToLocalTime().ToString("MMM d, h:mm tt");
+
+    private static string ChannelTitle(ChannelDto c) =>
+        !string.IsNullOrWhiteSpace(c.Name) ? c.Name!
+        : c.Type == "Direct" ? "Direct message"
+        : c.Type == "GroupDm" ? "Group" : "Channel";
+
+    private static string ChannelIcon(ChannelDto c) =>
+        c.Scope == "Global" ? Icons.Material.Filled.Public
+        : c.Type == "Direct" ? Icons.Material.Filled.Person
+        : c.Type == "GroupDm" ? Icons.Material.Filled.Group
+        : Icons.Material.Filled.Tag;
+
+    private string ChannelRowClass(ChannelDto c) =>
+        _selected?.Id == c.Id ? "mud-chip-text mud-primary-text" : "";
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.MessageCreated -= OnMessageCreated;
+        Hub.TypingStarted -= OnTypingStarted;
+        Hub.ConnectionStateChanged -= OnConnectionStateChanged;
+        _typingResetCts?.Cancel();
+        _typingResetCts?.Dispose();
+        await ValueTask.CompletedTask;
+    }
+}

@@ -22,3 +22,40 @@ public sealed record ListChannelMessagesQuery(
     Guid ChannelId,
     Guid? Before = null,
     int? Take = null) : IQuery<MessagePageDto>;
+
+/// <summary>Edit a message's content. Caller must be the original sender.</summary>
+public sealed record EditMessageCommand(Guid MessageId, string Content) : ICommand<MessageDto>;
+
+/// <summary>
+/// Soft-delete (tombstone) a message. Caller must be the original sender. Returns the tombstoned
+/// message so clients render a "message deleted" placeholder in place.
+/// </summary>
+public sealed record DeleteMessageCommand(Guid MessageId) : ICommand<MessageDto>;
+
+/// <summary>Pin a message in its channel. Caller must be a channel member.</summary>
+public sealed record PinMessageCommand(Guid MessageId) : ICommand<MessageDto>;
+
+/// <summary>Unpin a message. Caller must be a channel member.</summary>
+public sealed record UnpinMessageCommand(Guid MessageId) : ICommand<MessageDto>;
+
+/// <summary>List the replies of a single-level thread (oldest first). Caller must be a channel member.</summary>
+public sealed record ListMessageRepliesQuery(Guid MessageId) : IQuery<IReadOnlyList<MessageDto>>;
+
+/// <summary>List a channel's pinned messages (most recently pinned first). Caller must be a channel member.</summary>
+public sealed record GetPinnedMessagesQuery(Guid ChannelId) : IQuery<IReadOnlyList<MessageDto>>;
+
+/// <summary>Add the caller's emoji reaction to a message. Idempotent. Caller must be a channel member.</summary>
+public sealed record AddReactionCommand(Guid MessageId, string Emoji) : ICommand<MessageDto>;
+
+/// <summary>Remove the caller's emoji reaction from a message. Caller must be a channel member.</summary>
+public sealed record RemoveReactionCommand(Guid MessageId, string Emoji) : ICommand<MessageDto>;
+
+/// <summary>
+/// Search a channel's messages by content using a case-insensitive ILIKE substring match (v1 — no ranked FTS),
+/// newest first, keyset-paginated. Tombstoned messages are excluded. Caller must be a channel member.
+/// </summary>
+public sealed record SearchChannelMessagesQuery(
+    Guid ChannelId,
+    string Query,
+    Guid? Before = null,
+    int? Take = null) : IQuery<MessagePageDto>;

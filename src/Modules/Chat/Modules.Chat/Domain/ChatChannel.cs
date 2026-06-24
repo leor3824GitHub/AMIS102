@@ -137,6 +137,19 @@ public sealed class ChatChannel : AggregateRoot<Guid>, ISoftDeletable
         return member;
     }
 
+    /// <summary>Removes a member by user id. Returns false if the user was not a member (idempotent).</summary>
+    public bool RemoveMember(string userId)
+    {
+        var existing = _members.Find(m => string.Equals(m.UserId, userId, StringComparison.OrdinalIgnoreCase));
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _members.Remove(existing);
+        return true;
+    }
+
     public void Rename(string name, string? topic)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);

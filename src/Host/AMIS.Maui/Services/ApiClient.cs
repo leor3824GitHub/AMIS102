@@ -198,6 +198,33 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         return new AddFoundAtStationResult(Guid.Empty, request.PropertyNumber);
     }
 
+    // ── Chat ──
+
+    public async Task<List<ChatChannelDto>> GetChatChannelsAsync(CancellationToken ct = default)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<ChatChannelDto>>("api/v1/chat/channels", ct);
+        return result ?? [];
+    }
+
+    public async Task<ChatMessagePageDto> GetChatMessagesAsync(Guid channelId, Guid? before, int? take, CancellationToken ct = default)
+    {
+        var url = $"api/v1/chat/channels/{channelId}/messages";
+        var query = new List<string>();
+        if (before is not null) query.Add($"before={before}");
+        if (take is not null) query.Add($"take={take}");
+        if (query.Count > 0) url += "?" + string.Join("&", query);
+
+        var result = await httpClient.GetFromJsonAsync<ChatMessagePageDto>(url, ct);
+        return result ?? new ChatMessagePageDto([], null, false);
+    }
+
+    public async Task<ChatMessageDto?> SendChatMessageAsync(Guid channelId, string content, CancellationToken ct = default)
+    {
+        var response = await httpClient.PostAsJsonAsync("api/v1/chat/messages", new { channelId, content }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<ChatMessageDto>(ct);
+    }
+
     // AssetRegister stores condition as the count outcome; map to the MAUI "result" label for display.
     private static string MapCondition(string? condition) => condition switch
     {

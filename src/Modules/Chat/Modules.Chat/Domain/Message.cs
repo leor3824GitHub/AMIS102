@@ -18,6 +18,9 @@ public sealed class Message : BaseEntity<Guid>
 
     public string SenderId { get; private set; } = default!;
 
+    /// <summary>Denormalized display name of the sender, resolved once at send time (for rendering without a directory lookup).</summary>
+    public string? SenderName { get; private set; }
+
     public string Content { get; private set; } = default!;
 
     public Guid? ParentMessageId { get; private set; }
@@ -47,7 +50,7 @@ public sealed class Message : BaseEntity<Guid>
 
     public IReadOnlyCollection<MessageReaction> Reactions => _reactions;
 
-    public static Message Create(Guid channelId, string senderId, string content, Guid? parentMessageId, string? tenantId)
+    public static Message Create(Guid channelId, string senderId, string? senderName, string content, Guid? parentMessageId, string? tenantId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(senderId);
         ArgumentException.ThrowIfNullOrWhiteSpace(content);
@@ -57,6 +60,7 @@ public sealed class Message : BaseEntity<Guid>
             Id = Guid.CreateVersion7(),
             ChannelId = channelId,
             SenderId = senderId,
+            SenderName = senderName,
             Content = content,
             ParentMessageId = parentMessageId,
             TenantId = tenantId,

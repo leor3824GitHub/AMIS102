@@ -4,11 +4,29 @@ using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
 using AMIS.Framework.Web.Realtime;
 using AMIS.Modules.Chat.Data;
+using AMIS.Modules.Chat.Features.v1.Channels.AddChannelMembers;
+using AMIS.Modules.Chat.Features.v1.Channels.ArchiveChannel;
 using AMIS.Modules.Chat.Features.v1.Channels.CreateChannel;
+using AMIS.Modules.Chat.Features.v1.Channels.DiscoverChannels;
 using AMIS.Modules.Chat.Features.v1.Channels.FindOrCreateDm;
+using AMIS.Modules.Chat.Features.v1.Channels.GetChannelById;
 using AMIS.Modules.Chat.Features.v1.Channels.ListMyChannels;
+using AMIS.Modules.Chat.Features.v1.Channels.MarkChannelRead;
+using AMIS.Modules.Chat.Features.v1.Channels.RemoveChannelMember;
+using AMIS.Modules.Chat.Features.v1.Channels.RestoreChannel;
+using AMIS.Modules.Chat.Features.v1.Channels.UpdateChannel;
+using AMIS.Modules.Chat.Features.v1.Messages.AddReaction;
+using AMIS.Modules.Chat.Features.v1.Messages.DeleteMessage;
+using AMIS.Modules.Chat.Features.v1.Messages.EditMessage;
+using AMIS.Modules.Chat.Features.v1.Messages.GetPinnedMessages;
 using AMIS.Modules.Chat.Features.v1.Messages.ListChannelMessages;
+using AMIS.Modules.Chat.Features.v1.Messages.ListMessageReplies;
+using AMIS.Modules.Chat.Features.v1.Messages.PinMessage;
+using AMIS.Modules.Chat.Features.v1.Messages.RemoveReaction;
+using AMIS.Modules.Chat.Features.v1.Messages.SearchChannelMessages;
 using AMIS.Modules.Chat.Features.v1.Messages.SendMessage;
+using AMIS.Modules.Chat.Features.v1.Messages.UnpinMessage;
+using AMIS.Modules.Chat.Features.v1.Users.SearchChatUsers;
 using AMIS.Modules.Chat.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -61,9 +79,33 @@ public class ChatModule : IModule
         CreateChannelEndpoint.Map(moduleGroup);
         FindOrCreateDmEndpoint.Map(moduleGroup);
         ListMyChannelsEndpoint.Map(moduleGroup);
+        DiscoverChannelsEndpoint.Map(moduleGroup);
+        GetChannelByIdEndpoint.Map(moduleGroup);
+        UpdateChannelEndpoint.Map(moduleGroup);
+        ArchiveChannelEndpoint.Map(moduleGroup);
+        RestoreChannelEndpoint.Map(moduleGroup);
+        AddChannelMembersEndpoint.Map(moduleGroup);
+        RemoveChannelMemberEndpoint.Map(moduleGroup);
+        MarkChannelReadEndpoint.Map(moduleGroup);
 
         // Messages
         SendMessageEndpoint.Map(moduleGroup);
         ListChannelMessagesEndpoint.Map(moduleGroup);
+        EditMessageEndpoint.Map(moduleGroup);
+        DeleteMessageEndpoint.Map(moduleGroup);
+        PinMessageEndpoint.Map(moduleGroup);
+        UnpinMessageEndpoint.Map(moduleGroup);
+        ListMessageRepliesEndpoint.Map(moduleGroup);
+        GetPinnedMessagesEndpoint.Map(moduleGroup);
+
+        // Reactions
+        AddReactionEndpoint.Map(moduleGroup);
+        RemoveReactionEndpoint.Map(moduleGroup);
+
+        // Search
+        SearchChannelMessagesEndpoint.Map(moduleGroup);
+
+        // Users (mention picker directory)
+        SearchChatUsersEndpoint.Map(moduleGroup);
     }
 }

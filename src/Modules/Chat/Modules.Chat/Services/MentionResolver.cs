@@ -8,6 +8,9 @@ public sealed record ResolvedMention(string UserId, string UserName);
 public interface IMentionResolver
 {
     Task<IReadOnlyList<ResolvedMention>> ResolveAsync(IReadOnlyCollection<string> usernames, CancellationToken cancellationToken);
+
+    /// <summary>Resolves a single user's display name (full name, falling back to username), or null if unknown.</summary>
+    Task<string?> ResolveDisplayNameAsync(string userId, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -34,5 +37,25 @@ internal sealed class MentionResolver(IUserService userService) : IMentionResolv
             .Select(u => new ResolvedMention(u.Id!, u.UserName!))
             .DistinctBy(r => r.UserId, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    public async Task<string?> ResolveDisplayNameAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return null;
+        }
+
+        try
+        {
+            var user = await userService.GetAsync(userId, cancellationToken).ConfigureAwait(false);
+            var fullName = $"{user.FirstName} {user.LastName}".Trim();
+            return !string.IsNullOrWhiteSpace(fullName) ? fullName : user.UserName;
+        }
+        catch (Exception)
+        {
+            // Directory lookup failed (e.g., user not found) — fall back to no display name.
+            return null;
+        }
     }
 }

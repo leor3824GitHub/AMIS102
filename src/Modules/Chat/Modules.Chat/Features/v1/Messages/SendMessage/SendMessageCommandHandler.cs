@@ -88,7 +88,9 @@ public sealed class SendMessageCommandHandler : ICommandHandler<SendMessageComma
             .Where(r => !string.Equals(r.UserId, userId, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        var message = Message.Create(command.ChannelId, userId, command.Content.Trim(), command.ParentMessageId, tenantId);
+        var senderName = await _mentionResolver.ResolveDisplayNameAsync(userId, cancellationToken).ConfigureAwait(false);
+
+        var message = Message.Create(command.ChannelId, userId, senderName, command.Content.Trim(), command.ParentMessageId, tenantId);
         foreach (var mention in mentioned)
         {
             message.AddMention(mention.UserId);
