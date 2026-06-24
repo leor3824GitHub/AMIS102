@@ -1,0 +1,272 @@
+@using AMIS.Blazor.ApiClient
+@inject IIdentityClient IdentityClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudAvatar Color="Color.Primary" Size="Size.Medium" Class="dialog-avatar">
+                <MudIcon Icon="@Icons.Material.Filled.PersonAdd" />
+            </MudAvatar>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h6" Class="fw-600">Create New User</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">Add a new team member to the system</MudText>
+            </MudStack>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" Model="_model">
+            @* Step indicator *@
+            <MudStack Row="true" Justify="Justify.Center" Spacing="4" Class="mb-4 mt-2">
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudAvatar Size="Size.Small" Color="Color.Primary" Class="step-avatar">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                    </MudAvatar>
+                    <MudText Typo="Typo.caption" Class="fw-600" Color="Color.Primary">Personal</MudText>
+                </MudStack>
+                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Default" Class="step-divider" />
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudAvatar Size="Size.Small" Color="Color.Primary" Class="step-avatar">
+                        <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" />
+                    </MudAvatar>
+                    <MudText Typo="Typo.caption" Class="fw-600" Color="Color.Primary">Account</MudText>
+                </MudStack>
+                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Default" Class="step-divider" />
+                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                    <MudAvatar Size="Size.Small" Color="Color.Primary" Class="step-avatar">
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" />
+                    </MudAvatar>
+                    <MudText Typo="Typo.caption" Class="fw-600" Color="Color.Primary">Security</MudText>
+                </MudStack>
+            </MudStack>
+
+            <MudGrid Spacing="3">
+                @* Personal Information Section *@
+                <MudItem xs="12">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" Size="Size.Small" />
+                        <MudText Typo="Typo.subtitle2" Class="fw-600">Personal Information</MudText>
+                    </MudStack>
+                    <MudDivider Class="mt-1" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.FirstName"
+                                  Label="First Name"
+                                  Placeholder="Enter first name"
+                                  Required="true"
+                                  RequiredError="First name is required"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Badge"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.LastName"
+                                  Label="Last Name"
+                                  Placeholder="Enter last name"
+                                  Required="true"
+                                  RequiredError="Last name is required"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Badge"
+                                  Immediate="true" />
+                </MudItem>
+
+                @* Account Details Section *@
+                <MudItem xs="12">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" Size="Size.Small" />
+                        <MudText Typo="Typo.subtitle2" Class="fw-600">Account Details</MudText>
+                    </MudStack>
+                    <MudDivider Class="mt-1" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Email"
+                                  Label="Email Address"
+                                  Placeholder="user@example.com"
+                                  Required="true"
+                                  RequiredError="Email is required"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.AlternateEmail"
+                                  HelperText="Used for notifications and recovery"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.UserName"
+                                  Label="Username"
+                                  Placeholder="Choose a username"
+                                  Required="true"
+                                  RequiredError="Username is required"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.AccountCircle"
+                                  HelperText="Used for login. Can be same as email."
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.PhoneNumber"
+                                  Label="Phone Number"
+                                  Placeholder="+1 (555) 123-4567"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Phone"
+                                  HelperText="Optional - for 2FA or contact" />
+                </MudItem>
+
+                @* Security Section *@
+                <MudItem xs="12">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Primary" Size="Size.Small" />
+                        <MudText Typo="Typo.subtitle2" Class="fw-600">Security</MudText>
+                    </MudStack>
+                    <MudDivider Class="mt-1" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.Password"
+                                  Label="Password"
+                                  Placeholder="Create a strong password"
+                                  Required="true"
+                                  RequiredError="Password is required"
+                                  InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@(_showPassword ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                  OnAdornmentClick="TogglePasswordVisibility"
+                                  AdornmentAriaLabel="Toggle password visibility"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Minimum 6 characters"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.ConfirmPassword"
+                                  Label="Confirm Password"
+                                  Placeholder="Re-enter password"
+                                  Required="true"
+                                  RequiredError="Please confirm password"
+                                  InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                                  Variant="Variant.Outlined"
+                                  HelperText="Must match the password above"
+                                  Immediate="true" />
+                </MudItem>
+
+                @* Info Alert *@
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Class="mt-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">
+                                The user will receive an email to verify their account. You can manage their roles after creation.
+                            </MudText>
+                        </MudStack>
+                    </MudAlert>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Default"
+                   OnClick="Cancel"
+                   Disabled="_busy">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Submit"
+                   Disabled="_busy"
+                   StartIcon="@(_busy ? null : Icons.Material.Filled.PersonAdd)">
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Creating...</span>
+            }
+            else
+            {
+                <span>Create User</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .dialog-avatar {
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+    }
+
+    .step-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .step-divider {
+        margin-top: 4px;
+        opacity: 0.5;
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudForm? _form;
+    private RegisterUserCommand _model = new();
+    private bool _busy;
+    private bool _showPassword;
+
+    private void TogglePasswordVisibility()
+    {
+        _showPassword = !_showPassword;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        if (_form is not null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                return;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(_model.FirstName) ||
+            string.IsNullOrWhiteSpace(_model.LastName) ||
+            string.IsNullOrWhiteSpace(_model.Email) ||
+            string.IsNullOrWhiteSpace(_model.UserName) ||
+            string.IsNullOrWhiteSpace(_model.Password))
+        {
+            Snackbar.Add("Please fill in all required fields.", Severity.Warning);
+            return;
+        }
+
+        if (_model.Password != _model.ConfirmPassword)
+        {
+            Snackbar.Add("Passwords do not match.", Severity.Error);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await IdentityClient.RegisterAsync(_model);
+            Snackbar.Add($"User '{_model.FirstName} {_model.LastName}' created successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to create user: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
+

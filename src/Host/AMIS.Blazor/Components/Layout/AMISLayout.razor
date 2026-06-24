@@ -1,0 +1,418 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Button
+@using AMIS.Framework.Blazor.UI.Components.Layouts
+@using AMIS.Framework.Blazor.UI.Components.User
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Theme
+@using AMIS.Blazor.Components.Pages
+@using Microsoft.AspNetCore.WebUtilities
+@using AMIS.Blazor.Services
+@using AMIS.Blazor.Services.Api
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject MudTheme AMISTheme
+@inject ITenantThemeState TenantThemeState
+@inject IThemeStateFactory ThemeStateFactory
+@inject AMIS.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject AMIS.Blazor.ApiClient.IOrganizationProfileClient OrgProfileClient
+@inject AMIS.Blazor.ApiClient.IEmployeesClient EmployeesClient
+@inject IUserProfileState UserProfileState
+@inject IOrganizationProfileState OrgProfileState
+@inject ICapitalizationThresholdState ThresholdState
+@inject IDialogService DialogService
+@inject IAuthStateNotifier AuthStateNotifier
+@inject IJSRuntime JS
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (!_authStatusLoaded)
+{
+    <MudContainer MaxWidth="MaxWidth.False"
+                  Class="d-flex justify-center align-center"
+                  Style="min-height:100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_isAuthenticated)
+{
+    <SimpleLogin />
+}
+else
+{
+    <MudLayout>
+        <MudAppBar Elevation="0">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            <MudSpacer />
+            <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+            <AMISAccountMenu UserName="@_userName"
+                            UserEmail="@_userEmail"
+                            UserRole="@_userRole"
+                            AvatarUrl="@_avatarUrl"
+                            OnProfileClick="NavigateToProfile"
+                            OnAuditingClick="NavigateToAuditing"
+                            OnLogoutClick="ConfirmAndLogoutAsync" />
+        </MudAppBar>
+        <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" Elevation="0">
+            <MudDrawerHeader>
+                <AMISDrawerHeader Title="AMIS" />
+            </MudDrawerHeader>
+            <NavMenu />
+        </MudDrawer>
+        <MudMainContent Class="pt-20" Style="padding-left:0;padding-right:0;">
+            <MudContainer Class="AMIS-section page-shell" MaxWidth="MaxWidth.False">
+                @Body
+            </MudContainer>
+            <footer style="margin-top: 40px; padding: 16px; border-top: 1px solid var(--mud-palette-lines-default); display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 12px; color: var(--mud-palette-text-secondary);">
+                <span>API Status:</span>
+                <ApiStatusIndicator />
+            </footer>
+        </MudMainContent>
+    </MudLayout>
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">??</span>
+</div>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudTheme? _theme = null;
+    private bool _authStatusLoaded;
+    private bool _isAuthenticated;
+    private string _userName = "User";
+    private string? _userEmail;
+    private string? _userRole;
+    private string? _avatarUrl;
+    private string? _logoUrl;
+    private bool _orgProfileChecked;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // SSR-friendly authentication check via HttpContext
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authState.User?.Identity?.IsAuthenticated ?? false;
+
+        if (_isAuthenticated)
+        {
+            // Extract user info from claims (available in SSR)
+            var user = authState.User!;
+            _userName = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst(ClaimTypes.Email)?.Value ?? "User";
+            _userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+            _userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+
+            // Load theme from cache (fast, SSR-compatible)
+            var httpContext = HttpContextAccessor.HttpContext;
+            if (httpContext is not null)
+            {
+                var tenantId = httpContext.Request.Cookies["AMIS_tenant"] ?? "root";
+                var themeSettings = await ThemeStateFactory.GetThemeAsync(tenantId);
+                _theme = themeSettings.ToMudTheme();
+                TenantThemeState.UpdateSettings(themeSettings);
+                _logoUrl = themeSettings.BrandAssets.LogoUrl; // light mode initially
+                // Dark mode preference is user-specific, default to false for SSR
+                _isDarkMode = false;
+            }
+        }
+        else
+        {
+            // Use default theme for non-authenticated users
+            _theme = TenantThemeState.Theme;
+            _isDarkMode = false;
+        }
+
+        // Subscribe to theme changes (for Interactive mode)
+        TenantThemeState.OnThemeChanged += HandleThemeChanged;
+
+        // Subscribe to profile changes (for syncing across components)
+        UserProfileState.OnProfileChanged += HandleProfileChanged;
+
+        // Subscribe to session expiration (for token refresh failures)
+        AuthStateNotifier.SessionExpired += HandleSessionExpired;
+
+        // Subscribe to authentication state changes
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+
+        _authStatusLoaded = true;
+    }
+
+    private void HandleSessionExpired(object? sender, EventArgs e)
+    {
+        // Route through server-side logout endpoint so the auth cookie is reliably cleared.
+        InvokeAsync(() => Navigation.NavigateTo("/auth/logout?toast=session_expired", forceLoad: true));
+    }
+
+    private void HandleThemeChanged()
+    {
+        _theme = TenantThemeState.Theme;
+        _isDarkMode = TenantThemeState.IsDarkMode;
+        _logoUrl = _isDarkMode ? TenantThemeState.Current.BrandAssets.LogoDarkUrl : TenantThemeState.Current.BrandAssets.LogoUrl;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleProfileChanged()
+    {
+        _userName = UserProfileState.UserName;
+        _userEmail = UserProfileState.UserEmail;
+        _userRole = UserProfileState.UserRole;
+        _avatarUrl = UserProfileState.AvatarUrl;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        var wasAuthenticated = _isAuthenticated;
+        _isAuthenticated = authState.User?.Identity?.IsAuthenticated ?? false;
+
+        if (!wasAuthenticated && _isAuthenticated)
+        {
+            // User just logged in, load theme and user info
+            var user = authState.User!;
+            _userName = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst(ClaimTypes.Email)?.Value ?? "User";
+            _userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+            _userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+
+            await TenantThemeState.LoadThemeAsync();
+            _theme = TenantThemeState.Theme;
+            _isDarkMode = TenantThemeState.IsDarkMode;
+            _logoUrl = _isDarkMode ? TenantThemeState.Current.BrandAssets.LogoDarkUrl : TenantThemeState.Current.BrandAssets.LogoUrl;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        else if (wasAuthenticated && !_isAuthenticated)
+        {
+            // User logged out, reset to default
+            try
+            {
+                await TenantThemeState.ResetThemeAsync();
+                _theme = TenantThemeState.Theme;
+                _isDarkMode = false;
+                _logoUrl = null;
+                await ApplyFaviconAsync(); // reset to default
+            }
+            catch (Exception)
+            {
+                // Silently handle errors - TenantThemeState already logs them
+                // This prevents unhandled exceptions during logout from crashing the app
+            }
+            finally
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        TenantThemeState.OnThemeChanged -= HandleThemeChanged;
+        UserProfileState.OnProfileChanged -= HandleProfileChanged;
+        AuthStateNotifier.SessionExpired -= HandleSessionExpired;
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (_isAuthenticated)
+        {
+            // Apply theme assets (favicon)
+            await ApplyFaviconAsync();
+
+            if (firstRender)
+            {
+                // Load full profile in Interactive mode
+                await LoadUserProfileAsync();
+
+                // Show org profile setup dialog if tenant has no profile yet
+                await CheckOrganizationProfileAsync();
+
+                // Warm the active capitalization threshold once per session for PR/receiving forms
+                await ThresholdState.EnsureLoadedAsync();
+
+                // Handle toast notifications
+                var currentUri = new Uri(Navigation.Uri);
+                var query = QueryHelpers.ParseQuery(currentUri.Query);
+                if (query.TryGetValue("toast", out var toastValues))
+                {
+                    var toast = toastValues.ToString();
+                    if (toast == "login_success")
+                    {
+                        Snackbar.Add("Signed in.", Severity.Success);
+                    }
+                    else if (toast == "logout_success")
+                    {
+                        Snackbar.Add("Signed out.", Severity.Success);
+                    }
+                    else if (toast == "session_expired")
+                    {
+                        Snackbar.Add("Your session has expired. Please sign in again.", Severity.Warning);
+                    }
+
+                    var cleanUri = currentUri.GetLeftPart(UriPartial.Path);
+                    Navigation.NavigateTo(cleanUri, false);
+                }
+
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task CheckOrganizationProfileAsync()
+    {
+        if (_orgProfileChecked) return;
+        _orgProfileChecked = true;
+
+        try
+        {
+            var profile = await OrgProfileClient.GetAsync();
+            OrgProfileState.SetProfile(profile);
+            if (profile is null || string.IsNullOrWhiteSpace(profile.Name))
+            {
+                var options = new DialogOptions
+                {
+                    CloseOnEscapeKey = false,
+                    BackdropClick = false,
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true
+                };
+                await DialogService.ShowAsync<AMIS.Blazor.Components.Shared.OrganizationProfileSetupDialog>(
+                    string.Empty, options);
+            }
+        }
+        catch
+        {
+            // Silently skip — don't block the user if the API is unavailable
+        }
+    }
+
+    private async Task ConfirmAndLogoutAsync()
+    {
+        var confirmed = await DialogService.ShowSignOutConfirmAsync();
+        if (confirmed)
+        {
+            await LogoutAsync();
+        }
+    }
+
+    private Task LogoutAsync()
+    {
+        // Use browser navigation to ensure the cookie is cleared properly
+        // The server will clear the auth cookie and redirect to login page
+        Navigation.NavigateTo("/auth/logout", forceLoad: true);
+        return Task.CompletedTask;
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void DarkModeToggle()
+    {
+        TenantThemeState.ToggleDarkMode();
+    }
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode,
+    };
+
+    private async Task ApplyFaviconAsync()
+    {
+        try
+        {
+            var faviconUrl = TenantThemeState.Current.BrandAssets.FaviconUrl;
+            await JS.InvokeVoidAsync("AMISTheme.setFavicon", faviconUrl);
+        }
+        catch (Exception ex)
+        {
+            // Log or ignore if JS not ready
+            Console.WriteLine($"Failed to apply favicon: {ex.Message}");
+        }
+    }
+
+    private async Task LoadUserProfileAsync()
+    {
+        try
+        {
+            var profile = await IdentityClient.ProfileGetAsync();
+            if (profile is not null)
+            {
+                _userName = $"{profile.FirstName} {profile.LastName}".Trim();
+                if (string.IsNullOrWhiteSpace(_userName))
+                    _userName = profile.Email ?? "User";
+                _userEmail = profile.Email;
+                _avatarUrl = profile.ImageUrl;
+
+                UserProfileState.UpdateProfile(_userName, _userEmail, _userRole, _avatarUrl);
+
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            _userName = "User";
+        }
+
+        // Resolve permissions — needed by multiple pages; loaded once per circuit.
+        try
+        {
+            var permissions = await IdentityClient.PermissionsGetAsync();
+            var set = new HashSet<string>(
+                permissions.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+            UserProfileState.SetPermissions(set);
+        }
+        catch { /* silently skip; pages degrade gracefully when Permissions is empty */ }
+
+        // Resolve employee profile — used by IAR pages, PR forms, and reports.
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var identityId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(identityId))
+            {
+                var employee = await EmployeesClient.ByIdentityAsync(identityId);
+                if (employee is not null)
+                    UserProfileState.SetEmployeeProfile(
+                        employee.Id,
+                        $"{employee.FirstName} {employee.LastName}".Trim(),
+                        employee.PositionName ?? string.Empty,
+                        employee.DepartmentId);
+            }
+        }
+        catch { /* silently skip; pages degrade gracefully when EmployeeId is Guid.Empty */ }
+    }
+
+    private void NavigateToProfile()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+
+    private void NavigateToSettings()
+    {
+        Navigation.NavigateTo("/settings/profile");
+    }
+
+    private void NavigateToAuditing()
+    {
+        Navigation.NavigateTo("/audits");
+    }
+}
+

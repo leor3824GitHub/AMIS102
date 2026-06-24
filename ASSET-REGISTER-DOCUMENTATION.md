@@ -271,7 +271,7 @@ All number generators operate against `PropertyCodeCounter` with optimistic conc
 - EF Core configurations, `AssetRegisterDbContext`
 - Initial migration for schema creation
 - Test project skeleton
-- Module integration into Playground.Api
+- Module integration into AMIS.Api
 
 **Status:** Domain + EF complete; migration skeleton ready.
 

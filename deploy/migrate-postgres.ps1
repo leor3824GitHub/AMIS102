@@ -10,7 +10,7 @@
 
     It only ever touches the database named in the connection string you pass. It does NOT generate
     migrations, modify source, or change snapshots - it only APPLIES migrations that already exist
-    in src/Playground/Migrations.PostgreSQL.
+    in src/Host/Migrations.PostgreSQL.
 
 .PARAMETER ConnectionString
     Full Npgsql connection string for the target database, e.g.
@@ -43,8 +43,8 @@ $ErrorActionPreference = 'Stop'
 
 # Resolve repo paths relative to this script (deploy/ -> repo root).
 $repoRoot       = Split-Path -Parent $PSScriptRoot
-$migrationsProj = Join-Path $repoRoot 'src/Playground/Migrations.PostgreSQL'
-$startupProj    = Join-Path $repoRoot 'src/Playground/Playground.Api'
+$migrationsProj = Join-Path $repoRoot 'src/Host/Migrations.PostgreSQL'
+$startupProj    = Join-Path $repoRoot 'src/Host/AMIS.Api'
 
 # -----------------------------------------------------------------------------
 # Ordered list of module DbContexts. Order matters:

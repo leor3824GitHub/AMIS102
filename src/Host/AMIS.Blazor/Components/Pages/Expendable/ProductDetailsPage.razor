@@ -1,0 +1,428 @@
+@page "/expendable/shopping/product/{ProductId:guid}"
+@using MudBlazor
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.Expendable.Contracts.Permissions
+@using ProductRaterDto = AMIS.Modules.Expendable.Contracts.v1.Products.ProductRaterDto
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IExpendableClient _expendableClient
+@inject IInventoryClient _inventoryClient
+@inject IProductRatingsClient _productRatingsClient
+@inject ICartClient _cartClient
+@inject IEmployeeClient _employeeClient
+@inject IEmployeesClient _employeesClient
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject NavigationManager _navigationManager
+@inject ISnackbar _snackbar
+@inject IUserProfileState UserProfileState
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+    <MudBreadcrumbs Items="_breadcrumbs" Class="px-0 mb-4" />
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center py-16">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        </div>
+    }
+    else if (_product is null)
+    {
+        <MudAlert Severity="Severity.Error">Product not found.</MudAlert>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-4"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="GoBack">Back to catalog</MudButton>
+    }
+    else
+    {
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudGrid>
+                <!-- Image -->
+                <MudItem xs="12" md="5">
+                    <MudImage Src="@(_product.ImageUrl ?? PlaceholderImage)"
+                              Alt="@_product.Name"
+                              ObjectFit="ObjectFit.Cover"
+                              Style="width:100%; aspect-ratio:1/1; border-radius:8px;" />
+                </MudItem>
+
+                <!-- Details -->
+                <MudItem xs="12" md="7">
+                    <MudText Typo="Typo.h5" Class="mb-1">@_product.Name</MudText>
+
+                    <!-- Rating (compact, inline under the title) -->
+                    <div class="d-flex align-center mb-2">
+                        <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mr-2">@_ratingAverage.ToString("0.0")</MudText>
+                        <MudRating ReadOnly="true" SelectedValue="@RoundedAverage" Size="Size.Small" />
+                        @if (_ratingCount > 0)
+                        {
+                            <MudLink Typo="Typo.body2" Color="Color.Primary" Class="ml-3" Style="cursor:pointer;"
+                                     OnClick="OpenRatersAsync">
+                                @_ratingCount @(_ratingCount == 1 ? "Rating" : "Ratings")
+                            </MudLink>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-3">No ratings yet</MudText>
+                        }
+                    </div>
+
+                    <MudText Typo="Typo.caption" Color="Color.Default" Class="d-block mb-3">Stock No.: @_product.StockNo</MudText>
+
+                    @if (!string.IsNullOrWhiteSpace(_product.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="mb-3">@_product.Description</MudText>
+                    }
+
+                    <MudStack Spacing="2" Class="mb-4">
+                        <div class="d-flex">
+                            <MudText Typo="Typo.body2" Style="width:140px;" Color="Color.Default">Article</MudText>
+                            <MudText Typo="Typo.body2">@_product.Article</MudText>
+                        </div>
+                        <div class="d-flex">
+                            <MudText Typo="Typo.body2" Style="width:140px;" Color="Color.Default">Unit of Measure</MudText>
+                            <MudText Typo="Typo.body2">@_product.UnitOfMeasure</MudText>
+                        </div>
+                        <div class="d-flex align-center">
+                            <MudText Typo="Typo.body2" Style="width:140px;" Color="Color.Default">Availability</MudText>
+                            @if (_balance <= 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ma-0">Out of Stock</MudChip>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2">@_balance available</MudText>
+                            }
+                        </div>
+                        <div class="d-flex align-center">
+                            <MudText Typo="Typo.body2" Style="width:140px;" Color="Color.Default">Status</MudText>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_product.Status == "Active" ? Color.Success : Color.Default)" Class="ma-0">
+                                @_product.Status
+                            </MudChip>
+                        </div>
+                    </MudStack>
+
+                    @if (_canRate)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                            <MudText Typo="Typo.body2" Color="Color.Default">Your rating</MudText>
+                            <MudRating SelectedValue="_myRating"
+                                       SelectedValueChanged="OnRatingChanged"
+                                       Disabled="_isRatingSubmitting" />
+                            @if (_myRating > 0)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Default">You rated this @_myRating/5</MudText>
+                            }
+                        </MudStack>
+                    }
+
+                    @if (_canEditCart)
+                    {
+                        <div class="d-flex align-center mb-4" style="gap:16px;">
+                            <MudText Typo="Typo.body2" Color="Color.Default">Quantity</MudText>
+                            <MudNumericField @bind-Value="_quantity"
+                                             Min="1"
+                                             Max="@(_balance > 0 ? _balance : 1)"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Margin="Margin.Dense"
+                                             Style="max-width:140px;" />
+                        </div>
+
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       StartIcon="@Icons.Material.Filled.AddShoppingCart"
+                                       Disabled="@(_balance <= 0 || _isAdding)"
+                                       OnClick="AddToCart">
+                                Add to Basket
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       Size="Size.Large"
+                                       OnClick="GoBack">
+                                Back to Catalog
+                            </MudButton>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                                   OnClick="GoBack">Back to Catalog</MudButton>
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+</MudContainer>
+
+<MudDialog @bind-Visible="_showRaters" Options="_ratersDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Who rated @_product?.Name</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_isLoadingRaters)
+        {
+            <div class="d-flex justify-center py-6">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            </div>
+        }
+        else if (_raters.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Default">No ratings yet.</MudText>
+        }
+        else
+        {
+            <MudList T="ProductRaterDto" Dense="true">
+                @foreach (var rater in _raters)
+                {
+                    <MudListItem T="ProductRaterDto">
+                        <div class="d-flex align-center justify-space-between" style="gap:16px;">
+                            <div>
+                                <MudText Typo="Typo.body2">@rater.RaterName</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Default">@rater.RatedOnUtc.LocalDateTime.ToString("g")</MudText>
+                            </div>
+                            <MudRating ReadOnly="true" SelectedValue="@rater.Value" Size="Size.Small" />
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _showRaters = false)">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public Guid ProductId { get; set; }
+
+    private ProductDto? _product;
+    private decimal _displayedPrice;
+    private int _balance;
+    private int _quantity = 1;
+    private bool _isLoading = true;
+    private bool _isAdding;
+
+    private string _currentEmployeeId = string.Empty;
+    private Guid? _currentCartId;
+
+    private double _ratingAverage;
+    private int _ratingCount;
+    private int _myRating;
+    private bool _isRatingSubmitting;
+
+    private List<ProductRaterDto> _raters = new();
+    private bool _showRaters;
+    private bool _isLoadingRaters;
+    private static readonly DialogOptions _ratersDialogOptions = new() { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+
+    private const string PlaceholderImage = "/images/placeholder.png";
+
+    private int RoundedAverage => (int)Math.Round(_ratingAverage, MidpointRounding.AwayFromZero);
+
+    private bool _canEditCart => UserProfileState.Permissions.Contains(ExpendablePermissions.ShoppingCarts.Edit);
+    private bool _canRate => UserProfileState.Permissions.Contains(ExpendablePermissions.Products.Rate);
+
+    private List<BreadcrumbItem> _breadcrumbs = new()
+    {
+        new BreadcrumbItem("Catalog", "/expendable/shopping"),
+        new BreadcrumbItem("Product", null, disabled: true)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProduct();
+        await LoadRatingsAsync();
+        await ResolveCurrentEmployeeContext();
+        await GetOrCreateCart();
+        _isLoading = false;
+    }
+
+    private async Task LoadProduct()
+    {
+        try
+        {
+            _product = await _expendableClient.ProductsGetAsync(ProductId);
+            await LoadBalanceAndPriceAsync();
+
+            if (_product is not null)
+            {
+                _breadcrumbs[1] = new BreadcrumbItem(_product.Name, null, disabled: true);
+            }
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _product = null;
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Error loading product: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadBalanceAndPriceAsync()
+    {
+        try
+        {
+            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
+            {
+                ProductCode = _product?.StockNo,
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            var items = inventoryList?.Items?.Where(i => i.ProductId == ProductId).ToList()
+                        ?? new List<ProductInventoryDto>();
+
+            _balance = items.Sum(i => i.QuantityAvailable);
+
+            var totalQty = items.Sum(i => i.QuantityOnHand);
+            var totalValue = items.Sum(i => (decimal)i.TotalValue);
+            var avgPrice = totalQty > 0 ? Math.Round(totalValue / totalQty, 4) : 0m;
+
+            _displayedPrice = avgPrice > 0 ? avgPrice : (decimal)(_product?.UnitPrice ?? 0);
+        }
+        catch (Exception)
+        {
+            _balance = 0;
+            _displayedPrice = (decimal)(_product?.UnitPrice ?? 0);
+        }
+    }
+
+    private async Task LoadRatingsAsync()
+    {
+        try
+        {
+            var summary = await _productRatingsClient.GetSummaryAsync(ProductId);
+            _ratingAverage = summary.AverageRating;
+            _ratingCount = summary.RatingCount;
+
+            var mine = await _productRatingsClient.GetMyRatingAsync(ProductId);
+            _myRating = mine?.Value ?? 0;
+        }
+        catch (Exception)
+        {
+            // Ratings are non-critical; leave defaults if the call fails.
+        }
+    }
+
+    private async Task OpenRatersAsync()
+    {
+        _showRaters = true;
+        _isLoadingRaters = true;
+        try
+        {
+            _raters = await _productRatingsClient.GetRatersAsync(ProductId);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Could not load raters: {ex.Message}", Severity.Error);
+            _raters = new();
+        }
+        finally
+        {
+            _isLoadingRaters = false;
+        }
+    }
+
+    private async Task OnRatingChanged(int value)
+    {
+        if (value <= 0)
+            return;
+
+        var previous = _myRating;
+        _myRating = value;
+        try
+        {
+            _isRatingSubmitting = true;
+            await _productRatingsClient.RateAsync(ProductId, value);
+            _snackbar.Add("Thanks for rating!", Severity.Success);
+
+            // Refresh the aggregate so the average/count reflect this submission.
+            var summary = await _productRatingsClient.GetSummaryAsync(ProductId);
+            _ratingAverage = summary.AverageRating;
+            _ratingCount = summary.RatingCount;
+        }
+        catch (Exception ex)
+        {
+            _myRating = previous; // revert optimistic update on failure
+            _snackbar.Add($"Could not submit rating: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isRatingSubmitting = false;
+        }
+    }
+
+    private async Task ResolveCurrentEmployeeContext()
+    {
+        try
+        {
+            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(identityUserId))
+                return;
+
+            var employee = await _employeesClient.ByIdentityAsync(identityUserId);
+            _currentEmployeeId = employee.Id.ToString();
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _snackbar.Add("No employee profile linked to this user. Please contact an administrator.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Failed to resolve employee context: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task GetOrCreateCart()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_currentEmployeeId))
+                return;
+
+            var cart = await _employeeClient.CartAsync(_currentEmployeeId);
+            _currentCartId = cart.Id;
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Error loading basket: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddToCart()
+    {
+        if (_product is null || !_currentCartId.HasValue)
+            return;
+
+        try
+        {
+            _isAdding = true;
+            var command = new AddToCartCommand
+            {
+                CartId = _currentCartId.Value,
+                ProductId = _product.Id,
+                Quantity = _quantity,
+                UnitPrice = (double)_displayedPrice
+            };
+
+            await _cartClient.ItemsPostAsync(_currentCartId.Value, command);
+            _snackbar.Add($"Added {_quantity} × {_product.Name} to basket!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Error adding to basket: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isAdding = false;
+        }
+    }
+
+    private void GoBack() => _navigationManager.NavigateTo("/expendable/shopping");
+}

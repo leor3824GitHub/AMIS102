@@ -165,7 +165,7 @@
          bundle_green/core/provider stay at 2.1.11 (managed, unaffected); only the native lib is pinned.
          3.50.3 is the restructured self-contained native package — it carries every platform's runtime
          (android/ios/win/maccatalyst) directly, so the vulnerable .android/.ios sub-packages drop out
-         of the graph entirely. (Pulled transitively via Playground.Maui -> SQLitePCLRaw.bundle_green.) -->
+         of the graph entirely. (Pulled transitively via AMIS.Maui -> SQLitePCLRaw.bundle_green.) -->
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.50.3" />
   </ItemGroup>
 </Project>

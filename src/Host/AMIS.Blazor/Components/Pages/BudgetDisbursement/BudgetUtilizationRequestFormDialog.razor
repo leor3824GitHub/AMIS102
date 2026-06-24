@@ -1,0 +1,167 @@
+﻿@using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Blazor.ApiClient
+@inject IBudgetUtilizationRequestClient Client
+@inject IPurchaseOrderClient PurchaseOrderClient
+@inject IPurchaseRequestClient PurchaseRequestClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAutocomplete T="PurchaseOrderSummaryDto"
+                             Value="_selectedPurchaseOrder"
+                             ValueChanged="OnPurchaseOrderChanged"
+                             SearchFunc="SearchPurchaseOrders"
+                             ToStringFunc="FormatPurchaseOrder"
+                             Label="Purchase Order"
+                             Variant="Variant.Outlined"
+                             Placeholder="Search PO number..."
+                             Required="true"
+                             Clearable="true"
+                             CoerceValue="true"
+                             ResetValueOnEmptyText="true"
+                             Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="_form.BurDateNullable" Label="BUR Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudDivider Class="my-1" />
+            <MudText Typo="Typo.subtitle2">Budget Classification</MudText>
+            @* Stores the standard allotment-class code (PS/MOOE/FE/CO); the full label is shown to the user. *@
+            <MudSelect @bind-Value="_form.AllotmentClass" Label="Allotment Class" Variant="Variant.Outlined" T="string" Required="true" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem Value="@("PS")">Personnel Services (PS)</MudSelectItem>
+                <MudSelectItem Value="@("MOOE")">Maintenance and Other Operating Expenses (MOOE)</MudSelectItem>
+                <MudSelectItem Value="@("FE")">Financial Expenses (FE)</MudSelectItem>
+                <MudSelectItem Value="@("CO")">Capital Outlay (CO)</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code" Variant="Variant.Outlined" Required="true"
+                          HelperText="e.g. 5-02-03-010" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.ResponsibilityCenter" Label="Responsibility Center (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudDivider Class="my-1" />
+            <MudText Typo="Typo.subtitle2">Details</MudText>
+            <MudTextField @bind-Value="_form.Particulars" Label="Particulars" Variant="Variant.Outlined" Required="true" Lines="3" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.Amount" Label="@($"Amount ({Money.Symbol})")" Variant="Variant.Outlined" Required="true" Min="0.01m" Format="N2" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined" Lines="2" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Create BUR
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private readonly BurForm _form = new();
+    private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
+    private bool _busy;
+
+    private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await PurchaseOrderClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                status: null,
+                page: 1,
+                pageSize: 20,
+                ct: ct);
+            return result.Items ?? Enumerable.Empty<PurchaseOrderSummaryDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<PurchaseOrderSummaryDto>();
+        }
+    }
+
+    private async Task OnPurchaseOrderChanged(PurchaseOrderSummaryDto? po)
+    {
+        _selectedPurchaseOrder = po;
+        if (po is null) return;
+
+        // Pre-fill what the PO can supply. Allotment Class and UACS Object Code are NOT carried as a
+        // single header value on the PO (UACS lives per-line on the PR/catalog; Allotment Class is a
+        // budget classification), so those stay for the user. Only fill empty fields so re-selection
+        // never clobbers typed values.
+        if (_form.Amount <= 0) _form.Amount = po.TotalAmount;
+        if (string.IsNullOrWhiteSpace(_form.Particulars))
+            _form.Particulars = $"Budget utilization for {po.PoNumber}";
+
+        // The Responsibility Center is captured on the originating Purchase Request and flows through the
+        // PO to the BUR. The PO summary doesn't carry it, so resolve PO → PR to inherit the code. Only
+        // fill when empty so a user's own entry survives re-selection.
+        if (string.IsNullOrWhiteSpace(_form.ResponsibilityCenter))
+        {
+            try
+            {
+                var poDetail = await PurchaseOrderClient.GetAsync(po.Id);
+                if (poDetail is not null)
+                {
+                    var pr = await PurchaseRequestClient.GetAsync(poDetail.PurchaseRequestId);
+                    if (!string.IsNullOrWhiteSpace(pr?.ResponsibilityCenterCode))
+                        _form.ResponsibilityCenter = pr!.ResponsibilityCenterCode;
+                }
+            }
+            catch
+            {
+                // Inheritance is a convenience; leave the field for manual entry if the lookup fails.
+            }
+        }
+    }
+
+    private static string FormatPurchaseOrder(PurchaseOrderSummaryDto? po)
+    {
+        if (po is null) return string.Empty;
+        return string.IsNullOrWhiteSpace(po.SupplierName)
+            ? po.PoNumber
+            : $"{po.PoNumber} — {po.SupplierName}";
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid()) { Snackbar.Add("Fill in all required fields.", Severity.Warning); return; }
+        _busy = true;
+        try
+        {
+            await Client.CreateAsync(new CreateBudgetUtilizationRequestCommand(
+                _selectedPurchaseOrder!.Id,
+                _selectedPurchaseOrder.PoNumber,
+                ToDateOnly(_form.BurDateNullable)!.Value,
+                _form.AllotmentClass,
+                _form.UacsObjectCode,
+                string.IsNullOrWhiteSpace(_form.ResponsibilityCenter) ? null : _form.ResponsibilityCenter,
+                _form.Particulars,
+                _form.Amount,
+                string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks));
+            Snackbar.Add("Budget utilization request and status created.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private bool IsFormValid() =>
+        _selectedPurchaseOrder is not null &&
+        _form.BurDateNullable.HasValue &&
+        !string.IsNullOrWhiteSpace(_form.AllotmentClass) &&
+        !string.IsNullOrWhiteSpace(_form.UacsObjectCode) &&
+        !string.IsNullOrWhiteSpace(_form.Particulars) &&
+        _form.Amount > 0;
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private sealed class BurForm
+    {
+        public DateTime? BurDateNullable { get; set; } = DateTime.Today;
+        public string AllotmentClass { get; set; } = string.Empty;
+        public string UacsObjectCode { get; set; } = string.Empty;
+        public string? ResponsibilityCenter { get; set; }
+        public string Particulars { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

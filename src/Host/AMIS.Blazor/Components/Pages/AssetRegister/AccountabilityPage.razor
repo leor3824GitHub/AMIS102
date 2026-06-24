@@ -1,0 +1,389 @@
+@page "/asset-register/accountability"
+@implements IDisposable
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services.AssetRegister
+@inject IArAccountabilityClient Client
+@inject IAssetRegisterReportsClient ReportsClient
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+
+<AMISPageHeader Title="Property Accountability (ICS / PAR)"
+               Description="Unified accountability tracking for Semi-Expendable (ICS) and PPE (PAR) per COA 2022-004." />
+
+<!-- Filters + Results -->
+<div>
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudTextField @bind-Value="_keyword" Label="Keyword / Document No." Variant="Variant.Outlined"
+                                  Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                        Search
+                    </AMISButton>
+                    @if (_canIssue)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success"
+                                    StartIcon="@Icons.Material.Outlined.Add" OnClick="OpenIssueDialogAsync">
+                            New ICS / PAR
+                        </AMISButton>
+                    }
+                </MudStack>
+
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-3">
+                    <AMISEnumChips TEnum="AccountabilityType" Value="_typeFilter" ValueChanged="OnTypeChanged"
+                                   Label="Type" LabelFunc="AccountabilityTypeLabel" Class="mb-0" />
+                    <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
+                    <AMISEnumChips TEnum="AccountabilityStatus" Value="_statusFilter" ValueChanged="OnStatusChanged"
+                                   Label="Status" LabelFunc="FormatStatus" Class="mb-0" />
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard Elevation="1" Class="mt-3">
+            <MudCardContent>
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true" T="ArAccountabilitySummaryDto">
+                        <HeaderContent>
+                            <MudTh>Document No.</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Issued On</MudTh>
+                            <MudTh>Expires On</MudTh>
+                            <MudTh Style="text-align:right">Lines</MudTh>
+                            <MudTh Style="text-align:center">Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Document No."><strong>@context.DocumentNo</strong></MudTd>
+                            <MudTd DataLabel="Type">
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.AccountabilityType == AccountabilityType.SE_ICS ? Color.Info : Color.Secondary)"
+                                         Variant="Variant.Outlined">
+                                    @(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@StatusColor(context.Status)"
+                                         Variant="Variant.Filled">
+                                    @FormatStatus(context.Status)
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Issued On">@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd DataLabel="Expires On">@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                            <MudTd DataLabel="Lines" Style="text-align:right">@context.LineCount</MudTd>
+                            <MudTd DataLabel="Actions" Style="text-align:center">
+                                <MudStack Row="true" Spacing="0" Justify="Justify.Center">
+                                    <MudTooltip Text="View">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                        Color="Color.Default" OnClick="@(() => OpenViewDialogAsync(context.Id))" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="@($"Print {(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")}")">
+                                        <AMISIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small"
+                                                        Color="Color.Secondary" OnClick="@(() => PrintRowAsync(context))"
+                                                        Disabled="@(_printingId == context.Id)" />
+                                    </MudTooltip>
+                                    <MudMenu Icon="@Icons.Material.Filled.QrCode2"
+                                             Color="Color.Default"
+                                             Size="Size.Small"
+                                             Dense="true"
+                                             AnchorOrigin="Origin.BottomLeft"
+                                             TransformOrigin="Origin.TopLeft"
+                                             ToolTip="Print property stickers (choose paper size)"
+                                             Disabled="@(_stickersId == context.Id)">
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => PrintStickersAsync(context, "longbond"))">
+                                            Stickers - Long Bond (8.5 x 13)
+                                        </MudMenuItem>
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => PrintStickersAsync(context, "a4"))">
+                                            Stickers - A4
+                                        </MudMenuItem>
+                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                     OnClick="@(() => PrintStickersAsync(context, "legal"))">
+                                            Stickers - Legal (8.5 x 14)
+                                        </MudMenuItem>
+                                    </MudMenu>
+                                    @if (context.Status == AccountabilityStatus.PendingAcceptance && _canUpdate)
+                                    {
+                                        <MudTooltip Text="Edit">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                            Color="Color.Primary" OnClick="@(() => OpenEditDialogAsync(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (context.Status == AccountabilityStatus.PendingAcceptance && _canDelete)
+                                    {
+                                        <MudTooltip Text="Delete">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                            Color="Color.Error" OnClick="@(() => DeleteRowAsync(context))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (IsAccepted(context.Status) && (context.HasSignedCopy ? _canViewSigned : _canUploadSigned))
+                                    {
+                                        <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                            <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                            Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                            OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                        </MudTooltip>
+                                    }
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Color="Color.Secondary">No accountability documents found.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                        <MudText Typo="Typo.caption">
+                            Page @_page of @_totalPages (@_totalCount total)
+                        </MudText>
+                        <MudStack Row="true" Spacing="1">
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+</div>
+
+@code {
+    private bool _busy;
+    private Guid? _printingId;
+    private Guid? _stickersId;
+    private string? _error;
+    private string? _keyword;
+    private AccountabilityType? _typeFilter;
+    private AccountabilityStatus? _statusFilter;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private IReadOnlyList<ArAccountabilitySummaryDto> _items = [];
+
+    [SupplyParameterFromQuery(Name = "id")]
+    public Guid? QueryId { get; set; }
+
+    private bool _canIssue  => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Issue);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Delete);
+    private bool _canViewSigned   => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // The ICS/PAR is wet-signed once the accountable employee accepts it — i.e. any post-PendingAcceptance,
+    // non-Cancelled state. Mirrors the server's AcceptedOn guard.
+    private static bool IsAccepted(AccountabilityStatus s) =>
+        s is AccountabilityStatus.Active or AccountabilityStatus.Renewed or AccountabilityStatus.Returned;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+        if (QueryId.HasValue)
+            await OpenViewDialogAsync(QueryId.Value);
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, page: _page, pageSize: PageSize);
+            _items = result.Items;
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    // ── Create ICS / PAR ─────────────────────────────────────────────────────
+
+    private async Task OpenIssueDialogAsync()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<IssueAccountabilityDialog>("New ICS / PAR", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled)
+            return;
+
+        _page = 1;
+        await LoadAsync();
+    }
+
+    // ── Row actions ──────────────────────────────────────────────────────────
+
+    private async Task OpenViewDialogAsync(Guid id)
+    {
+        var parameters = new DialogParameters<AccountabilityDetailDialog> { { x => x.Id, id } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AccountabilityDetailDialog>("Accountability Detail", parameters, options);
+        var result = await dialog.Result;
+        // Renew/Cancel inside the dialog mutate the record — reload the list if anything changed.
+        if (result is not null && !result.Canceled && result.Data is true)
+            await LoadAsync();
+    }
+
+    private async Task OpenEditDialogAsync(Guid id)
+    {
+        var parameters = new DialogParameters<EditAccountabilityDialog> { { x => x.Id, id } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<EditAccountabilityDialog>("Edit Accountability", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+            await LoadAsync();
+    }
+
+    private async Task DeleteRowAsync(ArAccountabilitySummaryDto item)
+    {
+        var label = item.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR";
+        var confirmed = await DialogService.ShowMessageBox(
+            $"Delete {label}?",
+            $"Permanently delete {label} {item.DocumentNo} and release its reserved assets back to Available? This cannot be undone.",
+            yesText: "Delete", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        try
+        {
+            await Client.DeleteAsync(item.Id);
+            Snackbar.Add($"{label} {item.DocumentNo} deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task PrintRowAsync(ArAccountabilitySummaryDto item)
+    {
+        _printingId = item.Id;
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(item.Id, item.AccountabilityType, pageWidth: "longbond");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printingId = null;
+        }
+    }
+
+    private async Task PrintStickersAsync(ArAccountabilitySummaryDto item, string paperSize)
+    {
+        _stickersId = item.Id;
+        try
+        {
+            var bytes = item.AccountabilityType == AccountabilityType.SE_ICS
+                ? await ReportsClient.GetIcsStickersPdfAsync(item.Id, paperSize)
+                : await ReportsClient.GetParStickersPdfAsync(item.Id, paperSize);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Sticker generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _stickersId = null;
+        }
+    }
+
+    private async Task OpenSignedCopyAsync(ArAccountabilitySummaryDto item)
+    {
+        var label = item.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR";
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AssetRegisterDocumentType.PropertyAccountability },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.DocumentNo) ? $"(no {label} number)" : item.DocumentNo },
+            { x => x.IsTerminalState, IsAccepted(item.Status) }
+        };
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var options = new DialogOptions { CloseButton = false, BackdropClick = false, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
+    }
+
+    private async Task PrevPage() { _page--; await LoadAsync(); }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnTypeChanged(AccountabilityType? value) { _typeFilter = value; _page = 1; await LoadAsync(); }
+    private async Task OnStatusChanged(AccountabilityStatus? value) { _statusFilter = value; _page = 1; await LoadAsync(); }
+
+    private static string AccountabilityTypeLabel(AccountabilityType t) => t switch
+    {
+        AccountabilityType.SE_ICS => "ICS (SE)",
+        AccountabilityType.PPE_PAR => "PAR (PPE)",
+        _ => t.ToString()
+    };
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+
+    private static string FormatStatus(AccountabilityStatus v) => v switch
+    {
+        AccountabilityStatus.Active => "Active",
+        AccountabilityStatus.Renewed => "Renewed",
+        AccountabilityStatus.Returned => "Returned",
+        AccountabilityStatus.Cancelled => "Cancelled",
+        AccountabilityStatus.PendingAcceptance => "Pending Acceptance",
+        _ => v.ToString()
+    };
+    private static Color StatusColor(AccountabilityStatus v) => v switch
+    {
+        AccountabilityStatus.Active => Color.Success,
+        AccountabilityStatus.Renewed => Color.Warning,
+        AccountabilityStatus.Returned => Color.Info,
+        AccountabilityStatus.Cancelled => Color.Error,
+        AccountabilityStatus.PendingAcceptance => Color.Warning,
+        _ => Color.Default
+    };
+}

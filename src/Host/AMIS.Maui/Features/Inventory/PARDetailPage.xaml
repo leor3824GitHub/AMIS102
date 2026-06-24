@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.Inventory"
+             xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             x:DataType="vm:PARDetailViewModel"
+             x:Class="AMIS.Maui.Features.Inventory.PARDetailPage"
+             Title="PAR Detail"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               Margin="0,24,0,16" />
+
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{StaticResource Danger}"
+                   FontSize="13"
+                   Margin="20,16"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}" />
+
+            <!-- Header card -->
+            <Border Style="{StaticResource CardBorderStyle}" Background="{StaticResource TealGradient}"
+                    Margin="16,16,16,0" Padding="20">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="PAR NO." Style="{StaticResource FieldLabelStyle}" TextColor="{StaticResource TealLight}" />
+                    <Label Text="{Binding Detail.PARNo}"
+                           FontSize="22" FontAttributes="Bold" TextColor="{StaticResource White}" />
+                    <Border Stroke="Transparent"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{StaticResource White}"
+                            Padding="10,4"
+                            HorizontalOptions="Start">
+                        <Label Text="{Binding Detail.PARType}"
+                               FontSize="12" FontAttributes="Bold"
+                               TextColor="{StaticResource Teal}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Details card -->
+            <Label Text="DOCUMENT DETAILS"
+                   Style="{StaticResource SectionHeaderStyle}"
+                   Margin="20,20,20,10" />
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="16,0">
+                <Grid Padding="16,14" ColumnDefinitions="*,*">
+                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="DATE" Style="{StaticResource FieldLabelStyle}" />
+                        <Label Text="{Binding Detail.Date}" FontSize="15" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                        <Label Text="FUND CLUSTER" Style="{StaticResource FieldLabelStyle}" />
+                        <Label Text="{Binding Detail.FundCluster}" FontSize="15" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Items -->
+            <Grid ColumnDefinitions="*,Auto" Margin="20,20,20,10">
+                <Label Grid.Column="0" Text="ITEMS"
+                       Style="{StaticResource SectionHeaderStyle}"
+                       Margin="0" VerticalOptions="Center" />
+                <Label Grid.Column="1"
+                       Text="{Binding Detail.Items.Count, StringFormat='{0} items'}"
+                       Style="{StaticResource CaptionStyle}"
+                       VerticalOptions="Center" />
+            </Grid>
+
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Detail.Items}"
+                                 Spacing="0" Margin="16,0,16,24">
+                <BindableLayout.EmptyView>
+                    <Label Text="No items on this PAR."
+                           Style="{StaticResource CaptionStyle}"
+                           Margin="4,8" />
+                </BindableLayout.EmptyView>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="svc:PARItemDto">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,4" Padding="16,12">
+                            <VerticalStackLayout Spacing="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding PropertyNo}"
+                                           FontFamily="InterSemiBold" FontSize="14" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding UnitCost, StringFormat='₱{0:N2}'}"
+                                           FontFamily="InterBold" FontSize="14" />
+                                </Grid>
+                                <Label Text="{Binding ItemDescription}"
+                                       Style="{StaticResource CaptionStyle}" />
+                                <HorizontalStackLayout Spacing="8">
+                                    <Border Stroke="Transparent" StrokeShape="RoundRectangle 8"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Tertiary}}"
+                                            Padding="8,2" VerticalOptions="Center"
+                                            IsVisible="{Binding AssetType, Converter={StaticResource IsNotNullConverter}}">
+                                        <Label Text="{Binding AssetType}"
+                                               FontFamily="InterSemiBold" FontSize="10"
+                                               TextColor="{StaticResource Teal}" />
+                                    </Border>
+                                    <Label Text="{Binding EstimatedUsefulLifeYears, StringFormat='EUL {0} yrs'}"
+                                           Style="{StaticResource CaptionStyle}" VerticalOptions="Center" />
+                                    <Label Text="{Binding DateAcquired, StringFormat='Acq. {0}'}"
+                                           Style="{StaticResource CaptionStyle}" VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                                <BoxView HeightRequest="1"
+                                         Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding QuantityDisplay, StringFormat='Qty: {0}'}"
+                                           Style="{StaticResource CaptionStyle}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding TotalCost, StringFormat='Total ₱{0:N2}'}"
+                                           FontFamily="InterSemiBold" FontSize="13"
+                                           VerticalOptions="Center"
+                                           IsVisible="{Binding ShowTotal}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <!-- Accept action — shown only while awaiting the accountable person's acknowledgement -->
+            <Button Text="Accept PAR"
+                    Style="{StaticResource PrimaryActionButtonStyle}"
+                    Command="{Binding AcceptCommand}"
+                    IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                    IsVisible="{Binding CanAccept}"
+                    Margin="16,0,16,24" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

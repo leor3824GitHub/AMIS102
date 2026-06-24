@@ -1,0 +1,246 @@
+@page "/asset-register/catalog"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@inject IArCatalogClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Property Item Catalog (Asset Register)"
+               Description="Manage the local SKU catalog used to mint property numbers and default asset attributes." />
+
+<MudGrid Spacing="3">
+    <!-- List -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Style="flex:1;" />
+                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                OnClick="LoadAsync" Disabled="_busy">Search</AMISButton>
+                    @if (_canCreate)
+                    {
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                    StartIcon="@Icons.Material.Filled.Add"
+                                    OnClick="OpenCreateDialog" Disabled="_busy">New Catalog Item</AMISButton>
+                    }
+                </MudStack>
+
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mb-3">
+                    <MudText Typo="Typo.caption" Class="text-muted me-1">Active</MudText>
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_activeFilter is null ? Color.Primary : Color.Default)"
+                             Variant="@(_activeFilter is null ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => OnActiveChanged(null))" Clickable="true">All</MudChip>
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_activeFilter == true ? Color.Primary : Color.Default)"
+                             Variant="@(_activeFilter == true ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => OnActiveChanged(true))" Clickable="true">Active</MudChip>
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_activeFilter == false ? Color.Primary : Color.Default)"
+                             Variant="@(_activeFilter == false ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => OnActiveChanged(false))" Clickable="true">Inactive</MudChip>
+                </MudStack>
+
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true" T="ArCatalogItemDto">
+                        <HeaderContent>
+                            <MudTh>Code</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Unit</MudTh>
+                            <MudTh Style="text-align:right">Life (yr)</MudTh>
+                            <MudTh Style="text-align:right">Residual %</MudTh>
+                            <MudTh>Active</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><strong>@context.Code</strong></MudTd>
+                            <MudTd>@context.Description</MudTd>
+                            <MudTd>@context.DefaultUnit</MudTd>
+                            <MudTd Style="text-align:right">@context.EstimatedUsefulLifeYears</MudTd>
+                            <MudTd Style="text-align:right">@context.ResidualValuePercent.ToString("0.##")%</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.IsActive ? Color.Success : Color.Default)"
+                                         Variant="Variant.Filled">
+                                    @(context.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudStack Row="true" Spacing="0">
+                                    @if (_canUpdate)
+                                    {
+                                        <AMISIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                        Color="Color.Primary" Title="Edit" OnClick="@(() => EditItem(context))" />
+                                        <AMISIconButton Icon="@(context.IsActive ? Icons.Material.Outlined.ToggleOff : Icons.Material.Outlined.ToggleOn)"
+                                                        Size="Size.Small" Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                                        Title="@(context.IsActive ? "Deactivate" : "Activate")"
+                                                        OnClick="@(() => ToggleActivationAsync(context))" />
+                                    }
+                                    @if (_canDelete)
+                                    {
+                                        <AMISIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small"
+                                                        Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(context))" />
+                                    }
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Color="Color.Secondary">No catalog items found.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                        <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
+                        <MudStack Row="true" Spacing="1">
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                            Title="Previous page" Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                            Title="Next page" Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                        </MudStack>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private string? _keyword;
+    private bool? _activeFilter = true;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 15;
+    private IReadOnlyList<ArCatalogItemDto> _items = [];
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Catalog.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Client.SearchAsync(_keyword, _activeFilter, _page, PageSize);
+            _items = result.Items;
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task OpenCreateDialog() => OpenFormDialog(null);
+
+    private Task EditItem(ArCatalogItemDto item) => OpenFormDialog(item);
+
+    private async Task OpenFormDialog(ArCatalogItemDto? editing)
+    {
+        var parameters = new DialogParameters<CatalogItemFormDialog>
+        {
+            { x => x.EditingId, editing?.Id },
+            { x => x.Code, editing?.Code },
+            { x => x.Description, editing?.Description },
+            { x => x.DefaultPropertyClass, editing?.DefaultPropertyClass },
+            { x => x.DefaultCategoryCode, editing?.DefaultCategoryCode },
+            { x => x.DefaultUnit, editing?.DefaultUnit },
+            { x => x.UacsObjectCode, editing?.UacsObjectCode },
+            { x => x.EstimatedUsefulLifeYears, editing?.EstimatedUsefulLifeYears },
+            { x => x.ResidualValuePercent, editing?.ResidualValuePercent },
+            { x => x.Method, editing?.DepreciationMethod }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var title = editing is null ? "New Catalog Item" : $"Edit: {editing.Code}";
+
+        var dialog = await DialogService.ShowAsync<CatalogItemFormDialog>(title, parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task ToggleActivationAsync(ArCatalogItemDto item)
+    {
+        _busy = true;
+        try
+        {
+            await Client.SetActivationAsync(item.Id, !item.IsActive);
+            Snackbar.Add(item.IsActive ? "Item deactivated." : "Item activated.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(ArCatalogItemDto item)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync($"catalog item \"{item.Code}\""))
+            return;
+
+        _busy = true;
+        try
+        {
+            await Client.DeleteAsync(item.Id);
+            Snackbar.Add("Catalog item deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrevPage() { _page--; await LoadAsync(); }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+    }
+
+    private async Task OnActiveChanged(bool? value) { _activeFilter = value; _page = 1; await LoadAsync(); }
+}
+

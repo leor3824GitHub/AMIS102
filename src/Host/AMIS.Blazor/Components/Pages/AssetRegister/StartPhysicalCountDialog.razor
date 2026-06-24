@@ -1,0 +1,109 @@
+@using AMIS.Blazor.ApiClient
+@using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
+@inject IArPhysicalCountClient Client
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width: 480px;">
+            <MudTextField @bind-Value="_form.Code" Label="Session Code" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Placeholder="e.g. PC-2026-Q1-SE"
+                          Dense="true" Margin="Margin.Dense" />
+            <MudSelect @bind-Value="_form.Scope" Label="Scope" Variant="Variant.Outlined" T="PhysicalCountScope"
+                       Required="true" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.SEOnly">Semi-Expendable (RPCSEMEX)</MudSelectItem>
+                <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.PPEOnly">PPE (RPCPPE)</MudSelectItem>
+                <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.Both">All Assets</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At Date" Variant="Variant.Outlined"
+                           DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudDatePicker @bind-Date="_form.StartedOnNullable" Label="Started On" Variant="Variant.Outlined"
+                           DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.OfficeOrderNo" Label="Office Order No. (optional)" Variant="Variant.Outlined"
+                          MaxLength="100" Placeholder="Required later to freeze the ledger"
+                          Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined"
+                          Lines="2" MaxLength="500" Dense="true" Margin="Margin.Dense" />
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Conducted by: @UserProfileState.EmployeeFullName
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Default" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Success"
+                    OnClick="StartSessionAsync" Disabled="_busy">
+            Start Session
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private bool _busy;
+    private readonly StartFormModel _form = new();
+
+    private sealed class StartFormModel
+    {
+        public string Code { get; set; } = "";
+        public PhysicalCountScope Scope { get; set; }
+        public string FundCluster { get; set; } = "";
+        public DateTime? AsAtNullable { get; set; }
+        public DateTime? StartedOnNullable { get; set; }
+        public string? OfficeOrderNo { get; set; }
+        public string? Remarks { get; set; }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private async Task StartSessionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Code) || !_form.AsAtNullable.HasValue || !_form.StartedOnNullable.HasValue)
+        {
+            Snackbar.Add("Code, As At date, and Started On are required.", Severity.Warning);
+            return;
+        }
+
+        if (UserProfileState.EmployeeId == Guid.Empty)
+        {
+            Snackbar.Add("Your account is not linked to an employee record. Ask an administrator to link it before starting a count.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            // The signed-in user conducts the count; the API requires at least one conductor with a real EmployeeId.
+            var conductedBy = new[]
+            {
+                new ArEmployeeRefDto(UserProfileState.EmployeeId, UserProfileState.EmployeeFullName, UserProfileState.EmployeePositionName)
+            };
+
+            var req = new StartPhysicalCountRequest(
+                _form.Code.Trim(),
+                _form.Scope,
+                _form.FundCluster,
+                DateOnly.FromDateTime(_form.AsAtNullable.Value),
+                DateOnly.FromDateTime(_form.StartedOnNullable.Value),
+                conductedBy,
+                _form.Remarks,
+                string.IsNullOrWhiteSpace(_form.OfficeOrderNo) ? null : _form.OfficeOrderNo.Trim());
+
+            await Client.StartAsync(req);
+            Snackbar.Add("Physical count session started.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

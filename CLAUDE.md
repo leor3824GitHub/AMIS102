@@ -7,7 +7,7 @@
 ```powershell
 dotnet build src/AMIS.Framework.slnx              # Build (0 warnings required)
 dotnet test src/AMIS.Framework.slnx               # Run tests
-dotnet run --project src/Playground/AMIS.Playground.AppHost  # Run with Aspire
+dotnet run --project src/Host/AMIS.AppHost  # Run with Aspire
 ```
 
 ## Project Layout
@@ -27,11 +27,11 @@ src/
 │   ├── Finance/            # Disbursement vouchers, budget utilization
 │   ├── ProcurementPlanning/    # Annual procurement planning
 │   └── ProcurementAcquisition/ # Purchase requests, orders, canvass
-├── Playground/         # Reference application
-│   ├── AMIS.Playground.AppHost/  # .NET Aspire orchestration
-│   ├── Playground.Api/          # API host
-│   ├── Playground.Blazor/       # Blazor UI client
-│   ├── Playground.Maui/         # .NET MAUI mobile/desktop client ← NEW
+├── Host/               # Executable hosts and reference clients
+│   ├── AMIS.AppHost/  # .NET Aspire orchestration
+│   ├── AMIS.Api/          # API host
+│   ├── AMIS.Blazor/       # Blazor UI client
+│   ├── AMIS.Maui/         # .NET MAUI mobile/desktop client ← NEW
 │   └── Migrations.PostgreSQL/   # EF Core migrations
 └── Tests/              # Architecture + unit tests
 ```
@@ -61,7 +61,7 @@ Modules/{Module}/Features/v1/{Feature}/
 | `.RequirePermission()` on endpoints | Explicit authorization                  |
 | Zero build warnings                 | CI blocks merges                        |
 
-### MAUI Client (`Playground.Maui`)
+### MAUI Client (`AMIS.Maui`)
 
 | ⚠️ Rule                                                         | Why                                              |
 | --------------------------------------------------------------- | ------------------------------------------------ |
@@ -81,7 +81,7 @@ Modules/{Module}/Features/v1/{Feature}/
 | No `Task.Run()` for I/O — use `async/await` directly            | `Task.Run()` causes deadlocks on UI thread       |
 | No inline colors/font sizes — use `{StaticResource}`            | Maintainable, theme-consistent styling           |
 
-### Blazor UI (`Playground.Blazor`)
+### Blazor UI (`AMIS.Blazor`)
 
 | ⚠️ Rule                                                               | Why                                               |
 | --------------------------------------------------------------------- | ------------------------------------------------- |
@@ -170,7 +170,7 @@ public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
 - **Multi-Tenancy:** Finbuckle.MultiTenant (shared DB, tenant isolation)
 - **Modules:** 3 core (Identity, Multitenancy, Auditing) + 8 business modules (MasterData, Expendable, AssetManagement, AssetProcurement, Vehicle, Finance, ProcurementPlanning, ProcurementAcquisition)
 - **BuildingBlocks:** 11 packages (Core, Persistence, Caching, Jobs, Web, etc.)
-- **MAUI Client:** `Playground.Maui` — Android · iOS · Windows; CommunityToolkit.Mvvm, ZXing.Net.MAUI, sqlite-net-pcl
+- **MAUI Client:** `AMIS.Maui` — Android · iOS · Windows; CommunityToolkit.Mvvm, ZXing.Net.MAUI, sqlite-net-pcl
 
 Details: See `.claude/rules/architecture.md` | MAUI details: `.claude/rules/maui.md`
 

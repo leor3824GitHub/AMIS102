@@ -1,0 +1,1212 @@
+@page "/audits"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using System.Linq
+@using System.Text
+@using System.Text.Json
+@using MudBlazor
+@using AMIS.Framework.Blazor.UI.Components.Cards
+<!-- Hero Section -->
+<AMISPageHeader Title="Audit Center"
+               Description="Comprehensive audit trail with advanced analytics, filtering, and insights">
+    <ActionContent>
+        <MudMenu Icon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" Label="Export">
+            <MudMenuItem OnClick="@(() => ExportAsync("csv"))">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.TableChart" Size="Size.Small" />
+                    <MudText>Export as CSV</MudText>
+                </MudStack>
+            </MudMenuItem>
+            <MudMenuItem OnClick="@(() => ExportAsync("json"))">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" />
+                    <MudText>Export as JSON</MudText>
+                </MudStack>
+            </MudMenuItem>
+        </MudMenu>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                       Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="ReloadTable"
+                       Title="Refresh Data" />
+    </ActionContent>
+</AMISPageHeader>
+
+<!-- Summary Dashboard Cards -->
+@if (_showSummary && _summary != null)
+{
+    <MudGrid Class="mb-4" Spacing="3">
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.Event"
+                         IconColor="Color.Primary"
+                         Value="@GetTotalEvents().ToString()"
+                         Label="Total Events"
+                         Badge="Total" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.Error"
+                         IconColor="Color.Error"
+                         Value="@GetEventsBySeverity("Error").ToString()"
+                         Label="Error Events"
+                         Badge="Errors" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.Security"
+                         IconColor="Color.Warning"
+                         Value="@GetEventsByType("Security").ToString()"
+                         Label="Security Events"
+                         Badge="Security" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.Source"
+                         IconColor="Color.Info"
+                         Value="@GetSourcesCount().ToString()"
+                         Label="Unique Sources"
+                         Badge="Sources" />
+        </MudItem>
+    </MudGrid>
+}
+
+<!-- Quick Action Chips -->
+<MudPaper Class="pa-3 mb-4" Elevation="1">
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="flex-wrap">
+        <MudText Typo="Typo.body2" Class="fw-600">Quick Filters:</MudText>
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.Schedule"
+                 Color="@(_quickFilter == "1h" ? Color.Primary : Color.Default)"
+                 Variant="@(_quickFilter == "1h" ? Variant.Filled : Variant.Outlined)"
+                 OnClick="@(() => ApplyQuickRange(TimeSpan.FromHours(1), "1h"))">Last Hour</MudChip>
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.Today"
+                 Color="@(_quickFilter == "24h" ? Color.Primary : Color.Default)"
+                 Variant="@(_quickFilter == "24h" ? Variant.Filled : Variant.Outlined)"
+                 OnClick="@(() => ApplyQuickRange(TimeSpan.FromHours(24), "24h"))">Last 24 Hours</MudChip>
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.DateRange"
+                 Color="@(_quickFilter == "7d" ? Color.Primary : Color.Default)"
+                 Variant="@(_quickFilter == "7d" ? Variant.Filled : Variant.Outlined)"
+                 OnClick="@(() => ApplyQuickRange(TimeSpan.FromDays(7), "7d"))">Last 7 Days</MudChip>
+        <MudDivider Vertical="true" FlexItem="true" />
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.Error"
+                 Color="@(_quickFilter == "errors" ? Color.Error : Color.Default)"
+                 Variant="@(_quickFilter == "errors" ? Variant.Filled : Variant.Outlined)"
+                 OnClick="ApplyErrorsFilter">Errors Only</MudChip>
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.Security"
+                 Color="@(_quickFilter == "security" ? Color.Warning : Color.Default)"
+                 Variant="@(_quickFilter == "security" ? Variant.Filled : Variant.Outlined)"
+                 OnClick="ApplySecurityFilter">Security Events</MudChip>
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.BugReport"
+                 Color="@(_quickFilter == "exceptions" ? Color.Error : Color.Default)"
+                 Variant="@(_quickFilter == "exceptions" ? Variant.Filled : Variant.Outlined)"
+                 OnClick="ApplyExceptionsFilter">Exceptions</MudChip>
+        <MudDivider Vertical="true" FlexItem="true" />
+        <MudChip T="string"
+                 Icon="@Icons.Material.Filled.Clear"
+                 Color="Color.Default"
+                 Variant="Variant.Outlined"
+                 OnClick="ResetFilters">Clear All</MudChip>
+    </MudStack>
+</MudPaper>
+
+<!-- Advanced Filters -->
+<MudCard Class="filter-card mb-4" Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.FilterList" />
+                <MudText Typo="Typo.h6">Advanced Filters</MudText>
+                @if (HasActiveFilters())
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">@GetActiveFiltersCount() Active</MudChip>
+                }
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@(_filtersExpanded? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           OnClick="@(() => _filtersExpanded = !_filtersExpanded)"
+                           Color="Color.Primary" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCollapse Expanded="_filtersExpanded">
+        <MudCardContent Class="pa-4">
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6" lg="4">
+                    <MudDateRangePicker @bind-DateRange="_filter.Range"
+                                        Label="Date Range"
+                                        Color="Color.Primary"
+                                        Variant="Variant.Outlined"
+                                        Dense="true"
+                                        Margin="Margin.Dense"
+                                        Size="Size.Small"
+                                        Adornment="Adornment.Start"
+                                        AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
+                </MudItem>
+                <MudItem xs="12" md="6" lg="4">
+                    <MudTextField @bind-Value="_filter.Search"
+                                  Label="Search"
+                                  Placeholder="Search events, users, resources..."
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" md="6" lg="4">
+                    <MudTextField @bind-Value="_filter.Actor"
+                                  Label="User / Actor"
+                                  Placeholder="Filter by user ID or name"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person"
+                                  Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" md="6" lg="3">
+                    <MudSelect T="AuditEventTypeOption ?"
+                               @bind-Value="_filter.EventType"
+                               Label="Event Type"
+                               Variant="Variant.Outlined"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Size="Size.Small"
+                               Clearable="true"
+                               AdornmentIcon="@Icons.Material.Filled.Category"
+                               Adornment="Adornment.Start">
+                        <MudSelectItem Value="@((AuditEventTypeOption?)null)">All Types</MudSelectItem>
+                        @foreach (var value in _eventTypes)
+                        {
+                            <MudSelectItem Value="@((AuditEventTypeOption?)value)">
+                                <MudChip T="string" Size="Size.Small" Color="@EventTypeColor((int)value)">@value</MudChip>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6" lg="3">
+                    <MudSelect T="AuditSeverityOption ?"
+                               @bind-Value="_filter.Severity"
+                               Label="Severity"
+                               Variant="Variant.Outlined"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Size="Size.Small"
+                               Clearable="true"
+                               AdornmentIcon="@Icons.Material.Filled.PriorityHigh"
+                               Adornment="Adornment.Start">
+                        <MudSelectItem Value="@((AuditSeverityOption?)null)">All Severities</MudSelectItem>
+                        @foreach (var value in _severities)
+                        {
+                            <MudSelectItem Value="@((AuditSeverityOption?)value)">
+                                <MudChip T="string" Size="Size.Small" Color="@SeverityColor((int)value)">@value</MudChip>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6" lg="3">
+                    <MudTextField @bind-Value="_filter.TenantId"
+                                  Label="Tenant ID"
+                                  Placeholder="Filter by tenant"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Business"
+                                  Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" md="6" lg="3">
+                    <MudTextField @bind-Value="_filter.Resource"
+                                  Label="Source / Resource"
+                                  Placeholder="Filter by source"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Source"
+                                  Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_filter.CorrelationId"
+                                  Label="Correlation ID"
+                                  Placeholder="Track related events"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Link"
+                                  Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_filter.TraceId"
+                                  Label="Trace ID"
+                                  Placeholder="Distributed tracing ID"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Margin="Margin.Dense"
+                                  Size="Size.Small"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Timeline"
+                                  Clearable="true" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions Class="px-4 pb-4">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Search"
+                       OnClick="ReloadTable"
+                       FullWidth="false">
+                Apply Filters
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Clear"
+                       OnClick="ResetFilters">
+                Reset All
+            </MudButton>
+        </MudCardActions>
+    </MudCollapse>
+</MudCard>
+
+<!-- Main Data Table -->
+<MudPaper Class="table-card" Elevation="2">
+    <MudTable T="AMIS.Blazor.ApiClient.AuditSummaryDto"
+              @ref="_table"
+              Class="audit-table"
+              ServerData="LoadAudits"
+              Hover="true"
+              Dense="false"
+              Striped="true"
+              Loading="_loading"
+              LoadingProgressColor="Color.Primary"
+              RowsPerPage="@_pageSize"
+              RowsPerPageChanged="OnRowsPerPageChanged"
+              Breakpoint="Breakpoint.Sm"
+              Elevation="0">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortLabel="OccurredAtUtc" T="AMIS.Blazor.ApiClient.AuditSummaryDto">Timestamp</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="EventType" T="AMIS.Blazor.ApiClient.AuditSummaryDto">Event Type</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="Severity" T="AMIS.Blazor.ApiClient.AuditSummaryDto">Severity</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="UserName" T="AMIS.Blazor.ApiClient.AuditSummaryDto">User</MudTableSortLabel></MudTh>
+            <MudTh>Tenant</MudTh>
+            <MudTh>Source</MudTh>
+            <MudTh>Tracking</MudTh>
+            <MudTh Style="text-align: right;">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Timestamp">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.body2" Class="fw-600">
+                        @context.OccurredAtUtc.ToLocalTime().ToString("MMM dd, yyyy")
+                    </MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">
+                        @context.OccurredAtUtc.ToLocalTime().ToString("HH:mm:ss")
+                    </MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Event Type">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="@EventTypeColor(context.EventType)"
+                         Icon="@GetEventTypeIcon(context.EventType)">
+                    @FormatEventType(context.EventType)
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Severity">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="@SeverityColor(context.Severity)"
+                         Icon="@GetSeverityIcon(context.Severity)">
+                    @FormatSeverity(context.Severity)
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="User">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(context.UserName) ? "System" : context.UserName)</MudText>
+                    @if (!string.IsNullOrEmpty(context.UserId) && context.UserId != context.UserName)
+                    {
+                        <MudText Typo="Typo.caption" Class="text-muted">@context.UserId</MudText>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Tenant">
+                <MudText Typo="Typo.body2">
+                    @(string.IsNullOrEmpty(context.TenantId) ? "-" : context.TenantId)
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Source">
+                <MudTooltip Text="@context.Source">
+                    <MudText Typo="Typo.body2" Class="text-truncate" Style="max-width: 150px;">
+                        @context.Source
+                    </MudText>
+                </MudTooltip>
+            </MudTd>
+            <MudTd DataLabel="Tracking">
+                <MudStack Row="true" Spacing="1">
+                    @if (!string.IsNullOrEmpty(context.CorrelationId))
+                    {
+                        <MudTooltip Text="@($"Correlation: {context.CorrelationId}")">
+                            <MudIconButton Icon="@Icons.Material.Filled.Link"
+                                           Size="Size.Small"
+                                           Color="Color.Info"
+                                           OnClick="@(() => ViewByCorrelation(context.CorrelationId))" />
+                        </MudTooltip>
+                    }
+                    @if (!string.IsNullOrEmpty(context.TraceId))
+                    {
+                        <MudTooltip Text="@($"Trace: {context.TraceId}")">
+                            <MudIconButton Icon="@Icons.Material.Filled.Timeline"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => ViewByTrace(context.TraceId))" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align: right;">
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           StartIcon="@(IsExpanded(context.Id) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           OnClick="@(() => ToggleDetail(context))">
+                    @(IsExpanded(context.Id) ? "Hide" : "Details")
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <ChildRowContent Context="context">
+            @if (IsExpanded(context.Id))
+            {
+                <MudTd ColSpan="8">
+                    @if (TryGetDetail(context.Id, out var detail) && detail is not null)
+                    {
+                        <MudPaper Class="pa-4 ma-3" Outlined="true" Elevation="0">
+                            <MudTabs Elevation="0" Color="Color.Primary" Rounded="true" PanelClass="pa-4">
+                                <MudTabPanel Icon="@Icons.Material.Filled.Info" Text="Overview">
+                                    <MudGrid Spacing="3">
+                                        <MudItem xs="12" md="6">
+                                            <MudCard Elevation="0" Outlined="true">
+                                                <MudCardHeader>
+                                                    <CardHeaderContent>
+                                                        <MudText Typo="Typo.subtitle1" Class="fw-600">Event Information</MudText>
+                                                    </CardHeaderContent>
+                                                </MudCardHeader>
+                                                <MudCardContent>
+                                                    <MudStack Spacing="2">
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Event Type:</MudText>
+                                                            <MudChip T="string" Size="Size.Small" Color="@EventTypeColor(detail.EventType)">
+                                                                @FormatEventType(detail.EventType)
+                                                            </MudChip>
+                                                        </MudStack>
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Severity:</MudText>
+                                                            <MudChip T="string" Size="Size.Small" Color="@SeverityColor(detail.Severity)">
+                                                                @FormatSeverity(detail.Severity)
+                                                            </MudChip>
+                                                        </MudStack>
+                                                        <MudDivider />
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Occurred At:</MudText>
+                                                            <MudText Typo="Typo.body2">@detail.OccurredAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")</MudText>
+                                                        </MudStack>
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Received At:</MudText>
+                                                            <MudText Typo="Typo.body2">@detail.ReceivedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff")</MudText>
+                                                        </MudStack>
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Latency:</MudText>
+                                                            <MudText Typo="Typo.body2">@((detail.ReceivedAtUtc - detail.OccurredAtUtc).TotalMilliseconds.ToString("F2")) ms</MudText>
+                                                        </MudStack>
+                                                    </MudStack>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudCard Elevation="0" Outlined="true">
+                                                <MudCardHeader>
+                                                    <CardHeaderContent>
+                                                        <MudText Typo="Typo.subtitle1" Class="fw-600">Context & Identity</MudText>
+                                                    </CardHeaderContent>
+                                                </MudCardHeader>
+                                                <MudCardContent>
+                                                    <MudStack Spacing="2">
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">User:</MudText>
+                                                            <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(detail.UserName) ? "System" : detail.UserName)</MudText>
+                                                        </MudStack>
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">User ID:</MudText>
+                                                            <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(detail.UserId) ? "-" : detail.UserId)</MudText>
+                                                        </MudStack>
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Tenant:</MudText>
+                                                            <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(detail.TenantId) ? "-" : detail.TenantId)</MudText>
+                                                        </MudStack>
+                                                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.body2" Class="text-muted">Source:</MudText>
+                                                            <MudText Typo="Typo.body2">@detail.Source</MudText>
+                                                        </MudStack>
+                                                    </MudStack>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudTabPanel>
+
+                                <MudTabPanel Icon="@Icons.Material.Filled.Troubleshoot" Text="Tracing">
+                                    <MudCard Elevation="0" Outlined="true">
+                                        <MudCardContent>
+                                            <MudGrid Spacing="2">
+                                                <MudItem xs="12" md="6">
+                                                    <MudTextField Value="@detail.CorrelationId"
+                                                                  Label="Correlation ID"
+                                                                  ReadOnly="true"
+                                                                  Variant="Variant.Outlined"
+                                                                  Adornment="Adornment.End"
+                                                                  AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                                                                  OnAdornmentClick="@(() => CopyToClipboard(detail.CorrelationId))" />
+                                                </MudItem>
+                                                <MudItem xs="12" md="6">
+                                                    <MudTextField Value="@detail.TraceId"
+                                                                  Label="Trace ID"
+                                                                  ReadOnly="true"
+                                                                  Variant="Variant.Outlined"
+                                                                  Adornment="Adornment.End"
+                                                                  AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                                                                  OnAdornmentClick="@(() => CopyToClipboard(detail.TraceId))" />
+                                                </MudItem>
+                                                <MudItem xs="12" md="4">
+                                                    <MudTextField Value="@detail.SpanId"
+                                                                  Label="Span ID"
+                                                                  ReadOnly="true"
+                                                                  Variant="Variant.Outlined" />
+                                                </MudItem>
+                                                <MudItem xs="12" md="4">
+                                                    <MudTextField Value="@detail.RequestId"
+                                                                  Label="Request ID"
+                                                                  ReadOnly="true"
+                                                                  Variant="Variant.Outlined" />
+                                                </MudItem>
+                                                <MudItem xs="12" md="4">
+                                                    <MudTextField Value="@detail.Tags.ToString()"
+                                                                  Label="Tags"
+                                                                  ReadOnly="true"
+                                                                  Variant="Variant.Outlined" />
+                                                </MudItem>
+                                                <MudItem xs="12">
+                                                    <MudStack Row="true" Spacing="2">
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                   Color="Color.Info"
+                                                                   StartIcon="@Icons.Material.Filled.Link"
+                                                                   OnClick="@(() => ViewByCorrelation(detail.CorrelationId))"
+                                                                   Disabled="@string.IsNullOrEmpty(detail.CorrelationId)">
+                                                            View Correlated Events
+                                                        </MudButton>
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                   Color="Color.Primary"
+                                                                   StartIcon="@Icons.Material.Filled.Timeline"
+                                                                   OnClick="@(() => ViewByTrace(detail.TraceId))"
+                                                                   Disabled="@string.IsNullOrEmpty(detail.TraceId)">
+                                                            View Trace Timeline
+                                                        </MudButton>
+                                                    </MudStack>
+                                                </MudItem>
+                                            </MudGrid>
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudTabPanel>
+
+                                <MudTabPanel Icon="@Icons.Material.Filled.Code" Text="Payload">
+                                    <MudCard Elevation="0" Outlined="true">
+                                        <MudCardContent>
+                                            <MudPaper Class="pa-3" Outlined="true" Style="background-color: var(--mud-palette-background-grey); max-height: 400px; overflow: auto;">
+                                                <pre style="margin: 0; white-space: pre-wrap; word-break: break-word; font-family: 'Courier New', monospace; font-size: 0.875rem;">@FormatPayload(detail.Payload)</pre>
+                                            </MudPaper>
+                                        </MudCardContent>
+                                        <MudCardActions>
+                                            <MudButton Variant="Variant.Text"
+                                                       Color="Color.Primary"
+                                                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                                                       OnClick="@(() => CopyToClipboard(FormatPayload(detail.Payload)))">
+                                                Copy Payload
+                                            </MudButton>
+                                        </MudCardActions>
+                                    </MudCard>
+                                </MudTabPanel>
+                            </MudTabs>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-4">
+                            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                            <MudText Typo="Typo.body2" Class="text-muted">Loading details...</MudText>
+                        </MudStack>
+                    }
+                </MudTd>
+            }
+        </ChildRowContent>
+        <NoRecordsContent>
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.h6">No audit events found</MudText>
+                <MudText Typo="Typo.body2" Class="text-muted">
+                    Try adjusting your filters or date range to see more results
+                </MudText>
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Clear"
+                           OnClick="ResetFilters"
+                           Class="mt-4">
+                    Clear All Filters
+                </MudButton>
+            </MudStack>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="PageSizeOptions"
+                           RowsPerPageString="Events per page:" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+<!-- Correlation/Trace Dialog -->
+<MudDialog @bind-IsVisible="_showRelatedDialog" Options="@(new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true })">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@(_relatedType == "correlation" ? Icons.Material.Filled.Link : Icons.Material.Filled.Timeline)" />
+            <MudText Typo="Typo.h6">@(_relatedType == "correlation" ? "Correlated Events" : "Trace Timeline")</MudText>
+            <MudChip T="string" Size="Size.Small" Color="Color.Info">@_relatedEvents.Count events</MudChip>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_loadingRelated)
+        {
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-8">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Class="text-muted">Loading related events...</MudText>
+            </MudStack>
+        }
+        else if (_relatedEvents.Any())
+        {
+            <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
+                @foreach (var evt in _relatedEvents.OrderBy(e => e.OccurredAtUtc))
+                {
+                    <MudTimelineItem Color="@EventTypeColor(evt.EventType)" Size="Size.Small">
+                        <ItemOpposite>
+                            <MudText Typo="Typo.body2" Class="text-muted">
+                                @evt.OccurredAtUtc.ToLocalTime().ToString("HH:mm:ss.fff")
+                            </MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudCard Elevation="2" Class="pa-3">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                        <MudChip T="string" Size="Size.Small" Color="@EventTypeColor(evt.EventType)">
+                                            @FormatEventType(evt.EventType)
+                                        </MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="@SeverityColor(evt.Severity)">
+                                            @FormatSeverity(evt.Severity)
+                                        </MudChip>
+                                        <MudText Typo="Typo.body2">@evt.UserName</MudText>
+                                    </MudStack>
+                                    <MudText Typo="Typo.body2">Source: @evt.Source</MudText>
+                                </MudStack>
+                            </MudCard>
+                        </ItemContent>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.body1">No related events found</MudText>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => _showRelatedDialog = false)">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .audit-shell {
+        background: var(--mud-palette-background);
+        min-height: 100vh;
+    }
+
+    .filter-card {
+        border-radius: 12px;
+    }
+
+    .table-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .audit-table {
+        border-radius: 12px;
+    }
+
+    .text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+
+@code {
+    private const int ApiPageSizeLimit = 100;
+    private static readonly int[] PageSizeOptions = new[] { 10, 25, 50, ApiPageSizeLimit };
+    private readonly AuditEventTypeOption[] _eventTypes = Enum.GetValues(typeof(AuditEventTypeOption)).Cast<AuditEventTypeOption>().Where(v => v != AuditEventTypeOption.None).ToArray();
+    private readonly AuditSeverityOption[] _severities = Enum.GetValues(typeof(AuditSeverityOption)).Cast<AuditSeverityOption>().Where(v => v != AuditSeverityOption.None).ToArray();
+
+    private FilterDto _filter = new();
+    private MudTable<AMIS.Blazor.ApiClient.AuditSummaryDto>? _table;
+    private IReadOnlyList<AMIS.Blazor.ApiClient.AuditSummaryDto> _currentPage = Array.Empty<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+    private TableState _lastState = new() { SortLabel = "OccurredAtUtc", SortDirection = SortDirection.Descending, PageSize = 25 };
+    private int _pageSize = 25;
+    private bool _loading;
+    private int _totalCount;
+    private readonly Dictionary<Guid, AMIS.Blazor.ApiClient.AuditDetailDto> _detailCache = new();
+    private readonly HashSet<Guid> _expanded = new();
+
+    // Summary dashboard
+    private bool _showSummary = true;
+    private AMIS.Blazor.ApiClient.AuditSummaryAggregateDto? _summary;
+
+    // UI state
+    private bool _filtersExpanded = false;
+    private string? _quickFilter = null;
+
+    // Related events dialog
+    private bool _showRelatedDialog = false;
+    private bool _loadingRelated = false;
+    private string _relatedType = "correlation";
+    private List<AMIS.Blazor.ApiClient.AuditSummaryDto> _relatedEvents = new();
+
+    [Inject] private AMIS.Blazor.ApiClient.IV1Client V1Client { get; set; } = default!;
+    [Inject] private AMIS.Blazor.ApiClient.IAuditsClient AuditsClient { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSummaryAsync();
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        try
+        {
+            _summary = await AuditsClient.SummaryAsync(
+                fromUtc: _filter.FromUtc,
+                toUtc: _filter.ToUtc,
+                tenantId: string.IsNullOrWhiteSpace(_filter.TenantId) ? null : _filter.TenantId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load summary: {ex.Message}", Severity.Warning);
+            _showSummary = false;
+        }
+    }
+
+    private async Task<TableData<AMIS.Blazor.ApiClient.AuditSummaryDto>> LoadAudits(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        try
+        {
+            _lastState = new TableState
+            {
+                Page = state.Page,
+                PageSize = Math.Min(state.PageSize, ApiPageSizeLimit),
+                SortLabel = state.SortLabel,
+                SortDirection = state.SortDirection
+            };
+
+            var sort = BuildSort(state);
+            var result = await V1Client.AuditsGetAsync(
+                pageNumber: state.Page + 1,
+                pageSize: Math.Min(state.PageSize, ApiPageSizeLimit),
+                sort: sort,
+                fromUtc: _filter.FromUtc,
+                toUtc: _filter.ToUtc,
+                tenantId: string.IsNullOrWhiteSpace(_filter.TenantId) ? null : _filter.TenantId,
+                userId: _filter.Actor,
+                eventType: _filter.EventType.HasValue ? (int)_filter.EventType.Value : null,
+                severity: _filter.Severity.HasValue ? (int)_filter.Severity.Value : null,
+                source: string.IsNullOrWhiteSpace(_filter.Resource) ? null : _filter.Resource,
+                correlationId: string.IsNullOrWhiteSpace(_filter.CorrelationId) ? null : _filter.CorrelationId,
+                traceId: string.IsNullOrWhiteSpace(_filter.TraceId) ? null : _filter.TraceId,
+                search: string.IsNullOrWhiteSpace(_filter.Search) ? null : _filter.Search,
+                cancellationToken: cancellationToken);
+
+            _currentPage = result.Items?.ToList() ?? new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+            _totalCount = (int)result.TotalCount;
+            _expanded.Clear();
+            _detailCache.Clear();
+
+            // Reload summary when filters change
+            await LoadSummaryAsync();
+
+            return new TableData<AMIS.Blazor.ApiClient.AuditSummaryDto>
+            {
+                Items = _currentPage,
+                TotalItems = _totalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load audits: {ex.Message}", Severity.Error);
+            return new TableData<AMIS.Blazor.ApiClient.AuditSummaryDto>
+            {
+                Items = Array.Empty<AMIS.Blazor.ApiClient.AuditSummaryDto>(),
+                TotalItems = 0
+            };
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private Task ReloadTable()
+    {
+        _table?.ReloadServerData();
+        return Task.CompletedTask;
+    }
+
+    private void ResetFilters()
+    {
+        _filter = new FilterDto();
+        _quickFilter = null;
+        _table?.ReloadServerData();
+    }
+
+    private void ApplyQuickRange(TimeSpan span, string filterKey)
+    {
+        // Use DateTimeOffset directly to avoid DateTime Kind issues
+        var nowUtc = DateTimeOffset.UtcNow;
+        var startUtc = nowUtc.Add(-span);
+
+        // Store as DateTime for DateRange, but we'll convert back to DateTimeOffset with UTC info
+        _filter.Range = new DateRange(startUtc.UtcDateTime, nowUtc.UtcDateTime);
+        _quickFilter = filterKey;
+        _table?.ReloadServerData();
+    }
+
+    private void ApplyErrorsFilter()
+    {
+        _filter.Severity = AuditSeverityOption.Error;
+        _quickFilter = "errors";
+        _table?.ReloadServerData();
+    }
+
+    private void ApplySecurityFilter()
+    {
+        _filter.EventType = AuditEventTypeOption.Security;
+        _quickFilter = "security";
+        _table?.ReloadServerData();
+    }
+
+    private void ApplyExceptionsFilter()
+    {
+        _filter.EventType = AuditEventTypeOption.Exception;
+        _quickFilter = "exceptions";
+        _table?.ReloadServerData();
+    }
+
+    private async Task ToggleDetail(AMIS.Blazor.ApiClient.AuditSummaryDto audit)
+    {
+        if (_expanded.Contains(audit.Id))
+        {
+            _expanded.Remove(audit.Id);
+            StateHasChanged();
+            return;
+        }
+
+        _expanded.Add(audit.Id);
+
+        if (_detailCache.ContainsKey(audit.Id))
+        {
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            var detail = await V1Client.AuditsGetAsync(audit.Id);
+            _detailCache[audit.Id] = detail;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load audit detail: {ex.Message}", Severity.Error);
+            _expanded.Remove(audit.Id);
+        }
+    }
+
+    private async Task ViewByCorrelation(string correlationId)
+    {
+        if (string.IsNullOrEmpty(correlationId)) return;
+
+        _loadingRelated = true;
+        _showRelatedDialog = true;
+        _relatedType = "correlation";
+        _relatedEvents.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var events = await AuditsClient.ByCorrelationAsync(
+                correlationId: correlationId,
+                fromUtc: _filter.FromUtc,
+                toUtc: _filter.ToUtc);
+
+            _relatedEvents = events?.ToList() ?? new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load correlated events: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingRelated = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ViewByTrace(string traceId)
+    {
+        if (string.IsNullOrEmpty(traceId)) return;
+
+        _loadingRelated = true;
+        _showRelatedDialog = true;
+        _relatedType = "trace";
+        _relatedEvents.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var events = await AuditsClient.ByTraceAsync(
+                traceId: traceId,
+                fromUtc: _filter.FromUtc,
+                toUtc: _filter.ToUtc);
+
+            _relatedEvents = events?.ToList() ?? new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load trace events: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingRelated = false;
+            StateHasChanged();
+        }
+    }
+
+    private Task CopyToClipboard(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return Task.CompletedTask;
+
+        try
+        {
+            NavigationManager.NavigateTo($"javascript:navigator.clipboard.writeText('{text}')");
+            Snackbar.Add("Copied to clipboard", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Failed to copy to clipboard", Severity.Warning);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private bool IsExpanded(Guid id) => _expanded.Contains(id);
+
+    private bool TryGetDetail(Guid id, out AMIS.Blazor.ApiClient.AuditDetailDto? detail) =>
+        _detailCache.TryGetValue(id, out detail);
+
+    private static string FormatPayload(AMIS.Blazor.ApiClient.JsonElement payload) =>
+        JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+
+    private Task OnRowsPerPageChanged(int size)
+    {
+        _pageSize = Math.Min(size, ApiPageSizeLimit);
+        _table?.SetRowsPerPage(_pageSize);
+        return ReloadTable();
+    }
+
+    private static Color SeverityColor(int severity) =>
+        severity switch
+        {
+            6 => Color.Error,      // Critical
+            5 => Color.Error,      // Error
+            4 => Color.Warning,    // Warning
+            3 => Color.Info,       // Information
+            2 => Color.Default,    // Debug
+            1 => Color.Default,    // Trace
+            _ => Color.Default
+        };
+
+    private static Color EventTypeColor(int eventType) =>
+        eventType switch
+        {
+            1 => Color.Info,       // EntityChange
+            2 => Color.Warning,    // Security
+            3 => Color.Success,    // Activity
+            4 => Color.Error,      // Exception
+            _ => Color.Default
+        };
+
+    private static string GetEventTypeIcon(int eventType) =>
+        eventType switch
+        {
+            1 => Icons.Material.Filled.Edit,
+            2 => Icons.Material.Filled.Security,
+            3 => Icons.Material.Filled.DirectionsRun,
+            4 => Icons.Material.Filled.BugReport,
+            _ => Icons.Material.Filled.Event
+        };
+
+    private static string GetSeverityIcon(int severity) =>
+        severity switch
+        {
+            6 => Icons.Material.Filled.ErrorOutline,
+            5 => Icons.Material.Filled.Error,
+            4 => Icons.Material.Filled.Warning,
+            3 => Icons.Material.Filled.Info,
+            2 => Icons.Material.Filled.Code,
+            1 => Icons.Material.Filled.BugReport,
+            _ => Icons.Material.Filled.Circle
+        };
+
+    private static string FormatEventType(int value) =>
+        Enum.GetName(typeof(AuditEventTypeOption), value) ?? value.ToString();
+
+    private static string FormatSeverity(int value) =>
+        Enum.GetName(typeof(AuditSeverityOption), value) ?? value.ToString();
+
+    private async Task ExportAsync(string format)
+    {
+        try
+        {
+            var items = new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+            var remaining = Math.Min(_totalCount, ApiPageSizeLimit);
+            var page = 1;
+
+            while (remaining > 0)
+            {
+                var pageSize = Math.Min(remaining, ApiPageSizeLimit);
+                var result = await V1Client.AuditsGetAsync(
+                    pageNumber: page,
+                    pageSize: pageSize,
+                    sort: BuildSort(_lastState),
+                    fromUtc: _filter.FromUtc,
+                    toUtc: _filter.ToUtc,
+                    tenantId: string.IsNullOrWhiteSpace(_filter.TenantId) ? null : _filter.TenantId,
+                    userId: _filter.Actor,
+                    eventType: _filter.EventType.HasValue ? (int)_filter.EventType.Value : null,
+                    severity: _filter.Severity.HasValue ? (int)_filter.Severity.Value : null,
+                    source: string.IsNullOrWhiteSpace(_filter.Resource) ? null : _filter.Resource,
+                    correlationId: string.IsNullOrWhiteSpace(_filter.CorrelationId) ? null : _filter.CorrelationId,
+                    traceId: string.IsNullOrWhiteSpace(_filter.TraceId) ? null : _filter.TraceId,
+                    search: string.IsNullOrWhiteSpace(_filter.Search) ? null : _filter.Search);
+
+                var pageItems = result.Items?.ToList() ?? new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+                if (pageItems.Count == 0)
+                {
+                    break;
+                }
+
+                items.AddRange(pageItems);
+                remaining -= pageItems.Count;
+                page++;
+            }
+
+            if (items.Count == 0)
+            {
+                Snackbar.Add("No audits to export for the current filters.", Severity.Info);
+                return;
+            }
+
+            var bytes = format.Equals("json", StringComparison.OrdinalIgnoreCase)
+                ? Encoding.UTF8.GetBytes(JsonSerializer.Serialize(items, new JsonSerializerOptions { WriteIndented = true }))
+                : BuildCsv(items);
+
+            var contentType = format.Equals("json", StringComparison.OrdinalIgnoreCase) ? "application/json" : "text/csv";
+            var dataUrl = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+
+            Snackbar.Add($"Exported {items.Count} audit events", Severity.Success);
+            NavigationManager.NavigateTo(dataUrl, true);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static byte[] BuildCsv(IEnumerable<AMIS.Blazor.ApiClient.AuditSummaryDto> items)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("OccurredAtUtc,EventType,Severity,UserName,UserId,TenantId,Source,CorrelationId,TraceId");
+        foreach (var item in items)
+        {
+            sb.AppendLine(string.Join(",",
+                Quote(item.OccurredAtUtc.ToString("o")),
+                Quote(FormatEventType(item.EventType)),
+                Quote(FormatSeverity(item.Severity)),
+                Quote(item.UserName),
+                Quote(item.UserId),
+                Quote(item.TenantId),
+                Quote(item.Source),
+                Quote(item.CorrelationId),
+                Quote(item.TraceId)));
+        }
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    private static string Quote(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return "\"\"";
+        }
+
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+
+    private static string? BuildSort(TableState state)
+    {
+        if (string.IsNullOrWhiteSpace(state.SortLabel))
+        {
+            return "OccurredAtUtc desc";
+        }
+
+        var direction = state.SortDirection == SortDirection.Descending ? "desc" : "asc";
+        return $"{state.SortLabel} {direction}";
+    }
+
+    private bool HasActiveFilters() =>
+        _filter.Range != null ||
+        !string.IsNullOrWhiteSpace(_filter.Actor) ||
+        _filter.EventType.HasValue ||
+        _filter.Severity.HasValue ||
+        !string.IsNullOrWhiteSpace(_filter.Resource) ||
+        !string.IsNullOrWhiteSpace(_filter.TenantId) ||
+        !string.IsNullOrWhiteSpace(_filter.CorrelationId) ||
+        !string.IsNullOrWhiteSpace(_filter.TraceId) ||
+        !string.IsNullOrWhiteSpace(_filter.Search);
+
+    private int GetActiveFiltersCount()
+    {
+        var count = 0;
+        if (_filter.Range != null) count++;
+        if (!string.IsNullOrWhiteSpace(_filter.Actor)) count++;
+        if (_filter.EventType.HasValue) count++;
+        if (_filter.Severity.HasValue) count++;
+        if (!string.IsNullOrWhiteSpace(_filter.Resource)) count++;
+        if (!string.IsNullOrWhiteSpace(_filter.TenantId)) count++;
+        if (!string.IsNullOrWhiteSpace(_filter.CorrelationId)) count++;
+        if (!string.IsNullOrWhiteSpace(_filter.TraceId)) count++;
+        if (!string.IsNullOrWhiteSpace(_filter.Search)) count++;
+        return count;
+    }
+
+    private long GetTotalEvents() =>
+        _summary?.EventsByType?.Values.Sum() ?? 0;
+
+    private long GetEventsBySeverity(string severity) =>
+        _summary?.EventsBySeverity?.TryGetValue(severity, out var count) == true ? count : 0;
+
+    private long GetEventsByType(string type) =>
+        _summary?.EventsByType?.TryGetValue(type, out var count) == true ? count : 0;
+
+    private int GetSourcesCount() =>
+        _summary?.EventsBySource?.Count ?? 0;
+
+    private sealed class FilterDto
+    {
+        public DateRange? Range { get; set; }
+        public string? Actor { get; set; }
+        public AuditEventTypeOption? EventType { get; set; }
+        public AuditSeverityOption? Severity { get; set; }
+        public string? Resource { get; set; }
+        public string? TenantId { get; set; }
+        public string? CorrelationId { get; set; }
+        public string? TraceId { get; set; }
+        public string? Search { get; set; }
+
+        public DateTimeOffset? FromUtc
+        {
+            get
+            {
+                if (Range?.Start is null)
+                    return null;
+
+                var dateTime = Range.Start.Value;
+
+                // Convert to UTC based on Kind
+                return dateTime.Kind switch
+                {
+                    DateTimeKind.Utc => new DateTimeOffset(dateTime, TimeSpan.Zero),
+                    DateTimeKind.Local => new DateTimeOffset(dateTime.ToUniversalTime(), TimeSpan.Zero),
+                    _ => new DateTimeOffset(DateTime.SpecifyKind(dateTime, DateTimeKind.Utc), TimeSpan.Zero)
+                };
+            }
+        }
+
+        public DateTimeOffset? ToUtc
+        {
+            get
+            {
+                if (Range?.End is null)
+                    return null;
+
+                var dateTime = Range.End.Value;
+
+                // Convert to UTC based on Kind
+                return dateTime.Kind switch
+                {
+                    DateTimeKind.Utc => new DateTimeOffset(dateTime, TimeSpan.Zero),
+                    DateTimeKind.Local => new DateTimeOffset(dateTime.ToUniversalTime(), TimeSpan.Zero),
+                    _ => new DateTimeOffset(DateTime.SpecifyKind(dateTime, DateTimeKind.Utc), TimeSpan.Zero)
+                };
+            }
+        }
+    }
+
+    private enum AuditEventTypeOption
+    {
+        None = 0,
+        EntityChange = 1,
+        Security = 2,
+        Activity = 3,
+        Exception = 4
+    }
+
+    private enum AuditSeverityOption
+    {
+        None = 0,
+        Trace = 1,
+        Debug = 2,
+        Information = 3,
+        Warning = 4,
+        Error = 5,
+        Critical = 6
+    }
+}
+

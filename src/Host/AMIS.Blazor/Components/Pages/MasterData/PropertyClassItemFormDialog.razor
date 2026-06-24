@@ -1,0 +1,109 @@
+@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+@using AMIS.Blazor.ApiClient
+@inject IPropertyClassClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Class="pt-2">
+            <MudTextField @bind-Value="_form.ItemCode"
+                          Label="Category Code (1–2 chars)" Placeholder="e.g. 01"
+                          HelperText="1–2 char sub-category code (e.g. 01, FM, WE)" CharacterCounter="true" MaxLength="2"
+                          Disabled="@(_isEdit)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Name"
+                          Label="Name" Placeholder="e.g. Computer and Accessories"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            @if (_isEdit)
+            {
+                <MudCheckBox @bind-Value="_form.IsActive" Label="Active" T="bool" />
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveItemAsync" Disabled="_busy">
+            @(_isEdit ? "Update" : "Add")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public Guid ClassId { get; set; }
+    [Parameter] public PropertyClassItemDto? Existing { get; set; }
+
+    private ItemForm _form = new();
+    private bool _busy;
+
+    private bool _isEdit => Existing != null;
+
+    private sealed class ItemForm
+    {
+        public string ItemCode { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Existing != null)
+        {
+            _form = new ItemForm
+            {
+                ItemCode = Existing.ItemCode,
+                Name = Existing.Name,
+                Description = Existing.Description,
+                IsActive = Existing.IsActive
+            };
+        }
+    }
+
+    private async Task SaveItemAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.ItemCode) || string.IsNullOrWhiteSpace(_form.Name))
+        {
+            Snackbar.Add("Item Code and Name are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _busy = true;
+            if (Existing is not null)
+            {
+                var cmd = new UpdatePropertyClassItemCommand(
+                    Existing.Id,
+                    _form.ItemCode.Trim().ToUpperInvariant(),
+                    _form.Name.Trim(),
+                    _form.Description,
+                    _form.IsActive);
+                await Client.UpdateItemAsync(Existing.Id, cmd);
+                Snackbar.Add("Item updated.", Severity.Success);
+            }
+            else
+            {
+                var cmd = new CreatePropertyClassItemCommand(
+                    ClassId,
+                    _form.ItemCode.Trim().ToUpperInvariant(),
+                    _form.Name.Trim(),
+                    _form.Description);
+                await Client.CreateItemAsync(ClassId, cmd);
+                Snackbar.Add("Item added.", Severity.Success);
+            }
+
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

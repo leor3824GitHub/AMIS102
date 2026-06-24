@@ -1,0 +1,764 @@
+@page "/settings/profile"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AMIS.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject AMIS.Blazor.ApiClient.IEmployeesClient EmployeesClient
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AMIS.Blazor.Services.IUserProfileState UserProfileState
+
+<!-- Hero Section -->
+<AMISPageHeader Title="Profile Settings"
+               Description="Manage your personal information, profile photo, and security settings" />
+
+@if (_loading)
+{
+    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-8">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        <MudText Typo="Typo.body2" Class="text-muted mt-4">Loading profile...</MudText>
+    </MudStack>
+}
+else
+{
+    <MudGrid Spacing="4">
+        <!-- Profile Photo Section -->
+        <MudItem xs="12" md="4">
+            <MudCard Class="profile-card" Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6" Class="fw-600">Profile Photo</MudText>
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="d-flex flex-column align-center">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                        <!-- Avatar Preview -->
+                        <div class="avatar-container">
+                            @if (!string.IsNullOrEmpty(_avatarPreviewUrl))
+                            {
+                                <MudAvatar Size="Size.Large" Style="width: 150px; height: 150px;">
+                                    <MudImage Src="@_avatarPreviewUrl" Alt="Profile Photo" ObjectFit="ObjectFit.Cover" />
+                                </MudAvatar>
+                            }
+                            else
+                            {
+                                <MudAvatar Color="Color.Primary" Size="Size.Large" Style="width: 150px; height: 150px; font-size: 3rem;">
+                                    @GetInitials()
+                                </MudAvatar>
+                            }
+                            @if (_hasImageChanges)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="pending-badge">Pending</MudChip>
+                            }
+                        </div>
+
+                        <MudText Typo="Typo.body2" Class="text-muted text-center">
+                            Upload a profile photo. Max 2MB, images only.
+                        </MudText>
+
+                        <!-- Upload/Delete Buttons -->
+                        <MudStack Row="true" Spacing="2" Class="flex-wrap justify-center">
+                            <MudFileUpload T="IBrowserFile" Accept="image/*" MaximumFileCount="1" OnFilesChanged="OnAvatarSelected">
+                                <ActivatorContent>
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                                               Size="Size.Small">
+                                        Upload Photo
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+
+                            @if (!string.IsNullOrEmpty(_avatarPreviewUrl))
+                            {
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Error"
+                                           StartIcon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small"
+                                           OnClick="DeleteAvatar">
+                                    Remove
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Account Status Card -->
+            <MudCard Class="profile-card mt-4" Elevation="2">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6" Class="fw-600">Account Status</MudText>
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2" Class="text-muted">Account Status</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="@(_profile?.IsActive == true ? Color.Success : Color.Error)">
+                                @(_profile?.IsActive == true ? "Active" : "Inactive")
+                            </MudChip>
+                        </MudStack>
+                        <MudDivider />
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2" Class="text-muted">Email Verified</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="@(_profile?.EmailConfirmed == true ? Color.Success : Color.Warning)">
+                                @(_profile?.EmailConfirmed == true ? "Verified" : "Pending")
+                            </MudChip>
+                        </MudStack>
+                        <MudDivider />
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2" Class="text-muted">Username</MudText>
+                            <MudText Typo="Typo.body2">@(_profile?.UserName ?? "-")</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Profile Information & Security Section -->
+        <MudItem xs="12" md="8">
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="profile-tabs" PanelClass="pa-0">
+                <!-- Personal Information Tab -->
+                <MudTabPanel Icon="@Icons.Material.Filled.Person" Text="Personal Info">
+                    <MudCard Elevation="0" Class="profile-form-card">
+                        <MudCardContent Class="pa-6">
+                            <MudForm @ref="_profileForm" Model="_profileModel">
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField @bind-Value="_profileModel.FirstName"
+                                                      Label="First Name"
+                                                      Placeholder="Enter your first name"
+                                                      Variant="Variant.Outlined"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                                      Required="true"
+                                                      RequiredError="First name is required" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField @bind-Value="_profileModel.LastName"
+                                                      Label="Last Name"
+                                                      Placeholder="Enter your last name"
+                                                      Variant="Variant.Outlined"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                                      Required="true"
+                                                      RequiredError="Last name is required" />
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField @bind-Value="_profileModel.Email"
+                                                      Label="Email Address"
+                                                      Placeholder="Enter your email"
+                                                      Variant="Variant.Outlined"
+                                                      InputType="InputType.Email"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                                      Required="true"
+                                                      RequiredError="Email is required" />
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField @bind-Value="_profileModel.PhoneNumber"
+                                                      Label="Phone Number"
+                                                      Placeholder="Enter your phone number"
+                                                      Variant="Variant.Outlined"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Phone" />
+                                    </MudItem>
+                                </MudGrid>
+                            </MudForm>
+                        </MudCardContent>
+                        <MudCardActions Class="px-6 pb-6">
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       StartIcon="@Icons.Material.Filled.Refresh"
+                                       OnClick="ResetProfile"
+                                       Disabled="_saving">
+                                Reset
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Save"
+                                       OnClick="SaveProfileAsync"
+                                       Disabled="_saving">
+                                @if (_saving)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save Changes</span>
+                                }
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudTabPanel>
+
+                <!-- Employee Info Tab -->
+                <MudTabPanel Icon="@Icons.Material.Filled.Badge" Text="Employee Info">
+                    <MudCard Elevation="0" Class="profile-form-card">
+                        <MudCardHeader Class="px-6 pt-6 pb-0">
+                            <CardHeaderContent>
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.h6" Class="fw-600">Employee Information</MudText>
+                                    <MudText Typo="Typo.body2" Class="text-muted">
+                                        Your employee profile linked to this account
+                                    </MudText>
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="px-6 py-4">
+                            @if (_loadingEmployee)
+                            {
+                                <MudStack AlignItems="AlignItems.Center" Class="pa-4">
+                                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+                                </MudStack>
+                            }
+                            else if (_employeeProfile is null)
+                            {
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                    No employee profile is linked to this account.
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="_employeeProfile.EmployeeNumber"
+                                                      Label="Employee Number"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Tag" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.FirstName} {_employeeProfile.LastName}".Trim())"
+                                                      Label="Full Name"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Person" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="_employeeProfile.WorkEmail"
+                                                      Label="Work Email"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Email" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                                            <MudText Typo="Typo.body2" Class="text-muted">Status:</MudText>
+                                            <MudChip T="string" Size="Size.Small" Color="@(_employeeProfile.IsActive ? Color.Success : Color.Error)">
+                                                @(_employeeProfile.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </MudStack>
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudDivider />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.OfficeName} ({_employeeProfile.OfficeCode})")"
+                                                      Label="Office"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Business" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.DepartmentName} ({_employeeProfile.DepartmentCode})")"
+                                                      Label="Department"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.AccountTree" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField Value="@($"{_employeeProfile.PositionName} ({_employeeProfile.PositionCode})")"
+                                                      Label="Position"
+                                                      Variant="Variant.Outlined"
+                                                      ReadOnly="true"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Filled.Work" />
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </MudTabPanel>
+
+                <!-- Security Tab (Change Password) -->
+                <MudTabPanel Icon="@Icons.Material.Filled.Lock" Text="Security">
+                    <MudCard Elevation="0" Class="profile-form-card">
+                        <MudCardHeader Class="px-6 pt-6 pb-0">
+                            <CardHeaderContent>
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.h6" Class="fw-600">Change Password</MudText>
+                                    <MudText Typo="Typo.body2" Class="text-muted">
+                                        Update your password to keep your account secure
+                                    </MudText>
+                                </MudStack>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="px-6 py-4">
+                            <MudForm @ref="_passwordForm" Model="_passwordModel">
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12">
+                                        <MudTextField @bind-Value="_passwordModel.CurrentPassword"
+                                                      Label="Current Password"
+                                                      Placeholder="Enter your current password"
+                                                      Variant="Variant.Outlined"
+                                                      InputType="@(_showCurrentPassword? InputType.Text: InputType.Password)"
+                                                      Adornment="Adornment.End"
+                                                      AdornmentIcon="@(_showCurrentPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                                      OnAdornmentClick="@(() => _showCurrentPassword = !_showCurrentPassword)"
+                                                      Required="true"
+                                                      RequiredError="Current password is required" />
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField @bind-Value="_passwordModel.NewPassword"
+                                                      Label="New Password"
+                                                      Placeholder="Enter your new password"
+                                                      Variant="Variant.Outlined"
+                                                      InputType="@(_showNewPassword? InputType.Text: InputType.Password)"
+                                                      Adornment="Adornment.End"
+                                                      AdornmentIcon="@(_showNewPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                                      OnAdornmentClick="@(() => _showNewPassword = !_showNewPassword)"
+                                                      Required="true"
+                                                      RequiredError="New password is required"
+                                                      HelperText="Use at least 8 characters with a mix of letters, numbers & symbols" />
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField @bind-Value="_passwordModel.ConfirmPassword"
+                                                      Label="Confirm New Password"
+                                                      Placeholder="Confirm your new password"
+                                                      Variant="Variant.Outlined"
+                                                      InputType="@(_showConfirmPassword? InputType.Text: InputType.Password)"
+                                                      Adornment="Adornment.End"
+                                                      AdornmentIcon="@(_showConfirmPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                                      OnAdornmentClick="@(() => _showConfirmPassword = !_showConfirmPassword)"
+                                                      Required="true"
+                                                      RequiredError="Please confirm your new password"
+                                                      Validation="@(new Func<string, string?>(ValidateConfirmPassword))" />
+                                    </MudItem>
+                                </MudGrid>
+                            </MudForm>
+                        </MudCardContent>
+                        <MudCardActions Class="px-6 pb-6">
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       StartIcon="@Icons.Material.Filled.Clear"
+                                       OnClick="ResetPasswordForm"
+                                       Disabled="_changingPassword">
+                                Clear
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.VpnKey"
+                                       OnClick="ChangePasswordAsync"
+                                       Disabled="_changingPassword">
+                                @if (_changingPassword)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Updating...</span>
+                                }
+                                else
+                                {
+                                    <span>Update Password</span>
+                                }
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudTabPanel>
+            </MudTabs>
+        </MudItem>
+    </MudGrid>
+}
+
+<style>
+    .profile-settings-shell {
+        background: var(--mud-palette-background);
+        min-height: 100vh;
+    }
+
+    .profile-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .profile-tabs {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .profile-form-card {
+        border-radius: 0 0 12px 12px;
+    }
+
+    .avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+
+        .avatar-container .pending-badge {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            transform: translate(25%, 25%);
+        }
+
+        .avatar-container .mud-avatar {
+            border: 4px solid var(--mud-palette-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .avatar-container:hover .mud-avatar {
+            transform: scale(1.02);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+        }
+</style>
+
+@code {
+    private bool _loading = true;
+    private bool _saving;
+    private bool _changingPassword;
+    private bool _loadingEmployee;
+    private AMIS.Blazor.ApiClient.UserDto? _profile;
+    private AMIS.Blazor.ApiClient.EmployeeReferenceDto? _employeeProfile;
+    private string? _avatarPreviewUrl;
+    private bool _hasImageChanges;
+    private bool _deleteCurrentImage;
+    private byte[]? _pendingImageData;
+    private string? _pendingImageFileName;
+    private string? _pendingImageContentType;
+
+    // Form references
+    private MudForm? _profileForm;
+    private MudForm? _passwordForm;
+
+    // Profile model
+    private ProfileModel _profileModel = new();
+
+    // Password model
+    private PasswordModel _passwordModel = new();
+
+    // Password visibility toggles
+    private bool _showCurrentPassword;
+    private bool _showNewPassword;
+    private bool _showConfirmPassword;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfileAsync();
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        _loading = true;
+        try
+        {
+            _profile = await IdentityClient.ProfileGetAsync();
+            if (_profile is not null)
+            {
+                _profileModel = new ProfileModel
+                {
+                    FirstName = _profile.FirstName,
+                    LastName = _profile.LastName,
+                    Email = _profile.Email,
+                    PhoneNumber = _profile.PhoneNumber
+                };
+                _avatarPreviewUrl = _profile.ImageUrl;
+
+                await LoadEmployeeProfileAsync(_profile.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadEmployeeProfileAsync(string identityUserId)
+    {
+        if (string.IsNullOrWhiteSpace(identityUserId)) return;
+
+        _loadingEmployee = true;
+        try
+        {
+            _employeeProfile = await EmployeesClient.ByIdentityAsync(identityUserId);
+        }
+        catch (AMIS.Blazor.ApiClient.ApiException ex) when (ex.StatusCode == 404)
+        {
+            _employeeProfile = null;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load employee profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingEmployee = false;
+        }
+    }
+
+    private string GetInitials()
+    {
+        var first = _profileModel.FirstName?.FirstOrDefault() ?? _profile?.FirstName?.FirstOrDefault() ?? ' ';
+        var last = _profileModel.LastName?.FirstOrDefault() ?? _profile?.LastName?.FirstOrDefault() ?? ' ';
+        return $"{char.ToUpperInvariant(first)}{char.ToUpperInvariant(last)}".Trim();
+    }
+
+    private async Task OnAvatarSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+
+        try
+        {
+            // Validate file size (2MB max)
+            if (file.Size > 2 * 1024 * 1024)
+            {
+                Snackbar.Add("File too large. Maximum 2MB allowed.", Severity.Error);
+                return;
+            }
+
+            // Validate file type
+            if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                Snackbar.Add("Only image files are allowed.", Severity.Error);
+                return;
+            }
+
+            // Read file data
+            using var stream = file.OpenReadStream(2 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+
+            // Store pending upload data
+            _pendingImageData = bytes;
+            _pendingImageFileName = file.Name;
+            _pendingImageContentType = file.ContentType;
+            _deleteCurrentImage = false;
+            _hasImageChanges = true;
+
+            // Set preview URL
+            _avatarPreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
+
+            Snackbar.Add("Image ready. Click Save Changes to upload.", Severity.Info);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to process image: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void DeleteAvatar()
+    {
+        _avatarPreviewUrl = null;
+        _pendingImageData = null;
+        _pendingImageFileName = null;
+        _pendingImageContentType = null;
+        _deleteCurrentImage = true;
+        _hasImageChanges = true;
+        Snackbar.Add("Photo will be removed when you save changes.", Severity.Info);
+        StateHasChanged();
+    }
+
+    private void ResetProfile()
+    {
+        if (_profile is not null)
+        {
+            _profileModel = new ProfileModel
+            {
+                FirstName = _profile.FirstName,
+                LastName = _profile.LastName,
+                Email = _profile.Email,
+                PhoneNumber = _profile.PhoneNumber
+            };
+            _avatarPreviewUrl = _profile.ImageUrl;
+            _pendingImageData = null;
+            _pendingImageFileName = null;
+            _pendingImageContentType = null;
+            _deleteCurrentImage = false;
+            _hasImageChanges = false;
+        }
+        StateHasChanged();
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (_profileForm is not null)
+        {
+            await _profileForm.Validate();
+            if (!_profileForm.IsValid)
+            {
+                Snackbar.Add("Please fix the validation errors.", Severity.Warning);
+                return;
+            }
+        }
+
+        _saving = true;
+        try
+        {
+            var command = new AMIS.Blazor.ApiClient.UpdateUserCommand
+            {
+                Id = _profile?.Id ?? string.Empty,
+                FirstName = _profileModel.FirstName,
+                LastName = _profileModel.LastName,
+                Email = _profileModel.Email,
+                PhoneNumber = _profileModel.PhoneNumber,
+                DeleteCurrentImage = _deleteCurrentImage
+            };
+
+            // Add image upload if pending
+            if (_pendingImageData is not null && _pendingImageFileName is not null && _pendingImageContentType is not null)
+            {
+                command.Image = new AMIS.Blazor.ApiClient.FileUploadRequest
+                {
+                    FileName = _pendingImageFileName,
+                    ContentType = _pendingImageContentType,
+                    Data = _pendingImageData.Select(b => (int)b).ToList()
+                };
+            }
+
+            await IdentityClient.ProfilePutAsync(command);
+
+            Snackbar.Add("Profile updated successfully!", Severity.Success);
+
+            // Reload profile to get updated data
+            await LoadProfileAsync();
+            _hasImageChanges = false;
+
+            // Notify other components (e.g., header) about the profile change
+            NotifyProfileChanged();
+        }
+        catch (AMIS.Blazor.ApiClient.ApiException ex)
+        {
+            Snackbar.Add($"Failed to update profile: {ex.Message}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void ResetPasswordForm()
+    {
+        _passwordModel = new PasswordModel();
+        _showCurrentPassword = false;
+        _showNewPassword = false;
+        _showConfirmPassword = false;
+        StateHasChanged();
+    }
+
+    private string? ValidateConfirmPassword(string confirmPassword)
+    {
+        if (string.IsNullOrEmpty(confirmPassword))
+            return null; // Required validation handles empty
+
+        if (confirmPassword != _passwordModel.NewPassword)
+            return "Passwords do not match";
+
+        return null;
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (_passwordForm is not null)
+        {
+            await _passwordForm.Validate();
+            if (!_passwordForm.IsValid)
+            {
+                Snackbar.Add("Please fix the validation errors.", Severity.Warning);
+                return;
+            }
+        }
+
+        if (_passwordModel.NewPassword != _passwordModel.ConfirmPassword)
+        {
+            Snackbar.Add("Passwords do not match.", Severity.Warning);
+            return;
+        }
+
+        _changingPassword = true;
+        try
+        {
+            var command = new AMIS.Blazor.ApiClient.ChangePasswordCommand
+            {
+                Password = _passwordModel.CurrentPassword,
+                NewPassword = _passwordModel.NewPassword,
+                ConfirmNewPassword = _passwordModel.ConfirmPassword
+            };
+
+            await IdentityClient.ChangePasswordAsync(command);
+
+            Snackbar.Add("Password changed successfully!", Severity.Success);
+            ResetPasswordForm();
+        }
+        catch (AMIS.Blazor.ApiClient.ApiException ex)
+        {
+            Snackbar.Add($"Failed to change password: {ex.Message}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _changingPassword = false;
+        }
+    }
+
+    private void NotifyProfileChanged()
+    {
+        if (_profile is null) return;
+
+        var userName = $"{_profile.FirstName} {_profile.LastName}".Trim();
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            userName = _profile.Email ?? "User";
+        }
+
+        UserProfileState.UpdateProfile(
+            userName,
+            _profile.Email,
+            null, // role is not changed here
+            _profile.ImageUrl);
+    }
+
+    private sealed class ProfileModel
+    {
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+    }
+
+    private sealed class PasswordModel
+    {
+        public string? CurrentPassword { get; set; }
+        public string? NewPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
+    }
+}
+

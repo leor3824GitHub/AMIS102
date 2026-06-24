@@ -1,0 +1,253 @@
+@page "/tenants/settings"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
+@using AMIS.Framework.Blazor.UI.Components.Page
+@using AMIS.Framework.Shared.Multitenancy
+@using AMIS.Modules.Multitenancy.Contracts.Dtos
+@inherits ComponentBase
+@inject IPlatformSettingsClient SettingsClient
+@inject IUserProfileState UserProfileState
+@inject ISnackbar Snackbar
+
+@if (!_canView)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        <MudText>You do not have permission to access this page. Only root tenant administrators can manage platform settings.</MudText>
+    </MudAlert>
+}
+else
+{
+    <AMISPageHeader Title="Tenant Settings"
+                   Description="Configure global tenant settings and policies" />
+
+    <MudGrid GutterSize="3">
+        @* Session Management Settings *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Devices" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Session Management</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.body2" Class="text-muted">
+                        Configure session limits, idle timeouts, and concurrent session policies for all tenants.
+                    </MudText>
+                    <MudNumericField T="int?" @bind-Value="_maxSessionsPerUser"
+                                     Label="Max Sessions per User" Placeholder="Unlimited"
+                                     HelperText="Leave empty for unlimited" Min="1" Max="100"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(!_canUpdate)" />
+                    <MudNumericField T="int?" @bind-Value="_idleTimeoutMinutes"
+                                     Label="Session Idle Timeout (minutes)" Placeholder="None"
+                                     HelperText="Leave empty for no idle timeout" Min="1" Max="1440"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(!_canUpdate)" />
+                    <MudNumericField T="int" @bind-Value="_absoluteTimeoutDays"
+                                     Label="Session Absolute Timeout (days)" Min="1" Max="365"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(!_canUpdate)" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        @* Security Settings *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Security Policies</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                        Security policy settings will be available in a future update.
+                    </MudAlert>
+                    <MudText Typo="Typo.body2" Class="text-muted">
+                        Configure password policies, lockout settings, and authentication requirements.
+                    </MudText>
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">Password History</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Success">Enabled (5)</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">Account Lockout</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">Default</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">Two-Factor Authentication</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">Optional</MudChip>
+                        </MudStack>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        @* Quota Settings *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.DataUsage" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Usage Quotas</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.body2" Class="text-muted">
+                        Configure storage limits, API rate limits, and resource quotas per tenant.
+                    </MudText>
+                    <MudNumericField T="int?" @bind-Value="_maxUsersPerTenant"
+                                     Label="Max Users per Tenant" Placeholder="Unlimited"
+                                     HelperText="Leave empty for unlimited" Min="1"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(!_canUpdate)" />
+                    <MudNumericField T="long?" @bind-Value="_storageLimitMb"
+                                     Label="Storage Limit (MB)" Placeholder="Unlimited"
+                                     HelperText="Display only — enforcement coming soon" Min="1"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(!_canUpdate)" />
+                    <MudNumericField T="int?" @bind-Value="_apiRateLimitPerMinute"
+                                     Label="API Rate Limit (per minute)" Placeholder="None"
+                                     HelperText="Leave empty for no additional limit" Min="1" Max="100000"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@(!_canUpdate)" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        @* Notification Settings *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Notifications</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="3">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                        Notification settings will be available in a future update.
+                    </MudAlert>
+                    <MudText Typo="Typo.body2" Class="text-muted">
+                        Configure email notifications, alerts, and system messages for tenants.
+                    </MudText>
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">Email Notifications</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Success">Enabled</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">System Alerts</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Success">Enabled</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">Subscription Reminders</MudText>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Success">Enabled</MudChip>
+                        </MudStack>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @if (_canUpdate)
+    {
+        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4">
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Save"
+                       OnClick="SaveAsync" Disabled="@_saving">
+                @(_saving ? "Saving..." : "Save Settings")
+            </MudButton>
+        </MudStack>
+    }
+}
+
+@code {
+    private int? _maxSessionsPerUser;
+    private int? _idleTimeoutMinutes;
+    private int _absoluteTimeoutDays = 7;
+    private int? _maxUsersPerTenant;
+    private long? _storageLimitMb;
+    private int? _apiRateLimitPerMinute;
+
+    private bool _saving;
+    private bool _loaded;
+
+    private bool _canView => UserProfileState.Permissions.Contains(MultitenancyConstants.Permissions.ViewSettings);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MultitenancyConstants.Permissions.UpdateSettings);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadSettingsAsync();
+    }
+
+    // Permissions load asynchronously in AMISLayout after first render. On a hard refresh the page
+    // first renders with an empty permission set, so the initial load short-circuits on !_canView; re-run
+    // it (and re-render) once permissions arrive.
+    private void OnProfileChanged() => InvokeAsync(ReloadOnPermissionsAsync);
+
+    private async Task ReloadOnPermissionsAsync()
+    {
+        if (_loaded || !_canView)
+        {
+            return;
+        }
+        await LoadSettingsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        if (!_canView)
+        {
+            return;
+        }
+
+        try
+        {
+            var settings = await SettingsClient.GetAsync();
+            _maxSessionsPerUser = settings.Session.MaxSessionsPerUser;
+            _idleTimeoutMinutes = settings.Session.IdleTimeoutMinutes;
+            _absoluteTimeoutDays = settings.Session.AbsoluteTimeoutDays;
+            _maxUsersPerTenant = settings.Quota.MaxUsersPerTenant;
+            _storageLimitMb = settings.Quota.StorageLimitMb;
+            _apiRateLimitPerMinute = settings.Quota.ApiRateLimitPerMinute;
+            _loaded = true;
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Could not load platform settings.", Severity.Error);
+        }
+    }
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            var dto = new PlatformSettingsDto
+            {
+                Session = new SessionSettingsDto
+                {
+                    MaxSessionsPerUser = _maxSessionsPerUser,
+                    IdleTimeoutMinutes = _idleTimeoutMinutes,
+                    AbsoluteTimeoutDays = _absoluteTimeoutDays
+                },
+                Quota = new QuotaSettingsDto
+                {
+                    MaxUsersPerTenant = _maxUsersPerTenant,
+                    StorageLimitMb = _storageLimitMb,
+                    ApiRateLimitPerMinute = _apiRateLimitPerMinute
+                }
+            };
+
+            await SettingsClient.UpdateAsync(dto);
+            Snackbar.Add("Platform settings saved.", Severity.Success);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Failed to save platform settings.", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

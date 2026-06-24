@@ -1,0 +1,407 @@
+@page "/expendable/shopping"
+@implements IDisposable
+@using System.Timers
+@using MudBlazor
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
+@using AMIS.Modules.Expendable.Contracts.Permissions
+@using AMIS.Blazor.Components.Pages.Expendable.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IProductsClient _productsClient
+@inject IEmployeeClient _employeeClient
+@inject IEmployeesClient _employeesClient
+@inject ICartClient _cartClient
+@inject IInventoryClient _inventoryClient
+@inject IProductRatingsClient _productRatingsClient
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject NavigationManager _navigationManager
+@inject MasterDataService MasterDataService
+@inject ISnackbar _snackbar
+@inject IUserProfileState UserProfileState
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <MudGrid>
+        <MudItem xs="12">
+            <div class="d-flex justify-space-between align-center">
+                <MudText Typo="Typo.h4" Class="mb-6">Product Catalog</MudText>
+                <MudBadge Content="@_cartItemCount" Color="Color.Primary" Overlap="true" Class="mb-6">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => _navigationManager.NavigateTo("/expendable/cart"))">
+                        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" /> Basket
+                    </MudButton>
+                </MudBadge>
+            </div>
+        </MudItem>
+        
+    <MudItem xs="12" Class="mb-2">
+        <MudChipSet T="string"
+                    SelectedValue="_selectedCategory"
+                    SelectedValueChanged="OnCategoryChanged"
+                    CheckMark="true"
+                    Variant="Variant.Text"
+                    Color="Color.Primary">
+           <MudChip Value="@("All")" Default="true">All Categories</MudChip>
+    @foreach (var cat in _categories)
+    {
+        <MudChip Value="@cat.Id.ToString()">@cat.Name</MudChip>
+    }
+        </MudChipSet>
+    </MudItem>
+    <MudItem xs="12" Class="mb-4">
+        <MudChipSet T="string"
+                    SelectedValue="_stockFilter"
+                    SelectedValueChanged="OnStockFilterChanged"
+                    CheckMark="true"
+                    Variant="Variant.Text"
+                    Color="Color.Secondary">
+            <MudChip Value="@("All")" Default="true">All Stock</MudChip>
+            <MudChip Value="@("InStock")" Color="Color.Success">In Stock</MudChip>
+            <MudChip Value="@("OutOfStock")" Color="Color.Error">Out of Stock</MudChip>
+        </MudChipSet>
+    </MudItem>
+        <!-- Search Box -->
+        <MudItem xs="12">
+            <MudTextField @bind-Value="_searchKeyword"
+                          Placeholder="Search products..."
+                          DebounceInterval="300"
+                          OnDebounceIntervalElapsed="SearchProductsDebounce"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="mb-4" />
+        </MudItem>
+
+        <!-- Product Grid -->
+        @if (_products != null && _products.Any())
+        {
+            <MudItem xs="12">
+                <MudGrid Spacing="2">
+                    @foreach (var product in _products)
+                    {
+                        <MudItem xs="6" sm="4" md="3" lg="2">
+                            <AMISProductCard Product="product"
+                                             AverageRating="GetAverageRating(product)"
+                                             RatingCount="GetRatingCount(product)"
+                                             Balance="GetProductBalance(product)"
+                                             CanAdd="_canEditCart"
+                                             OnDetails="@(() => OpenProductDetails(product))"
+                                             OnAdd="@(() => QuickAddToCart(product))" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudItem>
+        }
+        else if (_isLoading)
+        {
+            <MudItem xs="12">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            </MudItem>
+        }
+        else
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info">No products found</MudAlert>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<ProductDto>? _products = new();
+    private string _searchKeyword = "";
+    private bool _isLoading = false;
+    private int _cartItemCount = 0;
+    private Dictionary<Guid, int> _productBalances = new();
+    private Dictionary<Guid, decimal> _productAveragePrices = new();
+    private Dictionary<Guid, AMIS.Modules.Expendable.Contracts.v1.Products.ProductRatingSummaryDto> _productRatings = new();
+
+    private List<CategoryDto> _categories = new();
+    private string _selectedCategory = "All"; // holds either "All" or Category.Id.ToString()
+    private string _stockFilter = "All"; // "All", "InStock", "OutOfStock"
+
+    private string _currentEmployeeId = string.Empty;
+
+    private bool _canEditCart => UserProfileState.Permissions.Contains(ExpendablePermissions.ShoppingCarts.Edit);
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private int GetProductBalance(ProductDto product)
+    {
+        return _productBalances.TryGetValue(product.Id, out var balance) ? balance : 0;
+    }
+
+    private double GetAverageRating(ProductDto product)
+    {
+        return _productRatings.TryGetValue(product.Id, out var summary) ? summary.AverageRating : 0d;
+    }
+
+    private int GetRatingCount(ProductDto product)
+    {
+        return _productRatings.TryGetValue(product.Id, out var summary) ? summary.RatingCount : 0;
+    }
+
+    private decimal GetDisplayedPrice(ProductDto? product)
+    {
+        if (product is null)
+            return 0m;
+
+        if (_productAveragePrices.TryGetValue(product.Id, out var averagePrice) && averagePrice > 0)
+            return averagePrice;
+
+        return (decimal)product.UnitPrice;
+    }
+
+    private Guid? _currentCartId;
+
+    private async Task OnSearchTriggered()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadCategories()
+    {
+        try 
+        {
+            _isLoading = true;
+            // Use the same service and method from your Master Data page
+            var response = await MasterDataService.GetCategoriesAsync(pageSize: 100);
+
+            _categories = new List<CategoryDto>();
+            if (response?.Items != null)
+            {
+                // Keep the full CategoryDto so we can map ids for filtering
+                _categories = response.Items
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                    .ToList();
+            }
+        }
+        catch (Exception)
+        {
+            _categories = new List<CategoryDto>();
+            _snackbar.Add("Could not load categories", Severity.Warning);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        _isLoading = true; // Start loading state
+        await LoadCategories(); // MUST call this to see chips!
+        await ResolveCurrentEmployeeContext();
+        await GetOrCreateCart();
+        await LoadProductBalancesAsync();
+        await LoadProductRatingsAsync();
+        await LoadProducts();
+        _isLoading = false;
+    }
+
+    private async Task ResolveCurrentEmployeeContext()
+    {
+        try
+        {
+            var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            var identityUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(identityUserId))
+            {
+                _snackbar.Add("Unable to resolve signed-in user identity.", Severity.Warning);
+                return;
+            }
+
+            var employee = await _employeesClient.ByIdentityAsync(identityUserId);
+            _currentEmployeeId = employee.Id.ToString();
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _snackbar.Add("No employee profile linked to this user. Please contact an administrator.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Failed to resolve employee context: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadProducts()
+{
+    try
+    {
+        _isLoading = true;
+
+        // 1. Fetch products based on the search keyword
+        var query = new SearchProductsQuery
+        {
+            Keyword = _searchKeyword,
+            PageSize = 100 
+        };
+
+        var result = await _productsClient.SearchAsync(query);
+        var allItems = result.Items?.ToList() ?? new List<ProductDto>();
+
+        // 2. Apply the Category Filter locally
+        // We compare the ProductDto.CategoryId (string) to our _selectedCategory (string)
+        if (_selectedCategory != "All")
+        {
+            allItems = allItems
+                .Where(p => string.Equals(p.CategoryId, _selectedCategory, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        _products = _stockFilter switch
+        {
+            "InStock"    => allItems.Where(p => GetProductBalance(p) > 0).ToList(),
+            "OutOfStock" => allItems.Where(p => GetProductBalance(p) <= 0).ToList(),
+            _            => allItems
+        };
+    }
+    catch (Exception ex)
+    {
+        _snackbar.Add($"Error loading products: {ex.Message}", Severity.Error);
+    }
+    finally
+    {
+        _isLoading = false;
+        // In Blazor, StateHasChanged is usually automatic after Task-based events, 
+        // but it doesn't hurt to ensure the UI updates here.
+    }
+}
+    private async Task OnCategoryChanged(string category)
+    {
+        _selectedCategory = string.IsNullOrEmpty(category) ? "All" : category;
+        await LoadProducts();
+    }
+
+    private async Task OnStockFilterChanged(string filter)
+    {
+        _stockFilter = string.IsNullOrEmpty(filter) ? "All" : filter;
+        await LoadProducts();
+    }
+
+    private async Task LoadProductBalancesAsync()
+    {
+        try
+        {
+            // Aggregate available stock across ALL warehouses so the catalog shows total balance
+            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000
+            });
+
+            if (inventoryList?.Items != null)
+            {
+                _productBalances = inventoryList.Items
+                    .GroupBy(i => i.ProductId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Sum(i => i.QuantityAvailable));
+
+                _productAveragePrices = inventoryList.Items
+                    .GroupBy(i => i.ProductId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g =>
+                        {
+                            var totalQty = g.Sum(i => i.QuantityOnHand);
+                            var totalValue = g.Sum(i => (decimal)i.TotalValue);
+                            return totalQty > 0 ? Math.Round(totalValue / totalQty, 4) : 0m;
+                        });
+            }
+            else
+            {
+                _productBalances.Clear();
+                _productAveragePrices.Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Unable to load warehouse balance: {ex.Message}", Severity.Warning);
+            _productBalances.Clear();
+            _productAveragePrices.Clear();
+        }
+    }
+
+    private async Task LoadProductRatingsAsync()
+    {
+        try
+        {
+            var summaries = await _productRatingsClient.GetSummariesAsync();
+            _productRatings = summaries.ToDictionary(s => s.ProductId);
+        }
+        catch (Exception)
+        {
+            // Ratings are non-critical; show empty stars if the call fails.
+            _productRatings.Clear();
+        }
+    }
+
+    private async Task GetOrCreateCart()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_currentEmployeeId))
+            {
+                _currentCartId = null;
+                _cartItemCount = 0;
+                return;
+            }
+
+            var cart = await _employeeClient.CartAsync(_currentEmployeeId);
+            _currentCartId = cart.Id;
+            _cartItemCount = cart.Items?.Count ?? 0;
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Error loading basket: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SearchProducts(ElapsedEventArgs args)
+    {
+        await LoadProducts();
+    }
+
+    private async Task SearchProductsDebounce()
+    {
+        await LoadProducts();
+    }
+
+    private void OpenProductDetails(ProductDto? product)
+    {
+        if (product != null)
+        {
+            _navigationManager.NavigateTo($"/expendable/shopping/product/{product.Id}");
+        }
+    }
+
+    private async Task QuickAddToCart(ProductDto? product)
+    {
+        if (product == null || !_currentCartId.HasValue)
+            return;
+
+        try
+        {
+            var command = new AddToCartCommand
+            {
+                CartId = _currentCartId.Value,
+                ProductId = product.Id,
+                Quantity = 1,
+                UnitPrice = (double)GetDisplayedPrice(product)
+            };
+
+            await _cartClient.ItemsPostAsync(_currentCartId.Value, command);
+            await GetOrCreateCart();
+            _snackbar.Add($"Added {product.Name} to basket!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Add($"Error adding to basket: {ex.Message}", Severity.Error);
+        }
+    }
+
+}
+

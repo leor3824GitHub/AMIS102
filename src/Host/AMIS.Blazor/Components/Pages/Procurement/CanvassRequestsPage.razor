@@ -1,0 +1,672 @@
+@page "/procurement/canvass-requests"
+@implements IDisposable
+@using AMIS.Blazor.Components.Pages.Procurement
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Blazor.ApiClient
+@inject ICanvassRequestClient Client
+@inject IPurchaseOrderClient PoClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Nav
+@inject IUserProfileState UserProfileState
+@inject IFastReportSetupPreferences FastReportSetupPrefs
+@inject IJSRuntime JS
+
+<AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award" />
+
+<!-- List Panel -->
+<MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Canvass Requests</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                            New Canvass Request
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <!-- Filter toolbar: search + date range -->
+                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Search for RIV"
+                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
+                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
+
+                <!-- Status filter chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var s in _statusFilters)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                                 Variant="@(_statusFilter == s ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
+                    }
+                </MudStack>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No canvass requests found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>RIV #</th>
+                                <th>PR #</th>
+                                <th>Deadline</th>
+                                <th>Quotations</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                var isSelected = _selected?.Id == item.Id;
+                                <tr style="@(isSelected ? "background:var(--mud-palette-primary-lighten)" : "")">
+                                    <td><b>@item.RivNumber</b></td>
+                                    <td>@item.PrNumber</td>
+                                    <td>@item.ReturnDeadline.ToString("MM/dd/yyyy")</td>
+                                    <td>@item.QuotationCount</td>
+                                    <td>
+                                        @CanvassStatusChip(item.Status)
+                                        @if (item.AwardedLineCount > 0 && item.LineItemCount > 0)
+                                        {
+                                            <MudTooltip Text="@($"{item.AwardedLineCount} of {item.LineItemCount} line(s) awarded on this canvass")">
+                                                <MudChip T="string" Size="Size.Small" Class="ml-1"
+                                                         Color="@(item.AwardedLineCount >= item.LineItemCount ? Color.Success : Color.Warning)"
+                                                         Icon="@Icons.Material.Filled.Checklist">
+                                                    @item.AwardedLineCount / @item.LineItemCount awarded
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    </td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudTooltip Text="@(isSelected ? "Hide Quotations" : "View Quotations")">
+                                                <MudIconButton Icon="@(isSelected ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)" Size="Size.Small"
+                                                               Color="Color.Primary"
+                                                               OnClick="@(async () => await ToggleCanvass(item.Id))" />
+                                            </MudTooltip>
+                                            @if (item.Status == CanvassRequestStatus.Open && _canUpdate)
+                                            {
+                                                <MudTooltip Text="Add Quotation">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small"
+                                                                   Color="Color.Secondary"
+                                                                   OnClick="@(async () => await OpenQuotationDialogFor(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status != CanvassRequestStatus.Cancelled && item.QuotationCount > 0 && item.RemainingAwardableLineCount > 0 && _canAward)
+                                            {
+                                                <MudTooltip Text="@(item.AwardedLineCount > 0
+                                                    ? $"Award remaining {item.RemainingAwardableLineCount} line(s)"
+                                                    : "Award to Supplier")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small"
+                                                                   Color="Color.Success"
+                                                                   OnClick="@(async () => await AwardAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == CanvassRequestStatus.Awarded && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                            {
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view (Abstract of Canvass)" : "Upload signed copy (Abstract of Canvass)")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                   OnClick="@(() => OpenSignedCopyAsync(item.Id, item.RivNumber, item.Status))" />
+                                                </MudTooltip>
+                                            }
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print reports">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
+                                                    Abstract of Canvass – PDF
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Description"
+                                                             OnClick="@(() => DownloadRfqFastReportPdfAsync(item.Id))">
+                                                    Request for Quotation – PDF
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                             OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
+                                                    Abstract of Canvass – Page Setup…
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                             OnClick="@(() => OpenRfqFastReportSetupAsync(item.Id))">
+                                                    Request for Quotation – Page Setup…
+                                                </MudMenuItem>
+                                            </MudMenu>
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                                <!-- Inline quotation list if selected -->
+                                @if (isSelected && _selectedDetail is not null)
+                                {
+                                    <tr>
+                                        <td colspan="6">
+                                            <MudPaper Outlined="true" Class="pa-3 ma-1">
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-2">
+                                                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Quotations for @_selectedDetail.RivNumber</MudText>
+                                                    @if (_selectedDetail.Status == CanvassRequestStatus.Open && _canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Add Quotation">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small"
+                                                                           Variant="Variant.Filled" Color="Color.Primary"
+                                                                           OnClick="OpenQuotationDialog" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (item.Status != CanvassRequestStatus.Cancelled && item.QuotationCount > 0 && item.RemainingAwardableLineCount > 0 && _canAward)
+                                                    {
+                                                        <MudTooltip Text="@(item.AwardedLineCount > 0
+                                                            ? $"Award remaining {item.RemainingAwardableLineCount} line(s)"
+                                                            : "Award to Supplier")">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small"
+                                                                           Variant="Variant.Filled" Color="Color.Success"
+                                                                           OnClick="@(async () => await AwardAsync(item.Id))" />
+                                                        </MudTooltip>
+                                                    }
+                                                </MudStack>
+                                                @if (_selectedDetail.Quotations.Count == 0)
+                                                {
+                                                    @if (_selectedDetail.Status == CanvassRequestStatus.Open)
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">No quotations yet. Click <b>Add Quotation</b> above to record one.</MudText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">No quotations recorded.</MudText>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <MudSimpleTable Dense="true" Hover="true">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Supplier</th>
+                                                                <th>Date</th>
+                                                                <th style="text-align:right">Total</th>
+                                                                <th>Terms</th>
+                                                                <th>Awarded</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var q in _selectedDetail.Quotations)
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                                            <div>
+                                                                                <MudText Typo="Typo.body2"><b>@q.SupplierName</b></MudText>
+                                                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@q.SupplierAddress</MudText>
+                                                                            </div>
+                                                                        </MudStack>
+                                                                    </td>
+                                                                    <td>@q.QuotationDate.ToString("MM/dd/yyyy")</td>
+                                                                    <td style="text-align:right">@Money.Symbol@q.LineItems.Sum(li => li.Total).ToString("N2")</td>
+                                                                    <td>@(q.DeliveryTerms ?? "—")</td>
+                                                                    <td>
+                                                                        @{
+                                                                            var wonCount = _selectedDetail.LineItems.Count(li => li.AwardedQuotationId == q.Id);
+                                                                            var supplierPo = _selectedDetail.PurchaseOrders?.FirstOrDefault(p => p.SupplierId == q.SupplierId);
+                                                                        }
+                                                                        @if (q.IsAwarded || wonCount > 0)
+                                                                        {
+                                                                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Star">
+                                                                                    Won @wonCount line(s)
+                                                                                </MudChip>
+                                                                                <MudTooltip Text="@($"View line(s) awarded to {q.SupplierName}")">
+                                                                                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                                                                   Color="Color.Info"
+                                                                                                   OnClick="@(() => OpenAwardedLinesAsync(q.Id, q.SupplierName))" />
+                                                                                </MudTooltip>
+                                                                                @if (_selectedDetail.Status != CanvassRequestStatus.Cancelled && (q.HasSignedRfq ? _canViewSignedCopy : _canUploadSignedCopy))
+                                                                                {
+                                                                                    <MudTooltip Text="@(q.HasSignedRfq ? "Signed RFQ uploaded — click to view" : "Upload signed RFQ (wet-signed quotation)")">
+                                                                                        <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                                                       Color="@(q.HasSignedRfq ? Color.Success : Color.Secondary)"
+                                                                                                       OnClick="@(() => OpenRfqSignedCopyAsync(q.Id, _selectedDetail.RivNumber, q.SupplierName))" />
+                                                                                    </MudTooltip>
+                                                                                }
+                                                                                @if (supplierPo is not null)
+                                                                                {
+                                                                                    <MudTooltip Text="@($"PO {supplierPo.PoNumber} generated — click to view")">
+                                                                                        <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small"
+                                                                                                       Color="Color.Success"
+                                                                                                       OnClick="@(() => Nav.NavigateTo($"/procurement/purchase-orders?canvassId={_selectedDetail.Id}"))" />
+                                                                                    </MudTooltip>
+                                                                                }
+                                                                                else if (_selectedDetail.Status == CanvassRequestStatus.Awarded && _canCreatePo)
+                                                                                {
+                                                                                    <MudTooltip Text="@($"Create purchase order for {q.SupplierName}")">
+                                                                                        <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Small"
+                                                                                                       Color="Color.Primary"
+                                                                                                       OnClick="@(async () => await OpenCreatePoFormAsync(_selectedDetail.Id, q.SupplierId))" />
+                                                                                    </MudTooltip>
+                                                                                }
+                                                                            </MudStack>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </MudSimpleTable>
+                                                }
+                                            </MudPaper>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    @if (_totalCount > _pageSize)
+                    {
+                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                        </MudStack>
+                    }
+                }
+            </MudCardContent>
+</MudCard>
+
+@code {
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Update);
+    private bool _canAward => UserProfileState.Permissions.Contains(ProcurementPermissions.CanvassRequests.Award);
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
+
+    private async Task OpenSignedCopyAsync(Guid id, string rivNumber, CanvassRequestStatus status)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.AbstractOfCanvass },
+            { x => x.DocumentId, id },
+            { x => x.DocumentNumber, rivNumber },
+            { x => x.IsTerminalState, status == CanvassRequestStatus.Awarded }
+        };
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = false, BackdropClick = false });
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenRfqSignedCopyAsync(Guid quotationId, string rivNumber, string supplierName)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.RequestForQuotation },
+            { x => x.DocumentId, quotationId },
+            { x => x.DocumentNumber, $"{rivNumber} — {supplierName}" },
+            // The supplier's wet-signed RFQ backs the quotation itself, so it can be attached at any
+            // non-cancelled stage — the per-supplier button is only shown when that's the case.
+            { x => x.IsTerminalState, true }
+        };
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed RFQ", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true });
+        await dialog.Result;
+
+        // Refresh the inline detail so the per-supplier signed indicator reflects any upload.
+        if (_selectedDetail is not null)
+            await SelectCanvass(_selectedDetail.Id);
+    }
+    private bool _canCreatePo => UserProfileState.Permissions.Contains(ProcurementPermissions.PurchaseOrders.Create);
+
+    private List<CanvassRequestSummaryDto> _items = [];
+    private CanvassRequestDto? _selected, _selectedDetail;
+    private bool _busy, _loaded;
+    private string _keyword = string.Empty;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+    private Dictionary<string, int> _statusCounts = [];
+
+    private static readonly string[] _statusFilters = ["All", "Open", "Evaluated", "Awarded", "Cancelled"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+        await LoadStatusCountsAsync();
+    }
+
+    // Permissions load asynchronously in AMISLayout after first render; re-render when they arrive
+    // so permission-gated controls appear on a hard refresh without requiring a user interaction.
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CanvassRequestFormDialog>("New Canvass Request", options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            _page = 1;
+            await LoadAsync();
+            await LoadStatusCountsAsync();
+        }
+    }
+
+    private async Task OpenQuotationDialog()
+    {
+        if (_selected is null) return;
+        if (_selected.Status != CanvassRequestStatus.Open)
+        {
+            Snackbar.Add($"Cannot add quotation — canvass is {_selected.Status}.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            [nameof(CanvassQuotationDialog.CanvassRequestId)] = _selected.Id,
+            [nameof(CanvassQuotationDialog.PurchaseRequestId)] = _selected.PurchaseRequestId,
+            [nameof(CanvassQuotationDialog.Form)] = new QuotationForm()
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CanvassQuotationDialog>("Add Quotation", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            await SelectCanvass(_selected.Id);
+            await LoadAsync();
+            await LoadStatusCountsAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            CanvassRequestStatus? filter = _statusFilter == "All" ? null : Enum.Parse<CanvassRequestStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize, ToDateOnly(_fromDate), ToDateOnly(_toDate));
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    // Single grouped query (GROUP BY Status) backing the chip counts. Scoped to the date range only
+    // (not the keyword/status filter), so each chip shows the total per status in the current range.
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            var counts = await Client.GetStatusCountsAsync(ToDateOnly(_fromDate), ToDateOnly(_toDate));
+            var dict = counts.ToDictionary(c => c.Status.ToString(), c => c.Count);
+            dict["All"] = counts.Sum(c => c.Count);
+            _statusCounts = dict;
+        }
+        catch { _statusCounts = []; }
+    }
+
+    private string GetChipLabel(string status) =>
+        _statusCounts.TryGetValue(status, out var count) && count > 0 ? $"{status} ({count})" : status;
+
+    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+
+    private async Task OnKeywordChanged(string? keyword) { _keyword = keyword ?? string.Empty; _page = 1; await LoadAsync(); }
+
+    private async Task OnFromDateChanged(DateTime? date) { _fromDate = date; _page = 1; await LoadAsync(); await LoadStatusCountsAsync(); }
+
+    private async Task OnToDateChanged(DateTime? date) { _toDate = date; _page = 1; await LoadAsync(); await LoadStatusCountsAsync(); }
+
+    private static DateOnly? ToDateOnly(DateTime? value) =>
+        value is null ? null : DateOnly.FromDateTime(value.Value);
+
+    private async Task SelectCanvass(Guid id)
+    {
+        var detail = await Client.GetAsync(id);
+        if (detail is null) { Snackbar.Add("Canvass request not found.", Severity.Error); return; }
+        _selected = detail;
+        _selectedDetail = detail;
+    }
+
+    private async Task ToggleCanvass(Guid id)
+    {
+        if (_selected?.Id == id)
+        {
+            _selected = null;
+            _selectedDetail = null;
+        }
+        else
+        {
+            await SelectCanvass(id);
+        }
+    }
+
+    private async Task OpenQuotationDialogFor(Guid canvassId)
+    {
+        await SelectCanvass(canvassId);
+        if (_selected is null) return;
+        await OpenQuotationDialog();
+    }
+
+    private async Task AwardAsync(Guid canvassId)
+    {
+        var detail = await Client.GetAsync(canvassId);
+        if (detail is null || detail.Quotations.Count == 0) { Snackbar.Add("No quotations to award.", Severity.Warning); return; }
+
+        // Lines already awarded on a sibling canvass of the same PR — locked (greyed) in the award dialog.
+        var awardedElsewhere = (await Client.GetAwardedPrLinesAsync(detail.PurchaseRequestId))
+            .Where(a => a.CanvassRequestId != canvassId)
+            .ToList();
+
+        var parameters = new DialogParameters<CanvassAwardDialog>
+        {
+            { x => x.Canvass, detail },
+            { x => x.AwardedElsewhere, awardedElsewhere }
+        };
+        var dialog = await DialogService.ShowAsync<CanvassAwardDialog>("Award Canvass", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not IReadOnlyList<CanvassLineAwardRequest> lineAwards)
+            return;
+
+        _busy = true;
+        try
+        {
+            await Client.AwardAsync(canvassId, lineAwards);
+            Snackbar.Add("Canvass awarded.", Severity.Success);
+            if (_selected?.Id == canvassId) await SelectCanvass(canvassId);
+            await LoadAsync();
+            await LoadStatusCountsAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Award failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    // One supplier → one PO. Opens the manual PO form prefilled with this supplier's won lines (at awarded prices).
+    private async Task OpenCreatePoFormAsync(Guid canvassId, Guid supplierId)
+    {
+        var parameters = new DialogParameters<PurchaseOrderFormDialog>
+        {
+            { x => x.PurchaseOrder, null },
+            { x => x.PrefilledCanvassId, canvassId },
+            { x => x.PrefilledSupplierId, supplierId }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<PurchaseOrderFormDialog>("Purchase Order", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled)
+            return;
+
+        if (_selected?.Id == canvassId) await SelectCanvass(canvassId);
+        await LoadAsync();
+    }
+
+    // Shows the line items of the current canvass that were awarded to the given supplier (quotation).
+    private async Task OpenAwardedLinesAsync(Guid quotationId, string supplierName)
+    {
+        if (_selectedDetail is null) return;
+        var lines = _selectedDetail.LineItems
+            .Where(li => li.AwardedQuotationId == quotationId)
+            .ToList();
+
+        var parameters = new DialogParameters<AwardedLinesDialog>
+        {
+            { x => x.SupplierName, supplierName },
+            { x => x.Lines, lines }
+        };
+        await DialogService.ShowAsync<AwardedLinesDialog>("Awarded Lines", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
+    }
+
+    private async Task DownloadFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "a4",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows ?? 8);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadRfqFastReportPdfAsync(Guid id)
+    {
+        try
+        {
+            var saved = await FastReportSetupPrefs.GetAsync(RfqFastReportKey);
+            var bytes = await Client.GetRfqFastReportPdfAsync(id,
+                pageWidth: saved?.PaperSize ?? "a4",
+                orientation: saved?.Orientation ?? "portrait",
+                minRows: saved?.MinRows ?? 8);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RFQ PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"RFQ PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private const string FastReportKey = "abstract-of-canvass";
+    private const string RfqFastReportKey = "request-for-quotation";
+
+    private async Task OpenFastReportSetupAsync(Guid id)
+    {
+        // Abstract of Canvass is always 1 AOC per page; the dialog's Copies field is ignored on submit.
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 8
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
+
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenRfqFastReportSetupAsync(Guid id)
+    {
+        // RFQ is always 1 per page; the dialog's Copies field is ignored on submit.
+        var saved = await FastReportSetupPrefs.GetAsync(RfqFastReportKey);
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "a4",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "portrait",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 1,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 8
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(RfqFastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
+
+        try
+        {
+            var bytes = await Client.GetRfqFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("RFQ PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fast report failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static RenderFragment CanvassStatusChip(CanvassRequestStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            CanvassRequestStatus.Open => (Color.Info, Icons.Material.Filled.HourglassTop),
+            CanvassRequestStatus.Evaluated => (Color.Warning, Icons.Material.Filled.Assessment),
+            CanvassRequestStatus.Awarded => (Color.Success, Icons.Material.Filled.EmojiEvents),
+            CanvassRequestStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+
+    // QuotationForm and QLineItemRow moved to QuotationForm.cs for sharing with dialog
+}
+

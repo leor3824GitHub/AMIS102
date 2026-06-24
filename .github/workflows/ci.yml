@@ -141,7 +141,7 @@ jobs:
 
       - name: Publish API container image
         run: |
-          dotnet publish src/Playground/Playground.Api/Playground.Api.csproj \
+          dotnet publish src/Host/AMIS.Api/AMIS.Api.csproj \
             -c Release -r linux-x64 \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRepository=ghcr.io/${{ github.repository_owner }}/AMIS-playground-api \
@@ -149,7 +149,7 @@ jobs:
 
       - name: Publish Blazor container image
         run: |
-          dotnet publish src/Playground/Playground.Blazor/Playground.Blazor.csproj \
+          dotnet publish src/Host/AMIS.Blazor/AMIS.Blazor.csproj \
             -c Release -r linux-x64 \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRepository=ghcr.io/${{ github.repository_owner }}/AMIS-playground-blazor \
@@ -243,7 +243,7 @@ jobs:
 
       - name: Build and push API container
         run: |
-          dotnet publish src/Playground/Playground.Api/Playground.Api.csproj \
+          dotnet publish src/Host/AMIS.Api/AMIS.Api.csproj \
             -c Release -r linux-x64 \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRepository=ghcr.io/${{ github.repository_owner }}/AMIS-playground-api \
@@ -253,7 +253,7 @@ jobs:
 
       - name: Build and push Blazor container
         run: |
-          dotnet publish src/Playground/Playground.Blazor/Playground.Blazor.csproj \
+          dotnet publish src/Host/AMIS.Blazor/AMIS.Blazor.csproj \
             -c Release -r linux-x64 \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRepository=ghcr.io/${{ github.repository_owner }}/AMIS-playground-blazor \

@@ -1,0 +1,584 @@
+@page "/asset-register/returned-property"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Components.Shared
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
+@using ReturnedPropertyReceiptStatus = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptStatus
+@using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
+@inject IArReturnedPropertyClient Client
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
+
+<AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
+               Description="End-users request the return of property assigned to them; an inspector records each item's condition, then the property custodian receives and accepts it. Accepting marks each asset back to Available at its inspected condition." />
+
+<MudGrid Spacing="3">
+    <!-- List Panel -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Return Receipts</MudText>
+                    <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                                  Dense="true" Margin="Margin.Dense"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  DebounceInterval="350" OnDebounceIntervalElapsed="@(() => LoadAsync())" Style="max-width:220px" />
+                    @if (_canCreate)
+                    {
+                        <AMISButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                    StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRequestDialog">
+                            Request a Return
+                        </AMISButton>
+                    }
+                </MudStack>
+
+                <!-- Status filter chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var (index, label) in _statusTabs)
+                    {
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(_activeTabIndex == index ? Color.Primary : Color.Default)"
+                                 Variant="@(_activeTabIndex == index ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
+                    }
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_records.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">No return receipts found.</MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Receipt No.</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Accountability</th>
+                                <th>Items</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _records)
+                            {
+                                <tr>
+                                    <td><b>@(string.IsNullOrWhiteSpace(r.ReceiptNo) ? "—" : r.ReceiptNo)</b></td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(r.ReceiptType == ReturnedPropertyReceiptType.RRSP ? Color.Info : Color.Secondary)"
+                                                 Variant="Variant.Outlined">
+                                            @r.ReceiptType
+                                        </MudChip>
+                                    </td>
+                                    <td>@r.Date.ToString("MM/dd/yyyy")</td>
+                                    <td><MudText Typo="Typo.caption">@r.AccountabilityDocumentNo</MudText></td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                            @r.ItemCount item(s)
+                                        </MudChip>
+                                    </td>
+                                    <td>@StatusChip(r.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            <MudTooltip Text="View Details">
+                                                <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                                Color="Color.Default" OnClick="@(() => ViewAsync(r.Id))" />
+                                            </MudTooltip>
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canInspect && CanInspectRow(r))
+                                            {
+                                                <MudTooltip Text="Inspect">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.FactCheck" Size="Size.Small"
+                                                                    Color="Color.Info" OnClick="@(() => InspectAsync(r.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Inspected && _canAccept)
+                                            {
+                                                <MudTooltip Text="Receive / Accept">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                                    Color="Color.Success" OnClick="@(() => AcceptAsync(r.Id))" />
+                                                </MudTooltip>
+                                                <MudTooltip Text="Reject">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                                                    Color="Color.Error" OnClick="@(() => RejectAsync(r.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canCreate)
+                                            {
+                                                <MudTooltip Text="Reassign Inspector">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
+                                                                    Color="Color.Primary" OnClick="@(() => ReassignInspectorAsync(r.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (r.Status is ReturnedPropertyReceiptStatus.Pending or ReturnedPropertyReceiptStatus.Inspected && _canCreate)
+                                            {
+                                                <MudTooltip Text="Withdraw Request">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
+                                                                    Color="Color.Warning" OnClick="@(() => CancelAsync(r.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Accepted && (r.HasSignedCopy ? _canViewSigned : _canUploadSigned))
+                                            {
+                                                <MudTooltip Text="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                                    <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                    Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                    OnClick="@(() => OpenSignedCopyAsync(r))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2">
+                        <MudText Typo="Typo.caption">@_totalCount total</MudText>
+                        <MudSpacer />
+                        <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
+                                       SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Detail Card -->
+        @if (_detail is not null)
+        {
+            <MudCard Elevation="1" Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(_detail.ReceiptNo) ? "(Pending — no number yet)" : _detail.ReceiptNo)</MudText>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_detail.ReceiptType == ReturnedPropertyReceiptType.RRSP ? Color.Info : Color.Secondary)"
+                                     Variant="Variant.Outlined">
+                                @_detail.ReceiptType
+                            </MudChip>
+                            @StatusChip(_detail.Status)
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">@_detail.Date.ToString("MMMM dd, yyyy")</MudText>
+                            <MudSpacer />
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary"
+                                        StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                        OnClick="PrintAsync" Disabled="_printing">
+                                @if (_printing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
+                                Print @(_detail.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "RRSP" : "RRP")
+                            </AMISButton>
+                            <AMISIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+                        </MudStack>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="1" Class="mb-2">
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption">Accountability Document</MudText>
+                            <MudText Typo="Typo.body2"><b>@_detail.AccountabilityDocumentNo</b></MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption">Returned By</MudText>
+                            <MudText Typo="Typo.body2">@_detail.ReturnedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.ReturnedBy.Designation) ? $" — {_detail.ReturnedBy.Designation}" : "")</MudText>
+                        </MudItem>
+                        @if (_detail.AssignedInspector is not null)
+                        {
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.caption">Assigned Inspector</MudText>
+                                <MudText Typo="Typo.body2">@_detail.AssignedInspector.PrintedName@(!string.IsNullOrWhiteSpace(_detail.AssignedInspector.Designation) ? $" — {_detail.AssignedInspector.Designation}" : "")</MudText>
+                            </MudItem>
+                        }
+                        @if (_detail.InspectedBy is not null)
+                        {
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.caption">Inspected By</MudText>
+                                <MudText Typo="Typo.body2">@_detail.InspectedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.InspectedBy.Designation) ? $" — {_detail.InspectedBy.Designation}" : "")</MudText>
+                            </MudItem>
+                        }
+                        @if (_detail.ReceivedBy is not null)
+                        {
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.caption">Received By (Custodian)</MudText>
+                                <MudText Typo="Typo.body2">@_detail.ReceivedBy.PrintedName@(!string.IsNullOrWhiteSpace(_detail.ReceivedBy.Designation) ? $" — {_detail.ReceivedBy.Designation}" : "")</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.InspectionRemarks))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption">Inspection Remarks</MudText>
+                                <MudText Typo="Typo.body2">@_detail.InspectionRemarks</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.RejectionReason))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Color="Color.Error">Rejection Reason</MudText>
+                                <MudText Typo="Typo.body2">@_detail.RejectionReason</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.CancellationReason))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Color="Color.Warning">Cancellation Reason</MudText>
+                                <MudText Typo="Typo.body2">@_detail.CancellationReason</MudText>
+                            </MudItem>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                        {
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption">Remarks</MudText>
+                                <MudText Typo="Typo.body2">@_detail.Remarks</MudText>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Returned Items (@_detail.Items.Count)</MudText>
+                    <MudSimpleTable Dense="true" Striped="true">
+                        <thead>
+                            <tr><th>#</th><th>Property No.</th><th>Description</th><th>Type</th><th>Inspected Condition</th><th style="text-align:right">Unit Cost</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _detail.Items.OrderBy(x => x.ItemNo))
+                            {
+                                <tr>
+                                    <td>@item.ItemNo</td>
+                                    <td><b>@item.Snapshot.PropertyNo</b></td>
+                                    <td>@item.Snapshot.Description</td>
+                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Default">@item.Snapshot.AssetType</MudChip></td>
+                                    <td>@ConditionCell(item.InspectedCondition)</td>
+                                    <td style="text-align:right">@Money.Symbol@item.Snapshot.UnitCost.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" style="text-align:right"><b>Total:</b></td>
+                                <td style="text-align:right"><b>@Money.Symbol@_detail.Items.Sum(x => x.Snapshot.UnitCost).ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<ArReturnedPropertyReceiptSummaryDto> _records = [];
+    private ArReturnedPropertyReceiptDto? _detail;
+    private string? _keyword;
+    private bool _loading;
+    private int _activeTabIndex;
+    private int _page = 1;
+
+    // Status filter chips — index mirrors GetStatusFromTabIndex / _statusCounts keys (tab 0 = "All").
+    private static readonly (int Index, string Label)[] _statusTabs =
+    [
+        (0, "All"),
+        (1, "Pending"),
+        (2, "Inspected"),
+        (3, "Accepted"),
+        (4, "Rejected"),
+        (5, "Cancelled"),
+    ];
+    private int _totalCount;
+    private const int PageSize = 15;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
+    private readonly Dictionary<int, int> _statusCounts = [];
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Create);
+    private bool _canInspect => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Inspect);
+    private bool _canAccept => UserProfileState.Permissions.Contains(AssetRegisterPermissions.ReturnedProperty.Accept);
+    private bool _canViewSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
+    private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
+
+    // The inspection is restricted to the inspector nominated on the request (enforced server-side too).
+    private bool CanInspectRow(ArReturnedPropertyReceiptSummaryDto r) =>
+        UserProfileState.EmployeeId != Guid.Empty && r.AssignedInspectorEmployeeId == UserProfileState.EmployeeId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadStatusCountsAsync();
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private static ReturnedPropertyReceiptStatus? GetStatusFromTabIndex(int index) =>
+        index switch
+        {
+            1 => ReturnedPropertyReceiptStatus.Pending,
+            2 => ReturnedPropertyReceiptStatus.Inspected,
+            3 => ReturnedPropertyReceiptStatus.Accepted,
+            4 => ReturnedPropertyReceiptStatus.Rejected,
+            5 => ReturnedPropertyReceiptStatus.Cancelled,
+            _ => null
+        };
+
+    private async Task OnTabChanged(int index)
+    {
+        _activeTabIndex = index;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var status = GetStatusFromTabIndex(_activeTabIndex);
+            var response = await Client.SearchAsync(_keyword, receiptType: null, status: status, page: _page, pageSize: PageSize);
+            _records = [.. response.Items];
+            _totalCount = response.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loading = false; }
+    }
+
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            _statusCounts.Clear();
+            var counts = await Client.GetStatusCountsAsync();
+            var byStatus = counts.ToDictionary(c => c.Status, c => c.Count);
+            _statusCounts[1] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Pending);
+            _statusCounts[2] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Inspected);
+            _statusCounts[3] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Accepted);
+            _statusCounts[4] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Rejected);
+            _statusCounts[5] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Cancelled);
+            _statusCounts[0] = byStatus.Values.Sum();
+        }
+        catch { _statusCounts.Clear(); }
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadStatusCountsAsync();
+        await LoadAsync();
+    }
+
+    private string GetTabLabel(int tabIndex, string label) =>
+        _statusCounts.TryGetValue(tabIndex, out var count) && count > 0 ? $"{label} ({count})" : label;
+
+    private async Task ViewAsync(Guid id)
+    {
+        try { _detail = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+    }
+
+    private bool _printing;
+
+    private async Task PrintAsync()
+    {
+        if (_detail is null) return;
+        _printing = true;
+        try
+        {
+            var bytes = await Client.GetReceiptPdfAsync(_detail.Id, pageWidth: "longbond");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printing = false;
+        }
+    }
+
+    private async Task OpenRequestDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyFormDialog>("Request a Return", options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is ArReturnedPropertyReceiptDto created)
+            _detail = created;
+
+        await RefreshAsync();
+    }
+
+    private async Task InspectAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
+        {
+            Snackbar.Add("Your account is not linked to an employee record, so you cannot be recorded as the inspector.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<ReturnedPropertyInspectDialog> { { x => x.ReceiptId, id } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyInspectDialog>("Inspect Returned Items", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is ArReturnedPropertyReceiptDto updated)
+            _detail = updated;
+
+        await RefreshAsync();
+    }
+
+    private async Task ReassignInspectorAsync(Guid id)
+    {
+        var parameters = new DialogParameters<ReturnedPropertyReassignInspectorDialog>
+        {
+            { x => x.ReceiptId, id },
+            { x => x.CurrentInspectorName, _detail?.Id == id ? _detail.AssignedInspector?.PrintedName : null }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertyReassignInspectorDialog>("Reassign Inspector", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is ArReturnedPropertyReceiptDto updated)
+            _detail = updated;
+
+        await RefreshAsync();
+    }
+
+    private async Task OpenSignedCopyAsync(ArReturnedPropertyReceiptSummaryDto r)
+    {
+        var parameters = new DialogParameters<ReturnedPropertySignedCopyDialog>
+        {
+            { x => x.DocumentId, r.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(r.ReceiptNo) ? "(no number)" : r.ReceiptNo },
+            { x => x.IsAccepted, r.Status == ReturnedPropertyReceiptStatus.Accepted }
+        };
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var options = new DialogOptions { CloseButton = false, BackdropClick = false, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReturnedPropertySignedCopyDialog>("Signed Copy", parameters, options);
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _records = _records
+                .Select(x => x.Id == r.Id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
+    }
+
+    private async Task AcceptAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
+        {
+            Snackbar.Add("Your account is not linked to an employee record, so you cannot be recorded as the receiver.", Severity.Warning);
+            return;
+        }
+
+        var ok = await DialogService.ShowMessageBox(
+            "Accept Return",
+            "Receive and accept this return? The items will be marked back to Available and an official receipt number assigned.",
+            yesText: "Accept", cancelText: "Cancel");
+        if (ok is not true) return;
+
+        var receivedBy = new ArEmployeeRefDto(
+            UserProfileState.EmployeeId,
+            UserProfileState.EmployeeFullName.Trim(),
+            string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
+
+        try
+        {
+            var result = await Client.AcceptAsync(id, receivedBy);
+            Snackbar.Add($"{result.ReceiptNo} accepted.", Severity.Success);
+            _detail = result;
+            await RefreshAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Accept failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task RejectAsync(Guid id)
+    {
+        var parameters = new DialogParameters<ReasonInputDialog>
+        {
+            { x => x.Title, "Reject Return Request" },
+            { x => x.Label, "Rejection Reason" },
+            { x => x.ConfirmText, "Reject" }
+        };
+        var dialog = await DialogService.ShowAsync<ReasonInputDialog>("Reject Return", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not string reason || string.IsNullOrWhiteSpace(reason))
+            return;
+
+        try
+        {
+            await Client.RejectAsync(id, reason);
+            Snackbar.Add("Return request rejected.", Severity.Info);
+            await RefreshAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Reject failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task CancelAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox(
+            "Withdraw Request", "Withdraw this pending return request?",
+            yesText: "Yes, Withdraw", cancelText: "No");
+        if (ok is not true) return;
+
+        try
+        {
+            await Client.CancelAsync(id, null);
+            Snackbar.Add("Return request withdrawn.", Severity.Info);
+            await RefreshAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Withdraw failed: {ex.Message}", Severity.Error); }
+    }
+
+    private static RenderFragment ConditionCell(AssetCondition? condition) => __builder =>
+    {
+        if (condition is null)
+        {
+            __builder.AddContent(0, "—");
+            return;
+        }
+        var (color, label) = condition.Value switch
+        {
+            AssetCondition.InGoodCondition => (Color.Success, "In Good Condition"),
+            AssetCondition.NeedingRepair   => (Color.Warning, "Needing Repair"),
+            AssetCondition.Unserviceable   => (Color.Error, "Unserviceable"),
+            _ => (Color.Default, condition.Value.ToString())
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Variant", Variant.Outlined);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, label)));
+        __builder.CloseComponent();
+    };
+
+    private static RenderFragment StatusChip(ReturnedPropertyReceiptStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            ReturnedPropertyReceiptStatus.Pending   => (Color.Info, Icons.Material.Filled.HourglassBottom),
+            ReturnedPropertyReceiptStatus.Inspected => (Color.Primary, Icons.Material.Filled.FactCheck),
+            ReturnedPropertyReceiptStatus.Accepted  => (Color.Success, Icons.Material.Filled.CheckCircle),
+            ReturnedPropertyReceiptStatus.Rejected  => (Color.Error, Icons.Material.Filled.Cancel),
+            ReturnedPropertyReceiptStatus.Cancelled => (Color.Warning, Icons.Material.Filled.Block),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+}

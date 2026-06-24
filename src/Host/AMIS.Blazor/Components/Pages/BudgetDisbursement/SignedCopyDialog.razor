@@ -1,0 +1,168 @@
+﻿@using AMIS.Modules.BudgetDisbursement.Contracts.v1.SignedDocuments
+@using AMIS.Modules.BudgetDisbursement.Contracts.Permissions
+@using AMIS.Blazor.ApiClient
+@using Microsoft.AspNetCore.Components.Forms
+@inject IBudgetDisbursementSignedDocumentClient Client
+@inject IUserProfileState UserProfileState
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3" Style="min-width: 420px;">
+            <MudText Typo="Typo.h6">Signed Copy — @DocumentNumber</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                The scanned, wet-signed official copy of this @FriendlyType. Stored with a SHA-256 integrity check.
+            </MudText>
+
+            @if (_loading)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (_meta is not null)
+            {
+                <MudPaper Outlined="true" Class="pa-3">
+                    <MudStack Spacing="1">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" />
+                            <MudText Typo="Typo.body1"><b>@_meta.FileName</b></MudText>
+                        </MudStack>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Uploaded by @(_meta.UploadedByName ?? "—") on @_meta.UploadedOnUtc.ToLocalTime().ToString("MM/dd/yyyy hh:mm tt")
+                            · @(FormatSize(_meta.FileSizeBytes))
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="word-break: break-all;">
+                            SHA-256: @_meta.Sha256
+                        </MudText>
+                    </MudStack>
+                </MudPaper>
+
+                <MudStack Row="true" Spacing="2">
+                    <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary"
+                               OnClick="DownloadAsync" Disabled="_busy">Download</MudButton>
+                    @if (_canUpload && IsTerminalState)
+                    {
+                        <MudFileUpload T="IBrowserFile" FilesChanged="OnFilePicked" Accept="application/pdf" MaximumFileCount="1">
+                            <ActivatorContent>
+                                <MudButton StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Outlined" Color="Color.Secondary" Disabled="_busy">
+                                    Replace
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    }
+                </MudStack>
+            }
+            else if (_canUpload && IsTerminalState)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">No signed copy uploaded yet.</MudAlert>
+                <MudFileUpload T="IBrowserFile" FilesChanged="OnFilePicked" Accept="application/pdf" MaximumFileCount="1">
+                    <ActivatorContent>
+                        <MudButton StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy">
+                            Upload Signed Copy (PDF)
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    @(IsTerminalState ? "No signed copy uploaded yet." : NotReadyMessage)
+                </MudAlert>
+            }
+
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Secondary" />
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => Dialog.Close(DialogResult.Ok(_changed)))">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public BudgetDisbursementDocumentType DocumentType { get; set; }
+    [Parameter] public Guid DocumentId { get; set; }
+    [Parameter] public string DocumentNumber { get; set; } = string.Empty;
+
+    /// <summary>True when the document has reached a signed state (DV Approved or Paid) — the only states a signed copy may be uploaded against.</summary>
+    [Parameter] public bool IsTerminalState { get; set; }
+
+    private const long MaxUploadBytes = 25L * 1024 * 1024; // allow multi-page scans (server enforces its own cap)
+
+    private SignedDocumentDto? _meta;
+    private bool _loading = true;
+    private bool _busy;
+    /// <summary>Set true once a signed copy is uploaded/replaced, so the caller knows to refresh the row's green indicator.</summary>
+    private bool _changed;
+    private bool _canUpload => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.SignedDocuments.Upload);
+    private string FriendlyType => DocumentType switch
+    {
+        BudgetDisbursementDocumentType.DisbursementVoucher => "disbursement voucher (DV)",
+        BudgetDisbursementDocumentType.BudgetUtilizationRequest => "budget utilization request and status (BUR)",
+        _ => "document"
+    };
+
+    private string NotReadyMessage => DocumentType switch
+    {
+        BudgetDisbursementDocumentType.DisbursementVoucher => "A signed copy can only be uploaded once this voucher is approved or paid.",
+        BudgetDisbursementDocumentType.BudgetUtilizationRequest => "A signed copy can only be uploaded once this BUR is obligated.",
+        _ => "A signed copy can only be uploaded once this document is in its signed state."
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try { _meta = await Client.GetAsync(DocumentType, DocumentId); }
+        catch { _meta = null; }
+        finally { _loading = false; }
+    }
+
+    private async Task OnFilePicked(IBrowserFile? file)
+    {
+        if (file is null) return;
+        if (!file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Please select a PDF file.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await using var stream = file.OpenReadStream(MaxUploadBytes);
+            _meta = await Client.UploadAsync(DocumentType, DocumentId, stream, file.Name,
+                string.IsNullOrWhiteSpace(file.ContentType) ? "application/pdf" : file.ContentType);
+            _changed = true;
+            Snackbar.Add("Signed copy uploaded.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Upload failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task DownloadAsync()
+    {
+        _busy = true;
+        try
+        {
+            var bytes = await Client.DownloadAsync(DocumentType, DocumentId);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Download failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private static string FormatSize(long bytes) =>
+        bytes >= 1024 * 1024 ? $"{bytes / (1024.0 * 1024.0):0.0} MB" : $"{bytes / 1024.0:0} KB";
+}

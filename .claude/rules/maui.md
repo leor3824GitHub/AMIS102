@@ -1,16 +1,16 @@
 ﻿---
 paths:
-  - "src/Playground/Playground.Maui/**"
+  - "src/Host/AMIS.Maui/**"
 ---
 
 # MAUI Client Rules
 
-`Playground.Maui` is a **client-only** project. It consumes the existing REST API and has no knowledge of backend module internals. It never references any `Modules.*` project directly.
+`AMIS.Maui` is a **client-only** project. It consumes the existing REST API and has no knowledge of backend module internals. It never references any `Modules.*` project directly.
 
 ## Project Location
 
 ```
-src/Playground/Playground.Maui/
+src/Host/AMIS.Maui/
 ```
 
 Added to `src/AMIS.Framework.slnx`. Targets: `net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0`.
@@ -330,9 +330,9 @@ Always declare `x:DataType` on every `ContentPage` and every `DataTemplate`. Thi
 <!-- ✅ Correct — compiled binding on page -->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:Playground.Maui.Features.Inventory"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.Inventory"
              x:DataType="vm:InventoryViewModel"
-             x:Class="Playground.Maui.Features.Inventory.InventoryPage">
+             x:Class="AMIS.Maui.Features.Inventory.InventoryPage">
 
 <!-- ✅ Correct — compiled binding on DataTemplate -->
 <DataTemplate x:DataType="dto:ICSSummaryDto">
@@ -472,7 +472,7 @@ private void OnBarcodeDetected(object sender, BarcodeDetectionEventArgs e)
 
 ### AOT Compilation and Trimming
 
-Enable full AOT and trimming in `Playground.Maui.csproj` for release builds. This significantly reduces app size and improves cold startup time.
+Enable full AOT and trimming in `AMIS.Maui.csproj` for release builds. This significantly reduces app size and improves cold startup time.
 
 ```xml
 <PropertyGroup Condition="'$(Configuration)' == 'Release'">

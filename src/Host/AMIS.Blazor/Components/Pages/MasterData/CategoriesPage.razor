@@ -1,0 +1,291 @@
+@page "/masterdata/categories"
+@implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
+@using AMIS.Modules.MasterData.Contracts.Permissions
+@inherits ComponentBase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject MasterDataService MasterDataService
+@inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Categories" Description="Manage product categories">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search categories..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchCategories())"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchCategories" Disabled="_isLoading">
+                Search
+            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
+        </MudStack>
+    </ActionContent>
+</AMISPageHeader>
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <!-- Categories List -->
+        <MudItem xs="12">
+            <MudCard Class="AMIS-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Categories List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
+
+                    @if (_categories.Any())
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var category in _categories.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                                {
+                                    <tr>
+                                        <td>@category.Code</td>
+                                        <td>@category.Name</td>
+                                        <td>@(category.Description ?? "-")</td>
+                                        <td><MudChip T="string" Size="Size.Small" Color="@(category.IsActive ? Color.Success : Color.Error)">@(category.IsActive ? "Active" : "Inactive")</MudChip></td>
+                                        <td>
+                                            @if (IsOwnedByMe(category.OfficeCode) && (_canUpdate || _canDelete))
+                                            {
+                                                <MudStack Row="true" Spacing="1">
+                                                    @if (_canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Edit category">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(category))" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (_canDelete)
+                                                    {
+                                                        <MudTooltip Text="Delete category">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeleteCategory(category.Id))" />
+                                                        </MudTooltip>
+                                                    }
+                                                </MudStack>
+                                            }
+                                            else
+                                            {
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(category.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
+                                                </MudTooltip>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                        @if (_categories.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_categories.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No categories yet. Create one to get started.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private List<CategoryDto> _categories = new();
+    private List<CategoryDto> _allCategories = new();
+    private bool _initialized = false;
+    private bool _isLoading = false;
+    private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Categories.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Categories.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Categories.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        var profile = await OrgProfileClient.GetAsync();
+        _myOfficeCode = profile?.AnnexECode;
+        await LoadCategories();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await MasterDataService.GetCategoriesAsync(pageSize: 100);
+            _allCategories = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load categories: {ex.Message}", Severity.Error);
+            _categories = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchCategories()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await MasterDataService.GetCategoriesAsync(keyword: _searchKeyword, pageSize: 100);
+            _allCategories = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+
+            if (_categories.Count == 0 && !string.IsNullOrWhiteSpace(_searchKeyword))
+            {
+                Snackbar.Add("No categories found matching your search", Severity.Info);
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
+            _categories = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<CategoryFormDialog>("Create Category", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadCategories();
+        }
+    }
+
+    private async Task OpenEditDialog(CategoryDto category)
+    {
+        var parameters = new DialogParameters { ["Existing"] = category };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<CategoryFormDialog>($"Edit {category.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadCategories();
+        }
+    }
+
+    private async Task DeleteCategory(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this category"))
+            return;
+
+        try
+        {
+            await MasterDataService.DeleteCategoryAsync(id);
+            await LoadCategories();
+            Snackbar.Add("Category deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete category: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
+    private Task OnStatusFilterChanged(string status)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        ApplyLocalFilters();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
+    private void ApplyLocalFilters()
+    {
+        var filtered = _statusFilter switch
+        {
+            "Active" => _allCategories.Where(x => x.IsActive),
+            "Inactive" => _allCategories.Where(x => !x.IsActive),
+            "Own" => _allCategories.Where(x => IsOwnedByMe(x.OfficeCode)),
+            _ => _allCategories.AsEnumerable()
+        };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OfficeCode != null &&
+                x.OfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _categories = (_sortField, _sortAscending) switch
+        {
+            ("Code", true)  => filtered.OrderBy(x => x.Code).ToList(),
+            ("Code", false) => filtered.OrderByDescending(x => x.Code).ToList(),
+            ("Name", false) => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
+            _               => filtered.OrderBy(x => x.Name).ThenBy(x => x.Code).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
+    }
+}
+

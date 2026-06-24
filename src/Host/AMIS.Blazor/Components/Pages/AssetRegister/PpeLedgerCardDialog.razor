@@ -1,0 +1,71 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1.Depreciation
+@inject IArDepreciationClient Client
+
+<MudDialog>
+    <DialogContent>
+        <div style="min-width:560px;">
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (_card is null)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">No ledger card available for @PropertyNo.</MudAlert>
+            }
+            else
+            {
+                <MudGrid Spacing="2" Class="mb-2">
+                    <MudItem xs="6"><MudText Typo="Typo.caption" Color="Color.Secondary">Property No.</MudText><MudText Typo="Typo.body2"><strong>@_card.PropertyNo</strong></MudText></MudItem>
+                    <MudItem xs="6"><MudText Typo="Typo.caption" Color="Color.Secondary">Description</MudText><MudText Typo="Typo.body2">@_card.Description</MudText></MudItem>
+                    <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Secondary">Acquisition Cost</MudText><MudText Typo="Typo.body2">@Money.Symbol@_card.AcquisitionCost.ToString("N2")</MudText></MudItem>
+                    <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Secondary">Residual Value</MudText><MudText Typo="Typo.body2">@Money.Symbol@_card.ResidualValue.ToString("N2")</MudText></MudItem>
+                    <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Secondary">Useful Life</MudText><MudText Typo="Typo.body2">@_card.EstimatedUsefulLifeYears yr</MudText></MudItem>
+                    <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Secondary">Monthly Depreciation</MudText><MudText Typo="Typo.body2">@Money.Symbol@_card.MonthlyDepreciation.ToString("N2")</MudText></MudItem>
+                    <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Secondary">Accum. Depreciation</MudText><MudText Typo="Typo.body2">@Money.Symbol@_card.AccumulatedDepreciation.ToString("N2")</MudText></MudItem>
+                    <MudItem xs="4"><MudText Typo="Typo.caption" Color="Color.Secondary">Carrying Amount</MudText><MudText Typo="Typo.body2">@Money.Symbol@_card.CarryingAmount.ToString("N2")</MudText></MudItem>
+                </MudGrid>
+
+                @if (_card.IsFullyDepreciated)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="mb-2">Fully depreciated</MudChip>
+                }
+
+                <MudTable Items="_card.Entries" Dense="true" Hover="true" Striped="true" T="DepreciationEntryDto" FixedHeader="true" Height="320px">
+                    <HeaderContent>
+                        <MudTh>Period</MudTh>
+                        <MudTh Style="text-align:right">Charge (@Money.Symbol)</MudTh>
+                        <MudTh Style="text-align:right">Accum. Deprec. (@Money.Symbol)</MudTh>
+                        <MudTh Style="text-align:right">Carrying (@Money.Symbol)</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Period.ToString("yyyy-MM")</MudTd>
+                        <MudTd Style="text-align:right">@context.Amount.ToString("N2")</MudTd>
+                        <MudTd Style="text-align:right">@context.AccumulatedDepreciationAfter.ToString("N2")</MudTd>
+                        <MudTd Style="text-align:right">@context.CarryingAmountAfter.ToString("N2")</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Color="Color.Secondary">No depreciation posted yet. Run depreciation to populate the schedule.</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="@(() => MudDialog.Close())">Close</AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string PropertyNo { get; set; } = "";
+
+    private bool _busy = true;
+    private PpeLedgerCardDto? _card;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _card = await Client.GetLedgerCardAsync(PropertyNo); }
+        finally { _busy = false; }
+    }
+}

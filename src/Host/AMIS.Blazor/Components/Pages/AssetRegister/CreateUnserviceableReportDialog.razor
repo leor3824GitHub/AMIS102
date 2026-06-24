@@ -1,0 +1,79 @@
+@using AMIS.Blazor.ApiClient
+@using UnserviceableReportType = AMIS.Modules.AssetRegister.Contracts.v1.UnserviceableReportType
+@inject IArUnserviceableReportClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width: 420px;">
+            <MudSelect @bind-Value="_form.ReportType" Label="Report Type" Variant="Variant.Outlined" T="UnserviceableReportType" Required="true">
+                <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUSP">IIRUSP (Semi-Expendable)</MudSelectItem>
+                <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUP">IIRUP (PPE)</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
+            <MudTextField @bind-Value="_form.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
+            <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+            <MudTextField @bind-Value="_form.AccountableOfficerName" Label="Accountable Officer (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+            <MudTextField @bind-Value="_form.AccountableOfficerDesignation" Label="Designation" Variant="Variant.Outlined" MaxLength="100" />
+            <AMISButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                        OnClick="CreateReportAsync" Disabled="_busy">
+                Create Report
+            </AMISButton>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private bool _busy;
+    private readonly CreateFormModel _form = new();
+
+    private sealed class CreateFormModel
+    {
+        public UnserviceableReportType ReportType { get; set; }
+        public string FundCluster { get; set; } = "";
+        public string Station { get; set; } = "";
+        public DateTime? AsAtNullable { get; set; }
+        public string AccountableOfficerName { get; set; } = "";
+        public string? AccountableOfficerDesignation { get; set; }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private async Task CreateReportAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.AccountableOfficerName) ||
+            string.IsNullOrWhiteSpace(_form.Station) || !_form.AsAtNullable.HasValue)
+        {
+            Snackbar.Add("All required fields must be filled.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new CreateUnserviceableReportRequest(
+                _form.ReportType,
+                _form.FundCluster,
+                _form.Station.Trim(),
+                DateOnly.FromDateTime(_form.AsAtNullable.Value),
+                new ArEmployeeRefDto(Guid.Empty, _form.AccountableOfficerName.Trim(), _form.AccountableOfficerDesignation));
+
+            var created = await Client.CreateDraftAsync(req);
+            Snackbar.Add("Report created.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(created));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

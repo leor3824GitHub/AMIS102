@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.Scan"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
+             x:DataType="vm:ScanViewModel"
+             x:Class="AMIS.Maui.Features.Scan.ScanPage"
+             Title="Scan Asset">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Barcode viewfinder (default mode) -->
+        <zxing:CameraBarcodeReaderView Grid.Row="0"
+                                       x:Name="BarcodeReader"
+                                       IsVisible="{Binding IsBarcodeMode}"
+                                       IsDetecting="False"
+                                       BarcodesDetected="OnBarcodeDetected">
+            <zxing:CameraBarcodeReaderView.Options>
+                <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
+                                                AutoRotate="True"
+                                                Multiple="False" />
+            </zxing:CameraBarcodeReaderView.Options>
+        </zxing:CameraBarcodeReaderView>
+
+        <!-- Live text viewfinder host (text mode). The CameraView is created in code-behind on demand
+             so its platform handler is never realized on devices without a camera (e.g. desktops) —
+             realizing it eagerly crashes the page, unlike ZXing which degrades gracefully. -->
+        <Grid Grid.Row="0"
+              x:Name="TextCameraHost"
+              IsVisible="{Binding IsTextMode}" />
+
+        <!-- Text-mode hint overlay — pushed below the toggle pill by top padding -->
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding IsTextMode}"
+                             VerticalOptions="Start" HorizontalOptions="Center"
+                             Spacing="8" Padding="20,80"
+                             InputTransparent="True">
+            <ActivityIndicator IsRunning="{Binding IsTextMode}"
+                               Color="{StaticResource White}"
+                               HorizontalOptions="Center" />
+            <Label Text="Point at the printed property number"
+                   FontFamily="InterSemiBold"
+                   FontSize="14"
+                   TextColor="{StaticResource White}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+            <Label Text="Hold steady — it reads automatically."
+                   FontSize="12"
+                   TextColor="{StaticResource Gray200}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- No camera placeholder (Windows / devices without camera) -->
+        <VerticalStackLayout Grid.Row="0"
+                             IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+                             VerticalOptions="Center" HorizontalOptions="Center"
+                             Spacing="12" Padding="32">
+            <Label Text="&#x1F4F7;"
+                   FontSize="52"
+                   HorizontalOptions="Center" />
+            <Label Text="Camera not available on this device."
+                   FontSize="14"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+            <Label Text="Use the search box below to look up a property number."
+                   FontSize="13"
+                   TextColor="{StaticResource Gray400}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <!-- Barcode / Text mode toggle pill — floated at the top of the camera area.
+             Hidden when no camera is present (Windows). -->
+        <Border Grid.Row="0"
+                IsVisible="{Binding IsCameraAvailable}"
+                HorizontalOptions="Center"
+                VerticalOptions="Start"
+                Margin="0,20,0,0"
+                Stroke="Transparent"
+                Background="{StaticResource CameraOverlayBg}"
+                Padding="3">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="22" />
+            </Border.StrokeShape>
+            <HorizontalStackLayout Spacing="2">
+
+                <!-- Barcode tab -->
+                <Border Stroke="Transparent"
+                        Background="Transparent"
+                        Padding="20,8">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="18" />
+                    </Border.StrokeShape>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
+                                     Binding="{Binding IsBarcodeMode}"
+                                     Value="True">
+                            <Setter Property="Background" Value="{StaticResource White}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding StopTextScanCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="Barcode"
+                           FontFamily="InterSemiBold"
+                           FontSize="13"
+                           TextColor="{StaticResource Gray300}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label"
+                                         Binding="{Binding IsBarcodeMode}"
+                                         Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+
+                <!-- Text tab -->
+                <Border Stroke="Transparent"
+                        Background="Transparent"
+                        Padding="20,8">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="18" />
+                    </Border.StrokeShape>
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border"
+                                     Binding="{Binding IsTextMode}"
+                                     Value="True">
+                            <Setter Property="Background" Value="{StaticResource White}" />
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding StartTextScanCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="Text"
+                           FontFamily="InterSemiBold"
+                           FontSize="13"
+                           TextColor="{StaticResource Gray300}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label"
+                                         Binding="{Binding IsTextMode}"
+                                         Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Border>
+
+            </HorizontalStackLayout>
+        </Border>
+
+        <!-- Bottom panel: manual entry (always visible) -->
+        <Border Grid.Row="1"
+                Stroke="Transparent"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                Padding="20,16,20,24">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20,20,0,0" />
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-4" Radius="16" Opacity="0.06" />
+            </Border.Shadow>
+
+            <VerticalStackLayout Spacing="12">
+                <Label Text="MANUAL ENTRY"
+                       Style="{StaticResource SectionHeaderStyle}"
+                       Margin="0,0,0,0" />
+
+                <HorizontalStackLayout Spacing="20" RadioButtonGroup.GroupName="ScanSearchMode">
+                    <RadioButton Content="Property No" IsChecked="True" />
+                    <RadioButton Content="Serial No" IsChecked="{Binding SearchBySerial, Mode=TwoWay}" />
+                </HorizontalStackLayout>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Entry Grid.Column="0"
+                           Placeholder="{Binding SearchPlaceholder}"
+                           Text="{Binding ManualPropertyNo}"
+                           ReturnCommand="{Binding SearchManualCommand}"
+                           AutomationId="PropertyNoEntry" />
+                    <Button Grid.Column="1"
+                            Text="Search"
+                            Command="{Binding SearchManualCommand}" />
+                </Grid>
+
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                       TextColor="{StaticResource Danger}"
+                       FontSize="13"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
+</ContentPage>

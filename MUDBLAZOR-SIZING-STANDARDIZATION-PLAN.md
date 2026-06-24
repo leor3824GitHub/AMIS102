@@ -76,12 +76,12 @@ This plan standardizes control sizing across the Blazor UI to eliminate visual i
 #### 2. **High-Traffic Pages with Mixed Patterns (User Visible)**
 | File | Current Issue | Visual Symptom | Priority |
 |------|---|---|---|
-| [VehiclesPage](src/Playground/Playground.Blazor/Components/Pages/Vehicle/VehiclesPage.razor) | Search (Size.Small 48px) + Select (Dense 40px) + Button (default 48px) | Misaligned filter bar; inputs at 2 different heights | **P1** |
-| [Audits.razor](src/Playground/Playground.Blazor/Components/Pages/Audits.razor) | 7 filter fields, no consistent Dense/Size | Advanced Filter section takes 180px+ (should be 120px); inconsistent field heights | **P1** |
-| [PhysicalCountWalkthroughPage](src/Playground/Playground.Blazor/Components/Pages/AssetManagement/PhysicalCountWalkthroughPage.razor) | Dialog fields mix default (56px) + Size.Small (48px) | "Mark as Found" dialog form looks cramped; vertical rhythm breaks | **P1** |
-| [AssetManagementReportsPage](src/Playground/Playground.Blazor/Components/Pages/AssetManagement/AssetManagementReportsPage.razor) | Filter sidebar: inconsistent field sizes across tabs | Each tab filter has different control heights; tab content alignment jumps | **P1** |
-| [GroupsPage](src/Playground/Playground.Blazor/Components/Pages/Groups/GroupsPage.razor) | Search field (default 56px) vs. DataGrid row (32px dense) | Massive height gap between filter and table; poor visual hierarchy | **P1** |
-| [PpmpPage.razor](src/Playground/Playground.Blazor/Components/Pages/ProcurementPlanning/PpmpPage.razor) | Multiple MudSelects without sizing | Filter row too tall; buttons floating off-center vertically | **P2** |
+| [VehiclesPage](src/Host/AMIS.Blazor/Components/Pages/Vehicle/VehiclesPage.razor) | Search (Size.Small 48px) + Select (Dense 40px) + Button (default 48px) | Misaligned filter bar; inputs at 2 different heights | **P1** |
+| [Audits.razor](src/Host/AMIS.Blazor/Components/Pages/Audits.razor) | 7 filter fields, no consistent Dense/Size | Advanced Filter section takes 180px+ (should be 120px); inconsistent field heights | **P1** |
+| [PhysicalCountWalkthroughPage](src/Host/AMIS.Blazor/Components/Pages/AssetManagement/PhysicalCountWalkthroughPage.razor) | Dialog fields mix default (56px) + Size.Small (48px) | "Mark as Found" dialog form looks cramped; vertical rhythm breaks | **P1** |
+| [AssetManagementReportsPage](src/Host/AMIS.Blazor/Components/Pages/AssetManagement/AssetManagementReportsPage.razor) | Filter sidebar: inconsistent field sizes across tabs | Each tab filter has different control heights; tab content alignment jumps | **P1** |
+| [GroupsPage](src/Host/AMIS.Blazor/Components/Pages/Groups/GroupsPage.razor) | Search field (default 56px) vs. DataGrid row (32px dense) | Massive height gap between filter and table; poor visual hierarchy | **P1** |
+| [PpmpPage.razor](src/Host/AMIS.Blazor/Components/Pages/ProcurementPlanning/PpmpPage.razor) | Multiple MudSelects without sizing | Filter row too tall; buttons floating off-center vertically | **P2** |
 | Weather.razor, Users/**/*.razor | Inconsistent across all CRUD pages | Default sizing everywhere; forms feel bloated | **P3** |
 
 **Test Yourself:** Open Audits.razor and VehiclesPage in browser side-by-side. Notice the Advanced Filter section is noticeably taller, and the filter row controls don't align. That's the problem we're solving.
@@ -422,7 +422,7 @@ Update MudAutocomplete call (line 6-8) to use the parameter:
 #### Pages in First Batch (Priority Order)
 
 ##### 1. VehiclesPage — Filter Row Alignment
-**File:** `src/Playground/Playground.Blazor/Components/Pages/Vehicle/VehiclesPage.razor` (line 10–18)
+**File:** `src/Host/AMIS.Blazor/Components/Pages/Vehicle/VehiclesPage.razor` (line 10–18)
 
 **Change Pattern:**
 - All filters in the row → Size.Small (40px) or use AMISTextField/AMISSelect
@@ -432,7 +432,7 @@ Update MudAutocomplete call (line 6-8) to use the parameter:
 **Test:** Filter row should be exactly one control height; all elements aligned top-to-bottom.
 
 ##### 2. Audits.razor — Advanced Filters Section
-**File:** `src/Playground/Playground.Blazor/Components/Pages/Audits.razor` (line 95–180)
+**File:** `src/Host/AMIS.Blazor/Components/Pages/Audits.razor` (line 95–180)
 
 **Change Pattern:**
 - MudDateRangePicker + MudTextField + MudSelect in grid → all Dense="true" + Margin="Margin.Dense"
@@ -442,7 +442,7 @@ Update MudAutocomplete call (line 6-8) to use the parameter:
 **Test:** Filter card should be ~120px tall (was ~180px); vertical rhythm consistent.
 
 ##### 3. PhysicalCountWalkthroughPage — Dialog Forms
-**File:** `src/Playground/Playground.Blazor/Components/Pages/AssetManagement/PhysicalCountWalkthroughPage.razor` (line 140–180)
+**File:** `src/Host/AMIS.Blazor/Components/Pages/AssetManagement/PhysicalCountWalkthroughPage.razor` (line 140–180)
 
 **Change Pattern:**
 - All MudSelect / MudTextField in dialogs → Dense="true" + Margin="Margin.Dense"
@@ -452,7 +452,7 @@ Update MudAutocomplete call (line 6-8) to use the parameter:
 **Test:** "Mark Found" dialog should look compact; all fields same height; dialog fits screen.
 
 ##### 4. AssetManagementReportsPage — Tabbed Filters
-**File:** `src/Playground/Playground.Blazor/Components/Pages/AssetManagement/AssetManagementReportsPage.razor` (line 13–45)
+**File:** `src/Host/AMIS.Blazor/Components/Pages/AssetManagement/AssetManagementReportsPage.razor` (line 13–45)
 
 **Change Pattern:**
 - Filter sidebar controls (all MudAutocomplete, MudSelect, MudDatePicker) → Dense="true" + Margin="Margin.Dense" + Size.Small
@@ -544,8 +544,8 @@ dotnet build src/AMIS.Framework.slnx /p:GenerateFullPaths=true
 ##### Step 2: Smoke Test (Per Migrated Page)
 1. **Start app:**
    ```powershell
-   dotnet run --project src/Playground/Playground.Api
-   # or: dotnet run --project src/Playground/AMIS.Playground.AppHost
+   dotnet run --project src/Host/AMIS.Api
+   # or: dotnet run --project src/Host/AMIS.AppHost
    ```
 2. **Navigate to page** (e.g., `/vehicle/vehicles`)
 3. **Visual checks:**
@@ -581,10 +581,10 @@ If issues found:
 
 ```bash
 # Option 1: Rollback single page
-git checkout -- src/Playground/Playground.Blazor/Components/Pages/Vehicle/VehiclesPage.razor
+git checkout -- src/Host/AMIS.Blazor/Components/Pages/Vehicle/VehiclesPage.razor
 
 # Option 2: Rollback entire Phase 2
-git checkout -- src/Playground/Playground.Blazor/Components/Pages/
+git checkout -- src/Host/AMIS.Blazor/Components/Pages/
 
 # Investigate issue on reverted page
 # Fix in isolated branch, test, then merge
@@ -642,13 +642,13 @@ After Phase 2, measure:
    - Add optional `InputSize` parameter.
 
 ### Phase 2 (First Batch Pages)
-5. src/Playground/Playground.Blazor/Components/Pages/Vehicle/VehiclesPage.razor
-6. src/Playground/Playground.Blazor/Components/Pages/Audits.razor
-7. src/Playground/Playground.Blazor/Components/Pages/AssetManagement/PhysicalCountWalkthroughPage.razor
-8. src/Playground/Playground.Blazor/Components/Pages/AssetManagement/AssetManagementReportsPage.razor
+5. src/Host/AMIS.Blazor/Components/Pages/Vehicle/VehiclesPage.razor
+6. src/Host/AMIS.Blazor/Components/Pages/Audits.razor
+7. src/Host/AMIS.Blazor/Components/Pages/AssetManagement/PhysicalCountWalkthroughPage.razor
+8. src/Host/AMIS.Blazor/Components/Pages/AssetManagement/AssetManagementReportsPage.razor
 
 ### Phase 3 (Remaining Pages)
-- ~50 additional Playground.Blazor pages (bulk update with Find & Replace).
+- ~50 additional AMIS.Blazor pages (bulk update with Find & Replace).
 
 ### Phase 4 (Documentation)
 9. CLAUDE.md (update Blazor section)
@@ -891,7 +891,7 @@ git checkout -b feature/mudblazor-sizing-standardization
 **4. Build & test Phase 1:**
 ```powershell
 dotnet build src/AMIS.Framework.slnx  # Must pass with 0 warnings
-dotnet run --project src/Playground/Playground.Api
+dotnet run --project src/Host/AMIS.Api
 # Navigate to existing pages; verify no changes (backward compat)
 ```
 

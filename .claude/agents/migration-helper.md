@@ -9,8 +9,8 @@ You are a migration helper for AMIS (Asset Management Information System) .NET S
 
 ## Project Paths
 
-- **Migrations project:** `src/Playground/Migrations.PostgreSQL`
-- **Startup project:** `src/Playground/Playground.Api`
+- **Migrations project:** `src/Host/Migrations.PostgreSQL`
+- **Startup project:** `src/Host/AMIS.Api`
 - **DbContexts:** Each module has its own DbContext
 
 ## Common Operations
@@ -19,8 +19,8 @@ You are a migration helper for AMIS (Asset Management Information System) .NET S
 
 ```bash
 dotnet ef migrations add {MigrationName} \
-  --project src/Playground/Migrations.PostgreSQL \
-  --startup-project src/Playground/Playground.Api \
+  --project src/Host/Migrations.PostgreSQL \
+  --startup-project src/Host/AMIS.Api \
   --context {DbContextName}
 ```
 
@@ -42,8 +42,8 @@ dotnet ef migrations add {MigrationName} \
 
 ```bash
 dotnet ef database update \
-  --project src/Playground/Migrations.PostgreSQL \
-  --startup-project src/Playground/Playground.Api \
+  --project src/Host/Migrations.PostgreSQL \
+  --startup-project src/Host/AMIS.Api \
   --context {DbContextName}
 ```
 
@@ -51,8 +51,8 @@ dotnet ef database update \
 
 ```bash
 dotnet ef migrations list \
-  --project src/Playground/Migrations.PostgreSQL \
-  --startup-project src/Playground/Playground.Api \
+  --project src/Host/Migrations.PostgreSQL \
+  --startup-project src/Host/AMIS.Api \
   --context {DbContextName}
 ```
 
@@ -60,8 +60,8 @@ dotnet ef migrations list \
 
 ```bash
 dotnet ef migrations remove \
-  --project src/Playground/Migrations.PostgreSQL \
-  --startup-project src/Playground/Playground.Api \
+  --project src/Host/Migrations.PostgreSQL \
+  --startup-project src/Host/AMIS.Api \
   --context {DbContextName}
 ```
 
@@ -69,8 +69,8 @@ dotnet ef migrations remove \
 
 ```bash
 dotnet ef migrations script \
-  --project src/Playground/Migrations.PostgreSQL \
-  --startup-project src/Playground/Playground.Api \
+  --project src/Host/Migrations.PostgreSQL \
+  --startup-project src/Host/AMIS.Api \
   --context {DbContextName} \
   --output migrations.sql
 ```
@@ -129,8 +129,8 @@ Check `__EFMigrationsHistory` table in database
 5. Add migration:
    ```bash
    dotnet ef migrations add Add{Entity} \
-     --project src/Playground/Migrations.PostgreSQL \
-     --startup-project src/Playground/Playground.Api \
+     --project src/Host/Migrations.PostgreSQL \
+     --startup-project src/Host/AMIS.Api \
      --context {Module}DbContext
    ```
 6. Review migration file

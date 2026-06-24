@@ -15,7 +15,7 @@ internal sealed class EmployeeIssuancePdfDocument(
     Dictionary<string, string>  employeeNames,
     Dictionary<string, string>  departmentNames,
     string                      paperSize   = "a4",
-    string                      orientation = "landscape",
+    string                      orientation = "portrait",
     float                       marginMm    = 15f) : IDocument
 {
     public DocumentMetadata GetMetadata() => new()

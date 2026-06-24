@@ -1,0 +1,361 @@
+@page "/sessions"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Shared.Identity
+@inherits ComponentBase
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ISessionsClient SessionsClient
+@inject IIdentityClient IdentityClient
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Active Sessions"
+               Description="Manage your active sessions and connected devices">
+    <ActionContent>
+        @if (_canRevokeAll)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Warning"
+                       StartIcon="@Icons.Material.Filled.Logout"
+                       OnClick="RevokeAllSessions"
+                       Disabled="_loading || !_sessions.Any()">
+                Logout All Other Devices
+            </MudButton>
+        }
+    </ActionContent>
+</AMISPageHeader>
+
+@* Stats Cards *@
+<MudGrid Class="mb-4">
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Devices"
+                     IconColor="Color.Primary"
+                     Value="@_stats.Total.ToString()"
+                     Label="Active Sessions"
+                     Badge="Total" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Computer"
+                     IconColor="Color.Info"
+                     Value="@_stats.Desktop.ToString()"
+                     Label="Desktop Sessions"
+                     Badge="Desktop" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.PhoneAndroid"
+                     IconColor="Color.Success"
+                     Value="@_stats.Mobile.ToString()"
+                     Label="Mobile Sessions"
+                     Badge="Mobile" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Tablet"
+                     IconColor="Color.Warning"
+                     Value="@_stats.Tablet.ToString()"
+                     Label="Tablet Sessions"
+                     Badge="Tablet" />
+    </MudItem>
+</MudGrid>
+
+@* Sessions List *@
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+
+    <MudDataGrid T="UserSessionDto"
+                 Items="_sessions"
+                 Loading="_loading"
+                 Hover="true"
+                 Dense="true"
+                 Striped="true"
+                 SortMode="SortMode.Single"
+                 Filterable="false"
+                 RowsPerPage="@_pageSize"
+                 Class="sessions-datagrid">
+        <Columns>
+            <TemplateColumn Title="Device" Sortable="true" SortBy="@(x => x.DeviceType)">
+                <CellTemplate>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudAvatar Size="Size.Small" Class="device-avatar" Color="@GetDeviceColor(context.Item.DeviceType)">
+                            <MudIcon Icon="@GetDeviceIcon(context.Item.DeviceType)" Size="Size.Small" />
+                        </MudAvatar>
+                        <MudStack Spacing="0">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.body2" Class="fw-600">
+                                    @(context.Item.Browser ?? "Unknown Browser")
+                                    @if (!string.IsNullOrEmpty(context.Item.BrowserVersion))
+                                    {
+                                        <span class="text-muted"> @context.Item.BrowserVersion</span>
+                                    }
+                                </MudText>
+                                @if (context.Item.IsCurrentSession)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                                        Current
+                                    </MudChip>
+                                }
+                            </MudStack>
+                            <MudText Typo="Typo.caption" Class="text-muted">
+                                @(context.Item.OperatingSystem ?? "Unknown OS")
+                                @if (!string.IsNullOrEmpty(context.Item.OsVersion))
+                                {
+                                    <span> @context.Item.OsVersion</span>
+                                }
+                            </MudText>
+                        </MudStack>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="x => x.IpAddress" Title="IP Address" Sortable="true">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@context.Item.IpAddress</MudText>
+                </CellTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="Last Activity" Sortable="true" SortBy="@(x => x.LastActivityAt)">
+                <CellTemplate>
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2">@FormatRelativeTime(context.Item.LastActivityAt)</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">@context.Item.LastActivityAt.ToString("MMM dd, yyyy HH:mm")</MudText>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Created" Sortable="true" SortBy="@(x => x.CreatedAt)">
+                <CellTemplate>
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2">@FormatRelativeTime(context.Item.CreatedAt)</MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">@context.Item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudText>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.IsActive)">
+                <CellTemplate>
+                    @if (context.Item.IsActive)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Expired</MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
+                <CellTemplate>
+                    @if (!context.Item.IsCurrentSession && _canRevoke)
+                    {
+                        <MudTooltip Text="Revoke this session">
+                            <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => RevokeSession(context.Item))"
+                                           Disabled="_busySessionId == context.Item.Id" />
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudTooltip Text="This is your current session">
+                            <MudIconButton Icon="@Icons.Material.Filled.Lock"
+                                           Size="Size.Small"
+                                           Color="Color.Default"
+                                           Disabled="true" />
+                        </MudTooltip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="UserSessionDto" PageSizeOptions="@_pageSizeOptions" />
+        </PagerContent>
+        <NoRecordsContent>
+            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.DevicesOther" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.h6">No active sessions</MudText>
+                <MudText Typo="Typo.body2" Class="text-muted">You don't have any active sessions at the moment.</MudText>
+            </MudStack>
+        </NoRecordsContent>
+    </MudDataGrid>
+</MudPaper>
+
+<style>
+    .device-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .sessions-datagrid .mud-table-head .mud-table-row .mud-table-cell {
+        font-weight: 600;
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.04);
+    }
+
+    .sessions-datagrid .mud-table-row:hover {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.02);
+    }
+</style>
+
+@code {
+    private List<UserSessionDto> _sessions = new();
+    private bool _loading = true;
+    private Guid? _busySessionId;
+
+    private readonly int _pageSize = 10;
+    private readonly int[] _pageSizeOptions = { 5, 10, 25, 50 };
+
+    private SessionStats _stats = new();
+
+    private class SessionStats
+    {
+        public int Total { get; set; }
+        public int Desktop { get; set; }
+        public int Mobile { get; set; }
+        public int Tablet { get; set; }
+    }
+
+    private bool _canRevoke => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Sessions.Revoke);
+    private bool _canRevokeAll => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Sessions.RevokeAll);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadSessions();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadSessions()
+    {
+        _loading = true;
+        try
+        {
+            var result = await SessionsClient.MeAsync();
+            _sessions = result?.ToList() ?? new List<UserSessionDto>();
+            CalculateStats();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load sessions: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void CalculateStats()
+    {
+        _stats = new SessionStats
+        {
+            Total = _sessions.Count,
+            Desktop = _sessions.Count(s => s.DeviceType == "Desktop"),
+            Mobile = _sessions.Count(s => s.DeviceType == "Mobile"),
+            Tablet = _sessions.Count(s => s.DeviceType == "Tablet")
+        };
+    }
+
+    private async Task RevokeSession(UserSessionDto session)
+    {
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Revoke Session",
+            $"Are you sure you want to log out from this device?\n\n{session.Browser} on {session.OperatingSystem}",
+            "Revoke",
+            "Cancel",
+            Color.Error);
+
+        if (!confirmed) return;
+
+        _busySessionId = session.Id;
+        try
+        {
+            await IdentityClient.SessionsAsync(session.Id);
+            Snackbar.Add("Session revoked successfully.", Severity.Success);
+            await LoadSessions();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to revoke session: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busySessionId = null;
+        }
+    }
+
+    private async Task RevokeAllSessions()
+    {
+        var otherSessions = _sessions.Count(s => !s.IsCurrentSession);
+        if (otherSessions == 0)
+        {
+            Snackbar.Add("No other sessions to revoke.", Severity.Info);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Logout All Other Devices",
+            $"This will log you out from {otherSessions} other device(s). Your current session will remain active.",
+            "Logout All",
+            "Cancel",
+            Color.Warning,
+            Icons.Material.Outlined.Warning,
+            Color.Warning);
+
+        if (!confirmed) return;
+
+        _loading = true;
+        try
+        {
+            await SessionsClient.RevokeAllPostAsync(null);
+            Snackbar.Add($"Successfully logged out from {otherSessions} device(s).", Severity.Success);
+            await LoadSessions();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to revoke sessions: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string GetDeviceIcon(string? deviceType) => deviceType switch
+    {
+        "Mobile" => Icons.Material.Filled.PhoneAndroid,
+        "Tablet" => Icons.Material.Filled.Tablet,
+        _ => Icons.Material.Filled.Computer
+    };
+
+    private static Color GetDeviceColor(string? deviceType) => deviceType switch
+    {
+        "Mobile" => Color.Success,
+        "Tablet" => Color.Warning,
+        _ => Color.Info
+    };
+
+    private static string FormatRelativeTime(DateTimeOffset dateTime)
+    {
+        var timeSpan = DateTimeOffset.UtcNow - dateTime;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes} min ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hour(s) ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays} day(s) ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)(timeSpan.TotalDays / 7)} week(s) ago";
+
+        return $"{(int)(timeSpan.TotalDays / 30)} month(s) ago";
+    }
+}
+

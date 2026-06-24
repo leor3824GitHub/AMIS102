@@ -1,0 +1,167 @@
+@using AMIS.Blazor.ApiClient
+@using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
+@inject IArReturnedPropertyClient Client
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+
+<MudDialog>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_detail is null)
+        {
+            <MudAlert Severity="Severity.Error">Could not load the return request.</MudAlert>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Record the actual condition of each returned item. The custodian will accept the return afterwards;
+                    each asset is returned to <b>Available</b> at the condition you set here.
+                </MudAlert>
+
+                <MudStack Row="true" Spacing="4">
+                    <MudText Typo="Typo.body2"><b>Accountability:</b> @_detail.AccountabilityDocumentNo</MudText>
+                    <MudText Typo="Typo.body2"><b>Returned by:</b> @_detail.ReturnedBy.PrintedName</MudText>
+                    @if (_detail.AssignedInspector is not null)
+                    {
+                        <MudText Typo="Typo.body2"><b>Assigned inspector:</b> @_detail.AssignedInspector.PrintedName</MudText>
+                    }
+                </MudStack>
+
+                <MudDivider />
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Items to Inspect (@_rows.Count)</MudText>
+                    <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                                OnClick="@(() => SetAll(AssetCondition.InGoodCondition))">
+                        All Good
+                    </AMISButton>
+                </MudStack>
+
+                @foreach (var row in _rows)
+                {
+                    <MudPaper Outlined="true" Class="pa-3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudStack Spacing="0" Class="flex-grow-1">
+                                <MudText Typo="Typo.body2"><b>@row.PropertyNo</b> — @row.Description</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item #@row.ItemNo · @Money.Symbol@row.UnitCost.ToString("N2")</MudText>
+                            </MudStack>
+                            <MudSelect T="AssetCondition" @bind-Value="row.Condition" Label="Condition"
+                                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                       Style="min-width:200px">
+                                <MudSelectItem T="AssetCondition" Value="AssetCondition.InGoodCondition">In Good Condition</MudSelectItem>
+                                <MudSelectItem T="AssetCondition" Value="AssetCondition.NeedingRepair">Needing Repair</MudSelectItem>
+                                <MudSelectItem T="AssetCondition" Value="AssetCondition.Unserviceable">Unserviceable</MudSelectItem>
+                            </MudSelect>
+                        </MudStack>
+                    </MudPaper>
+                }
+
+                <MudTextField @bind-Value="_remarks" Label="Inspection Remarks (optional)" Variant="Variant.Outlined"
+                              Lines="2" MaxLength="1000" Dense="true" Margin="Margin.Dense" />
+
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Inspected by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — the server records the authenticated user and only the assigned inspector may proceed.
+                </MudAlert>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.FactCheck"
+                    OnClick="SubmitAsync" Disabled="@(_busy || _detail is null)">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Mark as Inspected
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Guid ReceiptId { get; set; }
+
+    private ArReturnedPropertyReceiptDto? _detail;
+    private readonly List<InspectRow> _rows = [];
+    private string? _remarks;
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _detail = await Client.GetAsync(ReceiptId);
+            if (_detail is not null)
+            {
+                _rows.Clear();
+                foreach (var item in _detail.Items.OrderBy(i => i.ItemNo))
+                {
+                    _rows.Add(new InspectRow
+                    {
+                        ItemId = item.Id,
+                        ItemNo = item.ItemNo,
+                        PropertyNo = item.Snapshot.PropertyNo,
+                        Description = item.Snapshot.Description,
+                        UnitCost = item.Snapshot.UnitCost,
+                        Condition = item.InspectedCondition ?? AssetCondition.InGoodCondition
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load the return request: {ex.Message}", Severity.Error);
+        }
+        finally { _loading = false; }
+    }
+
+    private void SetAll(AssetCondition condition)
+    {
+        foreach (var row in _rows) row.Condition = condition;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_detail is null) return;
+
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
+        {
+            Snackbar.Add("Your account is not linked to an employee record, so you cannot be recorded as the inspector.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var conditions = _rows
+                .Select(r => new ArReturnedPropertyInspectionItemDto(r.ItemId, r.Condition))
+                .ToList();
+
+            var result = await Client.InspectAsync(ReceiptId, new InspectReturnedPropertyReceiptRequest(conditions, _remarks?.Trim()));
+            Snackbar.Add("Inspection recorded. The return is now awaiting custodian acceptance.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Inspection failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private sealed class InspectRow
+    {
+        public Guid ItemId { get; set; }
+        public int ItemNo { get; set; }
+        public string PropertyNo { get; set; } = "";
+        public string Description { get; set; } = "";
+        public decimal UnitCost { get; set; }
+        public AssetCondition Condition { get; set; }
+    }
+}

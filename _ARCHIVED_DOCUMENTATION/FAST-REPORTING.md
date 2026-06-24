@@ -214,7 +214,7 @@ The FastReport Open Source Designer is a **separate free tool**:
 | Handler | [src/Modules/FastReporting/Modules.FastReporting/Features/v1/PurchaseRequests/PrintPurchaseRequestFast/PrintPurchaseRequestFastQueryHandler.cs](src/Modules/FastReporting/Modules.FastReporting/Features/v1/PurchaseRequests/PrintPurchaseRequestFast/PrintPurchaseRequestFastQueryHandler.cs) |
 | Endpoint | [src/Modules/FastReporting/Modules.FastReporting/Features/v1/PurchaseRequests/PrintPurchaseRequestFast/PrintPurchaseRequestFastEndpoint.cs](src/Modules/FastReporting/Modules.FastReporting/Features/v1/PurchaseRequests/PrintPurchaseRequestFast/PrintPurchaseRequestFastEndpoint.cs) |
 | Template | [src/Modules/FastReporting/Modules.FastReporting/Templates/PurchaseRequestFast.frx](src/Modules/FastReporting/Modules.FastReporting/Templates/PurchaseRequestFast.frx) |
-| API client | [src/Playground/Playground.Blazor/ApiClient/ProcurementClient.cs](src/Playground/Playground.Blazor/ApiClient/ProcurementClient.cs) — `GetFastReportPdfAsync` |
+| API client | [src/Host/AMIS.Blazor/ApiClient/ProcurementClient.cs](src/Host/AMIS.Blazor/ApiClient/ProcurementClient.cs) — `GetFastReportPdfAsync` |
 
 ---
 

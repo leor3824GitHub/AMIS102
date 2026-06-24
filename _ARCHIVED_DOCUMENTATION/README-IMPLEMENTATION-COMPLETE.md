@@ -234,7 +234,7 @@ dotnet sln add src/Modules/Expendable/Modules.Expendable/Modules.Expendable.cspr
 ```
 
 ### 2. Register Module
-In `Playground.Api/Program.cs`:
+In `AMIS.Api/Program.cs`:
 ```csharp
 builder.AddModule<ExpenableModule>();
 ```

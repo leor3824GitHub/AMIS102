@@ -22,7 +22,7 @@ dotnet build src/AMIS.Framework.slnx
 
 ### Step 2: Register Module in Application
 
-#### In Playground.Api Program.cs:
+#### In AMIS.Api Program.cs:
 ```csharp
 // Add this with other module registrations
 builder.AddModule<ExpenableModule>();
@@ -45,7 +45,7 @@ dotnet ef migrations add AddExpenableModule -o Data/Migrations
 ### Step 4: Update Database
 
 ```bash
-dotnet ef database update --startup-project ../../Playground/Playground.Api
+dotnet ef database update --startup-project ../../Host/AMIS.Api
 ```
 
 - [ ] Database updated successfully
@@ -66,7 +66,7 @@ dotnet ef database update --startup-project ../../Playground/Playground.Api
 Start application and test endpoints:
 
 ```bash
-dotnet run --project src/Playground/Playground.Api
+dotnet run --project src/Host/AMIS.Api
 ```
 
 Test each endpoint group:

@@ -1,0 +1,300 @@
+@page "/masterdata/suppliers"
+@implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
+@using AMIS.Modules.MasterData.Contracts.Permissions
+@inherits ComponentBase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject MasterDataService MasterDataService
+@inject ILookupClient LookupClient
+@inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Suppliers" Description="Manage supplier information">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search suppliers..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchSuppliers())"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchSuppliers" Disabled="_isLoading">
+                Search
+            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
+        </MudStack>
+    </ActionContent>
+</AMISPageHeader>
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <!-- Suppliers List -->
+        <MudItem xs="12">
+            <MudCard Class="AMIS-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Suppliers List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
+
+                    @if (_suppliers.Any())
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>TIN No.</th>
+                                    <th>Tax Type</th>
+                                    <th>Contact</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var supplier in _suppliers.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                                {
+                                    <tr>
+                                        <td>@supplier.Code</td>
+                                        <td>@supplier.Name</td>
+                                        <td>@(supplier.TinNo ?? "-")</td>
+                                        <td>@supplier.BusinessTaxType</td>
+                                        <td>@(supplier.ContactPerson ?? "-")</td>
+                                        <td>@(supplier.Email ?? "-")</td>
+                                        <td>@(supplier.Phone ?? "-")</td>
+                                        <td><MudChip T="string" Size="Size.Small" Color="@(supplier.IsActive ? Color.Success : Color.Error)">@(supplier.IsActive ? "Active" : "Inactive")</MudChip></td>
+                                        <td>
+                                            @if (IsOwnedByMe(supplier.OfficeCode) && (_canUpdate || _canDelete))
+                                            {
+                                                <MudStack Row="true" Spacing="1">
+                                                    @if (_canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Edit supplier">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(supplier))" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (_canDelete)
+                                                    {
+                                                        <MudTooltip Text="Delete supplier">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeleteSupplier(supplier.Id))" />
+                                                        </MudTooltip>
+                                                    }
+                                                </MudStack>
+                                            }
+                                            else
+                                            {
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(supplier.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
+                                                </MudTooltip>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                        @if (_suppliers.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_suppliers.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No suppliers yet. Add one to get started.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private List<SupplierDto> _suppliers = new();
+    private List<SupplierDto> _allSuppliers = new();
+    private bool _initialized = false;
+    private bool _isLoading = false;
+    private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Suppliers.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        var profile = await OrgProfileClient.GetAsync();
+        _myOfficeCode = profile?.AnnexECode;
+        await LoadSuppliers();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadSuppliers()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await MasterDataService.GetSuppliersAsync(pageSize: 100);
+            _allSuppliers = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load suppliers: {ex.Message}", Severity.Error);
+            _suppliers = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchSuppliers()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await MasterDataService.GetSuppliersAsync(keyword: _searchKeyword, pageSize: 100);
+            _allSuppliers = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+
+            if (_suppliers.Count == 0 && !string.IsNullOrWhiteSpace(_searchKeyword))
+            {
+                Snackbar.Add("No suppliers found matching your search", Severity.Info);
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
+            _suppliers = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<SupplierFormDialog>("Create Supplier", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadSuppliers();
+        }
+    }
+
+    private async Task OpenEditDialog(SupplierDto supplier)
+    {
+        var parameters = new DialogParameters { ["Existing"] = supplier };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<SupplierFormDialog>($"Edit {supplier.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadSuppliers();
+        }
+    }
+
+    private async Task DeleteSupplier(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this supplier"))
+            return;
+
+        try
+        {
+            await MasterDataService.DeleteSupplierAsync(id);
+            await LoadSuppliers();
+            Snackbar.Add("Supplier deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete supplier: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
+    private Task OnStatusFilterChanged(string status)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        ApplyLocalFilters();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
+    private void ApplyLocalFilters()
+    {
+        var filtered = _statusFilter switch
+        {
+            "Active" => _allSuppliers.Where(x => x.IsActive),
+            "Inactive" => _allSuppliers.Where(x => !x.IsActive),
+            "Own" => _allSuppliers.Where(x => IsOwnedByMe(x.OfficeCode)),
+            _ => _allSuppliers.AsEnumerable()
+        };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OfficeCode != null &&
+                x.OfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _suppliers = (_sortField, _sortAscending) switch
+        {
+            ("Code", true)  => filtered.OrderBy(x => x.Code).ToList(),
+            ("Code", false) => filtered.OrderByDescending(x => x.Code).ToList(),
+            ("Name", false) => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
+            _               => filtered.OrderBy(x => x.Name).ThenBy(x => x.Code).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
+    }
+}
+

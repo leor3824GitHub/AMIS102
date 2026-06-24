@@ -76,12 +76,12 @@ dotnet ef migrations add AddExpenableModule -o Data/Migrations
 
 ### 3. Update Database
 ```powershell
-dotnet ef database update --startup-project ../../Playground/Playground.Api
+dotnet ef database update --startup-project ../../Host/AMIS.Api
 ```
 
 ### 4. Run Application
 ```powershell
-dotnet run --project src/Playground/AMIS.Playground.AppHost
+dotnet run --project src/Host/AMIS.AppHost
 ```
 
 **See [EXPENDABLE-QUICKSTART.md](EXPENDABLE-QUICKSTART.md) for detailed developer setup and common tasks.**
@@ -112,7 +112,7 @@ Before deploying:
 
 1. ✅ Review module structure and implementation
 2. ✅ Add projects to solution (`.csproj` files)
-3. ✅ Register module in `Playground.Api/Program.cs`
+3. ✅ Register module in `AMIS.Api/Program.cs`
 4. ✅ Create and apply EF migration
 5. ✅ Verify database schema
 6. ✅ Run tests: `dotnet test src/AMIS.Framework.slnx`

@@ -1,0 +1,178 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
+@inject ISnackbar Snackbar
+@inject MasterDataService MasterDataService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="_form.Code" Label="Category Code" Placeholder="Unique code"
+                          Required="true" Disabled="@(_isEdit)"
+                          HelperText="@(_isEdit ? "Code cannot be changed after creation" : null)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Name" Label="Category Name" Placeholder="Category name"
+                          Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Description" Label="Description" Placeholder="Category description" Lines="3"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
+                          Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
+                          Disabled="@(_isEdit)"
+                          HelperText="@(_isEdit ? "Cannot be changed after creation" : null)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudCheckBox @bind-Value="_form.IsActive" Label="Active" T="bool" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveCategory" Disabled="_isLoading">
+            @(_isEdit ? "Update" : "Create")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public CategoryDto? Existing { get; set; }
+
+    private CategoryForm _form = new();
+    private bool _isLoading = false;
+
+    private bool _isEdit => Existing != null;
+
+    public class CategoryForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
+        public string? OfficeCode { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Existing != null)
+        {
+            _form = new CategoryForm
+            {
+                Code = Existing.Code,
+                Name = Existing.Name,
+                Description = Existing.Description,
+                IsActive = Existing.IsActive,
+                OfficeCode = Existing.OfficeCode
+            };
+        }
+    }
+
+    private async Task SaveCategory()
+    {
+        var normalizedCode = _form.Code?.Trim() ?? string.Empty;
+        var normalizedName = _form.Name?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalizedCode) || string.IsNullOrWhiteSpace(normalizedName))
+        {
+            Snackbar.Add("Code and Name are required", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            if (Existing != null)
+            {
+                var updateCmd = new UpdateCategoryCommand
+                {
+                    Id = Existing.Id,
+                    Code = normalizedCode,
+                    Name = normalizedName,
+                    Description = _form.Description,
+                    IsActive = _form.IsActive
+                };
+
+                await MasterDataService.UpdateCategoryAsync(Existing.Id, updateCmd);
+                Snackbar.Add("Category updated successfully", Severity.Success);
+            }
+            else
+            {
+                var createCmd = new CreateCategoryCommand
+                {
+                    Code = normalizedCode,
+                    Name = normalizedName,
+                    Description = _form.Description,
+                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
+                };
+
+                await MasterDataService.CreateCategoryAsync(createCmd);
+                Snackbar.Add("Category created successfully", Severity.Success);
+            }
+
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            var validationMessages = ExtractValidationMessages(apiEx.Response);
+            if (validationMessages.Count > 0)
+            {
+                foreach (var message in validationMessages)
+                {
+                    Snackbar.Add(message, Severity.Warning);
+                }
+            }
+            else
+            {
+                Snackbar.Add("Validation failed. Please check your inputs and try again.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save category: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private static List<string> ExtractValidationMessages(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return new List<string>();
+        }
+
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            if (!json.RootElement.TryGetProperty("errors", out var errorsElement) ||
+                errorsElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+            {
+                return new List<string>();
+            }
+
+            var messages = new List<string>();
+            foreach (var property in errorsElement.EnumerateObject())
+            {
+                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var errorItem in property.Value.EnumerateArray())
+                {
+                    var message = errorItem.GetString();
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        messages.Add(message);
+                    }
+                }
+            }
+
+            return messages;
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

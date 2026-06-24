@@ -20,13 +20,13 @@ Priority order for remediation:
 ## High severity
 
 ### 1. No account lockout — unlimited password brute-force
-- **Where:** [IdentityModule.cs:124-134](src/Modules/Identity/Modules.Identity/IdentityModule.cs#L124-L134), [IdentityService.cs:132-141](src/Modules/Identity/Modules.Identity/Services/IdentityService.cs#L132-L141), [appsettings.json:169-180](src/Playground/Playground.Api/appsettings.json#L169-L180)
+- **Where:** [IdentityModule.cs:124-134](src/Modules/Identity/Modules.Identity/IdentityModule.cs#L124-L134), [IdentityService.cs:132-141](src/Modules/Identity/Modules.Identity/Services/IdentityService.cs#L132-L141), [appsettings.json:169-180](src/Host/AMIS.Api/appsettings.json#L169-L180)
 - **Issue:** `AddIdentity` configures no `Lockout` options. Login validates through `UserManager.CheckPasswordAsync`, which never increments `AccessFailedCount` or honors lockout. The only throttle is the `auth` rate-limit policy — and `RateLimitingOptions.Enabled` is `false` in the default/dev config. Even with Production's `Enabled=true`, it's a 10/60s fixed window partitioned by IP/tenant — no per-account lockout.
 - **Impact:** Unlimited password guessing per account.
 - **Fix:** Use `SignInManager.CheckPasswordSignInAsync(..., lockoutOnFailure: true)` and configure `options.Lockout` (MaxFailedAccessAttempts, DefaultLockoutTimeSpan, AllowedForNewUsers).
 
 ### 2. Secrets committed to source control
-- **Where:** [appsettings.json](src/Playground/Playground.Api/appsettings.json) (git-tracked), Production guard at [Program.cs:36-50](src/Playground/Playground.Api/Program.cs#L36-L50), key consumed at [ConfigureJwtBearerOptions.cs:40-55](src/Modules/Identity/Modules.Identity/Authorization/Jwt/ConfigureJwtBearerOptions.cs#L40-L55)
+- **Where:** [appsettings.json](src/Host/AMIS.Api/appsettings.json) (git-tracked), Production guard at [Program.cs:36-50](src/Host/AMIS.Api/Program.cs#L36-L50), key consumed at [ConfigureJwtBearerOptions.cs:40-55](src/Modules/Identity/Modules.Identity/Authorization/Jwt/ConfigureJwtBearerOptions.cs#L40-L55)
 - **Issue:** `appsettings.json` contains live-looking secrets: DB `Password=password`, Hangfire `admin / Secure1234!Me`, SMTP `anderson22@ethereal.email / rqD44sq5P6U2UDCqD1`, and JWT `SigningKey: "replace-with-256-bit-secret-min-32-chars"`. The Production guard only checks the signing key is non-empty, not that it differs from the placeholder.
 - **Impact:** If the placeholder symmetric key ever ships, **anyone can forge JWTs** = complete auth bypass.
 - **Fix:** Move secrets to user-secrets/env/Key Vault, rotate everything exposed, reject the placeholder value at startup.

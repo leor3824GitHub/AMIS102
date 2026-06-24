@@ -88,18 +88,18 @@ Every endpoint must have explicit authorization.
 
 ### 8. Check MAUI Client Boundaries
 
-Only run when files under `src/Playground/Playground.Maui/` are changed.
+Only run when files under `src/Host/AMIS.Maui/` are changed.
 
 ```powershell
 # MAUI must not reference any Modules.* project
-Select-String -Path "src/Playground/Playground.Maui/Playground.Maui.csproj" -Pattern "Modules\."
+Select-String -Path "src/Host/AMIS.Maui/AMIS.Maui.csproj" -Pattern "Modules\."
 ```
 
 Must return no results — MAUI is API-only; no module project references allowed.
 
 ```powershell
 # MAUI must not use Navigation.PushAsync (Shell navigation required)
-Get-ChildItem -Recurse -Filter "*.cs" src/Playground/Playground.Maui/ |
+Get-ChildItem -Recurse -Filter "*.cs" src/Host/AMIS.Maui/ |
     Select-String "Navigation\.PushAsync|Navigation\.PopAsync"
 ```
 
@@ -107,7 +107,7 @@ Must return no results.
 
 ```powershell
 # MAUI must not store tokens in Preferences (SecureStorage/PasswordVault required)
-Get-ChildItem -Recurse -Filter "*.cs" src/Playground/Playground.Maui/ |
+Get-ChildItem -Recurse -Filter "*.cs" src/Host/AMIS.Maui/ |
     Select-String "Preferences\.Set|Preferences\.Get" |
     Where-Object { $_ -match "token|Token|accessToken|refreshToken" }
 ```
@@ -116,7 +116,7 @@ Must return no results.
 
 ```powershell
 # ViewModels must be sealed partial
-Get-ChildItem -Recurse -Filter "*ViewModel.cs" src/Playground/Playground.Maui/ |
+Get-ChildItem -Recurse -Filter "*ViewModel.cs" src/Host/AMIS.Maui/ |
     Select-String "class.*ViewModel" |
     Where-Object { $_ -notmatch "sealed partial" }
 ```

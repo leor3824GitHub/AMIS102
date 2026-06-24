@@ -1,11 +1,11 @@
 ---
 paths:
-  - "src/Playground/Playground.Blazor/**"
+  - "src/Host/AMIS.Blazor/**"
 ---
 
 # Blazor UI Rules
 
-`Playground.Blazor` is a **Blazor Server** application. It consumes the REST API via typed HTTP clients and uses scoped DI services for shared session state across components.
+`AMIS.Blazor` is a **Blazor Server** application. It consumes the REST API via typed HTTP clients and uses scoped DI services for shared session state across components.
 
 ## Shared Session State Pattern
 
@@ -26,7 +26,7 @@ Blazor Server uses **Scoped** lifetime per circuit (one scope = one connected us
 Follow `IUserProfileState` exactly:
 
 ```csharp
-// src/Playground/Playground.Blazor/Services/MyState.cs
+// src/Host/AMIS.Blazor/Services/MyState.cs
 internal interface IMyState
 {
     SomeDto? Value { get; }
@@ -139,7 +139,7 @@ Designations are free-text and can be "Acting Regional Manager II", "OIC-Regiona
 
 ### Reference Implementation
 
-`src/Playground/Playground.Blazor/Components/Pages/InspectionAcceptanceReports/InspectionAcceptanceReportExhibit3PrintPage.razor` is the canonical example. Replicate the pattern for all other report pages.
+`src/Host/AMIS.Blazor/Components/Pages/InspectionAcceptanceReports/InspectionAcceptanceReportExhibit3PrintPage.razor` is the canonical example. Replicate the pattern for all other report pages.
 
 ---
 
@@ -212,7 +212,7 @@ Blazor page (already references the Contracts project):
 ### Canonical references
 
 - Constants: [ProcurementPermissions.cs](../../src/Modules/ProcurementAcquisition/Modules.ProcurementAcquisition.Contracts/Permissions/ProcurementPermissions.cs)
-- UI usage: [InspectionAcceptanceReportsPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/InspectionAcceptanceReports/InspectionAcceptanceReportsPage.razor)
+- UI usage: [InspectionAcceptanceReportsPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/InspectionAcceptanceReports/InspectionAcceptanceReportsPage.razor)
 
 ---
 
@@ -273,7 +273,7 @@ Use when filters are few (≤ 3) and actions are secondary (export, download). E
 
 Use when filters are many (4+) or the primary action is a "Generate Report" CTA. Filters can be default-density; buttons live on their own row so the mismatch is irrelevant.
 
-Canonical reference: [DepartmentIssuanceReportPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/Expendable/DepartmentIssuanceReportPage.razor), [PhysicalCountReportPage.razor](../../src/Playground/Playground.Blazor/Components/Pages/Expendable/PhysicalCountReportPage.razor).
+Canonical reference: [DepartmentIssuanceReportPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/Expendable/DepartmentIssuanceReportPage.razor), [PhysicalCountReportPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/Expendable/PhysicalCountReportPage.razor).
 
 ### Anti-Pattern
 
@@ -300,7 +300,7 @@ Canonical reference: [DepartmentIssuanceReportPage.razor](../../src/Playground/P
 
 All API clients (`IMaster_dataClient`, `ILookupClient`, etc.) are registered **Transient** in `ApiClientRegistration.cs`. They are stateless and resolved fresh per injection point. Do not cache them manually — inject and use directly.
 
-**Details:** See `src/Playground/Playground.Blazor/Services/Api/ApiClientRegistration.cs`
+**Details:** See `src/Host/AMIS.Blazor/Services/Api/ApiClientRegistration.cs`
 
 ---
 

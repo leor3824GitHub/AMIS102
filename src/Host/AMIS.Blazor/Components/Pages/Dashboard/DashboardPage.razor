@@ -1,0 +1,121 @@
+@page "/dashboard"
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@attribute [StreamRendering(true)]
+@using System.Linq
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@inherits ComponentBase
+@inject AMIS.Blazor.ApiClient.IV1Client V1Client
+@inject AMIS.Blazor.ApiClient.IIdentityClient IdentityClient
+@inject ISnackbar Snackbar
+
+<AMISPageHeader Title="Dashboard"
+               Description="Overview of your system metrics and recent activity" />
+
+<div class="dashboard-shell">
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.People"
+                         IconColor="Color.Primary"
+                         Value="@_summary.Users.ToString()"
+                         Label="Total Users" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.Security"
+                         IconColor="Color.Secondary"
+                         Value="@_summary.Roles.ToString()"
+                         Label="Total Roles" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.Business"
+                         IconColor="Color.Info"
+                         Value="@_summary.Tenants.ToString()"
+                         Label="Total Tenants" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <AMISStatCard Icon="@Icons.Material.Filled.History"
+                         IconColor="Color.Warning"
+                         Value="@_recentAudits.Count.ToString()"
+                         Label="Recent Audits" />
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="AMIS-card pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Recent Audits</MudText>
+        <MudTable Items="_recentAudits" Dense="true">
+            <HeaderContent>
+                <MudTh>Timestamp</MudTh>
+                <MudTh>Event Type</MudTh>
+                <MudTh>User</MudTh>
+                <MudTh>Correlation</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Timestamp">@context.OccurredAtUtc.ToLocalTime()</MudTd>
+                <MudTd DataLabel="Event Type">@context.EventType</MudTd>
+                <MudTd DataLabel="User">@context.UserName</MudTd>
+                <MudTd DataLabel="Correlation">@context.CorrelationId</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</div>
+
+@code {
+    private SummaryDto _summary = new();
+    private List<AMIS.Blazor.ApiClient.AuditSummaryDto> _recentAudits = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecentAudits();
+        await LoadSummary();
+    }
+
+    private async Task LoadRecentAudits()
+    {
+        try
+        {
+            var result = await V1Client.AuditsGetAsync(pageNumber: 1, pageSize: 5);
+            if (result is null)
+            {
+                _recentAudits = new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+                _summary.RecentAudits = 0;
+                return;
+            }
+
+            _recentAudits = result.Items?.ToList() ?? new List<AMIS.Blazor.ApiClient.AuditSummaryDto>();
+            _summary.RecentAudits = (int)result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load audits: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadSummary()
+    {
+        try
+        {
+            var users = await IdentityClient.UsersGetAsync();
+            _summary.Users = users?.Count ?? 0;
+
+            var roles = await IdentityClient.RolesGetAsync();
+            _summary.Roles = roles?.Count ?? 0;
+
+            var tenants = await V1Client.TenantsGetAsync(pageNumber: 1, pageSize: 1);
+            _summary.Tenants = (int)tenants.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load summary: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private sealed class SummaryDto
+    {
+        public int Users { get; set; }
+        public int Roles { get; set; }
+        public int Tenants { get; set; }
+        public int RecentAudits { get; set; }
+    }
+}
+

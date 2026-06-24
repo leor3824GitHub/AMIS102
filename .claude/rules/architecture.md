@@ -245,12 +245,12 @@ public void Domain_Should_Not_Depend_On_Infrastructure()
 
 ### 9. MAUI Client Layer
 
-`Playground.Maui` is a **client-only** consumer of the REST API. It is NOT a module and does NOT follow the module pattern.
+`AMIS.Maui` is a **client-only** consumer of the REST API. It is NOT a module and does NOT follow the module pattern.
 
 ```
-Playground.Maui/       ← Client UI (Android · iOS · Windows)
+AMIS.Maui/       ← Client UI (Android · iOS · Windows)
     ↓ HTTP (REST)
-Playground.Api/        ← API host (Modules + BuildingBlocks)
+AMIS.Api/        ← API host (Modules + BuildingBlocks)
     ↓
 Modules/* + BuildingBlocks/*
 ```

@@ -1,0 +1,142 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@inject IArCatalogClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width:360px;">
+            <MudTextField @bind-Value="_form.Code" Label="Code" Variant="Variant.Outlined"
+                          MaxLength="50" Disabled="IsEditing" Required="true"
+                          Dense="true" Margin="Margin.Dense"
+                          Placeholder="e.g. AIT-CMP-001" />
+            <MudTextField @bind-Value="_form.Description" Label="Description" Variant="Variant.Outlined"
+                          MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.DefaultPropertyClass" Label="Default Property Class" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.DefaultCategoryCode" Label="Default Category Code" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.DefaultUnit" Label="Default Unit" Variant="Variant.Outlined"
+                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense"
+                          Placeholder="e.g. piece, set" />
+            <MudTextField @bind-Value="_form.UacsObjectCode" Label="UACS Object Code (optional)" Variant="Variant.Outlined"
+                          MaxLength="50" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.EstimatedUsefulLifeYears" Label="Estimated Useful Life (years)"
+                             Variant="Variant.Outlined" Min="1" Max="50" T="int" Required="true"
+                             Dense="true" Margin="Margin.Dense" />
+
+            <MudText Typo="Typo.subtitle2" Class="mt-2">Depreciation policy</MudText>
+            <MudText Typo="Typo.caption" Class="mb-1">
+                COA GAM defaults: straight-line, 5% residual value. Assets registered against this item
+                inherit these — individual assets can still be overridden.
+            </MudText>
+            <MudNumericField @bind-Value="_form.ResidualValuePercent" Label="Residual Value (%)"
+                             Variant="Variant.Outlined" Min="0" Max="100" T="decimal" Required="true"
+                             Dense="true" Margin="Margin.Dense" Adornment="Adornment.End" AdornmentText="%" />
+            <MudSelect @bind-Value="_form.DepreciationMethod" Label="Depreciation Method" T="DepreciationMethod"
+                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem Value="DepreciationMethod.StraightLine">Straight-line</MudSelectItem>
+            </MudSelect>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            @(IsEditing ? "Update" : "Create")
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    // When EditingId is set the dialog is in edit mode; the remaining parameters seed the form.
+    [Parameter] public Guid? EditingId { get; set; }
+    [Parameter] public string? Code { get; set; }
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? DefaultPropertyClass { get; set; }
+    [Parameter] public string? DefaultCategoryCode { get; set; }
+    [Parameter] public string? DefaultUnit { get; set; }
+    [Parameter] public string? UacsObjectCode { get; set; }
+    [Parameter] public int? EstimatedUsefulLifeYears { get; set; }
+    [Parameter] public decimal? ResidualValuePercent { get; set; }
+    [Parameter] public DepreciationMethod? Method { get; set; }
+
+    private bool IsEditing => EditingId is not null;
+
+    private bool _busy;
+    private readonly CatalogFormModel _form = new();
+
+    protected override void OnInitialized()
+    {
+        if (IsEditing)
+        {
+            _form.Code = Code ?? "";
+            _form.Description = Description ?? "";
+            _form.DefaultPropertyClass = DefaultPropertyClass ?? "";
+            _form.DefaultCategoryCode = DefaultCategoryCode ?? "";
+            _form.DefaultUnit = DefaultUnit ?? "piece";
+            _form.UacsObjectCode = UacsObjectCode;
+            _form.EstimatedUsefulLifeYears = EstimatedUsefulLifeYears ?? 10;
+            _form.ResidualValuePercent = ResidualValuePercent ?? 5m;
+            _form.DepreciationMethod = Method ?? DepreciationMethod.StraightLine;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.Description))
+        {
+            Snackbar.Add("Code and Description are required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (EditingId is null)
+            {
+                await Client.CreateAsync(new CreateArCatalogItemRequest(
+                    _form.Code, _form.Description, _form.DefaultPropertyClass,
+                    _form.DefaultCategoryCode, _form.DefaultUnit,
+                    _form.UacsObjectCode, _form.EstimatedUsefulLifeYears,
+                    _form.ResidualValuePercent, _form.DepreciationMethod));
+                Snackbar.Add("Catalog item created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(EditingId.Value, new UpdateArCatalogItemRequest(
+                    _form.Description, _form.DefaultPropertyClass, _form.DefaultCategoryCode,
+                    _form.DefaultUnit, _form.UacsObjectCode, _form.EstimatedUsefulLifeYears,
+                    _form.ResidualValuePercent, _form.DepreciationMethod));
+                Snackbar.Add("Catalog item updated.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private sealed class CatalogFormModel
+    {
+        public string Code { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string DefaultPropertyClass { get; set; } = "";
+        public string DefaultCategoryCode { get; set; } = "";
+        public string DefaultUnit { get; set; } = "piece";
+        public string? UacsObjectCode { get; set; }
+        public int EstimatedUsefulLifeYears { get; set; } = 10;
+        public decimal ResidualValuePercent { get; set; } = 5m;
+        public DepreciationMethod DepreciationMethod { get; set; } = DepreciationMethod.StraightLine;
+    }
+}

@@ -6,8 +6,8 @@
 
 Today the MAUI app finds an asset only via a **readable identifier**: ZXing barcode/QR, live
 on-device OCR of the printed PropertyNo
-([ScanViewModel.cs](src/Playground/Playground.Maui/Features/Scan/ScanViewModel.cs) +
-[PropertyNumberExtractor.cs](src/Playground/Playground.Maui/Services/PropertyNumberExtractor.cs)),
+([ScanViewModel.cs](src/Host/AMIS.Maui/Features/Scan/ScanViewModel.cs) +
+[PropertyNumberExtractor.cs](src/Host/AMIS.Maui/Services/PropertyNumberExtractor.cs)),
 manual entry, or serial search. The goal is to identify an asset from a photo when the sticker is
 missing or destroyed and there's nothing to read.
 
@@ -26,7 +26,7 @@ assist, not a guaranteed unique hit:
 - **Inherent limit:** identical fungible items (twenty identical chairs) have near-identical
   embeddings, so they come back as a *cluster*. The user taps the right one from a short ranked list
   — exactly like the existing serial-search disambiguation
-  (`PickAssetBySerialAsync` action sheet, [ScanViewModel.cs](src/Playground/Playground.Maui/Features/Scan/ScanViewModel.cs#L96)).
+  (`PickAssetBySerialAsync` action sheet, [ScanViewModel.cs](src/Host/AMIS.Maui/Features/Scan/ScanViewModel.cs#L96)).
   Scoping candidates by location/custodian shrinks the cluster.
 - **Consistency rule:** reference and query embeddings must come from the **same encoder + version**,
   or cosine similarity is meaningless. Pin a model version and store it with every embedding.

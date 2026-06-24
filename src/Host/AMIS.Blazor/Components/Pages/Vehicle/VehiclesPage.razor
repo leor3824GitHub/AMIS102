@@ -1,0 +1,280 @@
+@page "/vehicle/vehicles"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
+@using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Vehicles" Description="Manage vehicle records and lifecycle" />
+
+<MudGrid Spacing="3">
+    <!-- List Panel - Full Width -->
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Vehicle List</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog"
+                                   Title="Create a new vehicle">
+                            NEW VEHICLE
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <!-- Filter toolbar: search + status (date range not applicable to vehicles) -->
+                <AMISFilterBar Keyword="@_query.Keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Plate, make, model"
+                               ShowDateRange="false"
+                               SearchSm="8" SearchMd="9">
+                    <Extra>
+                        <MudItem xs="12" sm="4" md="3">
+                            <MudSelect T="string" Value="_query.Status" ValueChanged="OnStatusChanged"
+                                       Label="Status" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true">
+                                <MudSelectItem Value="@Active">Active</MudSelectItem>
+                                <MudSelectItem Value="@UnderRepair">Under Repair</MudSelectItem>
+                                <MudSelectItem Value="@Retired">Retired</MudSelectItem>
+                                <MudSelectItem Value="@Decommissioned">Decommissioned</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                    </Extra>
+                </AMISFilterBar>
+
+                <!-- Status summary chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Total: @_vehicles.Count</MudChip>
+                    <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined">Active: @_vehicles.Count(v => v.Status == Active)</MudChip>
+                    <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">Under Repair: @_vehicles.Count(v => v.Status == UnderRepair)</MudChip>
+                    <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Retired: @_vehicles.Count(v => v.Status == Retired)</MudChip>
+                    <MudChip T="string" Color="Color.Error" Variant="Variant.Outlined">Decommissioned: @_vehicles.Count(v => v.Status == Decommissioned)</MudChip>
+                </MudStack>
+
+                @if (_busy)
+                {
+                    <MudProgressLinear Indeterminate="true" Class="mb-2" />
+                }
+                    @if (_vehicles.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info">No vehicles found.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable Items="_vehicles" Dense="true" Hover="true" Striped="true">
+                            <HeaderContent>
+                                <MudTh>Plate</MudTh>
+                                <MudTh>Vehicle</MudTh>
+                                <MudTh>Status</MudTh>
+                                <MudTh>Odometer</MudTh>
+                                <MudTh>Actions</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.PlateNumber</MudTd>
+                                <MudTd>@context.Make @context.Model (@context.Year)</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@DisplayStatus(context.Status)</MudChip>
+                                </MudTd>
+                                <MudTd>@context.Odometer</MudTd>
+                                <MudTd>
+                                    <MudStack Row="true" Spacing="1">
+                                        <MudTooltip Text="View details">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary"
+                                                           Size="Size.Small" OnClick="@(() => GoDetail(context.Id))" />
+                                        </MudTooltip>
+                                        @if (context.Status == Active && _canUpdate)
+                                        {
+                                            <MudTooltip Text="Retire vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Warning"
+                                                               Size="Size.Small" OnClick="@(() => Retire(context.Id))" />
+                                            </MudTooltip>
+                                            <MudTooltip Text="Decommission vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Block" Color="Color.Error"
+                                                               Size="Size.Small" OnClick="@(() => Decommission(context.Id))" />
+                                            </MudTooltip>
+                                        }
+                                        else if ((context.Status is Retired or Decommissioned) && _canUpdate)
+                                        {
+                                            <MudTooltip Text="Reactivate vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" Color="Color.Success"
+                                                               Size="Size.Small" OnClick="@(() => Reactivate(context.Id))" />
+                                            </MudTooltip>
+                                        }
+                                        @if (_canDelete)
+                                        {
+                                            <MudTooltip Text="Delete vehicle">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                               Size="Size.Small" OnClick="@(() => Delete(context.Id))" />
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+@code {
+    private readonly SearchVehiclesQuery _query = new() { PageNumber = 1, PageSize = 100 };
+    private readonly List<VehicleDto> _vehicles = [];
+    private bool _busy;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Vehicles.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadVehicles();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadVehicles()
+    {
+        try
+        {
+            _busy = true;
+            var result = await VehicleClient.SearchVehiclesAsync(_query);
+            _vehicles.Clear();
+            _vehicles.AddRange(result.Items ?? []);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<VehicleFormDialog>("Create Vehicle", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadVehicles();
+        }
+    }
+
+    private void GoDetail(Guid id) => Navigation.NavigateTo($"/vehicle/vehicles/{id}");
+
+    private async Task OnKeywordChanged(string? keyword)
+    {
+        _query.Keyword = keyword;
+        _query.PageNumber = 1;
+        await LoadVehicles();
+    }
+
+    private async Task OnStatusChanged(string? status)
+    {
+        _query.Status = status;
+        _query.PageNumber = 1;
+        await LoadVehicles();
+    }
+
+    private async Task Retire(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.RetireVehicleAsync(id), "Vehicle retired.");
+    }
+
+    private async Task Reactivate(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.ReactivateVehicleAsync(id), "Vehicle reactivated.");
+    }
+
+    private async Task Decommission(Guid id)
+    {
+        await RunAction(async () => await VehicleClient.DecommissionVehicleAsync(id), "Vehicle decommissioned.");
+    }
+
+    private async Task Delete(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this vehicle"))
+            return;
+
+        await RunAction(async () => await VehicleClient.DeleteVehicleAsync(id), "Vehicle deleted.");
+    }
+
+    private async Task RunAction(Func<Task> action, string success)
+    {
+        try
+        {
+            _busy = true;
+            await action();
+            Snackbar.Add(success, Severity.Success);
+            await LoadVehicles();
+        }
+        catch (ApiException apiEx)
+        {
+            var detail = ExtractProblemDetail(apiEx.Response);
+            Snackbar.Add(detail ?? apiEx.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string? ExtractProblemDetail(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response)) return null;
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            if (json.RootElement.TryGetProperty("detail", out var detail) &&
+                detail.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return detail.GetString();
+            }
+
+            if (json.RootElement.TryGetProperty("title", out var title) &&
+                title.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return title.GetString();
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        Active => Color.Success,
+        UnderRepair => Color.Warning,
+        Retired => Color.Info,
+        Decommissioned => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string DisplayStatus(string status) => status switch
+    {
+        UnderRepair => "Under Repair",
+        _ => status
+    };
+
+}
+

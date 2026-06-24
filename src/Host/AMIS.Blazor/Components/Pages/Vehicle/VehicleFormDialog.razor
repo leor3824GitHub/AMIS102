@@ -1,0 +1,182 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudTextField @bind-Value="_form.PlateNumber" Label="Plate Number" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Make" Label="Make" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.Model" Label="Model" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.Year" Label="Year" Min="1900" Max="2100" Required="true"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudSelect T="string" @bind-Value="_form.Type" Label="Type" Required="true"
+                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                @foreach (var vehicleType in VehicleTypes)
+                {
+                    <MudSelectItem Value="@vehicleType">@vehicleType</MudSelectItem>
+                }
+            </MudSelect>
+            <MudNumericField @bind-Value="_form.Odometer" Label="Initial Odometer" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.caption" Class="font-weight-bold">Technical Specifications</MudText>
+
+            <MudTextField @bind-Value="_form.MotorNumber" Label="Motor Number"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.ChassisNumber" Label="Chassis Number"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.NumberOfCylinders" Label="No. of Cylinders" Min="1"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_form.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudNumericField @bind-Value="_form.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudTextField @bind-Value="_form.Notes" Label="Notes" Lines="2"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateVehicle" Disabled="_isLoading">
+            Create
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private VehicleForm _form = new();
+    private bool _isLoading;
+
+    private static readonly string[] VehicleTypes = ["Other", "Sedan", "SUV", "Van", "Truck", "Motorcycle", "Bus", "PickUp", "MPV", "Hatchback", "Crossover", "Wagon", "Minibus"];
+
+    public sealed class VehicleForm
+    {
+        public string PlateNumber { get; set; } = string.Empty;
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int Year { get; set; } = DateTime.UtcNow.Year;
+        public string Type { get; set; } = "Sedan";
+        public int Odometer { get; set; }
+        public string? Notes { get; set; }
+        public string? MotorNumber { get; set; }
+        public string? ChassisNumber { get; set; }
+        public int? NumberOfCylinders { get; set; }
+        public int? EngineDisplacementCC { get; set; }
+        public string? FuelType { get; set; }
+        public string? VehicleUse { get; set; }
+        public decimal? AcquisitionCost { get; set; }
+    }
+
+    private async Task CreateVehicle()
+    {
+        if (string.IsNullOrWhiteSpace(_form.PlateNumber) || string.IsNullOrWhiteSpace(_form.Make) ||
+            string.IsNullOrWhiteSpace(_form.Model) || string.IsNullOrWhiteSpace(_form.Type))
+        {
+            Snackbar.Add("Plate number, make, model, and type are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            await VehicleClient.CreateVehicleAsync(new CreateVehicleCommand(
+                _form.PlateNumber,
+                _form.Make,
+                _form.Model,
+                _form.Year,
+                _form.Type,
+                _form.Odometer,
+                _form.Notes,
+                _form.MotorNumber,
+                _form.ChassisNumber,
+                _form.NumberOfCylinders,
+                _form.EngineDisplacementCC,
+                _form.FuelType,
+                _form.VehicleUse,
+                _form.AcquisitionCost));
+
+            Snackbar.Add("Vehicle created.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            var validationMessages = ExtractValidationMessages(apiEx.Response);
+            if (validationMessages.Count > 0)
+            {
+                foreach (var message in validationMessages)
+                {
+                    Snackbar.Add(message, Severity.Warning);
+                }
+            }
+            else
+            {
+                Snackbar.Add("Vehicle creation failed validation. Please check your inputs and try again.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private static List<string> ExtractValidationMessages(string? response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            if (!json.RootElement.TryGetProperty("errors", out var errorsElement) ||
+                errorsElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+            {
+                return [];
+            }
+
+            var messages = new List<string>();
+            foreach (var property in errorsElement.EnumerateObject())
+            {
+                if (property.Value.ValueKind != System.Text.Json.JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var errorItem in property.Value.EnumerateArray())
+                {
+                    var message = errorItem.GetString();
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        messages.Add(message);
+                    }
+                }
+            }
+
+            return messages;
+        }
+        catch
+        {
+            return [];
+        }
+    }
+}

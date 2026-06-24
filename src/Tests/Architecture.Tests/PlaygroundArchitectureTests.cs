@@ -12,8 +12,8 @@ public class PlaygroundArchitectureTests
         // Assemblies / namespaces that represent Playground hosts.
         string[] playgroundNamespaces =
         {
-            "AMIS.Playground.Api",
-            "Playground.Blazor"
+            "AMIS.Api",
+            "AMIS.Blazor"
         };
 
         var result = Types
@@ -49,9 +49,9 @@ public class PlaygroundArchitectureTests
         var hostResult = Types
             .InCurrentDomain()
             .That()
-            .ResideInNamespace("AMIS.Playground")
+            .ResideInNamespace("AMIS.Api")
             .Or()
-            .ResideInNamespace("Playground.Blazor")
+            .ResideInNamespace("AMIS.Blazor")
             .Should()
             .NotHaveDependencyOnAny(forbiddenNamespaces)
             .GetResult();

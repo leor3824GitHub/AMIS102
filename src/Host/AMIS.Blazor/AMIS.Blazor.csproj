@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<RootNamespace>AMIS.Blazor</RootNamespace>
+		<AssemblyName>AMIS.Blazor</AssemblyName>
+		<IsPackable>false</IsPackable>
+
+		<!-- .NET 10 Performance Optimizations -->
+		<TieredCompilation>true</TieredCompilation>
+		<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+		<TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+		<PublishReadyToRun>true</PublishReadyToRun>
+
+		<!-- Container configuration -->
+		<ContainerPort>8080</ContainerPort>
+		<ContainerUser>root</ContainerUser>
+		<ContainerRepository>AMIS-playground-blazor</ContainerRepository>
+    	<PublishProfile>DefaultContainer</PublishProfile>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="MudBlazor" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\Blazor.UI\Blazor.UI.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\Modules\Multitenancy\Modules.Multitenancy.Contracts\Modules.Multitenancy.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\Vehicle\Modules.Vehicle.Contracts\Modules.Vehicle.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement.Contracts\Modules.BudgetDisbursement.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement.Contracts\Modules.AssetManagement.Contracts.csproj" />
+    <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ApiClient\" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Analyzer suppressions (PRD-0019): Mud analyzer attribute warnings and demo/sample warnings -->
+    <NoWarn>$(NoWarn);MUD0002;S3260;S2933;S3459;S3923;S108;S1144;S4487;CA1031;CA5394;CA1812</NoWarn>
+  </PropertyGroup>
+
+  <!-- Live auto-incrementing build number (see ..\BuildVersioning.targets) -->
+  <Import Project="..\BuildVersioning.targets" />
+</Project>
+

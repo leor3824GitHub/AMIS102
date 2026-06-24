@@ -1,0 +1,779 @@
+@page "/users"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@inherits ComponentBase
+@using System.Security.Claims
+@using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IIdentityClient IdentityClient
+@inject IUsersClient UsersClient
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Users"
+               Description="Manage user accounts and permissions">
+    <ActionContent>
+        @if (_selectedUsers.Any())
+        {
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" Class="mr-2">
+                @if (_canUpdate)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Color="Color.Success"
+                               OnClick="BulkActivate"
+                               Disabled="_bulkBusy">
+                        Activate (@_selectedUsers.Count)
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Cancel"
+                               Color="Color.Warning"
+                               OnClick="BulkDeactivate"
+                               Disabled="_bulkBusy">
+                        Deactivate
+                    </MudButton>
+                }
+                @if (_canDelete)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="BulkDelete"
+                               Disabled="_bulkBusy">
+                        Delete
+                    </MudButton>
+                }
+                <MudButton StartIcon="@Icons.Material.Filled.Clear"
+                           OnClick="ClearSelection">
+                    Clear
+                </MudButton>
+            </MudButtonGroup>
+        }
+        @if (_canCreate)
+        {
+            <AMISButton Variant="Variant.Filled"
+                        Color="Color.Primary"
+                        StartIcon="@Icons.Material.Filled.Add"
+                        OnClick="ShowCreate">
+                New User
+            </AMISButton>
+        }
+    </ActionContent>
+</AMISPageHeader>
+
+@* Stats Cards *@
+<MudGrid Class="mb-4">
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.People"
+                     IconColor="Color.Primary"
+                     Value="@_stats.Total.ToString()"
+                     Label="Total Users"
+                     Badge="Total" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.CheckCircle"
+                     IconColor="Color.Success"
+                     Value="@_stats.Active.ToString()"
+                     Label="Active Users"
+                     Badge="Active" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Cancel"
+                     IconColor="Color.Error"
+                     Value="@_stats.Inactive.ToString()"
+                     Label="Inactive Users"
+                     Badge="Inactive" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.MarkEmailUnread"
+                     IconColor="Color.Warning"
+                     Value="@_stats.UnconfirmedEmail.ToString()"
+                     Label="Pending Verification"
+                     Badge="Unconfirmed" />
+    </MudItem>
+</MudGrid>
+
+@* Filter Panel *@
+<MudExpansionPanels Class="mb-4" Elevation="0">
+    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="AMIS-card">
+        <MudGrid GutterSize="2">
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="_filter.Search"
+                              Label="Search"
+                              Placeholder="Name, email, or username"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true"
+                              DebounceInterval="400"
+                              OnDebounceIntervalElapsed="@((string _) => RefreshData())" />
+            </MudItem>
+            <MudItem xs="6" sm="2">
+                <MudSelect T="bool?" Value="_filter.IsActive" Label="Status" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true" ValueChanged="OnStatusFilterChanged">
+                    <MudSelectItem T="bool?" Value="@((bool?)null)">All</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="true">Active</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="false">Inactive</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" sm="2">
+                <MudSelect T="bool?" Value="_filter.EmailConfirmed" Label="Email" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true" ValueChanged="OnEmailFilterChanged">
+                    <MudSelectItem T="bool?" Value="@((bool?)null)">All</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="true">Confirmed</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="false">Unconfirmed</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4" Class="d-flex align-center justify-end">
+                <MudButton Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.FilterAltOff"
+                           Color="Color.Default"
+                           Variant="Variant.Text"
+                           OnClick="ClearFilters">
+                    Clear Filters
+                </MudButton>
+                <MudButton Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="RefreshData"
+                           Class="ml-2">
+                    Refresh
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+@* Data Grid *@
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
+    <MudDataGrid T="UserDto"
+                 @ref="_dataGrid"
+                 Items="_filtered"
+                 Loading="_loading"
+                 Hover="true"
+                 Dense="true"
+                 Striped="true"
+                 MultiSelection="true"
+                 SelectedItems="_selectedUsers"
+                 SelectedItemsChanged="OnSelectionChanged"
+                 SortMode="SortMode.Single"
+                 Filterable="false"
+                 RowsPerPage="@_pageSize"
+                 Class="users-datagrid">
+        <Columns>
+            <SelectColumn T="UserDto" ShowInFooter="false" />
+            <TemplateColumn Title="User" Sortable="true" SortBy="@(x => $"{x.FirstName} {x.LastName}")">
+                <CellTemplate>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudAvatar Size="Size.Small" Class="user-avatar">
+                            @if (!string.IsNullOrEmpty(context.Item.ImageUrl))
+                            {
+                                <MudImage Src="@context.Item.ImageUrl" Alt="@context.Item.UserName" />
+                            }
+                            else
+                            {
+                                @GetInitials(context.Item)
+                            }
+                        </MudAvatar>
+                        <MudStack Spacing="0">
+                            <MudLink Typo="Typo.body2" Class="fw-600" OnClick="@(() => GoToDetail(context.Item.Id))">
+                                @($"{context.Item.FirstName} {context.Item.LastName}".Trim())
+                            </MudLink>
+                            <MudText Typo="Typo.caption" Class="text-muted">@@@context.Item.UserName</MudText>
+                        </MudStack>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true">
+                <CellTemplate>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.body2">@context.Item.Email</MudText>
+                        @if (context.Item.EmailConfirmed)
+                        {
+                            <MudTooltip Text="Email verified">
+                                <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Success" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Email not verified">
+                                <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning" />
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                </CellTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.PhoneNumber" Title="Phone" Sortable="false" />
+            <TemplateColumn Title="Roles" Sortable="false">
+                <CellTemplate>
+                    @if (_userRolesCache.TryGetValue(context.Item.Id ?? "", out var roles) && roles.Any())
+                    {
+                        <MudStack Row="true" Spacing="1">
+                            @RenderRoleChips(roles.Where(r => r.Enabled).Take(2))
+                            @if (roles.Count(r => r.Enabled) > 2)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
+                                    +@(roles.Count(r => r.Enabled) - 2)
+                                </MudChip>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                            No roles
+                        </MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.IsActive)">
+                <CellTemplate>
+                    @if (context.Item.IsActive)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
+                <CellTemplate>
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
+                        <MudTooltip Text="View Details">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => GoToDetail(context.Item.Id))" />
+                        </MudTooltip>
+                        @if (_canManageRoles)
+                        {
+                            <MudTooltip Text="Manage Roles">
+                                <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
+                                               Size="Size.Small"
+                                               Color="Color.Info"
+                                               OnClick="@(() => GoToRoles(context.Item.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (_canUpdate)
+                        {
+                            <MudTooltip Text="@GetToggleTooltip(context.Item)">
+                                <MudIconButton Icon="@(context.Item.IsActive ? Icons.Material.Filled.PersonOff : Icons.Material.Filled.PersonAdd)"
+                                               Size="Size.Small"
+                                               Color="@(context.Item.IsActive ? Color.Warning : Color.Success)"
+                                               OnClick="@(() => ToggleStatus(context.Item))"
+                                               Disabled="@IsToggleDisabled(context.Item)" />
+                            </MudTooltip>
+                        }
+                        @if (_canDelete)
+                        {
+                            <MudTooltip Text="Delete User">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteUser(context.Item))"
+                                               Disabled="_busyUserId == context.Item.Id" />
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="UserDto" PageSizeOptions="@_pageSizeOptions" />
+        </PagerContent>
+        <NoRecordsContent>
+            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.h6">No users found</MudText>
+                <MudText Typo="Typo.body2" Class="text-muted">Try adjusting your filters or create a new user.</MudText>
+            </MudStack>
+        </NoRecordsContent>
+    </MudDataGrid>
+</MudPaper>
+
+<style>
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+        color: white;
+    }
+
+    .users-datagrid .mud-table-head .mud-table-row .mud-table-cell {
+        font-weight: 600;
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.04);
+    }
+
+    .users-datagrid .mud-table-row:hover {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.02);
+    }
+</style>
+
+@code {
+    private MudDataGrid<UserDto>? _dataGrid;
+    private List<UserDto> _users = new();
+    private List<UserDto> _filtered = new();
+    private HashSet<UserDto> _selectedUsers = new();
+    private bool _loading = true;
+    private string? _busyUserId;
+    private bool _bulkBusy;
+    private string? _currentUserId;
+    private readonly Dictionary<string, bool> _adminCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, List<UserRoleDto>> _userRolesCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly int _pageSize = 10;
+    private readonly int[] _pageSizeOptions = { 5, 10, 25, 50 };
+
+    private UserStats _stats = new();
+    private FilterModel _filter = new();
+
+    private class UserStats
+    {
+        public int Total { get; set; }
+        public int Active { get; set; }
+        public int Inactive { get; set; }
+        public int UnconfirmedEmail { get; set; }
+    }
+
+    private class FilterModel
+    {
+        public string? Search { get; set; }
+        public bool? IsActive { get; set; }
+        public bool? EmailConfirmed { get; set; }
+    }
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.Delete);
+    private bool _canManageRoles => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.ManageRoles);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await ResolveCurrentUser();
+        await LoadData();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            var result = await IdentityClient.UsersGetAsync();
+            _users = result?.ToList() ?? new List<UserDto>();
+            CalculateStats();
+            ApplyFilters();
+            await LoadRolesForUsers();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load users: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void CalculateStats()
+    {
+        _stats = new UserStats
+        {
+            Total = _users.Count,
+            Active = _users.Count(u => u.IsActive),
+            Inactive = _users.Count(u => !u.IsActive),
+            UnconfirmedEmail = _users.Count(u => !u.EmailConfirmed)
+        };
+    }
+
+    private void ApplyFilters()
+    {
+        var query = _users.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(_filter.Search))
+        {
+            var term = _filter.Search.ToLowerInvariant();
+            query = query.Where(u =>
+                (u.FirstName?.ToLowerInvariant().Contains(term) ?? false) ||
+                (u.LastName?.ToLowerInvariant().Contains(term) ?? false) ||
+                (u.Email?.ToLowerInvariant().Contains(term) ?? false) ||
+                (u.UserName?.ToLowerInvariant().Contains(term) ?? false));
+        }
+
+        if (_filter.IsActive.HasValue)
+        {
+            query = query.Where(u => u.IsActive == _filter.IsActive.Value);
+        }
+
+        if (_filter.EmailConfirmed.HasValue)
+        {
+            query = query.Where(u => u.EmailConfirmed == _filter.EmailConfirmed.Value);
+        }
+
+        _filtered = query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName).ToList();
+    }
+
+    private async Task LoadRolesForUsers()
+    {
+        var tasks = _filtered.Take(20).Select(async user =>
+        {
+            if (string.IsNullOrEmpty(user.Id) || _userRolesCache.ContainsKey(user.Id)) return;
+            try
+            {
+                var roles = await UsersClient.RolesGetAsync(Guid.Parse(user.Id));
+                _userRolesCache[user.Id] = roles?.ToList() ?? new List<UserRoleDto>();
+            }
+            catch
+            {
+                _userRolesCache[user.Id] = new List<UserRoleDto>();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+        StateHasChanged();
+    }
+
+    private async Task RefreshData()
+    {
+        ApplyFilters();
+        StateHasChanged();
+        await LoadRolesForUsers();
+    }
+
+    private async Task OnStatusFilterChanged(bool? value)
+    {
+        _filter.IsActive = value;
+        await RefreshData();
+    }
+
+    private async Task OnEmailFilterChanged(bool? value)
+    {
+        _filter.EmailConfirmed = value;
+        await RefreshData();
+    }
+
+    private void ClearFilters()
+    {
+        _filter = new FilterModel();
+        ApplyFilters();
+    }
+
+    private async Task ResolveCurrentUser()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+        catch
+        {
+            // Authentication state unavailable - user remains null (not logged in)
+        }
+    }
+
+    private static string GetInitials(UserDto user)
+    {
+        var first = user.FirstName?.FirstOrDefault() ?? ' ';
+        var last = user.LastName?.FirstOrDefault() ?? ' ';
+        return $"{first}{last}".Trim().ToUpperInvariant();
+    }
+
+    private static Color GetRoleColor(string? roleName) => roleName?.ToLowerInvariant() switch
+    {
+        "admin" => Color.Error,
+        "administrator" => Color.Error,
+        "basic" => Color.Info,
+        "user" => Color.Default,
+        _ => Color.Default
+    };
+
+    private static RenderFragment RenderRoleChips(IEnumerable<UserRoleDto> roles)
+    {
+        return builder =>
+        {
+            foreach (var (role, index) in roles.Select((r, i) => (r, i)))
+            {
+                var seq = index * 10;
+                builder.OpenComponent<MudChip<string>>(seq++);
+                builder.AddAttribute(seq++, "Size", Size.Small);
+                builder.AddAttribute(seq++, "Variant", Variant.Outlined);
+                builder.AddAttribute(seq++, "Color", GetRoleColor(role.RoleName));
+                builder.AddAttribute(seq, "ChildContent", (RenderFragment)(b => b.AddContent(0, role.RoleName)));
+                builder.CloseComponent();
+            }
+        };
+    }
+
+    private bool IsCurrentUser(UserDto user) =>
+        !string.IsNullOrWhiteSpace(_currentUserId) &&
+        string.Equals(_currentUserId, user.Id, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsToggleDisabled(UserDto user) =>
+        string.IsNullOrWhiteSpace(user.Id) || _busyUserId == user.Id || IsCurrentUser(user);
+
+    private string GetToggleTooltip(UserDto user)
+    {
+        if (IsCurrentUser(user)) return "Cannot modify your own account";
+        return user.IsActive ? "Deactivate user" : "Activate user";
+    }
+
+    private async Task<bool> IsUserAdminAsync(string userId)
+    {
+        if (_adminCache.TryGetValue(userId, out var cached)) return cached;
+
+        try
+        {
+            var roles = await UsersClient.RolesGetAsync(Guid.Parse(userId));
+            var isAdmin = roles?.Any(r => string.Equals(r.RoleName, RoleConstants.Admin, StringComparison.OrdinalIgnoreCase) && r.Enabled) ?? false;
+            _adminCache[userId] = isAdmin;
+            return isAdmin;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void GoToDetail(string? id)
+    {
+        if (Guid.TryParse(id, out var guid))
+            Navigation.NavigateTo($"/users/{guid}");
+    }
+
+    private void GoToRoles(string? id)
+    {
+        if (Guid.TryParse(id, out var guid))
+            Navigation.NavigateTo($"/users/{guid}/roles");
+    }
+
+    private void OnSelectionChanged(HashSet<UserDto> items)
+    {
+        _selectedUsers = items;
+    }
+
+    private void ClearSelection()
+    {
+        _selectedUsers.Clear();
+        StateHasChanged();
+    }
+
+    private async Task ToggleStatus(UserDto user)
+    {
+        if (string.IsNullOrWhiteSpace(user.Id)) return;
+
+        if (IsCurrentUser(user))
+        {
+            Snackbar.Add("You cannot modify your own account.", Severity.Warning);
+            return;
+        }
+
+        var isAdmin = await IsUserAdminAsync(user.Id);
+        if (isAdmin && user.IsActive)
+        {
+            Snackbar.Add("Administrators cannot be deactivated.", Severity.Warning);
+            return;
+        }
+
+        var action = user.IsActive ? "deactivate" : "activate";
+        var confirmed = await DialogService.ShowConfirmAsync(
+            $"{(user.IsActive ? "Deactivate" : "Activate")} User",
+            $"Are you sure you want to {action} {user.FirstName} {user.LastName}?",
+            user.IsActive ? "Deactivate" : "Activate",
+            "Cancel",
+            user.IsActive ? Color.Warning : Color.Success);
+
+        if (!confirmed) return;
+
+        _busyUserId = user.Id;
+        try
+        {
+            var command = new ToggleUserStatusCommand { ActivateUser = !user.IsActive, UserId = user.Id };
+            await IdentityClient.UsersPatchAsync(Guid.Parse(user.Id), command);
+            Snackbar.Add($"User {(user.IsActive ? "deactivated" : "activated")} successfully.", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to update user: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busyUserId = null;
+        }
+    }
+
+    private async Task DeleteUser(UserDto user)
+    {
+        if (string.IsNullOrWhiteSpace(user.Id)) return;
+
+        var confirmed = await DialogService.ShowDeleteConfirmAsync($"{user.FirstName} {user.LastName}");
+        if (!confirmed) return;
+
+        _busyUserId = user.Id;
+        try
+        {
+            await IdentityClient.UsersDeleteAsync(Guid.Parse(user.Id));
+            Snackbar.Add("User deleted successfully.", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete user: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busyUserId = null;
+        }
+    }
+
+    private async Task BulkActivate()
+    {
+        var users = _selectedUsers.Where(u => !u.IsActive && !IsCurrentUser(u)).ToList();
+        if (!users.Any())
+        {
+            Snackbar.Add("No inactive users selected.", Severity.Info);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Bulk Activate",
+            $"Activate {users.Count} user(s)?",
+            "Activate All",
+            "Cancel",
+            Color.Success);
+
+        if (!confirmed) return;
+
+        _bulkBusy = true;
+        var results = await Task.WhenAll(users.Select(async user =>
+        {
+            try
+            {
+                var command = new ToggleUserStatusCommand { ActivateUser = true, UserId = user.Id };
+                await IdentityClient.UsersPatchAsync(Guid.Parse(user.Id!), command);
+                return true;
+            }
+            catch
+            {
+                // Continue with remaining users - failures are reflected in the success count
+                return false;
+            }
+        }));
+        var success = results.Count(r => r);
+        _bulkBusy = false;
+        Snackbar.Add($"Activated {success} of {users.Count} users.", Severity.Success);
+        ClearSelection();
+        await LoadData();
+    }
+
+    private async Task BulkDeactivate()
+    {
+        var users = _selectedUsers.Where(u => u.IsActive && !IsCurrentUser(u)).ToList();
+        if (!users.Any())
+        {
+            Snackbar.Add("No active users selected (excluding yourself).", Severity.Info);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Bulk Deactivate",
+            $"Deactivate {users.Count} user(s)?",
+            "Deactivate All",
+            "Cancel",
+            Color.Warning);
+
+        if (!confirmed) return;
+
+        _bulkBusy = true;
+        var results = await Task.WhenAll(users.Select(async user =>
+        {
+            if (await IsUserAdminAsync(user.Id!)) return false;
+            try
+            {
+                var command = new ToggleUserStatusCommand { ActivateUser = false, UserId = user.Id };
+                await IdentityClient.UsersPatchAsync(Guid.Parse(user.Id!), command);
+                return true;
+            }
+            catch
+            {
+                // Continue with remaining users - failures are reflected in the success count
+                return false;
+            }
+        }));
+        var success = results.Count(r => r);
+        _bulkBusy = false;
+        Snackbar.Add($"Deactivated {success} of {users.Count} users.", Severity.Success);
+        ClearSelection();
+        await LoadData();
+    }
+
+    private async Task BulkDelete()
+    {
+        var users = _selectedUsers.Where(u => !IsCurrentUser(u)).ToList();
+        if (!users.Any())
+        {
+            Snackbar.Add("No users selected (excluding yourself).", Severity.Info);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Bulk Delete",
+            $"Delete {users.Count} user(s)? This action cannot be undone.",
+            "Delete All",
+            "Cancel",
+            Color.Error,
+            Icons.Material.Outlined.DeleteForever,
+            Color.Error);
+
+        if (!confirmed) return;
+
+        _bulkBusy = true;
+        var success = 0;
+        foreach (var user in users)
+        {
+            try
+            {
+                await IdentityClient.UsersDeleteAsync(Guid.Parse(user.Id!));
+                success++;
+            }
+            catch
+            {
+                // Continue with remaining users - failures are reflected in the success count
+            }
+        }
+        _bulkBusy = false;
+        Snackbar.Add($"Deleted {success} of {users.Count} users.", Severity.Success);
+        ClearSelection();
+        await LoadData();
+    }
+
+    private async Task ShowCreate()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Create User", options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+}
+

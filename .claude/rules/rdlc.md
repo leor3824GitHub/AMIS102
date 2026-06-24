@@ -224,5 +224,5 @@ Toolbar split-button pattern (HTML print + RDLC download menu):
 - Helper: `src/Modules/RdlcReporting/Modules.RdlcReporting/Services/RdlcReportHelper.cs`
 - Handler: `src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestQueryHandler.cs`
 - Endpoint: `src/Modules/RdlcReporting/Modules.RdlcReporting/Features/v1/PurchaseRequests/PrintPurchaseRequest/PrintPurchaseRequestEndpoint.cs`
-- UI: `src/Playground/Playground.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor`
+- UI: `src/Host/AMIS.Blazor/Components/Pages/Procurement/PurchaseRequestPrintPage.razor`
 - RDLC: `src/Modules/RdlcReporting/Modules.RdlcReporting/Reports/PurchaseRequest.rdlc`

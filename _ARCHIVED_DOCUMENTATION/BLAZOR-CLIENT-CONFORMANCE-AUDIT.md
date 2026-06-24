@@ -510,7 +510,7 @@ public async Task<PurchaseDto> GetByIdAsync(Guid id, CancellationToken cancellat
 
 **Command:**
 ```bash
-grep -n "Task.*SearchAsync\|Task.*GetAsync" src/Playground/Playground.Blazor/ApiClient/Generated.cs | head -20
+grep -n "Task.*SearchAsync\|Task.*GetAsync" src/Host/AMIS.Blazor/ApiClient/Generated.cs | head -20
 ```
 
 ---
@@ -525,7 +525,7 @@ grep -n "Task.*SearchAsync\|Task.*GetAsync" src/Playground/Playground.Blazor/Api
 
 **Check Backend:**
 ```bash
-dotnet run --project src/Playground/Playground.Api
+dotnet run --project src/Host/AMIS.Api
 # Navigate to: https://localhost:7030/scalar
 # Verify endpoints exist
 ```
@@ -538,13 +538,13 @@ Once backend endpoints are verified:
 
 ```powershell
 # Ensure backend is running
-dotnet run --project src/Playground/Playground.Api
+dotnet run --project src/Host/AMIS.Api
 
 # Regenerate in new terminal
 ./scripts/openapi/generate-api-clients.ps1 -SpecUrl "https://localhost:7030/openapi/v1.json"
 
 # Review Generated.cs changes
-git diff src/Playground/Playground.Blazor/ApiClient/Generated.cs
+git diff src/Host/AMIS.Blazor/ApiClient/Generated.cs
 ```
 
 ---
@@ -603,10 +603,10 @@ git diff src/Playground/Playground.Blazor/ApiClient/Generated.cs
 
 ```powershell
 # 1. See what methods are available in generated clients
-grep "public.*Task.*Async" src/Playground/Playground.Blazor/ApiClient/Generated.cs | grep -i "search\|get\|list" | head -30
+grep "public.*Task.*Async" src/Host/AMIS.Blazor/ApiClient/Generated.cs | grep -i "search\|get\|list" | head -30
 
 # 2. Compare against wrapper interface definitions
-grep "Task.*SearchAsync\|Task.*GetAsync" src/Playground/Playground.Blazor/Services/Api/Expendable/I*.cs
+grep "Task.*SearchAsync\|Task.*GetAsync" src/Host/AMIS.Blazor/Services/Api/Expendable/I*.cs
 
 # 3. Check if search endpoints exist in backend
 curl -s https://localhost:7030/openapi/v1.json | jq '.paths | keys' | grep -i search

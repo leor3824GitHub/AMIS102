@@ -13,7 +13,7 @@ Set-Location $repoRoot
 Write-Host "Running NSwag generation against $SpecUrl..."
 ./scripts/openapi/generate-api-clients.ps1 -SpecUrl $SpecUrl
 
-$targetFile = "src/Playground/Playground.Blazor/ApiClient/Generated.cs"
+$targetFile = "src/Host/AMIS.Blazor/ApiClient/Generated.cs"
 
 Write-Host "Checking for drift in $targetFile..."
 git diff --exit-code -- $targetFile

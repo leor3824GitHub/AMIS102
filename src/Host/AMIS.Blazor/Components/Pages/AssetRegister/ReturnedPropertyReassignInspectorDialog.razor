@@ -1,0 +1,87 @@
+@using AMIS.Blazor.ApiClient
+@inject IArReturnedPropertyClient Client
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3" Style="min-width: 420px;">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Replace the nominated inspector for this Pending return request. Only the assigned inspector can record the inspection.
+            </MudText>
+
+            @if (!string.IsNullOrWhiteSpace(CurrentInspectorName))
+            {
+                <MudText Typo="Typo.caption">Current inspector: <b>@CurrentInspectorName</b></MudText>
+            }
+
+            <MudAutocomplete T="EmployeeReferenceDto"
+                             @bind-Value="_inspector"
+                             SearchFunc="SearchEmployees"
+                             ToStringFunc="FormatEmployee"
+                             Label="New Inspector" Variant="Variant.Outlined"
+                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                             Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" Disabled="@(_busy || _inspector is null)">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Reassign
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Guid ReceiptId { get; set; }
+    [Parameter] public string? CurrentInspectorName { get; set; }
+
+    private EmployeeReferenceDto? _inspector;
+    private bool _busy;
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private async Task SubmitAsync()
+    {
+        if (_inspector is null) return;
+
+        _busy = true;
+        try
+        {
+            var inspector = new ArEmployeeRefDto(
+                _inspector.Id,
+                $"{_inspector.FirstName} {_inspector.LastName}".Trim(),
+                string.IsNullOrWhiteSpace(_inspector.PositionName) ? null : _inspector.PositionName);
+
+            var result = await Client.ReassignInspectorAsync(ReceiptId, inspector);
+            Snackbar.Add("Inspector reassigned.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Reassign failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

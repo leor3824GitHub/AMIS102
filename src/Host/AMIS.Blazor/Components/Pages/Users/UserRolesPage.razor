@@ -1,0 +1,417 @@
+@page "/users/{Id:guid}/roles"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Shared.Identity
+@inherits ComponentBase
+@inject IIdentityClient IdentityClient
+@inject IUsersClient UsersClient
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Manage User Roles"
+               Description="Assign or remove roles for this user">
+    <ActionContent>
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="GoBack">
+            Back to Users
+        </MudButton>
+    </ActionContent>
+</AMISPageHeader>
+
+@if (_loading)
+{
+    <MudPaper Class="AMIS-card pa-8">
+        <MudStack AlignItems="AlignItems.Center" Spacing="4">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            <MudText Typo="Typo.body1">Loading user information...</MudText>
+        </MudStack>
+    </MudPaper>
+}
+else if (_user is null)
+{
+    <MudPaper Class="AMIS-card pa-8">
+        <MudStack AlignItems="AlignItems.Center" Spacing="4">
+            <MudIcon Icon="@Icons.Material.Filled.PersonOff" Size="Size.Large" Color="Color.Error" />
+            <MudText Typo="Typo.h6">User Not Found</MudText>
+            <MudText Typo="Typo.body2" Class="text-muted">The requested user could not be found.</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoBack">
+                Back to Users
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+}
+else
+{
+    @* User Info Header *@
+    <MudPaper Class="AMIS-card pa-4 mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+            <MudAvatar Size="Size.Large" Class="user-avatar-large">
+                @if (!string.IsNullOrEmpty(_user.ImageUrl))
+                {
+                    <MudImage Src="@_user.ImageUrl" Alt="@_user.UserName" />
+                }
+                else
+                {
+                    @GetInitials(_user)
+                }
+            </MudAvatar>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h5" Class="fw-700">@_user.FirstName @_user.LastName</MudText>
+                <MudText Typo="Typo.body2" Class="text-muted">@_user.Email</MudText>
+                <MudStack Row="true" Spacing="1" Class="mt-1">
+                    @if (_user.IsActive)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
+                    }
+                    @if (_user.EmailConfirmed)
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Class="mr-1" /> Verified
+                        </MudChip>
+                    }
+                </MudStack>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+
+    @* Current Roles *@
+    <MudPaper Class="AMIS-card pa-4 mb-4">
+        <MudStack Spacing="3">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h6" Class="fw-600">Current Roles</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">
+                    @_currentRoleIds.Count assigned
+                </MudChip>
+            </MudStack>
+            <MudDivider />
+            @if (_currentRoleIds.Any())
+            {
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                    @foreach (var role in _allRoles.Where(r => IsRoleAssigned(r.Id)))
+                    {
+                        <MudChip T="string"
+                                 Color="@GetRoleColor(role.Name)"
+                                 Variant="Variant.Filled"
+                                 OnClose="@(() => RemoveRole(role.Id, role.Name))"
+                                 CloseIcon="@Icons.Material.Filled.Close">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@GetRoleIcon(role.Name)" Size="Size.Small" />
+                                @role.Name
+                            </MudStack>
+                        </MudChip>
+                    }
+                </MudStack>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                    This user has no roles assigned. Assign roles below to grant permissions.
+                </MudAlert>
+            }
+        </MudStack>
+    </MudPaper>
+
+    @* Available Roles *@
+    <MudPaper Class="AMIS-card pa-4">
+        <MudStack Spacing="3">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h6" Class="fw-600">Available Roles</MudText>
+                <MudStack Row="true" Spacing="2">
+                    @if (HasChanges)
+                    {
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   OnClick="ResetChanges"
+                                   Disabled="_saving">
+                            Reset
+                        </MudButton>
+                    }
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Save"
+                               OnClick="SaveRoles"
+                               Disabled="@(!HasChanges || _saving || !_canManageRoles)">
+                        @if (_saving)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        }
+                        Save Changes
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+            <MudDivider />
+
+            @if (_allRoles.Any())
+            {
+                <MudList T="RoleDto" Dense="true" Class="pa-0">
+                    @foreach (var role in _allRoles)
+                    {
+                        var isAssigned = IsRoleAssigned(role.Id);
+                        var hasChanged = HasRoleChanged(role.Id);
+
+                        <MudListItem Class="@(hasChanged ? "role-changed" : "")">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                    <MudCheckBox T="bool"
+                                                 Value="@isAssigned"
+                                                 ValueChanged="@((bool val) => ToggleRole(role, val))"
+                                                 Color="@GetRoleColor(role.Name)" />
+                                    <MudAvatar Size="Size.Small" Style="@GetRoleAvatarStyle(role.Name)">
+                                        <MudIcon Icon="@GetRoleIcon(role.Name)" Size="Size.Small" />
+                                    </MudAvatar>
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body1" Class="fw-600">@role.Name</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-muted">@role.Description</MudText>
+                                    </MudStack>
+                                </MudStack>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    @if (hasChanged)
+                                    {
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(isAssigned ? Color.Success : Color.Warning)"
+                                                 Variant="Variant.Text">
+                                            @(isAssigned ? "Will be added" : "Will be removed")
+                                        </MudChip>
+                                    }
+                                    @if (isAssigned)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                                    }
+                                </MudStack>
+                            </MudStack>
+                        </MudListItem>
+                        <MudDivider />
+                    }
+                </MudList>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                    No roles available in the system. Contact an administrator.
+                </MudAlert>
+            }
+        </MudStack>
+    </MudPaper>
+}
+
+<style>
+    .user-avatar-large {
+        width: 64px;
+        height: 64px;
+        font-size: 20px;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+        color: white;
+        box-shadow: 0 4px 12px rgba(var(--mud-palette-primary-rgb), 0.3);
+    }
+
+    .role-changed {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.05);
+        border-left: 3px solid var(--mud-palette-primary);
+    }
+
+    .mud-list-item {
+        border-radius: 8px;
+        margin: 4px 0;
+        transition: background-color 0.2s ease;
+    }
+
+    .mud-list-item:hover {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.04);
+    }
+</style>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private bool _saving;
+    private UserDto? _user;
+    private List<RoleDto> _allRoles = new();
+    private HashSet<string> _originalRoleIds = new();
+    private HashSet<string> _currentRoleIds = new();
+
+    private bool HasChanges => !_originalRoleIds.SetEquals(_currentRoleIds);
+
+    private bool _canManageRoles => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Users.ManageRoles);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadData();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            // Load user details
+            _user = await IdentityClient.UsersGetAsync(Id);
+
+            // Load user's current roles
+            var userRoles = await UsersClient.RolesGetAsync(Id);
+            var enabledRoleIds = userRoles?.Where(r => r.Enabled).Select(r => r.RoleId ?? "").ToHashSet() ?? new HashSet<string>();
+
+            // Store original state and current state
+            _originalRoleIds = new HashSet<string>(enabledRoleIds);
+            _currentRoleIds = new HashSet<string>(enabledRoleIds);
+
+            // Load all available roles
+            var allRoles = await IdentityClient.RolesGetAsync();
+            _allRoles = allRoles?.ToList() ?? new List<RoleDto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool IsRoleAssigned(string? roleId) => !string.IsNullOrEmpty(roleId) && _currentRoleIds.Contains(roleId);
+
+    private bool IsRoleOriginallyAssigned(string? roleId) => !string.IsNullOrEmpty(roleId) && _originalRoleIds.Contains(roleId);
+
+    private bool HasRoleChanged(string? roleId) => IsRoleAssigned(roleId) != IsRoleOriginallyAssigned(roleId);
+
+    private void ToggleRole(RoleDto role, bool enabled)
+    {
+        if (string.IsNullOrEmpty(role.Id)) return;
+
+        if (enabled)
+        {
+            _currentRoleIds.Add(role.Id);
+        }
+        else
+        {
+            _currentRoleIds.Remove(role.Id);
+        }
+        StateHasChanged();
+    }
+
+    private async Task RemoveRole(string? roleId, string? roleName)
+    {
+        if (string.IsNullOrEmpty(roleId)) return;
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Remove Role",
+            $"Remove the '{roleName}' role from this user?",
+            "Remove",
+            "Cancel",
+            Color.Warning);
+
+        if (!confirmed) return;
+
+        _currentRoleIds.Remove(roleId);
+        StateHasChanged();
+    }
+
+    private void ResetChanges()
+    {
+        _currentRoleIds = new HashSet<string>(_originalRoleIds);
+        StateHasChanged();
+    }
+
+    private async Task SaveRoles()
+    {
+        _saving = true;
+        try
+        {
+            // Build user roles list from current selection
+            var userRoles = _allRoles.Select(role => new UserRoleDto
+            {
+                RoleId = role.Id,
+                RoleName = role.Name,
+                Description = role.Description,
+                Enabled = _currentRoleIds.Contains(role.Id ?? "")
+            }).ToList();
+
+            var command = new AssignUserRolesCommand
+            {
+                UserId = Id.ToString(),
+                UserRoles = userRoles
+            };
+
+            await UsersClient.RolesPostAsync(Id, command);
+
+            // Update original state to match current
+            _originalRoleIds = new HashSet<string>(_currentRoleIds);
+
+            Snackbar.Add("Roles updated successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save roles: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/users");
+    }
+
+    private static string GetInitials(UserDto user)
+    {
+        var first = user.FirstName?.FirstOrDefault() ?? ' ';
+        var last = user.LastName?.FirstOrDefault() ?? ' ';
+        return $"{first}{last}".Trim().ToUpperInvariant();
+    }
+
+    private static Color GetRoleColor(string? roleName) => roleName?.ToLowerInvariant() switch
+    {
+        "admin" => Color.Error,
+        "administrator" => Color.Error,
+        "basic" => Color.Info,
+        "user" => Color.Default,
+        "manager" => Color.Warning,
+        "moderator" => Color.Secondary,
+        _ => Color.Primary
+    };
+
+    private static string GetRoleIcon(string? roleName) => roleName?.ToLowerInvariant() switch
+    {
+        "admin" => Icons.Material.Filled.AdminPanelSettings,
+        "administrator" => Icons.Material.Filled.AdminPanelSettings,
+        "basic" => Icons.Material.Filled.Person,
+        "user" => Icons.Material.Filled.Person,
+        "manager" => Icons.Material.Filled.SupervisorAccount,
+        "moderator" => Icons.Material.Filled.Shield,
+        _ => Icons.Material.Filled.Badge
+    };
+
+    private static string GetRoleAvatarStyle(string? roleName)
+    {
+        var color = roleName?.ToLowerInvariant() switch
+        {
+            "admin" => "var(--mud-palette-error)",
+            "administrator" => "var(--mud-palette-error)",
+            "basic" => "var(--mud-palette-info)",
+            "user" => "var(--mud-palette-dark)",
+            "manager" => "var(--mud-palette-warning)",
+            "moderator" => "var(--mud-palette-secondary)",
+            _ => "var(--mud-palette-primary)"
+        };
+        return $"background-color: {color}; color: white;";
+    }
+}
+

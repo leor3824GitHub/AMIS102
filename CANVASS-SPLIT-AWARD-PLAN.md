@@ -87,7 +87,7 @@ File: [CanvassRequest.cs](src/Modules/ProcurementAcquisition/Modules.Procurement
 - Extend the two `ToJson()` blocks with the new properties (Step 1 + Step 2).
 - Generate the migration and **inspect it** — expect no `ADD COLUMN`. If EF emits an empty migration, keep it for snapshot consistency; if it emits column DDL, stop and reconcile.
   ```powershell
-  dotnet ef migrations add CanvassSplitAward --project src/Playground/Migrations.PostgreSQL --context ProcurementDbContext --output-dir ProcurementAcquisition
+  dotnet ef migrations add CanvassSplitAward --project src/Host/Migrations.PostgreSQL --context ProcurementDbContext --output-dir ProcurementAcquisition
   ```
 
 ### Step 4 — Contracts
@@ -127,7 +127,7 @@ File: [PrintAbstractOfCanvassFastQueryHandler.cs](src/Modules/FastReporting/Modu
 ### Step 8 — Blazor UI
 
 - **Award dialog:** replace the single-quotation radio with a per-line winner grid (PR line rows × supplier columns); default-select the lowest unit price, allow per-line override; submit `LineAwards[]`.
-- **PO flow:** add a "Generate POs" action (collects shared PO terms once in a dialog) calling `CreatePurchaseOrdersFromCanvassCommand`; show the resulting N POs. Update [PurchaseOrderFormDialog.razor](src/Playground/Playground.Blazor/Components/Pages/Procurement/PurchaseOrderFormDialog.razor) / [PurchaseOrdersPage.razor](src/Playground/Playground.Blazor/Components/Pages/Procurement/PurchaseOrdersPage.razor) and [CanvassRequestsPage.razor](src/Playground/Playground.Blazor/Components/Pages/Procurement/CanvassRequestsPage.razor) for the new list-of-POs DTO.
+- **PO flow:** add a "Generate POs" action (collects shared PO terms once in a dialog) calling `CreatePurchaseOrdersFromCanvassCommand`; show the resulting N POs. Update [PurchaseOrderFormDialog.razor](src/Host/AMIS.Blazor/Components/Pages/Procurement/PurchaseOrderFormDialog.razor) / [PurchaseOrdersPage.razor](src/Host/AMIS.Blazor/Components/Pages/Procurement/PurchaseOrdersPage.razor) and [CanvassRequestsPage.razor](src/Host/AMIS.Blazor/Components/Pages/Procurement/CanvassRequestsPage.razor) for the new list-of-POs DTO.
 - Update `ProcurementClient` for the new command/DTO shapes; gate buttons with `UserProfileState.Permissions.Contains(...)`.
 
 ### Step 9 — Tests

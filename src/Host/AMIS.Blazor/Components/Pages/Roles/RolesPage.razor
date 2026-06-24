@@ -1,0 +1,474 @@
+@page "/roles"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Shared.Identity
+@inherits ComponentBase
+@inject IIdentityClient IdentityClient
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Roles"
+               Description="Manage roles and their permissions">
+    <ActionContent>
+        @if (_selectedRoles.Any())
+        {
+            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" Class="mr-2">
+                @if (_canDelete)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               OnClick="BulkDelete"
+                               Disabled="_bulkBusy">
+                        Delete (@_selectedRoles.Count)
+                    </MudButton>
+                }
+                <MudButton StartIcon="@Icons.Material.Filled.Clear"
+                           OnClick="ClearSelection">
+                    Clear
+                </MudButton>
+            </MudButtonGroup>
+        }
+        @if (_canCreate)
+        {
+            <AMISButton Variant="Variant.Filled"
+                        Color="Color.Primary"
+                        StartIcon="@Icons.Material.Filled.Add"
+                        OnClick="ShowCreate">
+                New Role
+            </AMISButton>
+        }
+    </ActionContent>
+</AMISPageHeader>
+
+@* Stats Cards *@
+<MudGrid Class="mb-4">
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Security"
+                     IconColor="Color.Primary"
+                     Value="@_stats.Total.ToString()"
+                     Label="Total Roles"
+                     Badge="Total" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.AdminPanelSettings"
+                     IconColor="Color.Error"
+                     Value="@_stats.SystemRolesCount.ToString()"
+                     Label="System Roles"
+                     Badge="System" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Badge"
+                     IconColor="Color.Info"
+                     Value="@_stats.CustomRolesCount.ToString()"
+                     Label="Custom Roles"
+                     Badge="Custom" />
+    </MudItem>
+    <MudItem xs="6" sm="3">
+        <AMISStatCard Icon="@Icons.Material.Filled.Lock"
+                     IconColor="Color.Warning"
+                     Value="@_stats.ProtectedRolesCount.ToString()"
+                     Label="Protected Roles"
+                     Badge="Protected" />
+    </MudItem>
+</MudGrid>
+
+@* Filter Panel *@
+<MudExpansionPanels Class="mb-4" Elevation="0">
+    <MudExpansionPanel Text="Filters" IsInitiallyExpanded="true" Class="AMIS-card">
+        <MudGrid GutterSize="2">
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_filter.Search"
+                              Label="Search"
+                              Placeholder="Role name or description"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true"
+                              DebounceInterval="400"
+                              OnDebounceIntervalElapsed="@((string _) => RefreshData())" />
+            </MudItem>
+            <MudItem xs="12" sm="6" Class="d-flex align-center justify-end">
+                <AMISButton Size="Size.Small"
+                            StartIcon="@Icons.Material.Filled.FilterAltOff"
+                            Color="Color.Default"
+                            Variant="Variant.Text"
+                            OnClick="ClearFilters">
+                    Clear Filters
+                </AMISButton>
+                <AMISButton Size="Size.Small"
+                            StartIcon="@Icons.Material.Filled.Refresh"
+                            Color="Color.Primary"
+                            Variant="Variant.Filled"
+                            OnClick="LoadData"
+                            Class="ml-2">
+                    Refresh
+                </AMISButton>
+            </MudItem>
+        </MudGrid>
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+@* Roles Grid *@
+<MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
+    <MudDataGrid T="RoleDto"
+                 @ref="_dataGrid"
+                 Items="_filtered"
+                 Loading="_loading"
+                 Hover="true"
+                 Dense="true"
+                 Striped="true"
+                 MultiSelection="true"
+                 SelectedItems="_selectedRoles"
+                 SelectedItemsChanged="OnSelectionChanged"
+                 SortMode="SortMode.Single"
+                 Filterable="false"
+                 RowsPerPage="@_pageSize"
+                 Class="roles-datagrid">
+        <Columns>
+            <SelectColumn T="RoleDto" ShowInFooter="false" />
+            <TemplateColumn Title="Role" Sortable="true" SortBy="@(x => x.Name)">
+                <CellTemplate>
+                    <MudStack Spacing="0">
+                        <MudLink Typo="Typo.body1" Class="fw-600" OnClick="@(() => GoToPermissions(context.Item.Id))">
+                            @context.Item.Name
+                        </MudLink>
+                        <MudText Typo="Typo.caption" Class="text-muted">
+                            @(string.IsNullOrEmpty(context.Item.Description) ? "No description" : context.Item.Description)
+                        </MudText>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Type" Sortable="false">
+                <CellTemplate>
+                    @if (IsSystemRole(context.Item.Name))
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="mr-1" />
+                            System
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mr-1" />
+                            Custom
+                        </MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
+                <CellTemplate>
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
+                        @if (_canUpdate)
+                        {
+                            <MudTooltip Text="Manage Permissions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Key"
+                                               Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => GoToPermissions(context.Item.Id))" />
+                            </MudTooltip>
+                            <MudTooltip Text="@(IsProtectedRole(context.Item.Name) ? "Protected roles cannot be edited" : "Edit Role")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Size="Size.Small"
+                                               Color="Color.Info"
+                                               OnClick="@(() => EditRole(context.Item))"
+                                               Disabled="@IsProtectedRole(context.Item.Name)" />
+                            </MudTooltip>
+                        }
+                        @if (_canDelete)
+                        {
+                            <MudTooltip Text="@(IsProtectedRole(context.Item.Name) ? "Protected roles cannot be deleted" : "Delete Role")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteRole(context.Item))"
+                                               Disabled="@(IsProtectedRole(context.Item.Name) || _busyRoleId == context.Item.Id)" />
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="RoleDto" PageSizeOptions="@_pageSizeOptions" />
+        </PagerContent>
+        <NoRecordsContent>
+            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.h6">No roles found</MudText>
+                <MudText Typo="Typo.body2" Class="text-muted">Try adjusting your filters or create a new role.</MudText>
+            </MudStack>
+        </NoRecordsContent>
+    </MudDataGrid>
+</MudPaper>
+
+<style>
+    .roles-datagrid .mud-table-head .mud-table-row .mud-table-cell {
+        font-weight: 600;
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.04);
+    }
+
+    .roles-datagrid .mud-table-row:hover {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.02);
+    }
+</style>
+
+@code {
+    private MudDataGrid<RoleDto>? _dataGrid;
+    private List<RoleDto> _roles = new();
+    private List<RoleDto> _filtered = new();
+    private HashSet<RoleDto> _selectedRoles = new();
+    private bool _loading = true;
+    private string? _busyRoleId;
+    private bool _bulkBusy;
+
+    private readonly int _pageSize = 10;
+    private readonly int[] _pageSizeOptions = { 5, 10, 25, 50 };
+
+    private RoleStats _stats = new();
+    private FilterModel _filter = new();
+
+    // Only Admin roles are truly protected - Basic can be edited by tenant admins
+    private static readonly HashSet<string> ProtectedRoles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Admin", "Administrator"
+    };
+
+    // For display purposes, these are considered "system" roles
+    private static readonly HashSet<string> SystemRoles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Admin", "Administrator", "Basic"
+    };
+
+    private class RoleStats
+    {
+        public int Total { get; set; }
+        public int SystemRolesCount { get; set; }
+        public int CustomRolesCount { get; set; }
+        public int ProtectedRolesCount { get; set; }
+    }
+
+    private class FilterModel
+    {
+        public string? Search { get; set; }
+    }
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Roles.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Roles.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(IdentityPermissionConstants.Roles.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadData();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            var result = await IdentityClient.RolesGetAsync();
+            _roles = result?.ToList() ?? new List<RoleDto>();
+            CalculateStats();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load roles: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void CalculateStats()
+    {
+        _stats = new RoleStats
+        {
+            Total = _roles.Count,
+            SystemRolesCount = _roles.Count(r => IsSystemRole(r.Name)),
+            CustomRolesCount = _roles.Count(r => !IsSystemRole(r.Name)),
+            ProtectedRolesCount = _roles.Count(r => IsProtectedRole(r.Name))
+        };
+    }
+
+    private void ApplyFilters()
+    {
+        var query = _roles.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(_filter.Search))
+        {
+            var term = _filter.Search.ToLowerInvariant();
+            query = query.Where(r =>
+                (r.Name?.ToLowerInvariant().Contains(term) ?? false) ||
+                (r.Description?.ToLowerInvariant().Contains(term) ?? false));
+        }
+
+        _filtered = query.OrderBy(r => r.Name).ToList();
+    }
+
+    private void RefreshData()
+    {
+        ApplyFilters();
+        StateHasChanged();
+    }
+
+    private void ClearFilters()
+    {
+        _filter = new FilterModel();
+        ApplyFilters();
+    }
+
+    private static bool IsSystemRole(string? roleName) =>
+        !string.IsNullOrEmpty(roleName) && SystemRoles.Contains(roleName);
+
+    private static bool IsProtectedRole(string? roleName) =>
+        !string.IsNullOrEmpty(roleName) && ProtectedRoles.Contains(roleName);
+
+    private void GoToPermissions(string? id)
+    {
+        if (Guid.TryParse(id, out var guid))
+            Navigation.NavigateTo($"/roles/{guid}/permissions");
+    }
+
+    private void OnSelectionChanged(HashSet<RoleDto> items)
+    {
+        _selectedRoles = items;
+    }
+
+    private void ClearSelection()
+    {
+        _selectedRoles.Clear();
+        StateHasChanged();
+    }
+
+    private async Task ShowCreate()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateRoleDialog>("Create Role", options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task EditRole(RoleDto role)
+    {
+        if (IsProtectedRole(role.Name))
+        {
+            Snackbar.Add("Protected roles cannot be edited.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<CreateRoleDialog>
+        {
+            { x => x.ExistingRole, role }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateRoleDialog>("Edit Role", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteRole(RoleDto role)
+    {
+        if (string.IsNullOrWhiteSpace(role.Id)) return;
+
+        if (IsProtectedRole(role.Name))
+        {
+            Snackbar.Add("Protected roles cannot be deleted.", Severity.Warning);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowDeleteConfirmAsync(role.Name ?? "this role");
+        if (!confirmed) return;
+
+        _busyRoleId = role.Id;
+        try
+        {
+            await IdentityClient.RolesDeleteAsync(Guid.Parse(role.Id));
+            Snackbar.Add("Role deleted successfully.", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete role: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busyRoleId = null;
+        }
+    }
+
+    private async Task BulkDelete()
+    {
+        var roles = _selectedRoles.Where(r => !IsProtectedRole(r.Name)).ToList();
+        if (!roles.Any())
+        {
+            Snackbar.Add("No deletable roles selected. Protected roles cannot be deleted.", Severity.Info);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Bulk Delete",
+            $"Delete {roles.Count} role(s)? This action cannot be undone.",
+            "Delete All",
+            "Cancel",
+            Color.Error,
+            Icons.Material.Outlined.DeleteForever,
+            Color.Error);
+
+        if (!confirmed) return;
+
+        _bulkBusy = true;
+        var success = 0;
+        foreach (var role in roles)
+        {
+            try
+            {
+                await IdentityClient.RolesDeleteAsync(Guid.Parse(role.Id!));
+                success++;
+            }
+            catch
+            {
+                // Continue with remaining roles - failures are reflected in the success count
+            }
+        }
+        _bulkBusy = false;
+        Snackbar.Add($"Deleted {success} of {roles.Count} roles.", Severity.Success);
+        ClearSelection();
+        await LoadData();
+    }
+}
+

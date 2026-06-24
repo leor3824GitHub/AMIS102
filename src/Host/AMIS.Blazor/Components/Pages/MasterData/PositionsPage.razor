@@ -1,0 +1,328 @@
+@page "/master-data/positions"
+@implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.Permissions
+@inherits ComponentBase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IMaster_dataClient MasterDataClient
+@inject ILookupClient LookupClient
+@inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Positions" Description="Manage positions">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search positions..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchPositions())"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchPositions" Disabled="_isLoading">
+                Search
+            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
+        </MudStack>
+    </ActionContent>
+</AMISPageHeader>
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <!-- Positions List -->
+        <MudItem xs="12">
+            <MudCard Class="AMIS-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Positions List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
+
+                    @if (_positions.Any())
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var position in _positions.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                                {
+                                    <tr>
+                                        <td>@position.Code</td>
+                                        <td>@position.Name</td>
+                                        <td><MudChip T="string" Size="Size.Small" Color="@(position.IsActive ? Color.Success : Color.Default)">@(position.IsActive ? "Active" : "Inactive")</MudChip></td>
+                                        <td>
+                                            @if (IsOwnedByMe(position.OfficeCode) && (_canUpdate || _canDelete))
+                                            {
+                                                <MudStack Row="true" Spacing="1">
+                                                    @if (_canUpdate)
+                                                    {
+                                                        <MudTooltip Text="Edit position">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(position))" />
+                                                        </MudTooltip>
+                                                    }
+                                                    @if (_canDelete)
+                                                    {
+                                                        <MudTooltip Text="Delete position">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                           Color="Color.Error" OnClick="@(() => DeletePosition(position.Id))" />
+                                                        </MudTooltip>
+                                                    }
+                                                </MudStack>
+                                            }
+                                            else
+                                            {
+                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(position.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
+                                                </MudTooltip>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                        @if (_positions.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_positions.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No positions yet. Create one to get started.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private List<AMIS.Blazor.ApiClient.PositionReferenceDto> _positions = new();
+    private List<AMIS.Blazor.ApiClient.PositionReferenceDto> _allPositions = new();
+    private bool _initialized = false;
+    private bool _isLoading = false;
+    private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Positions.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        var profile = await OrgProfileClient.GetAsync();
+        _myOfficeCode = profile?.AnnexECode;
+        await LoadPositions();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadPositions()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await LookupClient.PositionsAsync(pageSize: 100);
+            _allPositions = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+            StateHasChanged();
+        }
+        catch (HttpRequestException ex) when (
+            ex.Message.Contains("StatusCode=401", StringComparison.OrdinalIgnoreCase) ||
+            ex.Message.Contains("401 (Unauthorized)", StringComparison.OrdinalIgnoreCase) ||
+            (ex.InnerException?.Message?.Contains("401", StringComparison.OrdinalIgnoreCase) ?? false))
+        {
+            Snackbar.Add("Authenticating...", Severity.Info);
+            await Task.Delay(500);
+            await LoadPositionsInternal(retryCount: 1);
+            return;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load positions: {ex.Message}", Severity.Error);
+            _positions = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPositionsInternal(int retryCount = 0, int maxRetries = 3)
+    {
+        try
+        {
+            var response = await LookupClient.PositionsAsync(pageSize: 100);
+            _allPositions = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+            StateHasChanged();
+        }
+        catch (HttpRequestException ex) when (
+            (ex.Message.Contains("StatusCode=401", StringComparison.OrdinalIgnoreCase) ||
+             ex.Message.Contains("401 (Unauthorized)", StringComparison.OrdinalIgnoreCase) ||
+             (ex.InnerException?.Message?.Contains("401", StringComparison.OrdinalIgnoreCase) ?? false)) &&
+            retryCount < maxRetries)
+        {
+            await Task.Delay(300 * (retryCount + 1));
+            await LoadPositionsInternal(retryCount + 1, maxRetries);
+        }
+        catch (Exception ex)
+        {
+            if (retryCount == 0)
+            {
+                Snackbar.Add($"Failed to load positions: {ex.Message}", Severity.Error);
+            }
+            _positions = new();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchPositions()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await LookupClient.PositionsAsync(keyword: _searchKeyword, pageSize: 100);
+            _allPositions = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+            
+            if (_positions.Count == 0 && !string.IsNullOrWhiteSpace(_searchKeyword))
+            {
+                Snackbar.Add("No positions found matching your search", Severity.Info);
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
+            _positions = new();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<PositionFormDialog>("Create Position", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadPositions();
+        }
+    }
+
+    private async Task OpenEditDialog(AMIS.Blazor.ApiClient.PositionReferenceDto position)
+    {
+        var parameters = new DialogParameters { ["Existing"] = position };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<PositionFormDialog>($"Edit {position.Name}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadPositions();
+        }
+    }
+
+    private async Task DeletePosition(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this position"))
+            return;
+
+        try
+        {
+            await MasterDataClient.PositionsDeleteAsync(id);
+            await LoadPositions();
+            Snackbar.Add("Position deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete position: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
+    private Task OnStatusFilterChanged(string status)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        ApplyLocalFilters();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
+    private void ApplyLocalFilters()
+    {
+        var filtered = _statusFilter switch
+        {
+            "Active" => _allPositions.Where(x => x.IsActive),
+            "Inactive" => _allPositions.Where(x => !x.IsActive),
+            "Own" => _allPositions.Where(x => IsOwnedByMe(x.OfficeCode)),
+            _ => _allPositions.AsEnumerable()
+        };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OfficeCode != null &&
+                x.OfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _positions = (_sortField, _sortAscending) switch
+        {
+            ("Code", true)  => filtered.OrderBy(x => x.Code).ToList(),
+            ("Code", false) => filtered.OrderByDescending(x => x.Code).ToList(),
+            ("Name", false) => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
+            _               => filtered.OrderBy(x => x.Name).ThenBy(x => x.Code).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
+    }
+}
+

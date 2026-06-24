@@ -1,0 +1,430 @@
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Blazor.ApiClient
+@inject IArAccountabilityClient Client
+@inject IAssetRegistryClient AssetClient
+@inject ILookupClient LookupClient
+@inject ILocationLookupClient LocationClient
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width:720px;">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="4">
+                    <MudSelect Value="_form.Type" Label="Type" Variant="Variant.Outlined" T="AccountabilityType"
+                               Required="true" Dense="true" Margin="Margin.Dense"
+                               ValueChanged="OnTypeChangedForm">
+                        <MudSelectItem T="AccountabilityType" Value="AccountabilityType.SE_ICS">ICS — Semi-Expendable</MudSelectItem>
+                        <MudSelectItem T="AccountabilityType" Value="AccountabilityType.PPE_PAR">PAR — Property, Plant &amp; Equipment</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudDatePicker Date="_form.IssuedOnNullable" DateChanged="OnIssuedOnChanged" Label="Issued On"
+                                   Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true"
+                                   Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudDatePicker @bind-Date="_form.ExpiresOnNullable" Label="Expires On" Variant="Variant.Outlined"
+                                   DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense"
+                                   ReadOnly="@(_form.Type == AccountabilityType.PPE_PAR)"
+                                   HelperText="@(_form.Type == AccountabilityType.SE_ICS ? "ICS (SE) requires an expiry date." : "Expires three (3) years after the issued date.")" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
+                                  Required="true" MaxLength="64" Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_form.ReceivedBy"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Received By (End-User)" Variant="Variant.Outlined"
+                                     Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                                     Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+            </MudGrid>
+
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Issued from: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the supply officer.
+            </MudAlert>
+
+            <MudDivider Class="my-1" />
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Property Items to Issue</MudText>
+                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                            StartIcon="@Icons.Material.Filled.Search" OnClick="BrowseAvailableAsync">
+                    Browse Available
+                </AMISButton>
+                <AMISIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                OnClick="AddItem" />
+            </MudStack>
+
+            @for (var i = 0; i < _form.Items.Count; i++)
+            {
+                var idx = i;
+                var li = _form.Items[idx];
+                <MudPaper Outlined="true" Class="pa-3">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                        <MudSpacer />
+                        <AMISIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                        OnClick="@(() => RemoveItem(idx))" />
+                    </MudStack>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <MudAutocomplete T="AssetRegistrySummaryDto" Value="li.Selected"
+                                             SearchFunc="SearchAvailableAssets"
+                                             ToStringFunc="FormatAsset"
+                                             ValueChanged="@(v => OnAssetSelectedAsync(li, v))"
+                                             Label="Property item" Variant="Variant.Outlined"
+                                             Dense="true" Margin="Margin.Dense" Clearable="true"
+                                             ResetValueOnEmptyText="true"
+                                             Placeholder="@(_form.Type == AccountabilityType.SE_ICS ? "Search SE — e.g. SPLV-2026-01-0001" : "Search PPE — e.g. PPE-2026-01-0001")">
+                                <ItemTemplate Context="asset">
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body2"><strong>@asset.PropertyNo</strong> — @asset.Description</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@Money.Symbol@asset.UnitCost.ToString("N2") · @asset.CurrentCondition</MudText>
+                                    </MudStack>
+                                </ItemTemplate>
+                            </MudAutocomplete>
+                            @if (li.Asset is not null)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Success">
+                                    @li.Asset.Description | @Money.Symbol@li.Asset.UnitCost.ToString("N2") — Available
+                                </MudText>
+                            }
+                            else if (!string.IsNullOrEmpty(li.LookupError))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Error">@li.LookupError</MudText>
+                            }
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudAutocomplete T="LocationLookupDto" @bind-Value="li.Location"
+                                             SearchFunc="SearchLocations"
+                                             ToStringFunc="FormatLocation"
+                                             Label="Location (where item will be kept)" Variant="Variant.Outlined"
+                                             Required="true" Dense="true" Margin="Margin.Dense" Clearable="true"
+                                             ResetValueOnEmptyText="true" Disabled="@(li.Asset is null)"
+                                             Placeholder="Search office / station">
+                                <ItemTemplate Context="loc">
+                                    <MudText Typo="Typo.body2"><strong>@loc.Code</strong> — @loc.Name</MudText>
+                                </ItemTemplate>
+                            </MudAutocomplete>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_issuing">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="IssueAsync" Disabled="_issuing">
+            @if (_issuing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+            @(_form.Type == AccountabilityType.SE_ICS ? "Create ICS" : "Create PAR")
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private bool _issuing;
+    private readonly IssueForm _form = new();
+
+    protected override void OnInitialized() => _form.Items.Add(new IssueItemRow());
+
+    private void OnTypeChangedForm(AccountabilityType value)
+    {
+        _form.Type = value;
+        ApplyExpiryPolicy();
+        // Selected assets are type-specific; clear them when the document type changes.
+        foreach (var item in _form.Items)
+        {
+            item.Selected = null;
+            item.Asset = null;
+            item.Location = null;
+            item.LookupError = null;
+        }
+    }
+
+    private void OnIssuedOnChanged(DateTime? date)
+    {
+        _form.IssuedOnNullable = date;
+        ApplyExpiryPolicy();
+    }
+
+    // PAR expiry is fixed at issued + 3 years (server-authoritative) — mirror it here so the
+    // read-only field always shows the value the server will store. ICS keeps a user-editable
+    // expiry, defaulted to 3 years out.
+    private void ApplyExpiryPolicy()
+    {
+        var basis = _form.IssuedOnNullable ?? DateTime.Today;
+        if (_form.Type == AccountabilityType.PPE_PAR)
+            _form.ExpiresOnNullable = basis.AddYears(3);
+        else if (_form.ExpiresOnNullable is null)
+            _form.ExpiresOnNullable = basis.AddYears(3);
+    }
+
+    private void AddItem() => _form.Items.Add(new IssueItemRow());
+
+    private void RemoveItem(int idx)
+    {
+        if (_form.Items.Count > 1) _form.Items.RemoveAt(idx);
+    }
+
+    private async Task<IEnumerable<AssetRegistrySummaryDto>> SearchAvailableAssets(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await AssetClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                assetType: ExpectedType(),
+                lifecycleState: LifecycleState.Available,
+                page: 1,
+                pageSize: 20,
+                ct: ct);
+            // Hide assets already chosen in another row.
+            var taken = SelectedAssetIds();
+            return result.Items.Where(a => !taken.Contains(a.Id));
+        }
+        catch { return []; }
+    }
+
+    private static string FormatAsset(AssetRegistrySummaryDto? a) =>
+        a is null ? "" : $"{a.PropertyNo} — {a.Description}";
+
+    private async Task OnAssetSelectedAsync(IssueItemRow row, AssetRegistrySummaryDto? summary)
+    {
+        row.Selected = summary;
+        row.Asset = null;
+        row.LookupError = null;
+        if (summary is null) return;
+
+        if (SelectedAssetIds().Contains(summary.Id))
+        {
+            row.Selected = null;
+            row.LookupError = "This asset is already on another line.";
+            return;
+        }
+
+        await AttachAssetAsync(row, summary.Id);
+    }
+
+    // Resolve the full asset and validate eligibility for the current document type.
+    private async Task AttachAssetAsync(IssueItemRow row, Guid assetId)
+    {
+        try
+        {
+            var asset = await AssetClient.GetAsync(assetId);
+            if (asset is null)
+            {
+                row.LookupError = "Asset could not be loaded.";
+                return;
+            }
+
+            if (asset.AssetType != ExpectedType())
+            {
+                row.LookupError = asset.AssetType == AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE
+                    ? "This is a Semi-Expendable asset — issue it via ICS, not PAR."
+                    : "This is a PPE asset — issue it via PAR, not ICS.";
+                return;
+            }
+
+            if (asset.LifecycleState != LifecycleState.Available)
+            {
+                row.LookupError = $"Asset is '{asset.LifecycleState}', not Available for issuance.";
+                return;
+            }
+
+            // Available assets carry no location (it's set on assignment) — the user picks the
+            // destination location per line.
+            row.Asset = asset;
+        }
+        catch (Exception ex)
+        {
+            row.LookupError = ex.Message;
+        }
+    }
+
+    private async Task<IEnumerable<LocationLookupDto>> SearchLocations(string? value, CancellationToken ct)
+    {
+        try
+        {
+            return await LocationClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                pageSize: 20,
+                ct: ct);
+        }
+        catch { return []; }
+    }
+
+    private static string FormatLocation(LocationLookupDto? l) =>
+        l is null ? "" : $"{l.Code} — {l.Name}";
+
+    private HashSet<Guid> SelectedAssetIds() =>
+        _form.Items.Where(i => i.Asset is not null).Select(i => i.Asset!.Id).ToHashSet();
+
+    private AMIS.Modules.AssetRegister.Contracts.v1.AssetType ExpectedType() =>
+        _form.Type == AccountabilityType.SE_ICS
+            ? AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE
+            : AMIS.Modules.AssetRegister.Contracts.v1.AssetType.PPE;
+
+    private async Task BrowseAvailableAsync()
+    {
+        var parameters = new DialogParameters<AvailableAssetsPickerDialog>
+        {
+            { x => x.AssetType, ExpectedType() },
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)SelectedAssetIds() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>(
+            _form.Type == AccountabilityType.SE_ICS ? "Available Semi-Expendable Assets" : "Available PPE Assets",
+            parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not List<AssetRegistrySummaryDto> picked || picked.Count == 0)
+            return;
+
+        // Drop the placeholder empty row, then add one row per picked asset.
+        _form.Items.RemoveAll(i => i.Selected is null && i.Asset is null);
+        foreach (var summary in picked)
+        {
+            var row = new IssueItemRow { Selected = summary };
+            _form.Items.Add(row);
+            await AttachAssetAsync(row, summary.Id);
+        }
+        if (_form.Items.Count == 0) _form.Items.Add(new IssueItemRow());
+    }
+
+    private async Task IssueAsync()
+    {
+        if (_form.IssuedOnNullable is null)
+        {
+            Snackbar.Add("Issued On date is required.", Severity.Warning);
+            return;
+        }
+        if (_form.ReceivedBy is null)
+        {
+            Snackbar.Add("Received By (End-User) is required.", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_form.FundCluster))
+        {
+            Snackbar.Add("Fund Cluster is required.", Severity.Warning);
+            return;
+        }
+        if (_form.ExpiresOnNullable is null)
+        {
+            Snackbar.Add("An expiry date is required.", Severity.Warning);
+            return;
+        }
+        if (_form.Items.Count == 0 || _form.Items.Any(i => i.Asset is null))
+        {
+            Snackbar.Add("All property items must be looked up and eligible for this document type.", Severity.Warning);
+            return;
+        }
+        if (_form.Items.Any(i => i.Location is null))
+        {
+            Snackbar.Add("Select a location for every property item.", Severity.Warning);
+            return;
+        }
+
+        var issuedBy = CurrentUserRef();
+        if (issuedBy is null)
+        {
+            Snackbar.Add("Your account is not linked to an employee record, so the supply officer cannot be captured. Please contact your administrator.", Severity.Warning);
+            return;
+        }
+
+        var receivedBy = ToRef(_form.ReceivedBy)!;
+        var issuedOn = DateOnly.FromDateTime(_form.IssuedOnNullable.Value);
+        DateOnly? expiresOn = DateOnly.FromDateTime(_form.ExpiresOnNullable!.Value);
+
+        var lines = _form.Items
+            .Select((row, idx) => new IssueAccountabilityLineRequest(
+                row.Asset!.Id,
+                (idx + 1).ToString(),
+                row.Location!.Id,
+                null))
+            .ToList();
+
+        _issuing = true;
+        try
+        {
+            var result = await Client.IssueAsync(new IssueAccountabilityRequest(
+                _form.Type,
+                _form.FundCluster!.Trim(),
+                issuedBy,
+                receivedBy,
+                issuedOn,
+                expiresOn,
+                lines));
+
+            Snackbar.Add($"{(_form.Type == AccountabilityType.SE_ICS ? "ICS" : "PAR")} {result.DocumentNo} created — {result.Lines.Count} item(s) issued.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _issuing = false;
+        }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private static ArEmployeeRefDto? ToRef(EmployeeReferenceDto? e) =>
+        e is null
+            ? null
+            : new ArEmployeeRefDto(
+                e.Id,
+                $"{e.FirstName} {e.LastName}".Trim(),
+                string.IsNullOrWhiteSpace(e.PositionName) ? null : e.PositionName);
+
+    private ArEmployeeRefDto? CurrentUserRef() =>
+        UserProfileState.EmployeeId == Guid.Empty || string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName)
+            ? null
+            : new ArEmployeeRefDto(
+                UserProfileState.EmployeeId,
+                UserProfileState.EmployeeFullName.Trim(),
+                string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private sealed class IssueForm
+    {
+        public AccountabilityType Type { get; set; } = AccountabilityType.SE_ICS;
+        public DateTime? IssuedOnNullable { get; set; } = DateTime.Today;
+        public DateTime? ExpiresOnNullable { get; set; } = DateTime.Today.AddYears(3);
+        public string? FundCluster { get; set; }
+        public EmployeeReferenceDto? ReceivedBy { get; set; }
+        public List<IssueItemRow> Items { get; set; } = [];
+    }
+
+    private sealed class IssueItemRow
+    {
+        public AssetRegistrySummaryDto? Selected { get; set; }
+        public AssetRegistryDto? Asset { get; set; }
+        public LocationLookupDto? Location { get; set; }
+        public string? LookupError { get; set; }
+    }
+}

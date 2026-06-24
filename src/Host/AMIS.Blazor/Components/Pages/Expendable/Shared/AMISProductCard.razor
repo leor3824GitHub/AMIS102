@@ -1,0 +1,54 @@
+@namespace AMIS.Blazor.Components.Pages.Expendable.Shared
+@using AMIS.Blazor.ApiClient
+
+<MudCard Class="amis-product-card d-flex flex-column h-100" Elevation="1">
+    <MudCardMedia Image="@(Product.ImageUrl ?? PlaceholderImage)" Height="140" />
+    <MudCardContent Class="pa-2 flex-grow-1 d-flex flex-column">
+        <div class="amis-product-name" title="@Product.Name">@Product.Name</div>
+        <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-1">@Product.StockNo</MudText>
+
+        <div class="mt-auto">
+            <div class="d-flex align-center mb-1">
+                <MudRating ReadOnly="true" SelectedValue="@RoundedRating" Size="Size.Small" />
+                <MudText Typo="Typo.caption" Color="Color.Default" Class="ml-1">(@RatingCount)</MudText>
+            </div>
+            @if (Balance <= 0)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="pa-1 ma-0">Out of Stock</MudChip>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Bal: @Balance</MudText>
+            }
+        </div>
+    </MudCardContent>
+    <MudCardActions Class="pa-1 d-flex justify-space-between align-center">
+        <AMISButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="OnDetails">
+            Details
+        </AMISButton>
+        @if (CanAdd)
+        {
+            <AMISIconButton Icon="@Icons.Material.Filled.AddShoppingCart"
+                            Color="Color.Primary"
+                            Variant="Variant.Filled"
+                            Size="Size.Small"
+                            Title="@(Balance <= 0 ? "Out of stock" : "Add to basket")"
+                            Disabled="@(Balance <= 0)"
+                            OnClick="OnAdd" />
+        }
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public ProductDto Product { get; set; } = default!;
+    [Parameter] public double AverageRating { get; set; }
+    [Parameter] public int RatingCount { get; set; }
+    [Parameter] public int Balance { get; set; }
+    [Parameter] public bool CanAdd { get; set; }
+    [Parameter] public EventCallback OnDetails { get; set; }
+    [Parameter] public EventCallback OnAdd { get; set; }
+
+    private const string PlaceholderImage = "/images/placeholder.png";
+
+    private int RoundedRating => (int)Math.Round(AverageRating, MidpointRounding.AwayFromZero);
+}

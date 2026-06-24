@@ -1,0 +1,368 @@
+@using AMIS.Blazor.ApiClient
+@using ReturnedPropertyReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReturnedPropertyReceiptType
+@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
+@using AccountabilityStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityStatus
+@using AccountabilityLineStatus = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityLineStatus
+@inject IArReturnedPropertyClient Client
+@inject IArAccountabilityClient AccountabilityClient
+@inject ILookupClient LookupClient
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+
+            <MudSelect Value="_form.ReceiptType" T="ReturnedPropertyReceiptType" Label="Receipt Type"
+                       Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense"
+                       ValueChanged="OnReceiptTypeChanged">
+                <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRSP">RRSP — Semi-Expendable (ICS)</MudSelectItem>
+                <MudSelectItem T="ReturnedPropertyReceiptType" Value="ReturnedPropertyReceiptType.RRP">RRP — Fixed Assets (PAR)</MudSelectItem>
+            </MudSelect>
+
+            <MudDatePicker @bind-Date="_form.DateNullable" Label="Date" Variant="Variant.Outlined"
+                           DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+
+            <MudAutocomplete T="ArAccountabilitySummaryDto"
+                             Value="_form.SelectedAccountability"
+                             SearchFunc="SearchAccountabilityAsync"
+                             ToStringFunc="@(x => x is null ? "" : x.DocumentNo)"
+                             Label="@(_form.ReceiptType == ReturnedPropertyReceiptType.RRSP ? "My ICS to Return Against" : "My PAR to Return Against")"
+                             Variant="Variant.Outlined"
+                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                             Dense="true" Margin="Margin.Dense"
+                             ValueChanged="OnAccountabilitySelected" />
+
+            @if (_accountability is not null)
+            {
+                <MudDivider Class="my-1" />
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Items to Return</MudText>
+                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Filled.Search" OnClick="BrowseItemsAsync"
+                                Disabled="@(ActiveLines.Count == 0)">
+                        Browse Items
+                    </AMISButton>
+                    <AMISIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary"
+                                    OnClick="AddItem" Disabled="@(ActiveLines.Count == 0)" />
+                </MudStack>
+
+                @if (ActiveLines.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        <b>@_accountability.DocumentNo</b> has no active items to return.
+                    </MudAlert>
+                }
+                else
+                {
+                    @for (var i = 0; i < _form.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var li = _form.Items[idx];
+                        <MudPaper Outlined="true" Class="pa-3">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Item @(idx + 1)</MudText>
+                                <MudSpacer />
+                                <AMISIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Color="Color.Error"
+                                                OnClick="@(() => RemoveItem(idx))" />
+                            </MudStack>
+                            <MudAutocomplete T="ArAccountabilityLineDto" Value="li.Selected"
+                                             SearchFunc="SearchReturnableLines"
+                                             ToStringFunc="FormatLine"
+                                             ValueChanged="@(v => OnLineSelected(li, v))"
+                                             Label="Property item" Variant="Variant.Outlined"
+                                             Dense="true" Margin="Margin.Dense" Clearable="true"
+                                             ResetValueOnEmptyText="true"
+                                             Placeholder="Search property no. / description">
+                                <ItemTemplate Context="line">
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body2"><strong>@line.Snapshot.PropertyNo</strong> — @line.Snapshot.Description</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@Money.Symbol@line.Snapshot.UnitCost.ToString("N2") · @line.Snapshot.Unit</MudText>
+                                    </MudStack>
+                                </ItemTemplate>
+                            </MudAutocomplete>
+                        </MudPaper>
+                    }
+                }
+            }
+
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Returned by: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the currently logged-in user.
+            </MudAlert>
+
+            <MudAutocomplete T="EmployeeReferenceDto"
+                             @bind-Value="_form.Inspector"
+                             SearchFunc="SearchEmployees"
+                             ToStringFunc="FormatEmployee"
+                             Label="Inspector" Variant="Variant.Outlined"
+                             Required="true" Clearable="true" ResetValueOnEmptyText="true" CoerceValue="true"
+                             Dense="true" Margin="Margin.Dense"
+                             HelperText="Who will inspect the returned items' condition." />
+
+            <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Variant="Variant.Outlined"
+                          Lines="2" MaxLength="1000" Dense="true" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.Send"
+                    OnClick="RequestAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Request Return
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    /// <summary>When set, the dialog opens pre-scoped to this accountability (e.g. launched from a My Accountability row).</summary>
+    [Parameter] public Guid? PreselectedAccountabilityId { get; set; }
+
+    private ArAccountabilityDto? _accountability;
+    private bool _busy;
+
+    private ReturnForm _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _form.Items.Add(new ReturnItemRow());
+
+        if (PreselectedAccountabilityId is Guid id)
+        {
+            try
+            {
+                _accountability = await AccountabilityClient.GetAsync(id);
+                if (_accountability is not null)
+                {
+                    _form.ReceiptType = _accountability.AccountabilityType == AccountabilityType.SE_ICS
+                        ? ReturnedPropertyReceiptType.RRSP
+                        : ReturnedPropertyReceiptType.RRP;
+                    _form.SelectedAccountability = new ArAccountabilitySummaryDto(
+                        _accountability.Id,
+                        _accountability.DocumentNo,
+                        _accountability.AccountabilityType,
+                        _accountability.Status,
+                        _accountability.IssuedOn,
+                        _accountability.ExpiresOn,
+                        _accountability.Lines.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private List<ArAccountabilityLineDto> ActiveLines =>
+        _accountability?.Lines.Where(l => l.LineStatus == AccountabilityLineStatus.Active).ToList() ?? [];
+
+    private async Task<IEnumerable<ArAccountabilitySummaryDto>> SearchAccountabilityAsync(string? value, CancellationToken ct)
+    {
+        var expectedType = _form.ReceiptType == ReturnedPropertyReceiptType.RRSP
+            ? AccountabilityType.SE_ICS
+            : AccountabilityType.PPE_PAR;
+        var scopeEmployeeId = UserProfileState.EmployeeId == Guid.Empty ? (Guid?)null : UserProfileState.EmployeeId;
+        var response = await AccountabilityClient.SearchAsync(
+            keyword: value, type: expectedType, status: AccountabilityStatus.Active,
+            receivedByEmployeeId: scopeEmployeeId, page: 1, pageSize: 20, ct: ct);
+        return response.Items;
+    }
+
+    private void OnReceiptTypeChanged(ReturnedPropertyReceiptType value)
+    {
+        _form.ReceiptType = value;
+        _form.SelectedAccountability = null;
+        _accountability = null;
+        ResetItems();
+    }
+
+    private async Task OnAccountabilitySelected(ArAccountabilitySummaryDto? selected)
+    {
+        _form.SelectedAccountability = selected;
+        _accountability = null;
+        ResetItems();
+
+        if (selected is null) return;
+
+        try
+        {
+            _accountability = await AccountabilityClient.GetAsync(selected.Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load accountability detail: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ResetItems()
+    {
+        _form.Items.Clear();
+        _form.Items.Add(new ReturnItemRow());
+    }
+
+    private void AddItem() => _form.Items.Add(new ReturnItemRow());
+
+    private void RemoveItem(int idx)
+    {
+        if (_form.Items.Count > 1) _form.Items.RemoveAt(idx);
+        else _form.Items[0] = new ReturnItemRow();
+    }
+
+    private HashSet<Guid> SelectedLineIds() =>
+        _form.Items.Where(i => i.Selected is not null).Select(i => i.Selected!.Id).ToHashSet();
+
+    // Search the selected document's active lines in memory, hiding lines already on another row.
+    private Task<IEnumerable<ArAccountabilityLineDto>> SearchReturnableLines(string? value, CancellationToken ct)
+    {
+        var taken = SelectedLineIds();
+        IEnumerable<ArAccountabilityLineDto> candidates = ActiveLines.Where(l => !taken.Contains(l.Id));
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            candidates = candidates.Where(l =>
+                l.Snapshot.PropertyNo.Contains(value, StringComparison.OrdinalIgnoreCase)
+                || l.Snapshot.Description.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+        return Task.FromResult(candidates);
+    }
+
+    private static string FormatLine(ArAccountabilityLineDto? l) =>
+        l is null ? "" : $"{l.Snapshot.PropertyNo} — {l.Snapshot.Description}";
+
+    private void OnLineSelected(ReturnItemRow row, ArAccountabilityLineDto? line)
+    {
+        row.Selected = line;
+        if (line is null) return;
+
+        // The search list already hides taken lines; this guards a duplicate slipping through.
+        if (_form.Items.Count(i => i.Selected?.Id == line.Id) > 1)
+        {
+            row.Selected = null;
+            Snackbar.Add("This item is already on another line.", Severity.Warning);
+        }
+    }
+
+    private async Task BrowseItemsAsync()
+    {
+        if (_accountability is null) return;
+
+        var parameters = new DialogParameters<ReturnableItemsPickerDialog>
+        {
+            { x => x.AccountabilityId, _accountability.Id },
+            { x => x.DocumentNo, _accountability.DocumentNo },
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)SelectedLineIds() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<ReturnableItemsPickerDialog>("Items to Return", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not List<ArAccountabilityLineDto> picked || picked.Count == 0)
+            return;
+
+        // Drop placeholder empty rows, then add one row per picked line (skip any already present).
+        _form.Items.RemoveAll(i => i.Selected is null);
+        var existing = SelectedLineIds();
+        foreach (var line in picked)
+        {
+            if (existing.Add(line.Id))
+                _form.Items.Add(new ReturnItemRow { Selected = line });
+        }
+        if (_form.Items.Count == 0) _form.Items.Add(new ReturnItemRow());
+    }
+
+    private async Task RequestAsync()
+    {
+        if (_form.DateNullable is null || _form.SelectedAccountability is null)
+        {
+            Snackbar.Add("Date and Accountability are required.", Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName))
+        {
+            Snackbar.Add("Your account is not linked to an employee record, so \"Returned By\" cannot be set. Contact an administrator.", Severity.Warning);
+            return;
+        }
+
+        if (_form.Inspector is null)
+        {
+            Snackbar.Add("Select an inspector for this return request.", Severity.Warning);
+            return;
+        }
+
+        var lineIds = _form.Items.Where(i => i.Selected is not null).Select(i => i.Selected!.Id).Distinct().ToList();
+        if (lineIds.Count == 0)
+        {
+            Snackbar.Add("Select at least one item to return.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var returnedBy = new ArEmployeeRefDto(
+                UserProfileState.EmployeeId,
+                UserProfileState.EmployeeFullName.Trim(),
+                string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
+
+            var inspector = new ArEmployeeRefDto(
+                _form.Inspector.Id,
+                $"{_form.Inspector.FirstName} {_form.Inspector.LastName}".Trim(),
+                string.IsNullOrWhiteSpace(_form.Inspector.PositionName) ? null : _form.Inspector.PositionName);
+
+            var result = await Client.CreateAsync(new CreateReturnedPropertyReceiptRequest(
+                _form.ReceiptType,
+                DateOnly.FromDateTime(_form.DateNullable!.Value),
+                _form.SelectedAccountability.Id,
+                lineIds,
+                returnedBy,
+                inspector,
+                _form.Remarks?.Trim()));
+
+            Snackbar.Add($"Return request submitted ({result.Items.Count} item(s)). Awaiting custodian acceptance.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Request failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private sealed class ReturnForm
+    {
+        public ReturnedPropertyReceiptType ReceiptType { get; set; } = ReturnedPropertyReceiptType.RRSP;
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public ArAccountabilitySummaryDto? SelectedAccountability { get; set; }
+        public EmployeeReferenceDto? Inspector { get; set; }
+        public string? Remarks { get; set; }
+        public List<ReturnItemRow> Items { get; set; } = [];
+    }
+
+    private sealed class ReturnItemRow
+    {
+        public ArAccountabilityLineDto? Selected { get; set; }
+    }
+}

@@ -120,11 +120,11 @@ src/Tests/Modules.AssetRegister.Tests/
 - Contracts: `Mediator.Abstractions`, `BuildingBlocks/Eventing.Abstractions`, `BuildingBlocks/Shared`.
 - Implementation: Contracts, `BuildingBlocks/Caching`, `BuildingBlocks/Persistence`, `BuildingBlocks/Web`, `BuildingBlocks/Eventing`, and `Modules.AssetProcurement.Contracts` (read-only — only the `AssetIARAcceptedEvent` type).
 
-**Host wiring in `Playground.Api/Program.cs`**
+**Host wiring in `AMIS.Api/Program.cs`**
 
 - Add representative types (`AssetRegisterModule`, `AssetRegisterContractsMarker`, a placeholder command type) to `Mediator.Assemblies`.
 - Append `typeof(AssetRegisterModule).Assembly` to `moduleAssemblies`.
-- Add both project references to `Playground.Api.csproj`.
+- Add both project references to `AMIS.Api.csproj`.
 - Update `src/AMIS.Framework.slnx` to include both projects.
 
 ## 2. Module constants
@@ -755,8 +755,8 @@ Single migration: **`AssetRegister_Initial`**. Generated to mirror the existing 
 
 ```bash
 dotnet ef migrations add AssetRegister_Initial \
-  --project src/Playground/Migrations.PostgreSQL \
-  --startup-project src/Playground/Playground.Api \
+  --project src/Host/Migrations.PostgreSQL \
+  --startup-project src/Host/AMIS.Api \
   --context AssetRegisterDbContext
 ```
 

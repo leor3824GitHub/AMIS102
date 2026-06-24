@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/Playground/Playground.Api/bin/Debug/net10.0/AMIS.Playground.Api.dll",
+            "program": "${workspaceFolder}/src/Host/AMIS.Api/bin/Debug/net10.0/AMIS.Api.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src/Playground/Playground.Api",
+            "cwd": "${workspaceFolder}/src/Host/AMIS.Api",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"

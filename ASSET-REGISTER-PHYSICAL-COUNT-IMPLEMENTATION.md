@@ -107,7 +107,7 @@ Also update `PhysicalCountSession.Close` guard: the "FoundAtStation entry has no
 ### 4.2 Persistence
 
 - EF config: add `ProposedPropertyNo` (maxLength 64) + `ProposedCatalogItemId` to `PhysicalCountEntryConfiguration` (`Data/Configurations/PhysicalCountSessionConfiguration.cs`).
-- Migration in `src/Playground/Migrations.PostgreSQL/AssetRegister` (context `AssetRegisterDbContext`), e.g. `PhysicalCountFoundAtStationIdentity`. Dev phase — data is disposable; no backfill needed.
+- Migration in `src/Host/Migrations.PostgreSQL/AssetRegister` (context `AssetRegisterDbContext`), e.g. `PhysicalCountFoundAtStationIdentity`. Dev phase — data is disposable; no backfill needed.
 
 ### 4.3 Validators
 

@@ -1,0 +1,260 @@
+@using AMIS.Blazor.ApiClient
+@using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
+@using IssuanceNature = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceNature
+@inject IArIssuanceReportClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+@inject IOrganizationProfileState OrgProfileState
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2" Style="min-width: 640px;">
+            <!-- Header fields -->
+            <MudItem xs="12" md="3">
+                <MudTextField Value="@SmirNumberDisplay" Label="SMIR No." Variant="Variant.Outlined"
+                              ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                              HelperText="Next available — assigned on save; may differ if another is saved first" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect @bind-Value="_form.Nature" Label="Nature of Issuance" Variant="Variant.Outlined"
+                           T="IssuanceNature" Required="true" Dense="true" Margin="Margin.Dense">
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.TransferCO">Transfer to C.O.</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.TransferRO">Transfer to R.O.</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.TransferPO">Transfer to P.O.</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.Donation">Donation</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.Dumping">Dumping</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.Destruction">Destruction</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.Sale">Sale</MudSelectItem>
+                    <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.Others">Others</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
+                              MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_form.DateNullable" @bind-Date:after="PeekNumberAsync" Label="Date" Variant="Variant.Outlined"
+                               DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            </MudItem>
+            <!-- Office address (full width) -->
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.IssuedToOfficeAddress" Label="Issued To — Office/Address" Variant="Variant.Outlined"
+                              MaxLength="500" Required="true" Dense="true" Margin="Margin.Dense" />
+            </MudItem>
+
+            <!-- Officers row -->
+            <MudItem xs="12"><MudText Typo="Typo.subtitle2" Class="mt-1">Signatories</MudText></MudItem>
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Issued from: <b>@UserProfileState.EmployeeFullName</b>@(string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? "" : $" — {UserProfileState.EmployeePositionName}") — captured automatically as the supply officer.
+                </MudAlert>
+            </MudItem>
+            <MudItem xs="12">
+                @if (!string.IsNullOrWhiteSpace(OrgProfileState.Profile?.ApprovingOfficialName))
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        Approved by: <b>@OrgProfileState.Profile!.ApprovingOfficialName</b>@(string.IsNullOrWhiteSpace(OrgProfileState.Profile!.ApprovingOfficialDesignation) ? "" : $" — {OrgProfileState.Profile!.ApprovingOfficialDesignation}") — captured automatically from the organization profile.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        No approving official is set in the Organization Profile. Set it there before creating this report.
+                    </MudAlert>
+                }
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_form.IssuedToName" Label="Issued To (Name)" Variant="Variant.Outlined"
+                              MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_form.IssuedToDesignation" Label="Issued To (Designation)" Variant="Variant.Outlined"
+                              MaxLength="200" Dense="true" Margin="Margin.Dense" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.Remarks" Label="Remarks (optional)" Variant="Variant.Outlined"
+                              MaxLength="1000" Lines="2" Dense="true" Margin="Margin.Dense" />
+            </MudItem>
+
+            <!-- Asset selection -->
+            <MudItem xs="12">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-1">
+                    <MudText Typo="Typo.subtitle2">
+                        Semi-Expendable Assets to Transfer
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">
+                            — only Available SE assets (no active ICS) may be issued
+                        </MudText>
+                    </MudText>
+                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Outlined.Search"
+                                OnClick="BrowseAssetsAsync">
+                        Browse Assets…
+                    </AMISButton>
+                </MudStack>
+            </MudItem>
+
+            @if (_form.SelectedAssets.Count > 0)
+            {
+            <MudItem xs="12">
+                <MudText Typo="Typo.caption" Class="mb-1">@_form.SelectedAssets.Count asset(s) selected:</MudText>
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead>
+                        <tr>
+                            <th>Property No.</th>
+                            <th>Description</th>
+                            <th class="text-right">Unit Cost (@Money.Symbol)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var asset in _form.SelectedAssets)
+                        {
+                            <tr>
+                                <td><strong>@asset.PropertyNo</strong></td>
+                                <td>@asset.Description</td>
+                                <td class="text-right">@asset.UnitCost.ToString("N2")</td>
+                                <td>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="@(() => _form.SelectedAssets.Remove(asset))" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+            }
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.caption" Color="Color.Warning">
+                    This action is irreversible. Assets will be permanently transferred out of this office.
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" Class="d-flex justify-end">
+                <AMISButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Default"
+                            Class="mr-2" Disabled="_busy">Cancel</AMISButton>
+                <AMISButton Variant="Variant.Filled" Color="Color.Error"
+                            OnClick="CreateAsync" Disabled="@(_busy || _form.SelectedAssets.Count == 0)">
+                    Save
+                </AMISButton>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    private const IssuanceReportType SmirReportType = IssuanceReportType.SMIR;
+
+    private bool _busy;
+    private readonly CreateFormModel _form = new();
+
+    // SMIR (RSPI) has no accountable-form series — its number is date-based and allocated
+    // server-side at save. This is a best-effort preview of the next available number.
+    private string? _peekedNumber;
+    private string SmirNumberDisplay => _peekedNumber ?? "Assigned on save";
+
+    protected override Task OnInitializedAsync() => PeekNumberAsync();
+
+    private async Task PeekNumberAsync()
+    {
+        if (_form.DateNullable is null) { _peekedNumber = null; return; }
+        try { _peekedNumber = await Client.PeekNumberAsync(SmirReportType, DateOnly.FromDateTime(_form.DateNullable.Value)); }
+        catch { _peekedNumber = null; }
+    }
+
+    private sealed class CreateFormModel
+    {
+        public IssuanceNature Nature { get; set; }
+        public string FundCluster { get; set; } = "";
+        public DateTime? DateNullable { get; set; } = DateTime.Today;
+        public string IssuedToName { get; set; } = "";
+        public string? IssuedToDesignation { get; set; }
+        public string IssuedToOfficeAddress { get; set; } = "";
+        public string? Remarks { get; set; }
+        public List<AssetRegistrySummaryDto> SelectedAssets { get; set; } = [];
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private async Task BrowseAssetsAsync()
+    {
+        var parameters = new DialogParameters<AvailableAssetsPickerDialog>
+        {
+            { x => x.AssetType, AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE },
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)_form.SelectedAssets.Select(a => a.Id).ToList() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>("Available Semi-Expendable Assets", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not List<AssetRegistrySummaryDto> picked || picked.Count == 0)
+            return;
+
+        foreach (var asset in picked.Where(a => _form.SelectedAssets.All(x => x.Id != a.Id)))
+            _form.SelectedAssets.Add(asset);
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.FundCluster) ||
+            string.IsNullOrWhiteSpace(_form.IssuedToName) ||
+            string.IsNullOrWhiteSpace(_form.IssuedToOfficeAddress) ||
+            !_form.DateNullable.HasValue)
+        {
+            Snackbar.Add("All required fields must be filled.", Severity.Warning);
+            return;
+        }
+
+        var approvingOfficialName = OrgProfileState.Profile?.ApprovingOfficialName;
+        if (string.IsNullOrWhiteSpace(approvingOfficialName))
+        {
+            Snackbar.Add("No approving official is set in the Organization Profile. Set it there before creating this report.", Severity.Warning);
+            return;
+        }
+
+        if (_form.SelectedAssets.Count == 0)
+        {
+            Snackbar.Add("At least one asset must be selected.", Severity.Warning);
+            return;
+        }
+
+        if (UserProfileState.EmployeeId == Guid.Empty)
+        {
+            Snackbar.Add("Your account is not linked to an employee record. Cannot prepare a report.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new CreateIssuanceReportRequest(
+                SmirReportType,
+                DateOnly.FromDateTime(_form.DateNullable.Value),
+                _form.FundCluster,
+                _form.Nature,
+                new ArEmployeeRefDto(
+                    UserProfileState.EmployeeId,
+                    UserProfileState.EmployeeFullName.Trim(),
+                    string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim()),
+                new ArEmployeeRefDto(Guid.Empty, _form.IssuedToName.Trim(), _form.IssuedToDesignation),
+                _form.IssuedToOfficeAddress.Trim(),
+                _form.Remarks?.Trim(),
+                _form.SelectedAssets.Select(a => a.Id).ToList());
+
+            var created = await Client.CreateAsync(req);
+            Snackbar.Add($"SMIR {created.ReportNo} created. Assets transferred out.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(created));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

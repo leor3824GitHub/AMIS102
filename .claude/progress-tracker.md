@@ -44,8 +44,8 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 | Backend — Finance Module                                  | ✅ Complete                     |
 | Backend — ProcurementPlanning Module                      | ✅ Complete                     |
 | Backend — ProcurementAcquisition Module                   | ✅ Complete                     |
-| Client — Playground.Blazor                                | ✅ Complete (all modules wired) |
-| Client — Playground.Maui                                  | ✅ Phases 1–11 built (login, shell, profile, inventory, scan, asset detail, platform manifests) + PhysicalCount feature (5 pages, OCR, offline sync) |
+| Client — AMIS.Blazor                                | ✅ Complete (all modules wired) |
+| Client — AMIS.Maui                                  | ✅ Phases 1–11 built (login, shell, profile, inventory, scan, asset detail, platform manifests) + PhysicalCount feature (5 pages, OCR, offline sync) |
 | AI Guides (.claude/ rules, skills, agents)                | ✅ Complete                     |
 
 ---
@@ -54,8 +54,8 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 
 ### Infrastructure
 
-- [x] Modular Monolith with 11 modules scaffolded and fully wired to `Playground.Api`
-- [x] .NET Aspire orchestration (`AMIS.Playground.AppHost`)
+- [x] Modular Monolith with 11 modules scaffolded and fully wired to `AMIS.Api`
+- [x] .NET Aspire orchestration (`AMIS.AppHost`)
 - [x] PostgreSQL migrations via `Migrations.PostgreSQL`
 - [x] OpenAPI + Scalar UI + NSwag client generation scripts
 - [x] Architecture tests (`src/Tests/Architecture.Tests`)
@@ -178,7 +178,7 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 - [x] Canvass
 - [x] Purchase Orders
 
-### Client: Playground.Blazor
+### Client: AMIS.Blazor
 
 - [x] Authentication (login, session)
 - [x] Dashboard / Home
@@ -242,7 +242,7 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 - [ ] Final visual print-layout parity signoff against approved ICS/PAR/SMIR/PPEIR templates (API/data-level cross-check completed; see `ASSETMANAGEMENT-REPORT-ALIGNMENT-CHECKLIST.md`)
 - [x] Full solution build gate revalidated after Vehicle compile fix
 
-### Client: Playground.Maui
+### Client: AMIS.Maui
 
 > Implementation plan: `MAUI-IMPLEMENTATION-PLAN.md` — **all 11 phases are built** (verified against the codebase 2026-06-10):
 > backend endpoints (`employees/me`, `tangible-inventory-items/by-property-no`), project setup, auth infrastructure
@@ -280,7 +280,7 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 2. MAUI: validation pass on a physical low-end Android device (requires hardware — cannot be automated)
 3. Blazor sizing Phase 3: ~40 pages still below 50% Dense coverage — see worklist in `MUDBLAZOR-SIZING-STANDARDIZATION-PLAN.md` "Status Reconciliation" section (reconciled 2026-06-10; VehiclesPage create form migrated same day)
 4. ~~Fix `AMISSelect` two-way binding~~ — ✅ Fixed 2026-06-10 (user-approved BuildingBlocks change): now propagates via `OnMudValueChanged`, same pattern as `AMISAutocomplete`. Wrapper adoption is unblocked for Phase 3 migrations.
-5. Set the real production API host in `Playground.Maui/appsettings.Production.json` before first release
+5. Set the real production API host in `AMIS.Maui/appsettings.Production.json` before first release
 
 ---
 
@@ -297,7 +297,7 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 
 | Decision               | What                                                      | Why                                                                    |
 | ---------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------- |
-| MAUI as second client  | Separate `Playground.Maui` project, no BFF                | Blazor uses BFF; MAUI calls API directly with bearer token             |
+| MAUI as second client  | Separate `AMIS.Maui` project, no BFF                | Blazor uses BFF; MAUI calls API directly with bearer token             |
 | Token storage          | `SecureStorage` (Android/iOS) + `PasswordVault` (Windows) | `Preferences` is unencrypted — not safe for tokens                     |
 | Employee ID resolution | New `/employees/me` endpoint (MasterData)                 | JWT only carries Identity UserId, not MasterData EmployeeId            |
 | QR scan target         | `PropertyNo` from existing property stickers              | No new QR generation needed — stickers already exist                   |
@@ -311,9 +311,9 @@ Harden the `AssetRegister` bounded context (valuation, reconciliation, print par
 
 ## Session Notes
 
-- All backend modules are complete and deployed to `Playground.Api`.
-- `Playground.Blazor` is the working web client; all modules are wired and tested there.
-- `Playground.Maui` is fully scaffolded and feature-complete per the plan (plus PhysicalCount); treat `MAUI-IMPLEMENTATION-PLAN.md` checklists as historical.
+- All backend modules are complete and deployed to `AMIS.Api`.
+- `AMIS.Blazor` is the working web client; all modules are wired and tested there.
+- `AMIS.Maui` is fully scaffolded and feature-complete per the plan (plus PhysicalCount); treat `MAUI-IMPLEMENTATION-PLAN.md` checklists as historical.
 - `_ARCHIVED_DOCUMENTATION/ASSET-REGISTER-MODULE-PROGRESS.md` is stale and self-contradictory; trust this file and the code.
 - The `.claude/` AI guides have been fully updated for MAUI: `rules/maui.md`, `skills/maui-feature/SKILL.md`, `agents/maui-reviewer.md`, plus updates to `code-reviewer.md`, `architecture-guard.md`, `CLAUDE.md`, and `architecture.md`.
 - Use `/maui-feature` skill when adding any new MAUI screen.

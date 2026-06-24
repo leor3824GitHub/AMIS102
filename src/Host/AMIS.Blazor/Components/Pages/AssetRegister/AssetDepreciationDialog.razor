@@ -1,0 +1,83 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@inject IAssetRegistryClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width:360px;">
+            <MudText Typo="Typo.caption">
+                Override the catalog depreciation policy for <strong>@PropertyNo</strong> only.
+                Applied prospectively — already-posted depreciation is untouched.
+            </MudText>
+            <MudNumericField @bind-Value="_residualValue" Label="@($"Residual Value ({Money.Symbol})")" T="decimal"
+                             Variant="Variant.Outlined" Min="0" Dense="true" Margin="Margin.Dense" Required="true" />
+            <MudNumericField @bind-Value="_usefulLifeYears" Label="Estimated Useful Life (years)" T="int"
+                             Variant="Variant.Outlined" Min="1" Max="100" Dense="true" Margin="Margin.Dense" Required="true" />
+            <MudSelect @bind-Value="_method" Label="Depreciation Method" T="DepreciationMethod"
+                       Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense">
+                <MudSelectItem Value="DepreciationMethod.StraightLine">Straight-line</MudSelectItem>
+            </MudSelect>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Acquisition cost: @Money.Symbol@UnitCost.ToString("N2"). Residual must be less than cost.
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_busy">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Save
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Guid AssetId { get; set; }
+    [Parameter] public string PropertyNo { get; set; } = "";
+    [Parameter] public decimal UnitCost { get; set; }
+    [Parameter] public decimal ResidualValue { get; set; }
+    [Parameter] public int EstimatedUsefulLifeYears { get; set; }
+    [Parameter] public DepreciationMethod Method { get; set; } = DepreciationMethod.StraightLine;
+
+    private bool _busy;
+    private decimal _residualValue;
+    private int _usefulLifeYears;
+    private DepreciationMethod _method;
+
+    protected override void OnInitialized()
+    {
+        _residualValue = ResidualValue;
+        _usefulLifeYears = EstimatedUsefulLifeYears;
+        _method = Method;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_residualValue >= UnitCost)
+        {
+            Snackbar.Add("Residual value must be less than the acquisition cost.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Client.UpdateDepreciationAsync(AssetId, _residualValue, _usefulLifeYears, _method);
+            Snackbar.Add("Depreciation parameters updated.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

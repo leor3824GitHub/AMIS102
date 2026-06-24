@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Blazor Server application (`Playground.Blazor`) connects to the .NET API (`Playground.Api`) through a sophisticated, production-ready architecture that implements:
+The Blazor Server application (`AMIS.Blazor`) connects to the .NET API (`AMIS.Api`) through a sophisticated, production-ready architecture that implements:
 
 - **Backend-for-Frontend (BFF) Pattern** - Simple authentication layer between Blazor and API
 - **JWT Token Management** - Automatic token refresh with proactive expiration detection
@@ -16,7 +16,7 @@ The Blazor Server application (`Playground.Blazor`) connects to the .NET API (`P
 ## 1. Architecture Layers
 
 ### Layer 1: Blazor UI (Interactive Components)
-- **Location:** `src/Playground/Playground.Blazor`
+- **Location:** `src/Host/AMIS.Blazor`
 - **Technology:** Blazor Server Rendering (SSR) with Interactive Razor Components
 - **Protocol:** HTTP/HTTPS to local API service
 - **Primary Responsibility:** User interface, client-side business logic, API client orchestration
@@ -30,7 +30,7 @@ The Blazor Server application (`Playground.Blazor`) connects to the .NET API (`P
 - **Purpose:** Acts as a thin authentication gateway between Blazor components and the identity API
 
 ### Layer 3: HTTP Client Abstraction
-- **Location:** `src/Playground/Playground.Blazor/Services/Api/`
+- **Location:** `src/Host/AMIS.Blazor/Services/Api/`
 - **Key Components:**
   - `AuthorizationHeaderHandler` - DelegatingHandler that injects JWT tokens into API requests
   - `TokenRefreshService` - Manages JWT refresh token flow
@@ -39,7 +39,7 @@ The Blazor Server application (`Playground.Blazor`) connects to the .NET API (`P
 - **Purpose:** Standardize and secure all HTTP communication with the backend API
 
 ### Layer 4: API Server
-- **Location:** `src/Playground/Playground.Api`
+- **Location:** `src/Host/AMIS.Api`
 - **Technology:** ASP.NET Core Web API
 - **Modules:** Identity, Multitenancy, Auditing, Expendable
 - **Authentication:** JWT Bearer tokens + Cookie fallback
@@ -62,7 +62,7 @@ The Blazor Server application (`Playground.Blazor`) connects to the .NET API (`P
                    │ HTTP/HTTPS
                    │
 ┌──────────────────▼──────────────────────────────────────────────────┐
-│              BLAZOR SERVER (d:\VB\AMIS101\Playground.Blazor)        │
+│              BLAZOR SERVER (d:\VB\AMIS101\AMIS.Blazor)        │
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │  BFF AUTH ENDPOINTS (/bff/auth/*)                          │   │
 │  │  - SimpleBffAuth.cs                                        │   │
@@ -93,7 +93,7 @@ The Blazor Server application (`Playground.Blazor`) connects to the .NET API (`P
                    │
 ┌──────────────────▼──────────────────────────────────────────────────┐
 │          ASP.NET CORE API SERVER (https://localhost:7030)          │
-│                 src/Playground/Playground.Api                       │
+│                 src/Host/AMIS.Api                       │
 │                                                                      │
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │  IDENTITY MODULE                                            │   │

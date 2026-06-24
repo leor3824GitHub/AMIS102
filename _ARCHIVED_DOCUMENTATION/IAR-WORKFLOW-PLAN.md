@@ -202,7 +202,7 @@ public const string Cancel              = "assetprocurement.iars.cancel";
    - `Status = Draft` (0) → no change.
 4. Drop the old `RejectionReason` column (lossy — accept this; old rejections are rare and rejection logic is gone).
 
-> **Run** `dotnet ef migrations add IAR_StageWorkflow --project src/Playground/Migrations.PostgreSQL --context AssetProcurementDbContext`.
+> **Run** `dotnet ef migrations add IAR_StageWorkflow --project src/Host/Migrations.PostgreSQL --context AssetProcurementDbContext`.
 
 ---
 

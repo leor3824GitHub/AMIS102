@@ -48,8 +48,8 @@ Rules:
 
 Primary file targets:
 
-- src/Playground/Playground.Blazor/Components/Pages/AssetProcurement/AssetIARDraftDialog.razor
-- src/Playground/Playground.Blazor/ApiClient/AssetProcurementClient.cs
+- src/Host/AMIS.Blazor/Components/Pages/AssetProcurement/AssetIARDraftDialog.razor
+- src/Host/AMIS.Blazor/ApiClient/AssetProcurementClient.cs
 
 ### B. Inspector UI (minimal decision UI)
 
@@ -75,7 +75,7 @@ Rules:
 
 Primary file target:
 
-- src/Playground/Playground.Blazor/Components/Pages/AssetProcurement/AssetIARInspectionPage.razor
+- src/Host/AMIS.Blazor/Components/Pages/AssetProcurement/AssetIARInspectionPage.razor
 
 ### C. Acceptance UI (PC/SO minimal + property generation)
 
@@ -108,7 +108,7 @@ Rules:
 
 Primary file target:
 
-- src/Playground/Playground.Blazor/Components/Pages/AssetProcurement/AssetIARAcceptancePage.razor
+- src/Host/AMIS.Blazor/Components/Pages/AssetProcurement/AssetIARAcceptancePage.razor
 
 ## 5. Data Hydration Strategy (No Redundant Encoding)
 

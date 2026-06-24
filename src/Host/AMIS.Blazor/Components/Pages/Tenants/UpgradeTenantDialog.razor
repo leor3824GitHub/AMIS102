@@ -1,0 +1,246 @@
+@using AMIS.Blazor.ApiClient
+@inject ITenantsClient TenantsClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudAvatar Color="Color.Primary" Size="Size.Medium" Class="dialog-avatar">
+                <MudIcon Icon="@Icons.Material.Filled.Upgrade" />
+            </MudAvatar>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h6" Class="fw-600">Upgrade Subscription</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">Extend the subscription for @Tenant?.Name</MudText>
+            </MudStack>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (Tenant is not null)
+        {
+            <MudStack Spacing="3">
+                @* Current Subscription Info *@
+                <MudPaper Class="pa-3" Elevation="0" Style="background-color: rgba(var(--mud-palette-primary-rgb), 0.04); border-radius: 8px;">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.subtitle2" Class="fw-600">Current Subscription</MudText>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="text-muted">Tenant</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-600">@Tenant.Name</MudText>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="text-muted">Valid Until</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-600" Color="@GetExpiryColor(Tenant.ValidUpto)">
+                                @Tenant.ValidUpto.ToString("MMMM dd, yyyy")
+                            </MudText>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="text-muted">Status</MudText>
+                            @if (IsExpired(Tenant.ValidUpto))
+                            {
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small">Expired</MudChip>
+                            }
+                            else if (IsExpiringSoon(Tenant.ValidUpto))
+                            {
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Expiring Soon</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+
+                @* New Expiry Date *@
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2" Class="fw-600">New Expiry Date</MudText>
+                    <MudDatePicker @bind-Date="_newExpiryDate"
+                                   Label="Extended Expiry Date"
+                                   Placeholder="Select new expiry date"
+                                   MinDate="@DateTime.Today"
+                                   Required="true"
+                                   RequiredError="Please select a new expiry date"
+                                   Variant="Variant.Outlined"
+                                   Adornment="Adornment.Start"
+                                   AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                   DateFormat="MMMM dd, yyyy" />
+                </MudStack>
+
+                @* Quick Extend Options *@
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2" Class="fw-600">Quick Extend</MudText>
+                    <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => ExtendBy(30))">
+                            +30 Days
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => ExtendBy(90))">
+                            +90 Days
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => ExtendBy(180))">
+                            +6 Months
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => ExtendBy(365))">
+                            +1 Year
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+
+                @* Preview *@
+                @if (_newExpiryDate.HasValue)
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.body2">
+                                <strong>Preview:</strong> Subscription will be extended to @_newExpiryDate.Value.ToString("MMMM dd, yyyy")
+                            </MudText>
+                            @{
+                                var daysAdded = (_newExpiryDate.Value - Tenant.ValidUpto.Date).Days;
+                                if (daysAdded > 0)
+                                {
+                                    <MudText Typo="Typo.caption" Class="text-muted">
+                                        Adding @daysAdded days to the subscription
+                                    </MudText>
+                                }
+                            }
+                        </MudStack>
+                    </MudAlert>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Default"
+                   OnClick="Cancel"
+                   Disabled="_busy">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Submit"
+                   Disabled="_busy || !_newExpiryDate.HasValue"
+                   StartIcon="@(_busy ? null : Icons.Material.Filled.Upgrade)">
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Upgrading...</span>
+            }
+            else
+            {
+                <span>Upgrade Subscription</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .dialog-avatar {
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public TenantDto? Tenant { get; set; }
+
+    private DateTime? _newExpiryDate;
+    private bool _busy;
+
+    protected override void OnParametersSet()
+    {
+        if (Tenant is not null)
+        {
+            // Default to current expiry + 30 days, or today + 30 days if expired
+            var baseDate = Tenant.ValidUpto.Date > DateTime.Today
+                ? Tenant.ValidUpto.Date
+                : DateTime.Today;
+            _newExpiryDate = baseDate.AddDays(30);
+        }
+    }
+
+    private void ExtendBy(int days)
+    {
+        if (Tenant is null) return;
+
+        var baseDate = Tenant.ValidUpto.Date > DateTime.Today
+            ? Tenant.ValidUpto.Date
+            : DateTime.Today;
+        _newExpiryDate = baseDate.AddDays(days);
+    }
+
+    private static bool IsExpired(DateTimeOffset validUpto) =>
+        validUpto <= DateTimeOffset.UtcNow;
+
+    private static bool IsExpiringSoon(DateTimeOffset validUpto)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return validUpto > now && validUpto <= now.AddDays(30);
+    }
+
+    private static Color GetExpiryColor(DateTimeOffset validUpto)
+    {
+        if (IsExpired(validUpto)) return Color.Error;
+        if (IsExpiringSoon(validUpto)) return Color.Warning;
+        return Color.Default;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        if (Tenant is null || !_newExpiryDate.HasValue)
+        {
+            Snackbar.Add("Please select a new expiry date.", Severity.Warning);
+            return;
+        }
+
+        if (_newExpiryDate.Value <= DateTime.Today)
+        {
+            Snackbar.Add("New expiry date must be in the future.", Severity.Error);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            // Convert the local date to UTC (use end of day in UTC to ensure full day coverage)
+            var utcDate = DateTime.SpecifyKind(_newExpiryDate.Value.Date, DateTimeKind.Utc);
+
+            var command = new UpgradeTenantCommand
+            {
+                Tenant = Tenant.Id,
+                ExtendedExpiryDate = new DateTimeOffset(utcDate)
+            };
+
+            await TenantsClient.UpgradeAsync(Tenant.Id, command);
+            Snackbar.Add($"Subscription for '{Tenant.Name}' upgraded successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to upgrade subscription: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
+

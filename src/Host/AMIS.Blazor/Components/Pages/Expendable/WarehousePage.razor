@@ -1,0 +1,192 @@
+@page "/expendable/warehouse"
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Blazor.ApiClient
+@inherits ComponentBase
+@inject ISnackbar Snackbar
+@inject IInventoryClient InventoryClient
+
+<AMISPageHeader Title="Warehouse" Description="Inventory stock levels" />
+
+<div class="mt-4">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+
+        <!-- ===== INVENTORY TAB ===== -->
+        <MudTabPanel Text="Inventory" Icon="@Icons.Material.Filled.Inventory2">
+
+            <!-- Filters -->
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                    <MudItem xs="12" sm="5">
+                        <MudAutocomplete T="WarehouseOption"
+                                         Label="Warehouse"
+                                         Value="_invWarehouse"
+                                         SearchFunc="@SearchWarehouses"
+                                         ToStringFunc="@(w => w?.Name ?? string.Empty)"
+                                         CoerceValue="true"
+                                         Clearable="true"
+                                         Placeholder="All warehouses"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         ValueChanged="@(async (WarehouseOption? w) => { _invWarehouse = w; await (_invTable?.ReloadServerData() ?? Task.CompletedTask); })" />
+                    </MudItem>
+                    <MudItem xs="12" sm="5">
+                        <MudTextField @bind-Value="_invSearch" Placeholder="Search by product name..."
+                                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                                      Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                      DebounceInterval="400" OnDebounceIntervalElapsed="() => _invTable?.ReloadServerData()" />
+                    </MudItem>
+                    <MudItem xs="12" sm="2">
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                                   OnClick="ClearInvFilters">Clear</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            <MudTable @ref="_invTable" T="ProductInventoryDto" ServerData="@LoadInventory"
+                      Dense="true" Hover="true" Striped="true" Elevation="2">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Warehouse</MudTh>
+                    <MudTh Style="text-align:center">On Hand</MudTh>
+                    <MudTh Style="text-align:center">Available</MudTh>
+                    <MudTh Style="text-align:center">Reserved</MudTh>
+                    <MudTh Style="text-align:center">Issued</MudTh>
+                    <MudTh Style="text-align:right">Avg Cost</MudTh>
+                    <MudTh Style="text-align:right">Total Value</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@context.ProductCode</MudText>
+                    </MudTd>
+                    <MudTd>@context.ProductName</MudTd>
+                    <MudTd>
+                        <MudText Typo="Typo.body2">@context.WarehouseLocationName</MudText>
+                    </MudTd>
+                    <MudTd Style="text-align:center">
+                        <MudChip T="string" Size="Size.Small" Color="@(context.QuantityOnHand > 0 ? Color.Primary : Color.Default)">
+                            @context.QuantityOnHand
+                        </MudChip>
+                    </MudTd>
+                    <MudTd Style="text-align:center">@context.QuantityAvailable</MudTd>
+                    <MudTd Style="text-align:center">
+                        @if (context.QuantityReserved > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">@context.QuantityReserved</MudChip>
+                        }
+                        else { <MudText>0</MudText> }
+                    </MudTd>
+                    <MudTd Style="text-align:center">@context.QuantityIssued</MudTd>
+                    <MudTd Style="text-align:right">$@context.AverageUnitPrice.ToString("F4")</MudTd>
+                    <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
+                    <MudTd>
+                        @{
+                            var (sc, si) = context.Status switch
+                            {
+                                "Active"       => (Color.Success, Icons.Material.Filled.CheckCircle),
+                                "Discontinued" => (Color.Warning, Icons.Material.Filled.Block),
+                                "Archived"     => (Color.Default, Icons.Material.Filled.Archive),
+                                _              => (Color.Default, Icons.Material.Filled.Help),
+                            };
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="@sc" Icon="@si">@context.Status</MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">N/A</MudText>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent><MudText Class="my-4">No inventory records found.</MudText></NoRecordsContent>
+                <PagerContent><MudTablePager /></PagerContent>
+            </MudTable>
+        </MudTabPanel>
+
+    </MudTabs>
+</div>
+
+@code {
+    private record WarehouseOption(Guid Id, string Name);
+
+    // ===== STATE =====
+    private List<WarehouseOption> _warehouses = [];
+
+    // Inventory tab
+    private MudTable<ProductInventoryDto>? _invTable;
+    private WarehouseOption? _invWarehouse;
+    private string _invSearch = string.Empty;
+
+    // ===== LIFECYCLE =====
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWarehouses();
+    }
+
+    private async Task LoadWarehouses()
+    {
+        try
+        {
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 1000 });
+            _warehouses = result?.Items?
+                .Where(i => i.WarehouseLocationId != default)
+                .GroupBy(i => i.WarehouseLocationId)
+                .Select(g =>
+                {
+                    var name = g.First().WarehouseLocationName;
+                    var display = string.IsNullOrWhiteSpace(name)
+                        ? $"Warehouse {g.Key.ToString()[..8]}…"
+                        : name;
+                    return new WarehouseOption(g.Key, display);
+                })
+                .ToList() ?? [];
+        }
+        catch { _warehouses = []; }
+    }
+
+    // ===== AUTOCOMPLETE =====
+
+    private Task<IEnumerable<WarehouseOption>> SearchWarehouses(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(_warehouses.AsEnumerable());
+        return Task.FromResult(
+            _warehouses.Where(w => w.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    // ===== INVENTORY TABLE =====
+
+    private async Task<TableData<ProductInventoryDto>> LoadInventory(TableState state, CancellationToken ct)
+    {
+        try
+        {
+            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery
+            {
+                WarehouseLocationId = _invWarehouse?.Id,
+                ProductName = string.IsNullOrWhiteSpace(_invSearch) ? null : _invSearch,
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            }, ct);
+
+            return new TableData<ProductInventoryDto>
+            {
+                Items = result?.Items?.ToList() ?? [],
+                TotalItems = (int)(result?.TotalCount ?? 0)
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load inventory: {ex.Message}", Severity.Error);
+            return new TableData<ProductInventoryDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private void ClearInvFilters()
+    {
+        _invWarehouse = null;
+        _invSearch = string.Empty;
+        _invTable?.ReloadServerData();
+    }
+}
+

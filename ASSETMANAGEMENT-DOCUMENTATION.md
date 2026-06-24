@@ -48,7 +48,7 @@ PR  ──►  RFQ  ──►  AoC  ──►  PO ─┐
 | PPERR / SMRR (manual creation) | ✅ Exists | `Modules/AssetRegister/.../Features/v1/Receiving/CreateReceivingReport` |
 | PPERR / SMRR (auto from IAR accept) | ⚠️ Partial — materializes `AssetRegistry` but **does not** create a `ReceivingReport` aggregate | `Modules/AssetRegister/.../Integration/AssetIARAcceptedEventConsumer.cs` |
 | PropertyNo value object (COA 2020-006) | ✅ Exists | `Modules.AssetRegister.Contracts/v1/ValueObjects/PropertyNumber.cs` (format `YYYY-AA-BB-NNNN-CC`) |
-| PropertyNo UI generator (rich, NFA-style) | ✅ Exists | `Playground.Blazor/Components/Shared/PropertyNoField.razor` (format `YYYY-NFA-OFFICE-CLASS-CATEGORY-SEQ`) |
+| PropertyNo UI generator (rich, NFA-style) | ✅ Exists | `AMIS.Blazor/Components/Shared/PropertyNoField.razor` (format `YYYY-NFA-OFFICE-CLASS-CATEGORY-SEQ`) |
 | TangibleItems page using `PropertyNoField` | ✅ Exists | `Pages/AssetManagement/TangibleItemsPage.razor` |
 | AssetIAR Blazor page | ❌ Missing | — |
 | PAR / ICS (accountability within office) | ✅ Exists | `Modules/AssetRegister/.../Features/v1/Accountability` |

@@ -375,7 +375,7 @@ DepartmentsPage.razor / Register.razor
 
 ### Generated API Clients (NSwag)
 
-Located in: `src/Playground/Playground.Blazor/ApiClient/Generated.cs`
+Located in: `src/Host/AMIS.Blazor/ApiClient/Generated.cs`
 
 ```csharp
 public partial interface IIdentityClient
@@ -488,7 +488,7 @@ request.Headers.Add(MultitenancyConstants.Identifier, tenant);
 
 ### How NSwag Auto-Generation Works
 
-1. **API Endpoint** (Playground.Api)
+1. **API Endpoint** (AMIS.Api)
 
    ```csharp
    [HttpPost("forgot-password")]
@@ -562,7 +562,7 @@ request.Headers.Add(MultitenancyConstants.Identifier, tenant);
 
 ### Step 1: API Endpoint Implementation
 
-**File:** `src/Playground/Playground.Api/Modules/Identity/Features/*/ForgotPasswordEndpoint.cs`
+**File:** `src/Host/AMIS.Api/Modules/Identity/Features/*/ForgotPasswordEndpoint.cs`
 
 ```csharp
 [HttpPost("forgot-password")]
@@ -612,7 +612,7 @@ The endpoint is automatically documented in the OpenAPI spec by the framework:
 
 **Command:** `./scripts/openapi/generate-api-clients.ps1 -SpecUrl "https://localhost:7030/openapi/v1.json"`
 
-**Output File:** `src/Playground/Playground.Blazor/ApiClient/Generated.cs`
+**Output File:** `src/Host/AMIS.Blazor/ApiClient/Generated.cs`
 
 The NSwag generator creates:
 
@@ -646,7 +646,7 @@ public partial class IdentityClient : IIdentityClient
 
 ### Step 4: Dependency Injection Registration
 
-**File:** `src/Playground/Playground.Blazor/Services/Api/ApiClientRegistration.cs`
+**File:** `src/Host/AMIS.Blazor/Services/Api/ApiClientRegistration.cs`
 
 ```csharp
 services.AddTransient<IIdentityClient>(sp =>
@@ -657,7 +657,7 @@ services.AddTransient<IIdentityClient>(sp =>
 
 ### Step 5: Blazor Component Usage
 
-**File:** `src/Playground/Playground.Blazor/Components/Pages/Authentication/Register.razor` ✅
+**File:** `src/Host/AMIS.Blazor/Components/Pages/Authentication/Register.razor` ✅
 
 ```csharp
 @inject IIdentityClient IdentityClient
@@ -681,7 +681,7 @@ Register.razor correctly uses the pattern.
 
 ### Step 5B: ForgotPassword.razor Antipattern ❌
 
-**File:** `src/Playground/Playground.Blazor/Components/Pages/Authentication/ForgotPassword.razor`
+**File:** `src/Host/AMIS.Blazor/Components/Pages/Authentication/ForgotPassword.razor`
 
 ```csharp
 @inject IHttpClientFactory HttpClientFactory  // ❌ Bypass the entire pipeline!
@@ -791,7 +791,7 @@ private async Task SendResetRequestAsync()
 
 ```powershell
 # Search Generated.cs for ForgotPasswordAsync
-Select-String "ForgotPasswordAsync" src/Playground/Playground.Blazor/ApiClient/Generated.cs
+Select-String "ForgotPasswordAsync" src/Host/AMIS.Blazor/ApiClient/Generated.cs
 ```
 
 **Task 1.2:** Verify Register.razor uses the correct pattern (baseline)
@@ -860,7 +860,7 @@ private async Task SendResetRequestAsync()
 **Test 1: Build Verification**
 
 ```powershell
-dotnet build src/Playground/Playground.Blazor/Playground.Blazor.csproj
+dotnet build src/Host/AMIS.Blazor/AMIS.Blazor.csproj
 ```
 
 Should complete with 0 warnings.
@@ -873,8 +873,8 @@ Should complete with 0 warnings.
 
 **Test 3: Manual Testing**
 
-1. Start Playground.Api: `dotnet run --project src/Playground/Playground.Api`
-2. Start Playground.Blazor: `dotnet run --project src/Playground/Playground.Blazor`
+1. Start AMIS.Api: `dotnet run --project src/Host/AMIS.Api`
+2. Start AMIS.Blazor: `dotnet run --project src/Host/AMIS.Blazor`
 3. Navigate to `/forgot-password`
 4. Test forgot password flow end-to-end
 5. Verify success message displays correctly
@@ -927,8 +927,8 @@ Documentation:
 
 **Files Modified:**
 
-- `src/Playground/Playground.Blazor/Components/Pages/Authentication/ForgotPassword.razor`
-- `src/Playground/Playground.Blazor/Components/Pages/Authentication/ResetPassword.razor` (if same issue)
+- `src/Host/AMIS.Blazor/Components/Pages/Authentication/ForgotPassword.razor`
+- `src/Host/AMIS.Blazor/Components/Pages/Authentication/ResetPassword.razor` (if same issue)
 - `BLAZOR-CLIENT-CONFORMANCE-AUDIT.md` (update audit)
 
 ---

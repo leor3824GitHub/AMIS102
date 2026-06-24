@@ -1,0 +1,255 @@
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Blazor.ApiClient
+@inject IArAccountabilityClient Client
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
+
+<MudDialog>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_selected is null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@(_error ?? "Document could not be loaded.")</MudAlert>
+        }
+        else
+        {
+            <MudStack Spacing="2" Style="min-width:720px;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudText Typo="Typo.h6">
+                        @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR") — @_selected.DocumentNo
+                    </MudText>
+                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(_selected.Status)" Variant="Variant.Filled">
+                        @FormatStatus(_selected.Status)
+                    </MudChip>
+                    <MudSpacer />
+                    <MudTooltip Text="Refresh — pull the latest status (e.g. if accepted on mobile)">
+                        <AMISIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small"
+                                        Color="Color.Default" OnClick="RefreshAsync" Disabled="_busy" />
+                    </MudTooltip>
+                    <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary"
+                                StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                OnClick="PrintAsync" Disabled="_printing">
+                        @if (_printing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
+                        Print @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
+                    </AMISButton>
+                </MudStack>
+
+                <MudGrid>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Issued On</MudText>
+                        <MudText Typo="Typo.body2">@_selected.IssuedOn.ToString("yyyy-MM-dd")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Expires On</MudText>
+                        <MudText Typo="Typo.body2">@(_selected.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Accepted On</MudText>
+                        <MudText Typo="Typo.body2">@(_selected.AcceptedOn?.ToString("yyyy-MM-dd") ?? "—")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                        <MudText Typo="Typo.body2">@_selected.FundCluster</MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Issued By</MudText>
+                        <MudText Typo="Typo.body2">@_selected.IssuedBy.PrintedName (@(_selected.IssuedBy.Designation ?? "—"))</MudText>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Received By</MudText>
+                        <MudText Typo="Typo.body2">@_selected.ReceivedBy.PrintedName (@(_selected.ReceivedBy.Designation ?? "—"))</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrEmpty(_selected.CancellationReason))
+                    {
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                Cancellation reason: @_selected.CancellationReason
+                            </MudAlert>
+                        </MudItem>
+                    }
+                </MudGrid>
+
+                <MudText Typo="Typo.subtitle2">Line Items</MudText>
+                <MudTable Items="_selected.Lines" Dense="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Property No.</MudTh>
+                        <MudTh>Description</MudTh>
+                        <MudTh>Unit</MudTh>
+                        <MudTh Style="text-align:right">Issued</MudTh>
+                        <MudTh Style="text-align:right">Returned</MudTh>
+                        <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Returned On</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Snapshot.PropertyNo</MudTd>
+                        <MudTd>@context.Snapshot.Description</MudTd>
+                        <MudTd>@context.Snapshot.Unit</MudTd>
+                        <MudTd Style="text-align:right">@context.IssuedQty</MudTd>
+                        <MudTd Style="text-align:right">@context.ReturnedQty</MudTd>
+                        <MudTd Style="text-align:right">@context.Snapshot.UnitCost.ToString("N2")</MudTd>
+                        <MudTd>@FormatLineStatus(context.LineStatus)</MudTd>
+                        <MudTd>@(context.ReturnedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+
+                @if (_selected.Status == AccountabilityStatus.PendingAcceptance && _canAcknowledge)
+                {
+                    <MudDivider Class="my-2" />
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        This @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR") is awaiting your acceptance.
+                        Accepting confirms you have received the property listed above.
+                    </MudAlert>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (_selected is not null && _selected.Status == AccountabilityStatus.PendingAcceptance && _canAcknowledge)
+        {
+            <AMISButton Variant="Variant.Filled" Color="Color.Success"
+                        StartIcon="@Icons.Material.Filled.CheckCircle"
+                        OnClick="AcceptAsync" Disabled="_busy">
+                Accept @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
+            </AMISButton>
+        }
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Close">Close</AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _printing;
+    private bool _changed;
+    private string? _error;
+    private ArAccountabilityDto? _selected;
+
+    private bool _canAcknowledge => UserProfileState.Permissions.Contains(AssetRegisterPermissions.MyAccountability.Acknowledge);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _selected = await Client.GetMineDetailAsync(Id);
+            if (_selected is null) _error = "Document not found.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        _busy = true;
+        try
+        {
+            var previousStatus = _selected?.Status;
+            var fresh = await Client.GetMineDetailAsync(Id);
+            if (fresh is null) { _error = "Document not found."; _selected = null; return; }
+            _selected = fresh;
+            // If the status moved on (e.g. accepted on MAUI while this dialog was open), tell the
+            // parent list to reload on close so its row no longer shows the stale status/actions.
+            if (previousStatus is not null && previousStatus != fresh.Status)
+                _changed = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task AcceptAsync()
+    {
+        if (_selected is null) return;
+        _busy = true;
+        try
+        {
+            _selected = await Client.AcceptAsync(_selected.Id, DateOnly.FromDateTime(DateTime.Today));
+            _changed = true;
+            Snackbar.Add("Accountability accepted.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            // Likely a cross-client race (already accepted on MAUI / another tab). Re-pull the
+            // current state so the Accept button drops and the parent list reflects the new status.
+            try
+            {
+                _selected = await Client.GetMineDetailAsync(Id);
+                _changed = true;
+            }
+            catch { /* keep the existing view if the refresh itself fails */ }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrintAsync()
+    {
+        if (_selected is null) return;
+        _printing = true;
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(_selected.Id, _selected.AccountabilityType, pageWidth: "longbond");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printing = false;
+        }
+    }
+
+    private void Close() => MudDialog.Close(DialogResult.Ok(_changed));
+
+    private static string FormatStatus(AccountabilityStatus v) => v switch
+    {
+        AccountabilityStatus.Active => "Active",
+        AccountabilityStatus.Renewed => "Renewed",
+        AccountabilityStatus.Returned => "Returned",
+        AccountabilityStatus.Cancelled => "Cancelled",
+        AccountabilityStatus.PendingAcceptance => "Pending Acceptance",
+        _ => v.ToString()
+    };
+    private static Color StatusColor(AccountabilityStatus v) => v switch
+    {
+        AccountabilityStatus.Active => Color.Success,
+        AccountabilityStatus.Renewed => Color.Warning,
+        AccountabilityStatus.Returned => Color.Info,
+        AccountabilityStatus.Cancelled => Color.Error,
+        AccountabilityStatus.PendingAcceptance => Color.Warning,
+        _ => Color.Default
+    };
+    private static string FormatLineStatus(AccountabilityLineStatus v) => v switch
+    {
+        AccountabilityLineStatus.Active => "Active",
+        AccountabilityLineStatus.Returned => "Returned",
+        AccountabilityLineStatus.Lost => "Lost",
+        _ => v.ToString()
+    };
+}

@@ -1,0 +1,399 @@
+@page "/master-data/employees"
+@implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.Permissions
+@inherits ComponentBase
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IMaster_dataClient MasterDataClient
+@inject ILookupClient LookupClient
+@inject IIdentityClient IdentityClient
+@inject IOrganizationProfileClient OrgProfileClient
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Employees" Description="Manage employee profiles">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search employees..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchEmployees())"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchEmployees" Disabled="_isLoading">
+                Search
+            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
+        </MudStack>
+    </ActionContent>
+</AMISPageHeader>
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <!-- Employees List -->
+        <MudItem xs="12">
+            <MudCard Class="AMIS-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Employees List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
+
+                    @if (_employees.Any())
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("EmployeeNumber")'>Employee # @SortIcon("EmployeeNumber")</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
+                                    <th>Email</th>
+                                    <th style="cursor:pointer" @onclick='() => SetSort("Office")'>Office @SortIcon("Office")</th>
+                                    <th>Department</th>
+                                    <th>Position</th>
+                                    <th>Linked Account</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var employee in _employees.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                                {
+                                    <tr>
+                                        <td>@employee.EmployeeNumber</td>
+                                        <td>@($"{employee.FirstName} {employee.LastName}")</td>
+                                        <td>@(employee.WorkEmail ?? "-")</td>
+                                        <td>@(GetOfficeName(employee.OfficeId))</td>
+                                        <td>@(GetDepartmentName(employee.DepartmentId))</td>
+                                        <td>@(GetPositionName(employee.PositionId))</td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(employee.IdentityUserId))
+                                            {
+                                                <MudTooltip Text="@GetLinkedAccountDisplay(employee.IdentityUserId)">
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                                             Icon="@Icons.Material.Filled.Link" Variant="Variant.Outlined">
+                                                        @GetLinkedAccountDisplay(employee.IdentityUserId)
+                                                    </MudChip>
+                                                </MudTooltip>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
+                                            }
+                                        </td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="@(employee.IsActive ? Color.Success : Color.Default)">@(employee.IsActive
+                                                                                        ? "Active" : "Inactive")</MudChip>
+                                            </td>
+                                            <td>
+                                                @if (IsOwnedByMe(employee.OfficeCode) && (_canUpdate || _canDelete))
+                                                {
+                                                    <MudStack Row="true" Spacing="1">
+                                                        @if (_canUpdate)
+                                                        {
+                                                            <MudTooltip Text="Edit employee">
+                                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                               Color="Color.Primary" OnClick="@(() => OpenEditDialog(employee))" />
+                                                            </MudTooltip>
+                                                        }
+                                                        @if (_canDelete)
+                                                        {
+                                                            <MudTooltip Text="Delete employee">
+                                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                               Color="Color.Error" OnClick="@(() => DeleteEmployee(employee.Id))" />
+                                                            </MudTooltip>
+                                                        }
+                                                    </MudStack>
+                                                }
+                                                else
+                                                {
+                                                    <MudTooltip Text="Owned by another office — read only">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
+                                                    </MudTooltip>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        @if (_employees.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_employees.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
+                        }
+                    else
+                        {
+                            <MudAlert Severity="Severity.Info">No employees yet. Create one to get started.</MudAlert>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </div>
+
+@code {
+    private List<EmployeeReferenceDto> _employees = new();
+    private List<EmployeeReferenceDto> _allEmployees = new();
+    private readonly Dictionary<string, string> _linkedAccountDisplays = [];
+    private List<OfficeReferenceDto> _offices = new();
+    private List<DepartmentReferenceDto> _departments = new();
+    private List<PositionReferenceDto> _positions = new();
+    private bool _initialized = false;
+    private bool _isLoading = false;
+    private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
+    private string _officeCodeFilter = string.Empty;
+    private string _sortField = "Name";
+    private bool _sortAscending = true;
+    private string? _myOfficeCode;
+    private int _pageIndex = 1;
+    private const int PageSize = 10;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.Employees.Delete);
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+
+        var profileTask = OrgProfileClient.GetAsync();
+        await Task.WhenAll(
+            LoadOffices(),
+            LoadDepartments(),
+            LoadPositions()
+        );
+        _myOfficeCode = (await profileTask)?.AnnexECode;
+
+        await LoadEmployees();
+    }
+
+    private async Task LoadEmployees()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await LookupClient.EmployeesGetAsync(pageSize: 100);
+            _allEmployees = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load employees: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+
+        await LoadLinkedAccountDisplaysAsync();
+    }
+
+    private async Task LoadLinkedAccountDisplaysAsync()
+    {
+        var linkedIds = _allEmployees
+            .Where(e => !string.IsNullOrWhiteSpace(e.IdentityUserId))
+            .Select(e => e.IdentityUserId!)
+            .Distinct()
+            .Where(id => !_linkedAccountDisplays.ContainsKey(id))
+            .ToList();
+
+        foreach (var identityUserId in linkedIds)
+        {
+            if (!Guid.TryParse(identityUserId, out var identityGuid)) continue;
+            try
+            {
+                var user = await IdentityClient.UsersGetAsync(identityGuid);
+                _linkedAccountDisplays[identityUserId] = $"{user.FirstName} {user.LastName} ({user.Email})".Trim();
+            }
+            catch
+            {
+                _linkedAccountDisplays[identityUserId] = identityUserId[..8] + "…";
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetLinkedAccountDisplay(string identityUserId) =>
+        _linkedAccountDisplays.TryGetValue(identityUserId, out var display) ? display : "Linked";
+
+    private async Task LoadOffices()
+    {
+        try
+        {
+            var response = await LookupClient.OfficesAsync(pageSize: 1000, isActive: true);
+            _offices = response?.Items?.ToList() ?? new();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task LoadDepartments()
+    {
+        try
+        {
+            var response = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
+            _departments = response?.Items?.ToList() ?? new();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task LoadPositions()
+    {
+        try
+        {
+            var response = await LookupClient.PositionsAsync(pageSize: 1000, isActive: true);
+            _positions = response?.Items?.ToList() ?? new();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task SearchEmployees()
+    {
+        try
+        {
+            _isLoading = true;
+            var keyword = string.IsNullOrWhiteSpace(_searchKeyword) ? null : _searchKeyword;
+            var response = await LookupClient.EmployeesGetAsync(keyword: keyword, pageSize: 100);
+            _allEmployees = response?.Items?.ToList() ?? new();
+            ApplyLocalFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Search failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnOfficeCodeFilterChanged(string value)
+    {
+        _officeCodeFilter = value ?? string.Empty;
+        ApplyLocalFilters();
+        StateHasChanged();
+    }
+
+    private Task OnStatusFilterChanged(string status)
+    {
+        _statusFilter = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        ApplyLocalFilters();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool IsOwnedByMe(string? officeCode) =>
+        !string.IsNullOrWhiteSpace(_myOfficeCode) &&
+        string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
+    private void ApplyLocalFilters()
+    {
+        var filtered = _statusFilter switch
+        {
+            "Active" => _allEmployees.Where(x => x.IsActive),
+            "Inactive" => _allEmployees.Where(x => !x.IsActive),
+            "Own" => _allEmployees.Where(x => IsOwnedByMe(x.OwnerOfficeCode)),
+            _ => _allEmployees.AsEnumerable()
+        };
+
+        if (!string.IsNullOrWhiteSpace(_officeCodeFilter))
+            filtered = filtered.Where(x => x.OwnerOfficeCode != null &&
+                x.OwnerOfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
+
+        _pageIndex = 1;
+        _employees = (_sortField, _sortAscending) switch
+        {
+            ("EmployeeNumber", true)  => filtered.OrderBy(x => x.EmployeeNumber).ToList(),
+            ("EmployeeNumber", false) => filtered.OrderByDescending(x => x.EmployeeNumber).ToList(),
+            ("Name", false)           => filtered.OrderByDescending(x => x.LastName).ThenByDescending(x => x.FirstName).ToList(),
+            ("Office", true)          => filtered.OrderBy(x => x.OfficeName).ThenBy(x => x.LastName).ToList(),
+            ("Office", false)         => filtered.OrderByDescending(x => x.OfficeName).ThenBy(x => x.LastName).ToList(),
+            _                         => filtered.OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToList()
+        };
+    }
+
+    private void SetSort(string field)
+    {
+        if (_sortField == field) _sortAscending = !_sortAscending;
+        else { _sortField = field; _sortAscending = true; }
+        ApplyLocalFilters();
+    }
+
+    private string SortIcon(string field)
+    {
+        if (_sortField != field) return string.Empty;
+        return _sortAscending ? "▲" : "▼";
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+
+        var parameters = new DialogParameters
+        {
+            ["Offices"] = _offices,
+            ["Departments"] = _departments,
+            ["Positions"] = _positions,
+            ["AllEmployees"] = _allEmployees
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<EmployeeFormDialog>("Create Employee", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadEmployees();
+        }
+    }
+
+    private async Task OpenEditDialog(EmployeeReferenceDto employee)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Existing"] = employee,
+            ["Offices"] = _offices,
+            ["Departments"] = _departments,
+            ["Positions"] = _positions,
+            ["AllEmployees"] = _allEmployees
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<EmployeeFormDialog>($"Edit {employee.FirstName} {employee.LastName}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadEmployees();
+        }
+    }
+
+    private async Task DeleteEmployee(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this employee"))
+            return;
+
+        try
+        {
+            await MasterDataClient.EmployeesDeleteAsync(id);
+            await LoadEmployees();
+            Snackbar.Add("Employee deleted", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+    }
+
+    // Helper methods for the Table display
+    private string GetOfficeName(Guid id) => _offices.FirstOrDefault(o => o.Id == id)?.Name ?? "Unknown";
+    private string GetDepartmentName(Guid id) => _departments.FirstOrDefault(d => d.Id == id)?.Name ?? "Unknown";
+    private string GetPositionName(Guid id) => _positions.FirstOrDefault(p => p.Id == id)?.Name ?? "Unknown";
+}

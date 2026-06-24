@@ -1,0 +1,579 @@
+@page "/tenants/{Id}"
+@using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Shared.Constants
+@using AMIS.Framework.Shared.Multitenancy
+@using Microsoft.AspNetCore.Components.Authorization
+@inherits ComponentBase
+@inject ITenantsClient TenantsClient
+@inject IProvisioningClient ProvisioningClient
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@if (!_isRootTenantAdmin)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        <MudText>You do not have permission to access this page. Only root tenant administrators can manage tenants.</MudText>
+    </MudAlert>
+}
+else if (_loading)
+{
+    <AMISPageHeader Title="Tenant Details"
+                   Description="Loading tenant details..." />
+    <MudStack AlignItems="AlignItems.Center" Class="pa-8">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <MudText>Loading tenant details...</MudText>
+    </MudStack>
+}
+else if (_tenant is null)
+{
+    <AMISPageHeader Title="Tenant Details"
+                   Description="Tenant not found" />
+    <MudAlert Severity="Severity.Error" Class="mb-4">
+        <MudText>Tenant not found.</MudText>
+    </MudAlert>
+}
+else
+{
+    <AMISPageHeader Title="Tenant Details"
+                   Description="@($"Managing {_tenant.Name}")">
+        <ActionContent>
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Outlined.ArrowBack"
+                       OnClick="GoBack">
+                Back to Tenants
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Upgrade"
+                       OnClick="ShowUpgrade">
+                Upgrade
+            </MudButton>
+            @if (!IsRootTenant)
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="@(_tenant.IsActive ? Color.Warning : Color.Success)"
+                           StartIcon="@(_tenant.IsActive ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                           OnClick="ToggleStatus"
+                           Disabled="_busy">
+                    @(_tenant.IsActive ? "Deactivate" : "Activate")
+                </MudButton>
+            }
+        </ActionContent>
+    </AMISPageHeader>
+
+    <MudPaper Class="AMIS-card pa-4 mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+            <MudAvatar Size="Size.Large" Class="tenant-avatar-lg">
+                @GetInitials(_tenant)
+            </MudAvatar>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h5" Class="fw-700">@_tenant.Name</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">@_tenant.Id</MudText>
+            </MudStack>
+            @if (_tenant.IsActive)
+            {
+                <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
+            }
+        </MudStack>
+    </MudPaper>
+
+    <MudGrid GutterSize="3">
+        @* Tenant Information *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Tenant Information</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Tenant ID</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600">@_tenant.Id</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Name</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600">@_tenant.Name</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Admin Email</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600">@_tenant.AdminEmail</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Issuer</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600">@(string.IsNullOrEmpty(_tenant.Issuer) ? "Default" : _tenant.Issuer)</MudText>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        @* Subscription Details *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.CardMembership" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Subscription Details</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Status</MudText>
+                        @if (_tenant.IsActive)
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small">Inactive</MudChip>
+                        }
+                    </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Valid Until</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600">@_tenant.ValidUpto.ToString("MMMM dd, yyyy")</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Time Remaining</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600" Color="@GetExpiryColor(_tenant.ValidUpto)">
+                            @GetExpiryText(_tenant.ValidUpto)
+                        </MudText>
+                    </MudStack>
+                </MudStack>
+
+                @if (IsExpiringSoon(_tenant.ValidUpto))
+                {
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+                        This tenant's subscription is expiring soon. Consider upgrading.
+                    </MudAlert>
+                }
+                else if (IsExpired(_tenant.ValidUpto))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-3">
+                        This tenant's subscription has expired.
+                    </MudAlert>
+                }
+            </MudPaper>
+        </MudItem>
+
+        @* Database Configuration *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Storage" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Class="fw-600">Database Configuration</MudText>
+                </MudStack>
+                <MudDivider Class="mb-3" />
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.body2" Class="text-muted">Database Type</MudText>
+                        @if (_tenant.HasConnectionString)
+                        {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
+                                <MudIcon Icon="@Icons.Material.Filled.Storage" Size="Size.Small" Class="mr-1" />
+                                Dedicated
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">
+                                <MudIcon Icon="@Icons.Material.Filled.Cloud" Size="Size.Small" Class="mr-1" />
+                                Shared
+                            </MudChip>
+                        }
+                    </MudStack>
+                    @if (_tenant.HasConnectionString)
+                    {
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="text-muted">Connection String</MudText>
+                            <MudTooltip Text="Connection string is configured">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                            </MudTooltip>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        @* Provisioning Status *@
+        <MudItem xs="12" md="6">
+            <MudPaper Class="AMIS-card pa-4" Style="height: 100%;">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.BuildCircle" Color="Color.Primary" />
+                        <MudText Typo="Typo.h6" Class="fw-600">Provisioning Status</MudText>
+                    </MudStack>
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="LoadProvisioningStatus" />
+                </MudStack>
+                <MudDivider Class="mb-3" />
+
+                @if (_provisioningLoading)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Class="pa-4">
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    </MudStack>
+                }
+                else if (_provisioningStatus is null)
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">
+                        No provisioning information available.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2" Class="text-muted">Status</MudText>
+                            <MudChip T="string" Color="@GetProvisioningStatusColor(_provisioningStatus.Status)" Size="Size.Small">
+                                @_provisioningStatus.Status
+                            </MudChip>
+                        </MudStack>
+                        @if (!string.IsNullOrEmpty(_provisioningStatus.CurrentStep))
+                        {
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2" Class="text-muted">Current Step</MudText>
+                                <MudText Typo="Typo.body2" Class="fw-600">@_provisioningStatus.CurrentStep</MudText>
+                            </MudStack>
+                        }
+                        @if (_provisioningStatus.StartedUtc.HasValue)
+                        {
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2" Class="text-muted">Started</MudText>
+                                <MudText Typo="Typo.body2">@_provisioningStatus.StartedUtc.Value.LocalDateTime.ToString("g")</MudText>
+                            </MudStack>
+                        }
+                        @if (_provisioningStatus.CompletedUtc.HasValue)
+                        {
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2" Class="text-muted">Completed</MudText>
+                                <MudText Typo="Typo.body2">@_provisioningStatus.CompletedUtc.Value.LocalDateTime.ToString("g")</MudText>
+                            </MudStack>
+                        }
+                        @if (!string.IsNullOrEmpty(_provisioningStatus.Error))
+                        {
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-2">
+                                @_provisioningStatus.Error
+                            </MudAlert>
+                        }
+                        @if (IsProvisioningFailed(_provisioningStatus.Status))
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Refresh"
+                                       OnClick="RetryProvisioning"
+                                       Disabled="_retrying"
+                                       Class="mt-3"
+                                       FullWidth="true">
+                                @if (_retrying)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Retrying...</span>
+                                }
+                                else
+                                {
+                                    <span>Retry Provisioning</span>
+                                }
+                            </MudButton>
+                        }
+                    </MudStack>
+
+                    @* Provisioning Steps *@
+                    @if (_provisioningStatus.Steps?.Any() == true)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudText Typo="Typo.subtitle2" Class="fw-600 mb-2">Provisioning Steps</MudText>
+                        <MudTimeline TimelinePosition="TimelinePosition.Start">
+                            @foreach (var step in _provisioningStatus.Steps)
+                            {
+                                <MudTimelineItem Color="@GetStepColor(step.Status)" Size="Size.Small">
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body2" Class="fw-600">@step.Step</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-muted">@step.Status</MudText>
+                                        @if (!string.IsNullOrEmpty(step.Error))
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Error">@step.Error</MudText>
+                                        }
+                                    </MudStack>
+                                </MudTimelineItem>
+                            }
+                        </MudTimeline>
+                    }
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+<style>
+    .tenant-avatar-lg {
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+        color: white;
+    }
+</style>
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private TenantStatusDto? _tenant;
+    private TenantProvisioningStatusDto? _provisioningStatus;
+    private bool _loading = true;
+    private bool _provisioningLoading;
+    private bool _busy;
+    private bool _retrying;
+    private bool _isRootTenantAdmin;
+
+    private bool IsRootTenant => string.Equals(Id, MultitenancyConstants.Root.Id, StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CheckRootTenantAdmin();
+        if (_isRootTenantAdmin)
+        {
+            await LoadTenant();
+            await LoadProvisioningStatus();
+        }
+    }
+
+    private async Task CheckRootTenantAdmin()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            var tenant = user.FindFirst(CustomClaims.Tenant)?.Value;
+            var isRootTenant = string.Equals(tenant, MultitenancyConstants.Root.Id, StringComparison.OrdinalIgnoreCase);
+
+            var roles = user.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = roles.Any(r => string.Equals(r, RoleConstants.Admin, StringComparison.OrdinalIgnoreCase));
+
+            _isRootTenantAdmin = isRootTenant && isAdmin;
+        }
+        catch
+        {
+            _isRootTenantAdmin = false;
+        }
+    }
+
+    private async Task LoadTenant()
+    {
+        _loading = true;
+        try
+        {
+            _tenant = await TenantsClient.StatusAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load tenant: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadProvisioningStatus()
+    {
+        _provisioningLoading = true;
+        try
+        {
+            _provisioningStatus = await TenantsClient.ProvisioningAsync(Id);
+        }
+        catch
+        {
+            _provisioningStatus = null;
+        }
+        finally
+        {
+            _provisioningLoading = false;
+        }
+    }
+
+    private static string GetInitials(TenantStatusDto tenant)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.Name)) return "?";
+        var words = tenant.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length >= 2)
+            return $"{words[0][0]}{words[1][0]}".ToUpperInvariant();
+        return tenant.Name.Length >= 2
+            ? tenant.Name[..2].ToUpperInvariant()
+            : tenant.Name.ToUpperInvariant();
+    }
+
+    private static bool IsExpired(DateTimeOffset validUpto) =>
+        validUpto <= DateTimeOffset.UtcNow;
+
+    private static bool IsExpiringSoon(DateTimeOffset validUpto)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return validUpto > now && validUpto <= now.AddDays(30);
+    }
+
+    private static string GetExpiryText(DateTimeOffset validUpto)
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (validUpto <= now)
+            return "Expired";
+
+        var diff = validUpto - now;
+        if (diff.TotalDays < 1)
+            return "Expires today";
+        if (diff.TotalDays < 2)
+            return "Expires tomorrow";
+        if (diff.TotalDays <= 30)
+            return $"Expires in {(int)diff.TotalDays} days";
+
+        return $"{(int)diff.TotalDays} days remaining";
+    }
+
+    private static Color GetExpiryColor(DateTimeOffset validUpto)
+    {
+        if (IsExpired(validUpto)) return Color.Error;
+        if (IsExpiringSoon(validUpto)) return Color.Warning;
+        return Color.Default;
+    }
+
+    private static Color GetProvisioningStatusColor(string status) => status?.ToLowerInvariant() switch
+    {
+        "completed" => Color.Success,
+        "inprogress" or "in_progress" => Color.Info,
+        "pending" => Color.Warning,
+        "failed" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static Color GetStepColor(string status) => status?.ToLowerInvariant() switch
+    {
+        "completed" => Color.Success,
+        "inprogress" or "in_progress" => Color.Info,
+        "pending" => Color.Default,
+        "failed" => Color.Error,
+        _ => Color.Default
+    };
+
+    private static bool IsProvisioningFailed(string? status) =>
+        string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase);
+
+    private async Task RetryProvisioning()
+    {
+        if (_tenant is null) return;
+
+        var confirmed = await DialogService.ShowConfirmAsync(
+            "Retry Provisioning",
+            $"Are you sure you want to retry provisioning for '{_tenant.Name}'? This will attempt to complete any failed provisioning steps.",
+            "Retry",
+            "Cancel",
+            Color.Primary);
+
+        if (!confirmed) return;
+
+        _retrying = true;
+        try
+        {
+            _provisioningStatus = await ProvisioningClient.RetryAsync(_tenant.Id);
+            Snackbar.Add("Provisioning retry initiated successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to retry provisioning: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _retrying = false;
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/tenants");
+
+    private async Task ToggleStatus()
+    {
+        if (_tenant is null) return;
+
+        if (IsRootTenant)
+        {
+            Snackbar.Add("Root tenant cannot be deactivated.", Severity.Warning);
+            return;
+        }
+
+        var action = _tenant.IsActive ? "deactivate" : "activate";
+        var confirmed = await DialogService.ShowConfirmAsync(
+            $"{(_tenant.IsActive ? "Deactivate" : "Activate")} Tenant",
+            $"Are you sure you want to {action} '{_tenant.Name}'?",
+            _tenant.IsActive ? "Deactivate" : "Activate",
+            "Cancel",
+            _tenant.IsActive ? Color.Warning : Color.Success);
+
+        if (!confirmed) return;
+
+        _busy = true;
+        try
+        {
+            var command = new ChangeTenantActivationCommand
+            {
+                TenantId = _tenant.Id,
+                IsActive = !_tenant.IsActive
+            };
+            await TenantsClient.ActivationAsync(_tenant.Id, command);
+            Snackbar.Add($"Tenant {(_tenant.IsActive ? "deactivated" : "activated")} successfully.", Severity.Success);
+            await LoadTenant();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to update tenant: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ShowUpgrade()
+    {
+        if (_tenant is null) return;
+
+        var tenantDto = new TenantDto
+        {
+            Id = _tenant.Id,
+            Name = _tenant.Name,
+            AdminEmail = _tenant.AdminEmail,
+            IsActive = _tenant.IsActive,
+            ValidUpto = _tenant.ValidUpto,
+            Issuer = _tenant.Issuer
+        };
+
+        var parameters = new DialogParameters<UpgradeTenantDialog>
+        {
+            { x => x.Tenant, tenantDto }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<UpgradeTenantDialog>("Upgrade Subscription", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadTenant();
+        }
+    }
+}
+

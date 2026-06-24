@@ -28,15 +28,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Storage", "src\BuildingBloc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\BuildingBlocks\Web\Web.csproj", "{24B427B7-D17B-3A55-15EB-CD9F01B7D960}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Playground", "Playground", "{DD2E34D7-CE95-3BC7-E860-2C2827134A59}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Host", "Host", "{DD2E34D7-CE95-3BC7-E860-2C2827134A59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMIS.Playground.AppHost", "src\Playground\AMIS.Playground.AppHost\AMIS.Playground.AppHost.csproj", "{C9C6BBEC-84BC-FDDF-BDB3-B50521FFAD3A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMIS.AppHost", "src\Host\AMIS.AppHost\AMIS.AppHost.csproj", "{C9C6BBEC-84BC-FDDF-BDB3-B50521FFAD3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrations.PostgreSQL", "src\Playground\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj", "{9A37164F-C18C-CFAE-A716-32CF322A180B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrations.PostgreSQL", "src\Host\Migrations.PostgreSQL\Migrations.PostgreSQL.csproj", "{9A37164F-C18C-CFAE-A716-32CF322A180B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground.Api", "src\Playground\Playground.Api\Playground.Api.csproj", "{5EA987BE-1A15-AE1B-6128-A1C04809BF34}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMIS.Api", "src\Host\AMIS.Api\AMIS.Api.csproj", "{5EA987BE-1A15-AE1B-6128-A1C04809BF34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground.Blazor", "src\Playground\Playground.Blazor\Playground.Blazor.csproj", "{5850E77C-B32E-E00F-4824-DC9338086D21}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMIS.Blazor", "src\Host\AMIS.Blazor\AMIS.Blazor.csproj", "{5850E77C-B32E-E00F-4824-DC9338086D21}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{CEA09484-30F6-4D44-02F6-822E06DBC57C}"
 EndProject

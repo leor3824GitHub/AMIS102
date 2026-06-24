@@ -1,0 +1,404 @@
+﻿@page "/budget-disbursement/disbursement-vouchers"
+@implements IDisposable
+@using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers
+@using AMIS.Modules.BudgetDisbursement.Contracts.Permissions
+@using AMIS.Blazor.ApiClient
+@inject IDisbursementVoucherClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
+
+<AMISPageHeader Title="Disbursement Vouchers" Description="Create and manage disbursement vouchers (DV)" />
+
+<MudCard Elevation="1">
+    <MudCardContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+            <MudText Typo="Typo.h6" Class="flex-grow-1">Disbursement Vouchers</MudText>
+            <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Style="max-width:220px" DebounceInterval="400"
+                          OnDebounceIntervalElapsed="@(async () => await ReloadAsync())" />
+            @if (_canCreate)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="OpenCreateDialog">New DV</MudButton>
+            }
+        </MudStack>
+
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+            @foreach (var s in _statusFilters)
+            {
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                         OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
+            }
+        </MudStack>
+
+        @if (!_loaded)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else if (_items.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">No disbursement vouchers found.</MudAlert>
+        }
+        else
+        {
+            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>DV #</th>
+                        <th>Date</th>
+                        <th>PO #</th>
+                        <th>Payee</th>
+                        <th style="text-align:right">Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td><b>@item.DvNumber</b></td>
+                            <td>@item.DvDate.ToString("MM/dd/yyyy")</td>
+                            <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
+                            <td>@item.Payee</td>
+                            <td style="text-align:right">@Money.Symbol@item.Amount.ToString("N2")</td>
+                            <td>@DvStatusChip(item.Status)</td>
+                            <td>
+                                <MudStack Row="true" Spacing="0">
+                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canCreate)
+                                    {
+                                        <MudTooltip Text="Edit">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                           OnClick="@(async () => await OpenEditDialog(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canDelete)
+                                    {
+                                        <MudTooltip Text="Delete">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                           OnClick="@(async () => await DeleteDvAsync(item))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canApprove)
+                                    {
+                                        <MudTooltip Text="Submit for Approval">
+                                            <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
+                                                           OnClick="@(async () => await ApproveAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (item.Status == DisbursementVoucherStatus.Approved && _canPay)
+                                    {
+                                        <MudTooltip Text="Mark as Paid">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Color="Color.Success"
+                                                           OnClick="@(async () => await PayAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (item.Status == DisbursementVoucherStatus.ForApproval && _canCancel)
+                                    {
+                                        <MudTooltip Text="Cancel">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                           OnClick="@(async () => await CancelDvAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if ((item.Status == DisbursementVoucherStatus.Approved || item.Status == DisbursementVoucherStatus.Paid) && _canViewSigned)
+                                    {
+                                        <MudTooltip Text="@(item.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                           Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                           OnClick="@(async () => await OpenSignedCopyAsync(item))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canView)
+                                    {
+                                        <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — print disabled" : "Print")">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
+                                                           Disabled="@(item.HasSignedCopy)"
+                                                           OnClick="@(async () => await PrintPdfAsync(item.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    <MudTooltip Text="View Details">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                                       OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
+                                    </MudTooltip>
+                                </MudStack>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            @if (_totalCount > _pageSize)
+            {
+                <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                    <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                   Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                </MudStack>
+            }
+        }
+    </MudCardContent>
+</MudCard>
+
+<!-- DV Detail View -->
+@if (_detail is not null)
+{
+    <MudCard Elevation="1" Class="mt-3">
+        <MudCardContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+                <MudText Typo="Typo.h6" Class="flex-grow-1">@_detail.DvNumber — Details</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _detail = null)" />
+            </MudStack>
+            <MudGrid Spacing="2">
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">DV Date</MudText>
+                    <MudText Typo="Typo.body2">@_detail.DvDate.ToString("MMMM dd, yyyy")</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Budget Utilization Request and Status</MudText>
+                    <MudText Typo="Typo.body2">@_detail.BurNumber</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Purchase Order</MudText>
+                    <MudText Typo="Typo.body2">@_detail.PurchaseOrderNumber</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                    <MudText Typo="Typo.body2">@_detail.FundCluster</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Payment</MudText>
+                    <MudText Typo="Typo.body2">@_detail.ModeOfPayment</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Payee</MudText>
+                    <MudText Typo="Typo.body2">@_detail.Payee</MudText>
+                    @if (!string.IsNullOrWhiteSpace(_detail.TinNo))
+                    {
+                        <MudText Typo="Typo.caption">TIN: @_detail.TinNo</MudText>
+                    }
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                    <MudText Typo="Typo.body2">@DvStatusChip(_detail.Status)</MudText>
+                </MudItem>
+                @if (_detail.PaidDate.HasValue)
+                {
+                    <MudItem xs="6" sm="3">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Paid Date</MudText>
+                        <MudText Typo="Typo.body2">@_detail.PaidDate.Value.ToString("MMMM dd, yyyy")</MudText>
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Particulars</MudText>
+                    <MudText Typo="Typo.body2">@_detail.Particulars</MudText>
+                </MudItem>
+                @if (!string.IsNullOrWhiteSpace(_detail.Remarks))
+                {
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Remarks</MudText>
+                        <MudText Typo="Typo.body2">@_detail.Remarks</MudText>
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudDivider />
+                    <MudStack Row="true" JustifyContent="JustifyContent.FlexEnd" Class="mt-2">
+                        <MudText Typo="Typo.h6">Total Amount: <b>@Money.Symbol@_detail.Amount.ToString("N2")</b></MudText>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private List<DisbursementVoucherListItemDto> _items = [];
+    private DisbursementVoucherDto? _detail;
+    private bool _loaded;
+    private string _keyword = string.Empty;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+    private Dictionary<string, int> _statusCounts = [];
+
+    private static readonly string[] _statusFilters = ["All", "Draft", "ForApproval", "Approved", "Paid", "Returned", "Cancelled"];
+
+    private bool _canView => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.DisbursementVouchers.View);
+    private bool _canCreate => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.DisbursementVouchers.Create);
+    private bool _canDelete => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.DisbursementVouchers.Delete);
+    private bool _canApprove => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.DisbursementVouchers.Approve);
+    private bool _canPay => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.DisbursementVouchers.Pay);
+    private bool _canCancel => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.DisbursementVouchers.Cancel);
+    private bool _canViewSigned => UserProfileState.Permissions.Contains(BudgetDisbursementPermissions.SignedDocuments.View);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await ReloadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task OpenSignedCopyAsync(DisbursementVoucherListItemDto item)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, AMIS.Modules.BudgetDisbursement.Contracts.v1.SignedDocuments.BudgetDisbursementDocumentType.DisbursementVoucher },
+            { x => x.DocumentId, item.Id },
+            { x => x.DocumentNumber, string.IsNullOrWhiteSpace(item.DvNumber) ? "(no DV number)" : item.DvNumber },
+            { x => x.IsTerminalState, true }
+        };
+        // Footer "Close" is the only exit (no header ×, no backdrop dismiss) so the upload result always reaches us.
+        var options = new DialogOptions { CloseButton = false, BackdropClick = false, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
+        var result = await dialog.Result;
+
+        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
+        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<DisbursementVoucherFormDialog>("New Disbursement Voucher", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await ReloadAsync();
+        }
+    }
+
+    private async Task OpenEditDialog(Guid id)
+    {
+        var dv = await Client.GetAsync(id);
+        if (dv is null) { Snackbar.Add("DV not found.", Severity.Error); return; }
+
+        var parameters = new DialogParameters<DisbursementVoucherFormDialog> { { x => x.Editing, dv } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<DisbursementVoucherFormDialog>($"Edit {dv.DvNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await ReloadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            DisbursementVoucherStatus? filter = _statusFilter == "All" ? null : Enum.Parse<DisbursementVoucherStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, null, _page, _pageSize);
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    // Reloads the list AND the keyword-scoped chip counts. Called when the matched result set can
+    // change: initial load, keyword change, and after mutations. Paging and chip-switch call
+    // LoadAsync alone — they don't change the per-status counts for the current keyword.
+    private async Task ReloadAsync()
+    {
+        await LoadAsync();
+        await LoadStatusCountsAsync();
+    }
+
+    // Grouped query (GROUP BY Status) backing the chip counts, scoped to the current keyword so each
+    // badge matches what selecting that status would return.
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            var counts = await Client.GetStatusCountsAsync(_keyword);
+            var dict = counts.ToDictionary(c => c.Status.ToString(), c => c.Count);
+            dict["All"] = counts.Sum(c => c.Count);
+            _statusCounts = dict;
+        }
+        catch { _statusCounts = []; }
+    }
+
+    private string GetChipLabel(string status) =>
+        _statusCounts.TryGetValue(status, out var count) && count > 0 ? $"{status} ({count})" : status;
+
+    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+
+    private async Task DeleteDvAsync(DisbursementVoucherListItemDto item)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync($"DV {item.DvNumber}")) return;
+        try { await Client.DeleteAsync(item.Id); Snackbar.Add("DV deleted.", Severity.Success); await ReloadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task ApproveAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Approve DV", "Submit this DV for approval?", "Approve", cancelText: "Cancel");
+        if (ok is not true) return;
+        try { await Client.ApproveAsync(id); Snackbar.Add("DV submitted for approval.", Severity.Success); await ReloadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Approve failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task PayAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Mark as Paid", "Mark this DV as paid today?", "Mark Paid", cancelText: "Cancel");
+        if (ok is not true) return;
+        try { await Client.PayAsync(id, DateOnly.FromDateTime(DateTime.Today), null); Snackbar.Add("DV marked as paid.", Severity.Success); await ReloadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Pay failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task CancelDvAsync(Guid id)
+    {
+        var ok = await DialogService.ShowMessageBox("Cancel DV", "Cancel this disbursement voucher?", "Yes, Cancel", cancelText: "No");
+        if (ok is not true) return;
+        try { await Client.CancelAsync(id, "Cancelled by user."); Snackbar.Add("DV cancelled.", Severity.Info); await ReloadAsync(); }
+        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task ViewDetailsAsync(Guid id)
+    {
+        _detail = await Client.GetAsync(id);
+    }
+
+    private async Task PrintPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await Client.GetPdfAsync(id, "a4");
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
+    }
+
+    private static RenderFragment DvStatusChip(DisbursementVoucherStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            DisbursementVoucherStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            DisbursementVoucherStatus.ForApproval => (Color.Warning, Icons.Material.Filled.Pending),
+            DisbursementVoucherStatus.Approved => (Color.Info, Icons.Material.Filled.CheckCircleOutline),
+            DisbursementVoucherStatus.Paid => (Color.Success, Icons.Material.Filled.Payments),
+            DisbursementVoucherStatus.Returned => (Color.Error, Icons.Material.Filled.KeyboardReturn),
+            DisbursementVoucherStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+}

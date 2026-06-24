@@ -1,0 +1,190 @@
+@page "/expendable/reports/physical-count"
+@using AMIS.Modules.Expendable.Contracts.v1.Requests
+@using AMIS.Blazor.ApiClient
+@using System.Text
+@inherits ComponentBase
+@inject IReportsClient ReportsClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
+@inject IAssumedAccountabilityDatePreference AssumedDatePref
+
+<div>
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudDatePicker @bind-Date="_asOfDate" Label="As of Date" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"
+                           Clearable="false" Margin="Margin.Dense" Style="width:220px;" Class="mt-0 mb-0" />
+            <MudDatePicker Date="_assumedDate" DateChanged="OnAssumedDateChanged" Label="Date Assumed Accountability"
+                           Variant="Variant.Outlined" DateFormat="yyyy-MM-dd" Clearable="true" Margin="Margin.Dense"
+                           Style="width:260px;" Class="mt-0 mb-0" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadReportAsync"
+                       StartIcon="@Icons.Material.Filled.Refresh" Disabled="_loading">
+                Generate Report
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                       StartIcon="@Icons.Material.Filled.Download" Disabled="_loading || _groups.Count == 0">
+                Export CSV
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf" Disabled="_loading || _groups.Count == 0">
+                Download PDF
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+</div>
+
+@if (_groups.Count == 0)
+{
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            No products found. Click Generate Report to load data.
+        </MudText>
+    </MudPaper>
+}
+else
+{
+    @foreach (var group in _groups)
+    {
+        <MudText Typo="Typo.subtitle1" Class="mt-4 mb-1"><b>@group.Article</b></MudText>
+        <MudTable T="PhysicalCountItemDto" Items="group.Items" Dense="true" Hover="true"
+                  Striped="true" Bordered="true" Elevation="1">
+            <HeaderContent>
+                <MudTh>Description</MudTh>
+                <MudTh Style="text-align:center">Stock No.</MudTh>
+                <MudTh Style="text-align:center">Unit of Measure</MudTh>
+                <MudTh Style="text-align:right">Unit Value</MudTh>
+                <MudTh Style="text-align:right">Balance Per Card (Qty)</MudTh>
+                <MudTh Style="text-align:right">On Hand Per Count (Qty)</MudTh>
+                <MudTh Style="text-align:right">Shortage Qty</MudTh>
+                <MudTh Style="text-align:right">Shortage Value</MudTh>
+                <MudTh>Remarks</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Description">@context.Description</MudTd>
+                <MudTd DataLabel="Stock No." Style="text-align:center">@context.StockNo</MudTd>
+                <MudTd DataLabel="Unit of Measure" Style="text-align:center">@context.UnitOfMeasure</MudTd>
+                <MudTd DataLabel="Unit Value" Style="text-align:right">@context.UnitValue.ToString("N2")</MudTd>
+                <MudTd DataLabel="Balance Per Card (Qty)" Style="text-align:right">@context.BalancePerCard</MudTd>
+                <MudTd DataLabel="On Hand Per Count (Qty)" Style="text-align:right">@context.OnHandPerCount</MudTd>
+                <MudTd DataLabel="Shortage Qty" Style="text-align:right">@context.ShortageQuantity</MudTd>
+                <MudTd DataLabel="Shortage Value" Style="text-align:right">@context.ShortageValue.ToString("N2")</MudTd>
+                <MudTd DataLabel="Remarks">@context.Remarks</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}
+
+@code {
+    private bool _loading;
+    private List<PhysicalCountGroupDto> _groups = [];
+    private DateTime? _asOfDate = DateTime.Today;
+    private DateTime? _assumedDate;
+    private const string ReportKey = "quest-physical-count";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // ProtectedLocalStorage relies on JS interop — only available after first render.
+        var saved = await AssumedDatePref.GetAsync();
+        if (saved is not null && _assumedDate != saved)
+        {
+            _assumedDate = saved;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnAssumedDateChanged(DateTime? date)
+    {
+        _assumedDate = date;
+        await AssumedDatePref.SaveAsync(date);
+    }
+
+    private async Task LoadReportAsync()
+    {
+        _loading = true;
+        _groups = [];
+        try
+        {
+            _groups = await ReportsClient.GetPhysicalCountReportAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load report: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        if (_groups.Count == 0) return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Article,Description,Stock No.,Unit of Measure,Unit Value,Balance Per Card (Qty),On Hand Per Count (Qty),Shortage Qty,Shortage Value,Remarks");
+
+        foreach (var group in _groups)
+        {
+            foreach (var item in group.Items)
+            {
+                sb.AppendLine(string.Join(",",
+                    Quote(group.Article),
+                    Quote(item.Description),
+                    Quote(item.StockNo),
+                    Quote(item.UnitOfMeasure),
+                    item.UnitValue.ToString("N2"),
+                    item.BalancePerCard > 0 ? item.BalancePerCard.ToString() : "",
+                    item.OnHandPerCount > 0 ? item.OnHandPerCount.ToString() : "",
+                    item.ShortageQuantity != 0 ? item.ShortageQuantity.ToString() : "",
+                    item.ShortageValue > 0 ? item.ShortageValue.ToString("N2") : "",
+                    Quote(item.Remarks ?? "")));
+            }
+        }
+
+        var dataUrl = $"data:text/csv;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(sb.ToString()))}";
+        await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        Snackbar.Add("CSV export ready.", Severity.Success);
+    }
+
+    private async Task DownloadQuestPdfAsync()
+    {
+        if (_groups.Count == 0) return;
+
+        var r = await QuestPdfSetupPrefs.ShowSetupDialogAsync(DialogService, ReportKey, defaultMarginMm: 15d);
+        if (r is null) return;
+
+        _loading = true;
+        try
+        {
+            var bytes = await ReportsClient.GeneratePhysicalCountPdfAsync(null, _asOfDate, _assumedDate, r.PaperSize, r.Orientation, r.MarginMm);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Quote(string? v) =>
+        string.IsNullOrEmpty(v) ? "\"\"" : $"\"{v.Replace("\"", "\"\"")}\"";
+}
+

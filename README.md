@@ -61,11 +61,11 @@ src/
 │   ├── ProcurementPlanning/
 │   ├── ProcurementAcquisition/
 │   └── ...
-├── Playground/          # Executable hosts and reference clients
-│   ├── AMIS.Playground.AppHost/    # .NET Aspire orchestration
-│   ├── Playground.Api/              # API host
-│   ├── Playground.Blazor/           # Blazor UI
-│   └── Playground.Maui/             # .NET MAUI mobile/desktop
+├── Host/                # Executable hosts and reference clients
+│   ├── AMIS.AppHost/    # .NET Aspire orchestration
+│   ├── AMIS.Api/              # API host
+│   ├── AMIS.Blazor/           # Blazor UI
+│   └── AMIS.Maui/             # .NET MAUI mobile/desktop
 └── Tests/               # Architecture and module tests
 scripts/                # Automation scripts (OpenAPI client generation, etc.)
 terraform/              # Infrastructure scaffolding (IaC)
@@ -91,7 +91,7 @@ dotnet build src/AMIS.Framework.slnx
 
 ### 2. Run Full Stack with Aspire
 ```powershell
-dotnet run --project src/Playground/AMIS.Playground.AppHost
+dotnet run --project src/Host/AMIS.AppHost
 ```
 
 Aspire will orchestrate the API, supporting services, and local infrastructure.
@@ -99,7 +99,7 @@ Aspire will orchestrate the API, supporting services, and local infrastructure.
 ### 3. Alternative Run Modes
 ```powershell
 # API only
-dotnet run --project src/Playground/Playground.Api
+dotnet run --project src/Host/AMIS.Api
 
 # Run tests
 dotnet test src/AMIS.Framework.slnx
