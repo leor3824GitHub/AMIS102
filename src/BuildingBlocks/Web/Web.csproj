@@ -30,6 +30,9 @@
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
 		<PackageReference Include="Mediator.Abstractions" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+		<!-- SignalR server itself ships in the Microsoft.AspNetCore.App shared framework (FrameworkReference above);
+		     only the Redis backplane needs an explicit package reference (used by AddHeroRealtime when Redis is configured). -->
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
 		<PackageReference Include="Npgsql.OpenTelemetry" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" />

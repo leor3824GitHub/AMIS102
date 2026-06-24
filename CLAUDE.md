@@ -91,7 +91,7 @@ Modules/{Module}/Features/v1/{Feature}/
 | Two-tier buttons: standalone CTAs stay `Size.Medium` (48px); inline filter-row buttons use `Size.Small` (40px) | A header CTA is alone (48px is right); inline buttons must match the 40px input baseline |
 | Avoid mixing default and compact controls in one row                  | Prevents visible height mismatch and misalignment |
 | Use `IOrganizationProfileState` for agency/officer data in reports   | Scoped session state — zero HTTP calls per page   |
-| Never fetch org profile per-page with `IOrganizationProfileClient`   | Already loaded by `PlaygroundLayout` at session start |
+| Never fetch org profile per-page with `IOrganizationProfileClient`   | Already loaded by `AMISLayout` at session start |
 | Gate every action button with `UserProfileState.Permissions.Contains(...)` | Mirror the endpoint's `.RequirePermission()` so users don't see buttons they can't use |
 | Save `.razor`/`.cs` as **UTF-8** — never ANSI                         | Non-ASCII glyphs (`₱ — … → ≤ ñ`) corrupt to `?`/`�` on a non-UTF-8 save |
 

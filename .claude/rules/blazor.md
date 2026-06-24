@@ -9,16 +9,16 @@ paths:
 
 ## Shared Session State Pattern
 
-Blazor Server uses **Scoped** lifetime per circuit (one scope = one connected user). Shared state services follow the `IUserProfileState` pattern: scoped, event-based, owned by `PlaygroundLayout`.
+Blazor Server uses **Scoped** lifetime per circuit (one scope = one connected user). Shared state services follow the `IUserProfileState` pattern: scoped, event-based, owned by `AMISLayout`.
 
 ### Existing State Services
 
 | Service | Lifetime | Owner | Purpose |
 | --- | --- | --- | --- |
-| `IUserProfileState` | Scoped | `PlaygroundLayout` | Current user: name, email, role, avatar, `EmployeeId`, `EmployeeFullName`, `EmployeePositionName` |
-| `IOrganizationProfileState` | Scoped | `PlaygroundLayout` | Agency name, address, 4 key officers — for report headers |
-| `ITenantThemeState` | Scoped | `PlaygroundLayout` | Theme colors, dark mode, logo, favicon |
-| `IAuthStateNotifier` | Scoped | `PlaygroundLayout` | Session expiry broadcast |
+| `IUserProfileState` | Scoped | `AMISLayout` | Current user: name, email, role, avatar, `EmployeeId`, `EmployeeFullName`, `EmployeePositionName` |
+| `IOrganizationProfileState` | Scoped | `AMISLayout` | Agency name, address, 4 key officers — for report headers |
+| `ITenantThemeState` | Scoped | `AMISLayout` | Theme colors, dark mode, logo, favicon |
+| `IAuthStateNotifier` | Scoped | `AMISLayout` | Session expiry broadcast |
 | `ICircuitTokenCache` | Scoped | Framework | Token cache per circuit |
 
 ### Pattern for New State Services
@@ -53,7 +53,7 @@ internal sealed class MyState : IMyState
 builder.Services.AddScoped<IMyState, MyState>();
 ```
 
-**Initialization** — load in `PlaygroundLayout.OnAfterRenderAsync(firstRender)`, piggybacking an existing API call where possible. Never add a new HTTP call just to populate state if the data is already fetched elsewhere.
+**Initialization** — load in `AMISLayout.OnAfterRenderAsync(firstRender)`, piggybacking an existing API call where possible. Never add a new HTTP call just to populate state if the data is already fetched elsewhere.
 
 **Disposal** — if the layout subscribes to the state's `OnChanged` event, unsubscribe in `Dispose()`.
 
@@ -61,7 +61,7 @@ builder.Services.AddScoped<IMyState, MyState>();
 
 ## Organization Profile in Reports
 
-`IOrganizationProfileState` holds the tenant's agency details (name, short name, address, 4 key officers). It is populated once per session by `PlaygroundLayout` — the same `OrgProfileClient.GetAsync()` call that checks whether the setup dialog should appear.
+`IOrganizationProfileState` holds the tenant's agency details (name, short name, address, 4 key officers). It is populated once per session by `AMISLayout` — the same `OrgProfileClient.GetAsync()` call that checks whether the setup dialog should appear.
 
 **It is always ready before any page renders. No async load needed in report pages.**
 
@@ -147,7 +147,7 @@ Designations are free-text and can be "Acting Regional Manager II", "OIC-Regiona
 
 Every page action — buttons, menu items, row icons — MUST be gated by the same permission its API endpoint enforces with `.RequirePermission(...)`. Backend authorization is necessary but not sufficient: a user without permission should never see the button.
 
-Permissions flow: at login the API returns the user's effective permissions (derived from their assigned roles via `UserPermissionService.GetPermissionsAsync`). `PlaygroundLayout` loads them once per circuit into `UserProfileState.Permissions` (a `HashSet<string>`). Pages read this synchronously — no async, no extra HTTP calls.
+Permissions flow: at login the API returns the user's effective permissions (derived from their assigned roles via `UserPermissionService.GetPermissionsAsync`). `AMISLayout` loads them once per circuit into `UserProfileState.Permissions` (a `HashSet<string>`). Pages read this synchronously — no async, no extra HTTP calls.
 
 ### Pattern
 
@@ -206,7 +206,7 @@ Blazor page (already references the Contracts project):
 | Never declare `private const string Permission* = "..."` in a page | Magic-string duplication breaks the single source of truth |
 | Every action button gated with `UserProfileState.Permissions.Contains(SomePermissions.Xxx.Yyy)` | Mirrors endpoint `.RequirePermission()` — users don't see actions they can't perform |
 | Combine permission check with status check via `&&`, not nested `@if` | Single line of gating intent per button |
-| Read `UserProfileState.Permissions` directly — no async, no caching | Already loaded once per circuit by `PlaygroundLayout` |
+| Read `UserProfileState.Permissions` directly — no async, no caching | Already loaded once per circuit by `AMISLayout` |
 | Newly assigned roles require **user re-login** to take effect | API-side permission cache is keyed per user |
 
 ### Canonical references

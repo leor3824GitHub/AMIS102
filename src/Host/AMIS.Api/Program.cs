@@ -1,5 +1,6 @@
 ﻿using AMIS.Framework.Web;
 using AMIS.Framework.Web.Modules;
+using AMIS.Framework.Web.Realtime;
 using AMIS.Modules.Auditing;
 using AMIS.Modules.MasterData;
 using AMIS.Modules.MasterData.Contracts.v1.References;
@@ -113,6 +114,11 @@ builder.AddHeroPlatform(o =>
 });
 
 builder.AddModules(moduleAssemblies);
+
+// Realtime (app-wide SignalR hub + presence). Safe to register here — the hub only resolves the
+// Chat-supplied membership adapters when a client actually connects. See CHAT-PORT-PLAN.md Phase 0.
+builder.AddHeroRealtime();
+
 var app = builder.Build();
 
 app.UseHeroMultiTenantDatabases();
@@ -121,6 +127,10 @@ app.UseHeroPlatform(p =>
     p.MapModules = true;
     p.ServeStaticFiles = true;
 });
+
+// Map the realtime hub + presence endpoint AFTER UseHeroPlatform so routing/authn/authz are in front of
+// the hub's [Authorize]. See CHAT-PORT-PLAN.md Phase 0.
+app.MapHeroRealtime();
 
 app.MapGet("/", () => Results.Ok(new { message = "hello world!" }))
    .WithTags("Host")

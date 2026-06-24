@@ -1,6 +1,8 @@
 # Port the Chat module from the FSH starter kit into AMIS102
 
-> Implementation plan. Status: drafted, not yet started. Scope decisions recorded below.
+> Implementation plan. **Status: finalized (2026-06-24) — ready to implement.** Scope decisions
+> settled below; Phase 0 BuildingBlocks edit is approved. v1 = office-isolated chat + one seeded
+> NFA-wide Global channel; no attachments, no persistent notifications, no ranked FTS, Blazor-only client.
 
 ## Context
 
@@ -45,7 +47,7 @@ adaptations called out under "Gotchas."
 | --- | --- | --- | --- |
 | **Client UI** | React SPA (`@microsoft/signalr`, `realtime-context.tsx`) | **Blazor Server + MudBlazor + cookie auth** ([AMIS.Blazor](src/Host/AMIS.Blazor/)), plus MAUI | UI is a **rewrite**, not a port. The SignalR client runs **server-side inside the Blazor circuit**. |
 | **Attachments** | dedicated `Files` module + `IFileAccessPolicy` | **No Files module** — only a `Storage` building block ([IStorageService](src/BuildingBlocks/Storage/Services/IStorageService.cs)) | **Deferred to v2** (decision below). Drop `MessageAttachment` from v1. |
-| **Tenant isolation** | added late via a `ChatTenantIsolation` migration | AMIS convention = `.IsMultiTenant()` **+ named** soft-delete query filter from day one ([persistence.md](.claude/rules/persistence.md)) | Bake tenant isolation into the EF config up front. |
+| **Tenant isolation** | added late via a `ChatTenantIsolation` migration | office-isolated **+ one NFA-wide Global channel** → a **custom** `(TenantId == me ‖ TenantId == null)` filter, **not** `.IsMultiTenant()` (it can't express "OR global"); membership is the boundary on child tables ([gotcha #1](#amis-specific-gotchas-dont-lose-these-in-the-rename)) | Bake the dual office/global filter into the EF config up front. |
 | **Mention notifications** | separate persistent `Notifications` module + bell inbox | none today | **v1 skips persistence** — push the mention straight to the user's SignalR group (decision below). |
 
 ## Architecture (target state in AMIS102)
@@ -123,18 +125,12 @@ New folder `src/BuildingBlocks/Web/Realtime/`:
   `Directory.Packages.props`; reference it + `Microsoft.AspNetCore.SignalR` from `Web.csproj`.
   ⚠️ Watch the NU1015 CPM trap noted in memory — keep `Directory.Packages.props` well-formed.
 
-<<<<<<< HEAD
-**Host wiring** ([Playground.Api/Program.cs](src/Playground/Playground.Api/Program.cs)): call
+**Host wiring** ([AMIS.Api/Program.cs](src/Host/AMIS.Api/Program.cs)): call
 `builder.AddHeroRealtime(...)` **before** `builder.Build()`, and `app.MapHeroRealtime()` **after**
 `app.UseHeroPlatform(...)`. Ordering matters: `UseRouting` / `UseAuthentication` / `UseAuthorization`
 all live inside `UseHeroPlatform` ([Extensions.cs:141-164](src/BuildingBlocks/Web/Extensions.cs#L141-L164)),
 and the hub's `[Authorize]` needs them in front of it. Prefer `Program.cs` wiring over editing
 `AddHeroPlatform`/`UseHeroPlatform` to keep the protected BB surface to just the new `Realtime/` folder.
-=======
-**Host wiring** ([AMIS.Api/Program.cs](src/Host/AMIS.Api/Program.cs)): call
-`AddHeroRealtime` during service config and `MapHeroRealtime` after build (either inside
-`AddHeroPlatform`/`UseHeroPlatform` in the Web BB, or directly in `Program.cs`).
->>>>>>> ac38fbedb80961dc03e9acb70ef2c656938fb8a7
 
 **JWT-over-WebSocket tweak** — AMIS already lifts `access_token` from the query string in
 [ConfigureJwtBearerOptions.cs:71](src/Modules/Identity/Modules.Identity/Authorization/Jwt/ConfigureJwtBearerOptions.cs#L71),
@@ -263,7 +259,9 @@ add both `.csproj` to [AMIS.Framework.slnx](src/AMIS.Framework.slnx) and as refs
 
 ### Phase 2 — Migrations
 
-Generate `InitialChat` for `ChatDbContext` into `Migrations.PostgreSQL/Chat/` with its snapshot.
+Generate `InitialChat` for `ChatDbContext` into [src/Host/Migrations.PostgreSQL/Chat/](src/Host/Migrations.PostgreSQL/)
+with its snapshot (one folder per module DbContext, matching the existing layout — `BudgetDisbursement/`,
+`Expendable/`, etc.).
 ⚠️ The migrations-discovery memory ("context found via its snapshot") applies to *existing* contexts.
 `ChatDbContext` is **brand new — it has no snapshot yet**, so the **first** `migrations add` discovers
 it through its `IDesignTimeDbContextFactory<ChatDbContext>` (`ChatDbContextFactory`). That factory must
@@ -284,36 +282,25 @@ In [AMIS.Blazor](src/Host/AMIS.Blazor/):
 
 - **`ChatHubClient`** — a circuit-scoped service wrapping `Microsoft.AspNetCore.SignalR.Client`.
   `HubConnectionBuilder().WithUrl(apiBase + "/api/v1/realtime/hub", o => o.AccessTokenProvider = …)`,
-<<<<<<< HEAD
   feeding the **existing JWT** the REST `ApiClient` already uses. ⚠️ `AccessTokenProvider` is a
   `Func<Task<string?>>`, so it **cannot** call `AuthorizationHeaderHandler` (that's an `internal sealed
   DelegatingHandler` in the HttpClient pipeline, not callable here). Read the token from the same source
   the handler does: `() => Task.FromResult(ICircuitTokenCache.AccessToken ?? <access_token claim on
   HttpContext.User>)` — see
-  [AuthorizationHeaderHandler.cs:186-213](src/Playground/Playground.Blazor/Services/Api/AuthorizationHeaderHandler.cs#L186-L213)
-  and [CircuitTokenCache.cs](src/Playground/Playground.Blazor/Services/Api/CircuitTokenCache.cs). Both
-  types are `internal` to `Playground.Blazor`, so `ChatHubClient` (same assembly) can use them directly.
+  [AuthorizationHeaderHandler.cs:186-213](src/Host/AMIS.Blazor/Services/Api/AuthorizationHeaderHandler.cs#L186-L213)
+  and [CircuitTokenCache.cs](src/Host/AMIS.Blazor/Services/Api/CircuitTokenCache.cs). Both
+  types are `internal` to `AMIS.Blazor`, so `ChatHubClient` (same assembly) can use them directly.
   Exposes C# events (`ChatMessageCreated`, `PresenceChanged`, `ChatTypingStarted`, `ChatMentioned`)
   and `JoinChannel`/`Typing` invokes. `IAsyncDisposable`, tied to the circuit lifetime; reconnect
   with backoff. **On every (re)connect, re-read the latest token from `ICircuitTokenCache`** so a
   refresh that happened on the REST path is picked up (see token-expiry risk below).
   `InvokeAsync(StateHasChanged)` to marshal hub callbacks onto the render thread.
-- **ApiClient methods** for the chat REST endpoints. ⚠️ [ApiClient/Generated.cs](src/Playground/Playground.Blazor/ApiClient/Generated.cs)
+- **ApiClient methods** for the chat REST endpoints. ⚠️ [ApiClient/Generated.cs](src/Host/AMIS.Blazor/ApiClient/Generated.cs)
   is **NSwag `<auto-generated>`** — do **not** hand-edit it. Either (a) regenerate it from the API's
   OpenAPI doc so the chat endpoints appear automatically (preferred — matches how the rest of the app
   is built), or (b) hand-write a `ChatClient.cs` partial alongside the other
-  [ApiClient/*Client.cs](src/Playground/Playground.Blazor/ApiClient/) extension clients (e.g.
+  [ApiClient/*Client.cs](src/Host/AMIS.Blazor/ApiClient/) extension clients (e.g.
   `MasterDataClientExtensions.cs`). Pick one.
-=======
-  feeding the **existing JWT** the REST `ApiClient` already uses (decision below — reuse
-  [AuthorizationHeaderHandler.cs](src/Host/AMIS.Blazor/Services/Api/AuthorizationHeaderHandler.cs)
-  / [TokenRefreshService.cs](src/Host/AMIS.Blazor/Services/Api/TokenRefreshService.cs)).
-  Exposes C# events (`ChatMessageCreated`, `PresenceChanged`, `ChatTypingStarted`, `ChatMentioned`)
-  and `JoinChannel`/`Typing` invokes. `IAsyncDisposable`, tied to the circuit lifetime; reconnect
-  with backoff. `InvokeAsync(StateHasChanged)` to marshal hub callbacks onto the render thread.
-- **ApiClient methods** for the chat REST endpoints (follow the existing
-  [ApiClient/Generated.cs](src/Host/AMIS.Blazor/ApiClient/Generated.cs) pattern).
->>>>>>> ac38fbedb80961dc03e9acb70ef2c656938fb8a7
 - **MudBlazor components** under `Components/Pages/Chat/`: channel rail, message list
   (`MudVirtualize`), composer, typing indicator, mention picker, pinned panel, search. Follow
   [blazor.md](.claude/rules/blazor.md): prefer `AMISTextField`/`AMISButton`/`AMISSelect`; gate

@@ -71,8 +71,12 @@ public class ConfigureJwtBearerOptions : IConfigureNamedOptions<JwtBearerOptions
             OnMessageReceived = context =>
             {
                 var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                // WebSocket/SSE handshakes can't send an Authorization header, so the realtime hub (and the
+                // legacy /notifications path) pass the JWT in the query string instead. See CHAT-PORT-PLAN.md Phase 0.
                 if (!string.IsNullOrEmpty(accessToken) &&
-                    context.HttpContext.Request.Path.StartsWithSegments("/notifications", StringComparison.OrdinalIgnoreCase))
+                    (path.StartsWithSegments("/notifications", StringComparison.OrdinalIgnoreCase) ||
+                     path.StartsWithSegments("/api/v1/realtime/hub", StringComparison.OrdinalIgnoreCase)))
                 {
                     // Read the token out of the query string
                     context.Token = accessToken;
