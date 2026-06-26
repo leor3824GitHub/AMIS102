@@ -5,6 +5,8 @@
 @inject IJobOrderClient Client
 @inject IPurchaseRequestClient PurchaseRequestClient
 @inject IMaster_dataClient MasterDataClient
+@inject ILookupClient LookupClient
+@inject IOrganizationProfileState OrgProfileState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -112,6 +114,38 @@
                     <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.PaymentTerm" Label="Payment Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., NET30, COD" /></MudItem>
                     <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="e.g., CO, GAA, SEF" /></MudItem>
                     <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.OursBursNumber" Label="BUR/OURS No. (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Budget reference" /></MudItem>
+                </MudGrid>
+            </div>
+
+            <!-- Inspection & Acceptance Section -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Inspection &amp; Acceptance</MudText>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_selectedInspector"
+                                         ValueChanged="OnInspectorChanged"
+                                         SearchFunc="SearchInspectorsAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         Label="C.O./F.O. Inspector *"
+                                         Variant="Variant.Outlined"
+                                         Placeholder="Search employee to assign as inspector..."
+                                         Required="true"
+                                         Clearable="true"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Dense="true" Margin="Margin.Dense"
+                                         HelperText="Only this person can later record the inspection" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudField Label="Supply Officer (Acceptance)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                  HelperText="Sourced from the Organization Profile — set there, not per JO">
+                            @(string.IsNullOrWhiteSpace(OrgProfileState.Profile?.PropertyCustodianName)
+                                ? "— not configured in Organization Profile —"
+                                : OrgProfileState.Profile!.PropertyCustodianName)
+                        </MudField>
+                    </MudItem>
                 </MudGrid>
             </div>
 
@@ -252,15 +286,42 @@
     private bool _busy;
     private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
     private SupplierDto? _selectedSupplier;
+    private EmployeeReferenceDto? _selectedInspector;
 
     protected override async Task OnInitializedAsync()
     {
         if (JobOrder is not null)
         {
             BeginEdit(JobOrder);
+
+            // Re-hydrate the assigned inspector so the autocomplete shows the current selection.
+            if (JobOrder.InspectorId != Guid.Empty)
+            {
+                try { _selectedInspector = await LookupClient.EmployeesGetAsync(JobOrder.InspectorId); }
+                catch { /* best-effort — user can re-select if the lookup fails */ }
+            }
         }
-        await Task.CompletedTask;
     }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchInspectorsAsync(string value, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return [];
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: value, isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnInspectorChanged(EmployeeReferenceDto? employee) => _selectedInspector = employee;
+
+    private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>
+        e is null ? string.Empty : $"{e.FirstName} {e.LastName}".Trim();
 
     private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken ct)
     {
@@ -423,7 +484,8 @@
                     _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
                     _form.ModeOfProcurement, _form.PlaceOfDelivery,
                     ToDateOnly(_form.DateOfDeliveryNullable),
-                    _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems));
+                    _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber,
+                    _selectedInspector!.Id, lineItems));
                 Snackbar.Add("Job order updated.", Severity.Success);
             }
             Dialog.Close(DialogResult.Ok(true));
@@ -443,7 +505,8 @@
             _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
             _form.ModeOfProcurement, _form.PlaceOfDelivery,
             ToDateOnly(_form.DateOfDeliveryNullable),
-            _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems,
+            _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber,
+            _selectedInspector!.Id, lineItems,
             allowDuplicate);
 
         try
@@ -544,6 +607,9 @@
 
         if (string.IsNullOrWhiteSpace(_form.PaymentTerm))
             errors.Add("Enter Payment Term");
+
+        if (_selectedInspector is null)
+            errors.Add("Assign an Inspector");
 
         var validItems = _form.LineItems.Where(li => !string.IsNullOrWhiteSpace(li.Description) && li.Quantity > 0).ToList();
         if (validItems.Count == 0)

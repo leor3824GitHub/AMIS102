@@ -456,6 +456,7 @@ internal interface IJobOrderClient
 {
     Task<PagedResponse<JobOrderSummaryDto>> SearchAsync(string? keyword = null, JobOrderStatus? status = null, int page = 1, int pageSize = 20, Guid? purchaseRequestId = null, Guid? supplierId = null, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
     Task<JobOrderDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, CancellationToken ct = default);
     Task<JobOrderDto> CreateAsync(CreateJobOrderCommand command, CancellationToken ct = default);
     Task<JobOrderDto> UpdateAsync(Guid id, UpdateJobOrderCommand command, CancellationToken ct = default);
     Task<JobOrderDto> SubmitAsync(Guid id, CancellationToken ct = default);
@@ -486,6 +487,20 @@ internal sealed class JobOrderClient(HttpClient http) : IJobOrderClient
 
     public Task<JobOrderDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<JobOrderDto>($"{Base}/{id}", ProcurementJson.Options, ct);
+
+    public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, string? orientation = null, CancellationToken ct = default)
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(pageWidth)) query["pageWidth"] = pageWidth;
+        if (!string.IsNullOrWhiteSpace(orientation)) query["orientation"] = orientation;
+
+        var queryString = query.ToString();
+        var url = string.IsNullOrWhiteSpace(queryString)
+            ? $"api/v1/quest-pdf-reporting/procurement/job-orders/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/procurement/job-orders/{id}/pdf?{queryString}";
+
+        return http.GetByteArrayAsync(url, ct);
+    }
 
     public async Task<JobOrderDto> CreateAsync(CreateJobOrderCommand command, CancellationToken ct = default)
     {

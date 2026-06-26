@@ -10,6 +10,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
+@inject IJSRuntime JS
 
 <AMISPageHeader Title="Job Orders" Description="Create and manage job orders (JO) for works — renovation, repair, fabrication" />
 
@@ -168,6 +169,22 @@
                                                                    OnClick="@(() => OpenSignedCopyAsync(item.Id, item.JoNumber, item.Status))" />
                                                 </MudTooltip>
                                             }
+                                            <MudMenu Icon="@Icons.Material.Filled.Print"
+                                                     Color="Color.Secondary"
+                                                     Size="Size.Small"
+                                                     Dense="true"
+                                                     AnchorOrigin="Origin.BottomLeft"
+                                                     TransformOrigin="Origin.TopLeft"
+                                                     ToolTip="Print or export">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadJoPdfAsync(item.Id, "a4"))">
+                                                    Download PDF — A4
+                                                </MudMenuItem>
+                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                             OnClick="@(() => DownloadJoPdfAsync(item.Id, "longbond"))">
+                                                    Download PDF — Long Bond
+                                                </MudMenuItem>
+                                            </MudMenu>
                                         </MudStack>
                                     </td>
                                 </tr>
@@ -491,6 +508,21 @@
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
         await DialogService.ShowAsync<JobOrderDetailsDialog>($"JO Details - {jo.JoNumber}", parameters, options);
+    }
+
+    private async Task DownloadJoPdfAsync(Guid id, string paperSize)
+    {
+        try
+        {
+            var bytes = await Client.GetPdfAsync(id, pageWidth: paperSize);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task OpenSignedCopyAsync(Guid id, string joNumber, JobOrderStatus status)

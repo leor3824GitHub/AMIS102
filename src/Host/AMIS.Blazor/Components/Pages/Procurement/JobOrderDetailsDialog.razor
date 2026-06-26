@@ -1,4 +1,5 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders
+@inject IOrganizationProfileState OrgProfileState
 
 <MudDialog>
     <DialogContent>
@@ -123,48 +124,43 @@
             </MudItem>
         </MudGrid>
 
-        @if (JobOrder.InspectedOnUtc is not null || JobOrder.AcceptedOnUtc is not null)
-        {
-            <MudDivider Class="my-3" />
-            <MudGrid Spacing="2">
-                <MudItem xs="12" md="6">
-                    <MudText Typo="Typo.subtitle2">Inspection (C.O./F.O. Inspector)</MudText>
-                    @if (JobOrder.InspectedOnUtc is null)
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Inspection (C.O./F.O. Inspector)</MudText>
+                <MudText Typo="Typo.body2">@(JobOrder.InspectorName?.ToUpperInvariant() ?? "—")</MudText>
+                @if (JobOrder.InspectedOnUtc is null)
+                {
+                    <MudText Typo="Typo.caption">— not yet inspected —</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption">
+                        Inspected @JobOrder.InspectedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy") —
+                        @(JobOrder.FoundInOrder ? "found in order." : "see findings.")
+                    </MudText>
+                    @if (!string.IsNullOrWhiteSpace(JobOrder.InspectionFindings))
                     {
-                        <MudText Typo="Typo.body2">— not yet inspected —</MudText>
+                        <MudText Typo="Typo.caption" Style="font-style:italic;">@JobOrder.InspectionFindings</MudText>
                     }
-                    else
-                    {
-                        <MudText Typo="Typo.body2">
-                            @(JobOrder.InspectedByName?.ToUpperInvariant() ?? "—") • @JobOrder.InspectedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy")
-                        </MudText>
-                        <MudText Typo="Typo.caption">
-                            @(JobOrder.FoundInOrder ? "Inspected, verified and found in order." : "See findings.")
-                        </MudText>
-                        @if (!string.IsNullOrWhiteSpace(JobOrder.InspectionFindings))
-                        {
-                            <MudText Typo="Typo.caption" Style="font-style:italic;">@JobOrder.InspectionFindings</MudText>
-                        }
-                    }
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudText Typo="Typo.subtitle2">Acceptance (Supply Officer)</MudText>
-                    @if (JobOrder.AcceptedOnUtc is null)
-                    {
-                        <MudText Typo="Typo.body2">— not yet accepted —</MudText>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2">
-                            @(JobOrder.AcceptedByName?.ToUpperInvariant() ?? "—") • @JobOrder.AcceptedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy")
-                        </MudText>
-                        <MudText Typo="Typo.caption">
-                            @(JobOrder.IsCompleteDelivery ? "Complete delivery." : $"Partial delivery: {JobOrder.PartialDeliveryNote}")
-                        </MudText>
-                    }
-                </MudItem>
-            </MudGrid>
-        }
+                }
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Acceptance (Supply Officer)</MudText>
+                <MudText Typo="Typo.body2">@(OrgProfileState.Profile?.PropertyCustodianName?.ToUpperInvariant() ?? "—")</MudText>
+                @if (JobOrder.AcceptedOnUtc is null)
+                {
+                    <MudText Typo="Typo.caption">— not yet accepted —</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption">
+                        Accepted @JobOrder.AcceptedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy") —
+                        @(JobOrder.IsCompleteDelivery ? "complete delivery." : $"partial: {JobOrder.PartialDeliveryNote}")
+                    </MudText>
+                }
+            </MudItem>
+        </MudGrid>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Close">Close</MudButton>

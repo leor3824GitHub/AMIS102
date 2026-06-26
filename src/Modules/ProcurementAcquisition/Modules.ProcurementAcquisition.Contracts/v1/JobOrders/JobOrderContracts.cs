@@ -74,20 +74,18 @@ public sealed record JobOrderDto(
     string? IssuedByName = null,
     DateTimeOffset? IssuedOnUtc = null,
     string? IssuedByDesignation = null,
-    // Inspection — C.O./F.O. Inspector (self-contained, no IAR)
-    Guid? InspectedById = null,
-    string? InspectedByName = null,
-    string? InspectedByDesignation = null,
+    // Inspection — C.O./F.O. Inspector (assigned at creation from the employee directory; gates inspection)
+    Guid InspectorId = default,
+    string? InspectorName = null,
+    string? InspectorDesignation = null,
     DateTimeOffset? InspectedOnUtc = null,
     string? InspectionInvoiceNo = null,
     DateOnly? InspectionInvoiceDate = null,
     DateOnly? DateInspected = null,
     string? InspectionFindings = null,
     bool FoundInOrder = false,
-    // Acceptance — PMSDS-GSD / F.O. Supply Officer (self-contained, no IAR)
+    // Acceptance — PMSDS-GSD / F.O. Supply Officer (signatory name sourced from the Organization Profile)
     Guid? AcceptedById = null,
-    string? AcceptedByName = null,
-    string? AcceptedByDesignation = null,
     DateTimeOffset? AcceptedOnUtc = null,
     string? AcceptanceInvoiceNo = null,
     DateOnly? DateReceived = null,
@@ -137,6 +135,7 @@ public sealed record CreateJobOrderCommand(
     string PaymentTerm,
     string? FundCluster,
     string? OursBursNumber,
+    Guid InspectorId,
     IReadOnlyList<JobOrderLineItemRequest> LineItems,
     bool AllowDuplicate = false) : ICommand<JobOrderDto>;
 
@@ -155,6 +154,7 @@ public sealed record UpdateJobOrderCommand(
     string PaymentTerm,
     string? FundCluster,
     string? OursBursNumber,
+    Guid InspectorId,
     IReadOnlyList<JobOrderLineItemRequest> LineItems) : ICommand<JobOrderDto>;
 
 /// <summary>Submit a Draft JO for funds-available certification. Moves Draft → PendingFundsAvailable.</summary>
@@ -175,8 +175,8 @@ public sealed record CertifyJobOrderFundsAvailableCommand(
 public sealed record IssueJobOrderCommand(Guid Id) : ICommand<JobOrderDto>;
 
 /// <summary>
-/// C.O./F.O. Inspector records the inspection result on an Issued JO. The signatory is resolved from the
-/// authenticated identity, never the request body. Moves Issued → Inspected.
+/// The assigned C.O./F.O. Inspector records the inspection result on an Issued JO. Only the inspector named
+/// at creation may do this (gated server-side). Moves Issued → Inspected.
 /// </summary>
 public sealed record InspectJobOrderCommand(
     Guid Id,
@@ -187,8 +187,9 @@ public sealed record InspectJobOrderCommand(
     bool FoundInOrder = true) : ICommand<JobOrderDto>;
 
 /// <summary>
-/// Supply Officer records acceptance of the completed work on an Inspected JO. The signatory is resolved
-/// from the authenticated identity, never the request body. Moves Inspected → Completed.
+/// The Supply Officer records acceptance of the completed work on an Inspected JO. The signatory printed on
+/// the form is the Organization Profile's Property/Supply Custodian; only that person may accept (gated
+/// server-side). Moves Inspected → Completed.
 /// </summary>
 public sealed record AcceptJobOrderCommand(
     Guid Id,

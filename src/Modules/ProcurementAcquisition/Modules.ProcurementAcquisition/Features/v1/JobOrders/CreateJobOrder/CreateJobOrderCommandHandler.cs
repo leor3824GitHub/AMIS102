@@ -1,6 +1,7 @@
 using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.JobOrders;
@@ -13,7 +14,8 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.CreateJobOrd
 
 public sealed class CreateJobOrderCommandHandler(
     ProcurementDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<CreateJobOrderCommand, JobOrderDto>
+    ICurrentUser currentUser,
+    IMediator mediator) : ICommandHandler<CreateJobOrderCommand, JobOrderDto>
 {
     public async ValueTask<JobOrderDto> Handle(CreateJobOrderCommand command, CancellationToken cancellationToken)
     {
@@ -23,6 +25,11 @@ public sealed class CreateJobOrderCommandHandler(
         {
             await EnsureNoDuplicateAsync(command, cancellationToken).ConfigureAwait(false);
         }
+
+        // The C.O./F.O. Inspector is assigned now and printed on the JO form. Resolve the authoritative
+        // name + designation from the employee directory so the request can't spoof them.
+        var (inspectorName, inspectorDesignation) = await ResolveInspectorAsync(command.InspectorId, cancellationToken)
+            .ConfigureAwait(false);
 
         // Works are not inventoried — JO line items are particulars (renovation/repair/fabrication) with no
         // StockNumber/CatalogItemId to recover, so they map straight through (unlike the PO line resolver).
@@ -68,6 +75,9 @@ public sealed class CreateJobOrderCommandHandler(
                 command.PaymentTerm,
                 command.FundCluster,
                 command.OursBursNumber,
+                command.InspectorId,
+                inspectorName,
+                inspectorDesignation,
                 lineItems);
 
             jo.CreatedBy = currentUser.GetUserId().ToString();
@@ -115,6 +125,18 @@ public sealed class CreateJobOrderCommandHandler(
         }
     }
 
+    /// <summary>Resolves the assigned inspector's full name + designation from the employee directory.</summary>
+    private async Task<(string Name, string? Designation)> ResolveInspectorAsync(Guid inspectorId, CancellationToken ct)
+    {
+        if (inspectorId == Guid.Empty)
+            throw new CustomException("An inspector is required.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+
+        var employee = await mediator.Send(new GetEmployeeReferenceByIdQuery(inspectorId), ct).ConfigureAwait(false)
+            ?? throw new NotFoundException($"Inspector employee '{inspectorId}' not found.");
+
+        return ($"{employee.FirstName} {employee.LastName}".Trim(), employee.PositionName);
+    }
+
     private string GetRequiredTenantId() =>
         currentUser.GetTenant()
         ?? dbContext.TenantInfo?.Identifier
@@ -158,9 +180,9 @@ public sealed class CreateJobOrderCommandHandler(
             jo.IssuedByName,
             jo.IssuedOnUtc,
             jo.IssuedByDesignation,
-            jo.InspectedById,
-            jo.InspectedByName,
-            jo.InspectedByDesignation,
+            jo.InspectorId,
+            jo.InspectorName,
+            jo.InspectorDesignation,
             jo.InspectedOnUtc,
             jo.InspectionInvoiceNo,
             jo.InspectionInvoiceDate,
@@ -168,8 +190,6 @@ public sealed class CreateJobOrderCommandHandler(
             jo.InspectionFindings,
             jo.FoundInOrder,
             jo.AcceptedById,
-            jo.AcceptedByName,
-            jo.AcceptedByDesignation,
             jo.AcceptedOnUtc,
             jo.AcceptanceInvoiceNo,
             jo.DateReceived,

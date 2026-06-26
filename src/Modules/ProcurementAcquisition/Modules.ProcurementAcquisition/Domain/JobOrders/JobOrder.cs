@@ -89,10 +89,12 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string? IssuedByDesignation { get; private set; }
     public DateTimeOffset? IssuedOnUtc { get; private set; }
 
-    // Inspection — C.O./F.O. Inspector (self-contained, no IAR)
-    public Guid? InspectedById { get; private set; }
-    public string? InspectedByName { get; private set; }
-    public string? InspectedByDesignation { get; private set; }
+    // Inspection — C.O./F.O. Inspector. The inspector is assigned at creation (picked from the employee
+    // directory); their name + designation are frozen onto the JO and printed in the form's INSPECTION box.
+    // Only this employee may later record the inspection result (gated in the domain).
+    public Guid InspectorId { get; private set; }
+    public string InspectorName { get; private set; } = default!;
+    public string? InspectorDesignation { get; private set; }
     public DateTimeOffset? InspectedOnUtc { get; private set; }
     public string? InspectionInvoiceNo { get; private set; }
     public DateOnly? InspectionInvoiceDate { get; private set; }
@@ -100,10 +102,11 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public string? InspectionFindings { get; private set; }
     public bool FoundInOrder { get; private set; }
 
-    // Acceptance — PMSDS-GSD / F.O. Supply Officer (self-contained, no IAR)
+    // Acceptance — PMSDS-GSD / F.O. Supply Officer. The Supply Officer signatory is sourced from the
+    // Organization Profile (Property/Supply Custodian) at print/display time, so no name is frozen here —
+    // only the acceptance event (acting officer + delivery details) is captured. The acting officer is
+    // gated against the org-profile custodian by the handler.
     public Guid? AcceptedById { get; private set; }
-    public string? AcceptedByName { get; private set; }
-    public string? AcceptedByDesignation { get; private set; }
     public DateTimeOffset? AcceptedOnUtc { get; private set; }
     public string? AcceptanceInvoiceNo { get; private set; }
     public DateOnly? DateReceived { get; private set; }
@@ -143,6 +146,9 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         string paymentTerm,
         string? fundCluster,
         string? oursBursNumber,
+        Guid inspectorId,
+        string inspectorName,
+        string? inspectorDesignation,
         IEnumerable<JobOrderLineItemData> lineItems)
     {
         var jo = new JobOrder
@@ -166,6 +172,9 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             FundCluster = fundCluster,
             OursBursNumber = oursBursNumber,
             OursBursDate = null,
+            InspectorId = inspectorId,
+            InspectorName = inspectorName,
+            InspectorDesignation = inspectorDesignation,
             Status = JobOrderStatus.Draft,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
@@ -194,6 +203,9 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         string paymentTerm,
         string? fundCluster,
         string? oursBursNumber,
+        Guid inspectorId,
+        string inspectorName,
+        string? inspectorDesignation,
         IEnumerable<JobOrderLineItemData> lineItems)
     {
         if (Status != JobOrderStatus.Draft)
@@ -212,6 +224,9 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         PaymentTerm = paymentTerm;
         FundCluster = fundCluster;
         OursBursNumber = oursBursNumber;
+        InspectorId = inspectorId;
+        InspectorName = inspectorName;
+        InspectorDesignation = inspectorDesignation;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
 
         _lineItems.Clear();
@@ -291,13 +306,12 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     }
 
     /// <summary>
-    /// C.O./F.O. Inspector records the inspection result on an Issued JO. The signatory name/designation are
-    /// resolved from the authenticated identity by the handler. Moves Issued → Inspected.
+    /// The assigned C.O./F.O. Inspector records the inspection result on an Issued JO. Only the inspector
+    /// named at creation may do this — <paramref name="actingInspectorId"/> must match <see cref="InspectorId"/>.
+    /// Moves Issued → Inspected.
     /// </summary>
     public void Inspect(
-        Guid inspectedById,
-        string? inspectedByName,
-        string? inspectedByDesignation,
+        Guid actingInspectorId,
         string? invoiceNo,
         DateOnly? invoiceDate,
         DateOnly? dateInspected,
@@ -306,10 +320,9 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     {
         if (Status != JobOrderStatus.Issued)
             throw new InvalidOperationException("Only Issued job orders can be inspected.");
+        if (actingInspectorId != InspectorId)
+            throw new UnauthorizedAccessException("Only the assigned inspector can record inspection on this job order.");
 
-        InspectedById = inspectedById;
-        InspectedByName = inspectedByName;
-        InspectedByDesignation = inspectedByDesignation;
         InspectedOnUtc = DateTimeOffset.UtcNow;
         InspectionInvoiceNo = invoiceNo;
         InspectionInvoiceDate = invoiceDate;
@@ -322,13 +335,12 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     }
 
     /// <summary>
-    /// Supply Officer records acceptance of the completed work on an Inspected JO. The signatory
-    /// name/designation are resolved from the authenticated identity by the handler. Moves Inspected → Completed.
+    /// The Supply Officer records acceptance of the completed work on an Inspected JO. The signatory printed
+    /// on the form is the Organization Profile's Property/Supply Custodian; the handler gates this action to
+    /// that person and passes their employee id as <paramref name="acceptedById"/>. Moves Inspected → Completed.
     /// </summary>
     public void Accept(
         Guid acceptedById,
-        string? acceptedByName,
-        string? acceptedByDesignation,
         string? invoiceNo,
         DateOnly? dateReceived,
         bool isCompleteDelivery,
@@ -338,8 +350,6 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Only Inspected job orders can be accepted.");
 
         AcceptedById = acceptedById;
-        AcceptedByName = acceptedByName;
-        AcceptedByDesignation = acceptedByDesignation;
         AcceptedOnUtc = DateTimeOffset.UtcNow;
         AcceptanceInvoiceNo = invoiceNo;
         DateReceived = dateReceived ?? DateOnly.FromDateTime(DateTime.UtcNow);

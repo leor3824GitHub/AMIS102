@@ -7,8 +7,9 @@
     <DialogContent>
         <MudStack Spacing="2">
             <MudAlert Severity="Severity.Info" Dense="true">
-                Record the <b>C.O./F.O. Inspector</b> result. Your name and designation are taken from your
-                signed-in profile.
+                Record the <b>C.O./F.O. Inspector</b> result for
+                <b>@(string.IsNullOrWhiteSpace(JobOrder.InspectorName) ? "the assigned inspector" : JobOrder.InspectorName)</b>.
+                Only the inspector assigned on this job order can record the inspection.
             </MudAlert>
 
             <MudGrid Spacing="2">

@@ -17,6 +17,7 @@ public sealed class UpdateJobOrderCommandValidator : AbstractValidator<UpdateJob
         RuleFor(x => x.PlaceOfDelivery).NotEmpty().MaximumLength(256);
         RuleFor(x => x.DeliveryTerm).NotEmpty().MaximumLength(256);
         RuleFor(x => x.PaymentTerm).NotEmpty().MaximumLength(256);
+        RuleFor(x => x.InspectorId).NotEmpty().WithMessage("An inspector must be assigned.");
         RuleFor(x => x.LineItems).NotEmpty().WithMessage("At least one line item is required.");
         RuleForEach(x => x.LineItems).ChildRules(li =>
         {

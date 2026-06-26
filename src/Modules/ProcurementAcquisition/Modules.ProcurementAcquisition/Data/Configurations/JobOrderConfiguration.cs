@@ -35,14 +35,12 @@ public sealed class JobOrderConfiguration : IEntityTypeConfiguration<JobOrder>
         // Approved — Authorized Official who issued the JO
         builder.Property(x => x.IssuedByName).HasMaxLength(200);
         builder.Property(x => x.IssuedByDesignation).HasMaxLength(200);
-        // Inspection — C.O./F.O. Inspector
-        builder.Property(x => x.InspectedByName).HasMaxLength(200);
-        builder.Property(x => x.InspectedByDesignation).HasMaxLength(200);
+        // Inspection — C.O./F.O. Inspector (assigned at creation)
+        builder.Property(x => x.InspectorName).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.InspectorDesignation).HasMaxLength(200);
         builder.Property(x => x.InspectionInvoiceNo).HasMaxLength(64);
         builder.Property(x => x.InspectionFindings).HasMaxLength(1000);
-        // Acceptance — Supply Officer
-        builder.Property(x => x.AcceptedByName).HasMaxLength(200);
-        builder.Property(x => x.AcceptedByDesignation).HasMaxLength(200);
+        // Acceptance — Supply Officer (signatory sourced from the Organization Profile)
         builder.Property(x => x.AcceptanceInvoiceNo).HasMaxLength(64);
         builder.Property(x => x.PartialDeliveryNote).HasMaxLength(500);
 

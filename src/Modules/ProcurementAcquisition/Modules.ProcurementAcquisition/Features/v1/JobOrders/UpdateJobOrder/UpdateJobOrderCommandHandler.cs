@@ -1,4 +1,6 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.JobOrders;
@@ -10,14 +12,20 @@ namespace AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.UpdateJobOrd
 
 public sealed class UpdateJobOrderCommandHandler(
     ProcurementDbContext dbContext,
-    ICurrentUser currentUser) : ICommandHandler<UpdateJobOrderCommand, JobOrderDto>
+    ICurrentUser currentUser,
+    IMediator mediator) : ICommandHandler<UpdateJobOrderCommand, JobOrderDto>
 {
     public async ValueTask<JobOrderDto> Handle(UpdateJobOrderCommand command, CancellationToken cancellationToken)
     {
         var jo = await dbContext.JobOrders
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Job order '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Job order '{command.Id}' not found.");
+
+        var inspector = command.InspectorId == Guid.Empty
+            ? throw new CustomException("An inspector is required.", Enumerable.Empty<string>(), System.Net.HttpStatusCode.BadRequest)
+            : await mediator.Send(new GetEmployeeReferenceByIdQuery(command.InspectorId), cancellationToken).ConfigureAwait(false)
+              ?? throw new NotFoundException($"Inspector employee '{command.InspectorId}' not found.");
 
         var lineItems = command.LineItems
             .Select(li => new JobOrderLineItemData(li.Unit, li.Description, li.Quantity, li.UnitCost))
@@ -37,6 +45,9 @@ public sealed class UpdateJobOrderCommandHandler(
             command.PaymentTerm,
             command.FundCluster,
             command.OursBursNumber,
+            command.InspectorId,
+            $"{inspector.FirstName} {inspector.LastName}".Trim(),
+            inspector.PositionName,
             lineItems);
 
         jo.LastModifiedBy = currentUser.GetUserId().ToString();

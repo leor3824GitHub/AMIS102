@@ -1,8 +1,9 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.CreateJobOrder;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,20 +19,32 @@ public sealed class InspectJobOrderCommandHandler(
         var jo = await dbContext.JobOrders
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Job order '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Job order '{command.Id}' not found.");
 
-        // The C.O./F.O. Inspector signatory is resolved from the authenticated identity, not the request body.
-        var inspector = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+        // Only the inspector assigned at creation may record inspection. Resolve the acting user's employee
+        // id and let the aggregate enforce the match.
+        var identityUserId = currentUser.GetUserId().ToString();
+        var employee = await mediator.Send(new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), cancellationToken).ConfigureAwait(false)
+            ?? throw new NotFoundException("No employee profile found for the current user. Cannot record inspection.");
 
-        jo.Inspect(
-            currentUser.GetUserId(),
-            inspector.Name,
-            inspector.Designation,
-            command.InvoiceNo,
-            command.InvoiceDate,
-            command.DateInspected,
-            command.Findings,
-            command.FoundInOrder);
+        try
+        {
+            jo.Inspect(
+                employee.Id,
+                command.InvoiceNo,
+                command.InvoiceDate,
+                command.DateInspected,
+                command.Findings,
+                command.FoundInOrder);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new ForbiddenException(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, [], System.Net.HttpStatusCode.BadRequest);
+        }
 
         jo.LastModifiedBy = currentUser.GetUserId().ToString();
 

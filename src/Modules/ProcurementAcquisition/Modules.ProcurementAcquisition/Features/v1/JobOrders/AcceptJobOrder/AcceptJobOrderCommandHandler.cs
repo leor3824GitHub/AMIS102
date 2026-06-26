@@ -1,8 +1,10 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.CreateJobOrder;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,19 +20,36 @@ public sealed class AcceptJobOrderCommandHandler(
         var jo = await dbContext.JobOrders
             .FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new AMIS.Framework.Core.Exceptions.NotFoundException($"Job order '{command.Id}' not found.");
+            ?? throw new NotFoundException($"Job order '{command.Id}' not found.");
 
-        // The Supply Officer signatory is resolved from the authenticated identity, not the request body.
-        var acceptor = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
+        // The Supply Officer signatory is the Organization Profile's Property/Supply Custodian. Only that
+        // person may accept; the printed name comes from the org profile, so it must be configured first.
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
+        if (org?.PropertyCustodianId is not { } supplyOfficerId || supplyOfficerId == Guid.Empty)
+            throw new CustomException(
+                "No Supply Officer is configured. Set the Property/Supply Custodian in the Organization Profile before accepting job orders.",
+                [], System.Net.HttpStatusCode.BadRequest);
 
-        jo.Accept(
-            currentUser.GetUserId(),
-            acceptor.Name,
-            acceptor.Designation,
-            command.InvoiceNo,
-            command.DateReceived,
-            command.IsCompleteDelivery,
-            command.PartialDeliveryNote);
+        var identityUserId = currentUser.GetUserId().ToString();
+        var employee = await mediator.Send(new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), cancellationToken).ConfigureAwait(false)
+            ?? throw new NotFoundException("No employee profile found for the current user. Cannot record acceptance.");
+
+        if (employee.Id != supplyOfficerId)
+            throw new ForbiddenException("Only the designated Supply Officer (Property/Supply Custodian) can accept job orders.");
+
+        try
+        {
+            jo.Accept(
+                employee.Id,
+                command.InvoiceNo,
+                command.DateReceived,
+                command.IsCompleteDelivery,
+                command.PartialDeliveryNote);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new CustomException(ex.Message, [], System.Net.HttpStatusCode.BadRequest);
+        }
 
         jo.LastModifiedBy = currentUser.GetUserId().ToString();
 
