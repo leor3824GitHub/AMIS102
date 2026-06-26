@@ -1,0 +1,80 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders
+@using AMIS.Blazor.ApiClient
+@inject IJobOrderClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Record the <b>C.O./F.O. Inspector</b> result. Your name and designation are taken from your
+                signed-in profile.
+            </MudAlert>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_invoiceNo" Label="Invoice No. (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" MaxLength="64" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_invoiceDate" Label="Invoice Date (optional)" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_dateInspected" Label="Date Inspected" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6" Class="d-flex align-center">
+                    <MudSwitch @bind-Value="_foundInOrder" Color="Color.Success" Label="Found in order (qty &amp; specifications)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_findings" Label="Findings and recommendations (optional)" Variant="Variant.Outlined"
+                                  Lines="3" Dense="true" Margin="Margin.Dense" MaxLength="1000" />
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="InspectAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Record Inspection
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public JobOrderDto JobOrder { get; set; } = default!;
+
+    private string? _invoiceNo;
+    private DateTime? _invoiceDate;
+    private DateTime? _dateInspected = DateTime.Today;
+    private string? _findings;
+    private bool _foundInOrder = true;
+    private bool _busy;
+
+    private async Task InspectAsync()
+    {
+        _busy = true;
+        try
+        {
+            var result = await Client.InspectAsync(JobOrder.Id, new InspectJobOrderCommand(
+                JobOrder.Id,
+                _invoiceNo,
+                ToDateOnly(_invoiceDate),
+                ToDateOnly(_dateInspected),
+                _findings,
+                _foundInOrder));
+
+            Snackbar.Add("Inspection recorded.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Inspection failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private void Cancel() => Dialog.Cancel();
+}

@@ -12,9 +12,7 @@ public sealed class ChatMessageItem
     {
         Id = dto.Id;
         IsMine = currentUserId is not null && string.Equals(dto.SenderId, currentUserId, StringComparison.OrdinalIgnoreCase);
-        SenderLabel = IsMine
-            ? "You"
-            : (!string.IsNullOrWhiteSpace(dto.SenderName) ? dto.SenderName! : Shorten(dto.SenderId));
+        SenderLabel = ResolveSenderLabel(dto, IsMine);
         Body = dto.IsDeleted ? "message deleted" : (dto.Content ?? string.Empty);
         IsDeleted = dto.IsDeleted;
         IsPinned = dto.IsPinned && !dto.IsDeleted;
@@ -30,6 +28,12 @@ public sealed class ChatMessageItem
     public bool IsPinned { get; }
     public bool Edited { get; }
     public string TimeDisplay { get; }
+
+    private static string ResolveSenderLabel(ChatMessageDto dto, bool isMine)
+    {
+        if (isMine) return "You";
+        return !string.IsNullOrWhiteSpace(dto.SenderName) ? dto.SenderName! : Shorten(dto.SenderId);
+    }
 
     private static string Shorten(string id) => id.Length <= 8 ? id : id[..8];
 }

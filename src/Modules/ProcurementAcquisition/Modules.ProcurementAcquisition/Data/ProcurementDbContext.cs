@@ -5,6 +5,7 @@ using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Domain.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Domain.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Domain.SignedDocuments;
@@ -23,6 +24,8 @@ public class ProcurementDbContext : BaseDbContext
     public DbSet<CanvassQuotation> CanvassQuotations => Set<CanvassQuotation>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PoNumberSequence> PoNumberSequences => Set<PoNumberSequence>();
+    public DbSet<JobOrder> JobOrders => Set<JobOrder>();
+    public DbSet<JoNumberSequence> JoNumberSequences => Set<JoNumberSequence>();
     public DbSet<InspectionAcceptanceReport> InspectionAcceptanceReports => Set<InspectionAcceptanceReport>();
     public DbSet<IarNumberSequence> IarNumberSequences => Set<IarNumberSequence>();
     public DbSet<SignedDocument> SignedDocuments => Set<SignedDocument>();

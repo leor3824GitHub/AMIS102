@@ -32,6 +32,16 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.IssuePurcha
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CancelPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.GetPurchaseOrder;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.SearchPurchaseOrders;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.CreateJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.UpdateJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.SubmitJobOrder;
+using JoCertifyFundsAvailable = AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.CertifyFundsAvailable;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.IssueJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.InspectJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.AcceptJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.CancelJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.GetJobOrder;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.JobOrders.SearchJobOrders;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.CreateInspectionAcceptanceReport;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.UpdateInspectionAcceptanceReport;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.AcceptInspectionAcceptanceReport;
@@ -84,6 +94,16 @@ public class ProcurementAcquisitionModule : IModule
         new("Issue Purchase Orders", "Issue", "Procurement.PurchaseOrders"),
         new("Cancel Purchase Orders", "Cancel", "Procurement.PurchaseOrders"),
 
+        new("View Job Orders", "View", "Procurement.JobOrders", IsBasic: true),
+        new("Create Job Orders", "Create", "Procurement.JobOrders"),
+        new("Update Job Orders", "Update", "Procurement.JobOrders"),
+        new("Submit Job Orders", "Submit", "Procurement.JobOrders"),
+        new("Certify Funds Available on Job Orders", "CertifyFundsAvailable", "Procurement.JobOrders"),
+        new("Issue Job Orders", "Issue", "Procurement.JobOrders"),
+        new("Inspect Job Orders", "Inspect", "Procurement.JobOrders"),
+        new("Accept Job Orders", "Accept", "Procurement.JobOrders"),
+        new("Cancel Job Orders", "Cancel", "Procurement.JobOrders"),
+
         new("View Signed Document Copies", "View", "Procurement.SignedDocuments", IsBasic: true),
         new("Upload Signed Document Copies", "Upload", "Procurement.SignedDocuments"),
 
@@ -127,6 +147,7 @@ public class ProcurementAcquisitionModule : IModule
         var purchaseRequestsGroup = moduleGroup.MapGroup("/purchase-requests");
         var canvassRequestsGroup = moduleGroup.MapGroup("/canvass-requests");
         var purchaseOrdersGroup = moduleGroup.MapGroup("/purchase-orders");
+        var jobOrdersGroup = moduleGroup.MapGroup("/job-orders");
         var iarGroup = moduleGroup.MapGroup("/inspection-acceptance-reports");
         var signedDocumentsGroup = moduleGroup.MapGroup("/signed-documents");
 
@@ -164,6 +185,18 @@ public class ProcurementAcquisitionModule : IModule
         CancelPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         GetPurchaseOrderEndpoint.Map(purchaseOrdersGroup);
         SearchPurchaseOrdersEndpoint.Map(purchaseOrdersGroup);
+
+        // Job Orders (works: renovation / repair / fabrication)
+        CreateJobOrderEndpoint.Map(jobOrdersGroup);
+        UpdateJobOrderEndpoint.Map(jobOrdersGroup);
+        SubmitJobOrderEndpoint.Map(jobOrdersGroup);
+        JoCertifyFundsAvailable.CertifyJobOrderFundsAvailableEndpoint.Map(jobOrdersGroup);
+        IssueJobOrderEndpoint.Map(jobOrdersGroup);
+        InspectJobOrderEndpoint.Map(jobOrdersGroup);
+        AcceptJobOrderEndpoint.Map(jobOrdersGroup);
+        CancelJobOrderEndpoint.Map(jobOrdersGroup);
+        GetJobOrderEndpoint.Map(jobOrdersGroup);
+        SearchJobOrdersEndpoint.Map(jobOrdersGroup);
 
         // Asset IARs
         CreateInspectionAcceptanceReportEndpoint.Map(iarGroup);

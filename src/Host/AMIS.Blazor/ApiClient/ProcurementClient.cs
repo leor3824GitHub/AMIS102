@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Web;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
@@ -13,6 +14,8 @@ using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.
 namespace AMIS.Blazor.ApiClient;
 
 internal sealed class DuplicatePurchaseOrderException(string message) : Exception(message);
+
+internal sealed class DuplicateJobOrderException(string message) : Exception(message);
 
 internal static class ProcurementJson
 {
@@ -445,5 +448,122 @@ internal sealed class PurchaseOrderClient(HttpClient http) : IPurchaseOrderClien
     }
 
     private sealed record CancelPoBody(string? Reason);
+}
+
+// ── Job Orders ────────────────────────────────────────────────────────────────
+
+internal interface IJobOrderClient
+{
+    Task<PagedResponse<JobOrderSummaryDto>> SearchAsync(string? keyword = null, JobOrderStatus? status = null, int page = 1, int pageSize = 20, Guid? purchaseRequestId = null, Guid? supplierId = null, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
+    Task<JobOrderDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<JobOrderDto> CreateAsync(CreateJobOrderCommand command, CancellationToken ct = default);
+    Task<JobOrderDto> UpdateAsync(Guid id, UpdateJobOrderCommand command, CancellationToken ct = default);
+    Task<JobOrderDto> SubmitAsync(Guid id, CancellationToken ct = default);
+    Task<JobOrderDto> CertifyFundsAvailableAsync(Guid id, CertifyJobOrderFundsAvailableCommand command, CancellationToken ct = default);
+    Task<JobOrderDto> IssueAsync(Guid id, CancellationToken ct = default);
+    Task<JobOrderDto> InspectAsync(Guid id, InspectJobOrderCommand command, CancellationToken ct = default);
+    Task<JobOrderDto> AcceptAsync(Guid id, AcceptJobOrderCommand command, CancellationToken ct = default);
+    Task<JobOrderDto> CancelAsync(Guid id, string? reason = null, CancellationToken ct = default);
+}
+
+internal sealed class JobOrderClient(HttpClient http) : IJobOrderClient
+{
+    private const string Base = "api/v1/procurement/job-orders";
+
+    public Task<PagedResponse<JobOrderSummaryDto>> SearchAsync(string? keyword = null, JobOrderStatus? status = null, int page = 1, int pageSize = 20, Guid? purchaseRequestId = null, Guid? supplierId = null, DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default)
+    {
+        var q = HttpUtility.ParseQueryString(string.Empty);
+        if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
+        if (status.HasValue) q["Status"] = ((int)status.Value).ToString(CultureInfo.InvariantCulture);
+        if (purchaseRequestId.HasValue) q["PurchaseRequestId"] = purchaseRequestId.Value.ToString();
+        if (supplierId.HasValue) q["SupplierId"] = supplierId.Value.ToString();
+        if (fromDate.HasValue) q["FromDate"] = fromDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (toDate.HasValue) q["ToDate"] = toDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
+        q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
+        return http.GetFromJsonAsync<PagedResponse<JobOrderSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;
+    }
+
+    public Task<JobOrderDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<JobOrderDto>($"{Base}/{id}", ProcurementJson.Options, ct);
+
+    public async Task<JobOrderDto> CreateAsync(CreateJobOrderCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync(Base, command, ProcurementJson.Options, ct);
+
+        if (r.StatusCode == HttpStatusCode.Conflict)
+        {
+            var detail = await ReadProblemDetailAsync(r, ct);
+            throw new DuplicateJobOrderException(detail ?? "A duplicate job order already exists.");
+        }
+
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> UpdateAsync(Guid id, UpdateJobOrderCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PutAsJsonAsync($"{Base}/{id}", command with { Id = id }, ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> SubmitAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsync($"{Base}/{id}/submit", null, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> CertifyFundsAvailableAsync(Guid id, CertifyJobOrderFundsAvailableCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/certify-funds-available", command with { Id = id }, ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> IssueAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.PatchAsync($"{Base}/{id}/issue", null, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> InspectAsync(Guid id, InspectJobOrderCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/inspect", command with { Id = id }, ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> AcceptAsync(Guid id, AcceptJobOrderCommand command, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/accept", command with { Id = id }, ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    public async Task<JobOrderDto> CancelAsync(Guid id, string? reason = null, CancellationToken ct = default)
+    {
+        using var r = await http.PatchAsJsonAsync($"{Base}/{id}/cancel", new CancelJoBody(reason), ProcurementJson.Options, ct);
+        r.EnsureSuccessStatusCode();
+        return (await r.Content.ReadFromJsonAsync<JobOrderDto>(ProcurementJson.Options, ct))!;
+    }
+
+    private static async Task<string?> ReadProblemDetailAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        try
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsLite>(ProcurementJson.Options, ct);
+            return problem?.Detail;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed record ProblemDetailsLite(string? Title, string? Detail);
+    private sealed record CancelJoBody(string? Reason);
 }
 

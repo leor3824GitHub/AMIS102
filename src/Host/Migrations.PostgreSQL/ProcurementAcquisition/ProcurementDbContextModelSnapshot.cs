@@ -359,6 +359,260 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.JobOrders.JoNumberSequence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("LastSerial")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("JoNumberSequences", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.JobOrders.JobOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcceptanceInvoiceNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("AcceptedByDesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("AcceptedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcceptedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("AcceptedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("DateInspected")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DateOfDelivery")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DateReceived")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryTerm")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("FoundInOrder")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FundCluster")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FundsAvailableCertifiedByDesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("FundsAvailableCertifiedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FundsAvailableCertifiedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("FundsAvailableCertifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InspectedByDesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("InspectedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("InspectedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("InspectedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InspectionFindings")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateOnly?>("InspectionInvoiceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("InspectionInvoiceNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsCompleteDelivery")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("IssuedByDesignation")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("IssuedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("IssuedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("IssuedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("JoDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("JoNumber")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("JobRequestNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ModeOfProcurement")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("OursBursDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("OursBursNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PartialDeliveryNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PaymentTerm")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PlaceOfDelivery")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("PurchaseRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequisitioningOffice")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SupplierAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SupplierTin")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PurchaseRequestId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId", "JoNumber")
+                        .IsUnique();
+
+                    b.ToTable("JobOrders", "procurement");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders.PoNumberSequence", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1036,6 +1290,45 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
 
                             b1.WithOwner()
                                 .HasForeignKey("InspectionAcceptanceReportId");
+                        });
+
+                    b.Navigation("LineItems");
+                });
+
+            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.JobOrders.JobOrder", b =>
+                {
+                    b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.JobOrders.JobOrderLineItem", "LineItems", b1 =>
+                        {
+                            b1.Property<Guid>("JobOrderId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasMaxLength(500);
+
+                            b1.Property<int>("ItemNo");
+
+                            b1.Property<decimal>("Quantity")
+                                .HasPrecision(18, 4);
+
+                            b1.Property<string>("Unit")
+                                .HasMaxLength(64);
+
+                            b1.Property<decimal>("UnitCost")
+                                .HasPrecision(18, 4);
+
+                            b1.HasKey("JobOrderId", "__synthesizedOrdinal");
+
+                            b1.ToTable("JobOrders", "procurement");
+
+                            b1
+                                .ToJson("LineItems")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("JobOrderId");
                         });
 
                     b.Navigation("LineItems");

@@ -41,31 +41,34 @@ public sealed class ChatHubService : IAsyncDisposable
             return;
         }
 
-        var hubUrl = $"{_options.BaseUrl.TrimEnd('/')}/api/v1/realtime/hub";
-
-        _connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.AccessTokenProvider = async () => await _tokenStorage.GetAccessTokenAsync();
-#if DEBUG
-                // Dev only: emulators/simulators don't trust the .NET HTTPS dev cert.
-                options.HttpMessageHandlerFactory = _ => new HttpClientHandler
-                {
-                    ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-                };
-                options.WebSocketConfiguration = ws =>
-                    ws.RemoteCertificateValidationCallback = (_, _, _, _) => true;
-#endif
-            })
-            .WithAutomaticReconnect()
-            .Build();
-
-        _connection.On<ChatMessageDto>(ChatMessageCreated, message => MessageCreated?.Invoke(message));
-        _connection.On<ChatTypingDto>(ChatTypingStarted, notification => TypingStarted?.Invoke(notification));
-
         try
         {
-            await _connection.StartAsync(ct);
+            var hubUrl = $"{_options.BaseUrl.TrimEnd('/')}/api/v1/realtime/hub";
+
+            var connection = new HubConnectionBuilder()
+                .WithUrl(hubUrl, options =>
+                {
+                    options.AccessTokenProvider = async () => await _tokenStorage.GetAccessTokenAsync();
+#if DEBUG
+                    // Dev only: emulators/simulators don't trust the .NET HTTPS dev cert.
+                    options.HttpMessageHandlerFactory = _ => new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+                    };
+                    options.WebSocketConfiguration = ws =>
+                        ws.RemoteCertificateValidationCallback = (_, _, _, _) => true;
+#endif
+                })
+                .WithAutomaticReconnect()
+                .Build();
+
+            connection.On<ChatMessageDto>(ChatMessageCreated, message => MessageCreated?.Invoke(message));
+            connection.On<ChatTypingDto>(ChatTypingStarted, notification => TypingStarted?.Invoke(notification));
+
+            // Publish only after a successful build so a build failure leaves _connection null and retryable.
+            _connection = connection;
+
+            await connection.StartAsync(ct);
         }
         catch (Exception ex)
         {

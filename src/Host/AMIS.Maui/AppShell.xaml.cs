@@ -1,4 +1,5 @@
 using AMIS.Maui.Features.Asset;
+using AMIS.Maui.Features.Chat;
 using AMIS.Maui.Features.Home;
 using AMIS.Maui.Features.Inventory;
 using AMIS.Maui.Features.PhysicalCount;
@@ -18,6 +19,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(PhysicalCountScanPage), typeof(PhysicalCountScanPage));
         Routing.RegisterRoute(nameof(PhysicalCountMarkEntryPage), typeof(PhysicalCountMarkEntryPage));
         Routing.RegisterRoute(nameof(PhysicalCountFoundAtStationPage), typeof(PhysicalCountFoundAtStationPage));
+        Routing.RegisterRoute(nameof(ChatConversationPage), typeof(ChatConversationPage));
     }
 
     protected override bool OnBackButtonPressed()

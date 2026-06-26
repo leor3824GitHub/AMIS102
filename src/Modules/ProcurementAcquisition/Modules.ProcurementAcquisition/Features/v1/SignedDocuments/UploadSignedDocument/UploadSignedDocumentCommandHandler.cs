@@ -6,6 +6,7 @@ using AMIS.Framework.Shared.Storage;
 using AMIS.Framework.Storage;
 using AMIS.Framework.Storage.Services;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
@@ -119,6 +120,16 @@ public sealed class UploadSignedDocumentCommandHandler(
                 // Signed at issue; remains a signed record while deliveries are recorded (Partially/Fulfilled).
                 if (po.Status is not (PurchaseOrderStatus.Issued or PurchaseOrderStatus.PartiallyDelivered or PurchaseOrderStatus.Fulfilled))
                     throw new CustomException("A signed copy can only be uploaded once the purchase order is Issued.",
+                        Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
+                break;
+
+            case ProcurementDocumentType.JobOrder:
+                var jo = await dbContext.JobOrders.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
+                    ?? throw new NotFoundException($"Job order '{id}' not found.");
+                // Signed at issue; remains a signed record through inspection and acceptance.
+                if (jo.Status is not (JobOrderStatus.Issued or JobOrderStatus.Inspected or JobOrderStatus.Completed))
+                    throw new CustomException("A signed copy can only be uploaded once the job order is Issued.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
                 break;
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using AMIS.Maui.Data;
 using AMIS.Maui.Features.Asset;
 using AMIS.Maui.Features.Auth;
+using AMIS.Maui.Features.Chat;
 using AMIS.Maui.Features.Home;
 using AMIS.Maui.Features.Inventory;
 using AMIS.Maui.Features.PhysicalCount;
@@ -86,6 +87,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<LocalDb>();
         builder.Services.AddSingleton<ITokenStorageService, TokenStorageService>();
         builder.Services.AddSingleton<IOcrService, OcrService>();
+        builder.Services.AddSingleton<ChatHubService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 
         var apiClientBuilder = builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
@@ -116,6 +118,8 @@ public static class MauiProgram
         builder.Services.AddTransient<PhysicalCountScanViewModel>();
         builder.Services.AddTransient<PhysicalCountMarkEntryViewModel>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationViewModel>();
+        builder.Services.AddTransient<ChatChannelListViewModel>();
+        builder.Services.AddTransient<ChatConversationViewModel>();
 
         // Pages
         builder.Services.AddTransient<HomePage>();
@@ -131,6 +135,8 @@ public static class MauiProgram
         builder.Services.AddTransient<PhysicalCountScanPage>();
         builder.Services.AddTransient<PhysicalCountMarkEntryPage>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationPage>();
+        builder.Services.AddTransient<ChatChannelListPage>();
+        builder.Services.AddTransient<ChatConversationPage>();
 
         return builder.Build();
     }

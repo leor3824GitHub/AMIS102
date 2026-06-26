@@ -226,6 +226,9 @@ internal static class ApiClientRegistration
         services.AddTransient<IPurchaseOrderClient>(sp =>
             new PurchaseOrderClient(ResolveClient(sp)));
 
+        services.AddTransient<IJobOrderClient>(sp =>
+            new JobOrderClient(ResolveClient(sp)));
+
         services.AddTransient<ISignedDocumentClient>(sp =>
             new SignedDocumentClient(ResolveClient(sp)));
 

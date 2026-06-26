@@ -1,0 +1,538 @@
+@page "/procurement/job-orders"
+@implements IDisposable
+@using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
+@using AMIS.Framework.Shared.Persistence
+@using AMIS.Blazor.ApiClient
+@inject IJobOrderClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Job Orders" Description="Create and manage job orders (JO) for works — renovation, repair, fabrication" />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <!-- Header: title + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">Job Orders</MudText>
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog"
+                                   Title="Create a new job order">
+                            NEW JOB ORDER
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <!-- Filter toolbar: search + date range -->
+                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Search for JO"
+                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
+                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
+
+                <!-- Status filter chips -->
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    @foreach (var s in _statusFilters)
+                    {
+                        var isActive = _statusFilter == s;
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(isActive ? Color.Primary : Color.Default)"
+                                 Variant="@(isActive ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => SetStatusFilter(s))"
+                                 Title="@($"Filter by {s} status")"
+                                 Clickable="true">
+                            @GetStatusChipLabel(s)
+                        </MudChip>
+                    }
+                </MudStack>
+
+                @if (!_loaded)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">
+                        @if (!string.IsNullOrWhiteSpace(_keyword) || _statusFilter != "All")
+                        {
+                            <text>No job orders match your filters. Try adjusting your search or status filter.</text>
+                        }
+                        else if (_canCreate)
+                        {
+                            <text>No job orders yet. <MudLink Href="#" OnClick="OpenCreateDialog" Style="cursor:pointer;">Create your first JO</MudLink></text>
+                        }
+                        else
+                        {
+                            <text>No job orders yet.</text>
+                        }
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>JO #</th>
+                                <th>Date</th>
+                                <th>Supplier</th>
+                                <th>Mode</th>
+                                <th style="text-align:right">Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _items)
+                            {
+                                <tr>
+                                    <td><b>@item.JoNumber</b></td>
+                                    <td>@item.JoDate.ToString("MM/dd/yyyy")</td>
+                                    <td>@item.SupplierName</td>
+                                    <td><MudText Typo="Typo.caption">@item.ModeOfProcurement.ToString().Replace("_"," ")</MudText></td>
+                                    <td style="text-align:right">@Money.Symbol@item.TotalAmount.ToString("N2")</td>
+                                    <td>@JoStatusChip(item.Status)</td>
+                                    <td>
+                                        <MudStack Row="true" Spacing="0">
+                                            @if (item.Status == JobOrderStatus.Draft)
+                                            {
+                                                @if (_canUpdate)
+                                                {
+                                                    <MudTooltip Text="Edit draft">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(async () => await OpenEditDialog(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canSubmit)
+                                                {
+                                                    <MudTooltip Text="Submit for Funds Available certification">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(async () => await SubmitAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                            }
+                                            @if (item.Status == JobOrderStatus.PendingFundsAvailable && _canCertifyFundsAvailable)
+                                            {
+                                                <MudTooltip Text="Certify Funds Available">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                                                   OnClick="@(async () => await CertifyFundsAvailableAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == JobOrderStatus.PendingApproval && _canIssue)
+                                            {
+                                                <MudTooltip Text="Issue this JO">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
+                                                                   OnClick="@(async () => await IssueAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == JobOrderStatus.Issued && _canInspect)
+                                            {
+                                                <MudTooltip Text="Record inspection">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.FactCheck" Size="Size.Small" Color="Color.Info"
+                                                                   OnClick="@(async () => await InspectAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if (item.Status == JobOrderStatus.Inspected && _canAccept)
+                                            {
+                                                <MudTooltip Text="Record acceptance">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Success"
+                                                                   OnClick="@(async () => await AcceptAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            @if ((item.Status == JobOrderStatus.Draft
+                                                  || item.Status == JobOrderStatus.PendingFundsAvailable
+                                                  || item.Status == JobOrderStatus.PendingApproval
+                                                  || item.Status == JobOrderStatus.Issued
+                                                  || item.Status == JobOrderStatus.Inspected)
+                                                 && _canCancel)
+                                            {
+                                                <MudTooltip Text="Cancel this JO">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                                   OnClick="@(async () => await CancelJoAsync(item.Id))" />
+                                                </MudTooltip>
+                                            }
+                                            <MudTooltip Text="View full details">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                                               OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
+                                            </MudTooltip>
+                                            @if (IsSignedJo(item.Status) && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                            {
+                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                                   OnClick="@(() => OpenSignedCopyAsync(item.Id, item.JoNumber, item.Status))" />
+                                                </MudTooltip>
+                                            }
+                                        </MudStack>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    @if (_totalCount > _pageSize)
+                    {
+                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
+                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
+                        </MudStack>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Update);
+    private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Submit);
+    private bool _canCertifyFundsAvailable => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.CertifyFundsAvailable);
+    private bool _canIssue => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Issue);
+    private bool _canInspect => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Inspect);
+    private bool _canAccept => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Accept);
+    private bool _canCancel => UserProfileState.Permissions.Contains(ProcurementPermissions.JobOrders.Cancel);
+    private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
+    private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
+
+    private string? _currentUserEmployeeName => UserProfileState.EmployeeFullName;
+
+    // Issued and every post-issue state — the JO is a signed record once issued, through inspection and acceptance.
+    private static bool IsSignedJo(JobOrderStatus status) =>
+        status is JobOrderStatus.Issued or JobOrderStatus.Inspected or JobOrderStatus.Completed;
+
+    private List<JobOrderSummaryDto> _items = [];
+    private bool _loaded;
+    private string _keyword = string.Empty;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+    private string _statusFilter = "All";
+    private int _page = 1, _pageSize = 15, _totalCount;
+    private Dictionary<string, int> _statusCounts = [];
+
+    private static readonly string[] _statusFilters = ["All", "Draft", "PendingFundsAvailable", "PendingApproval", "Issued", "Inspected", "Completed", "Cancelled"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadStatusCountsAsync();
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadAsync()
+    {
+        _loaded = false;
+        try
+        {
+            JobOrderStatus? filter = _statusFilter == "All" ? null : Enum.Parse<JobOrderStatus>(_statusFilter);
+            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize, fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
+            _items = result.Items?.ToList() ?? [];
+            _totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
+        finally { _loaded = true; }
+    }
+
+    private async Task SetStatusFilter(string s)
+    {
+        _statusFilter = s;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnKeywordChanged(string? keyword)
+    {
+        _keyword = keyword ?? string.Empty;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnFromDateChanged(DateTime? date)
+    {
+        _fromDate = date;
+        _page = 1;
+        await LoadAsync();
+        await RefreshStatusCountsAsync();
+    }
+
+    private async Task OnToDateChanged(DateTime? date)
+    {
+        _toDate = date;
+        _page = 1;
+        await LoadAsync();
+        await RefreshStatusCountsAsync();
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? value) =>
+        value is null ? null : DateOnly.FromDateTime(value.Value);
+
+    private async Task LoadStatusCountsAsync()
+    {
+        try
+        {
+            _statusCounts.Clear();
+            var statusesToLoad = _statusFilters.Skip(1).ToArray();
+            var tasks = new Task<(string status, int count)>[statusesToLoad.Length];
+
+            for (int i = 0; i < statusesToLoad.Length; i++)
+            {
+                var status = statusesToLoad[i];
+                var filter = Enum.Parse<JobOrderStatus>(status);
+                tasks[i] = LoadStatusCountAsync(status, filter);
+            }
+
+            var results = await Task.WhenAll(tasks);
+
+            int allCount = 0;
+            foreach (var (status, count) in results)
+            {
+                _statusCounts[status] = count;
+                allCount += count;
+            }
+
+            _statusCounts["All"] = allCount;
+        }
+        catch { _statusCounts = []; }
+    }
+
+    private async Task<(string status, int count)> LoadStatusCountAsync(string status, JobOrderStatus filter)
+    {
+        var result = await Client.SearchAsync(string.Empty, filter, 1, 1, fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
+        return (status, (int)result.TotalCount);
+    }
+
+    private string GetStatusChipLabel(string status)
+    {
+        if (_statusCounts.TryGetValue(status, out var count) && count > 0)
+            return $"{status} ({count})";
+        return status;
+    }
+
+    private async Task RefreshStatusCountsAsync()
+    {
+        await LoadStatusCountsAsync();
+        StateHasChanged();
+    }
+
+    private void OpenCreateDialog()
+    {
+        var parameters = new DialogParameters<JobOrderFormDialog>
+        {
+            { x => x.JobOrder, null }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        OpenFormDialog(parameters, options);
+    }
+
+    private async Task OpenEditDialog(Guid id)
+    {
+        var jo = await Client.GetAsync(id);
+        if (jo is null) { Snackbar.Add("JO not found.", Severity.Error); return; }
+
+        var parameters = new DialogParameters<JobOrderFormDialog>
+        {
+            { x => x.JobOrder, jo }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        OpenFormDialog(parameters, options);
+    }
+
+    private async void OpenFormDialog(DialogParameters<JobOrderFormDialog> parameters, DialogOptions options)
+    {
+        var dialog = await DialogService.ShowAsync<JobOrderFormDialog>("Job Order", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+    }
+
+    private async Task SubmitAsync(Guid id)
+    {
+        var jo = _items.FirstOrDefault(x => x.Id == id);
+        var message = $"Submit job order {jo?.JoNumber} for Funds Available certification?";
+        var ok = await DialogService.ShowMessageBox("Submit JO", message, "Submit", cancelText: "Cancel");
+        if (ok is not true) return;
+        try
+        {
+            await Client.SubmitAsync(id);
+            Snackbar.Add("JO submitted for Funds Available certification.", Severity.Success);
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Submit failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CertifyFundsAvailableAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(_currentUserEmployeeName))
+        {
+            Snackbar.Add("Cannot determine current user identity. Please re-login.", Severity.Warning);
+            return;
+        }
+
+        JobOrderDto? jo;
+        try { jo = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load JO failed: {ex.Message}", Severity.Error); return; }
+        if (jo is null) { Snackbar.Add("JO not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<CertifyJobOrderFundsAvailableDialog>
+        {
+            { x => x.JobOrder, jo },
+            { x => x.CertifiedByName, _currentUserEmployeeName }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CertifyJobOrderFundsAvailableDialog>($"Funds Available — {jo.JoNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+    }
+
+    private async Task IssueAsync(Guid id)
+    {
+        var jo = _items.FirstOrDefault(x => x.Id == id);
+        var message = $"Issue job order {jo?.JoNumber}? This will notify the supplier to proceed with the work.";
+        var ok = await DialogService.ShowMessageBox("Issue Job Order", message, "Issue", cancelText: "Cancel");
+        if (ok is not true) return;
+        try
+        {
+            await Client.IssueAsync(id);
+            Snackbar.Add("Job order issued successfully.", Severity.Success);
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Issue failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task InspectAsync(Guid id)
+    {
+        JobOrderDto? jo;
+        try { jo = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load JO failed: {ex.Message}", Severity.Error); return; }
+        if (jo is null) { Snackbar.Add("JO not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<InspectJobOrderDialog> { { x => x.JobOrder, jo } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<InspectJobOrderDialog>($"Inspection — {jo.JoNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+    }
+
+    private async Task AcceptAsync(Guid id)
+    {
+        JobOrderDto? jo;
+        try { jo = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Load JO failed: {ex.Message}", Severity.Error); return; }
+        if (jo is null) { Snackbar.Add("JO not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<AcceptJobOrderDialog> { { x => x.JobOrder, jo } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AcceptJobOrderDialog>($"Acceptance — {jo.JoNumber}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+    }
+
+    private async Task CancelJoAsync(Guid id)
+    {
+        var jo = _items.FirstOrDefault(x => x.Id == id);
+        var message = $"Cancel job order {jo?.JoNumber}? This action cannot be undone.";
+        var ok = await DialogService.ShowMessageBox("Cancel JO", message, "Yes, Cancel", cancelText: "No");
+        if (ok is not true) return;
+        try
+        {
+            await Client.CancelAsync(id);
+            Snackbar.Add("Job order cancelled.", Severity.Info);
+            await LoadAsync();
+            await RefreshStatusCountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ViewDetailsAsync(Guid id)
+    {
+        JobOrderDto? jo;
+        try { jo = await Client.GetAsync(id); }
+        catch (Exception ex) { Snackbar.Add($"Unable to load JO details: {ex.Message}", Severity.Error); return; }
+        if (jo is null) { Snackbar.Add("JO not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<JobOrderDetailsDialog>
+        {
+            { x => x.JobOrder, jo }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<JobOrderDetailsDialog>($"JO Details - {jo.JoNumber}", parameters, options);
+    }
+
+    private async Task OpenSignedCopyAsync(Guid id, string joNumber, JobOrderStatus status)
+    {
+        var parameters = new DialogParameters<SignedCopyDialog>
+        {
+            { x => x.DocumentType, ProcurementDocumentType.JobOrder },
+            { x => x.DocumentId, id },
+            { x => x.DocumentNumber, joNumber },
+            { x => x.IsTerminalState, IsSignedJo(status) }
+        };
+        var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = false, BackdropClick = false });
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: true })
+        {
+            _items = _items
+                .Select(x => x.Id == id ? x with { HasSignedCopy = true } : x)
+                .ToList();
+            StateHasChanged();
+        }
+    }
+
+    private static RenderFragment JoStatusChip(JobOrderStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            JobOrderStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            JobOrderStatus.PendingFundsAvailable => (Color.Warning, Icons.Material.Filled.AccountBalance),
+            JobOrderStatus.PendingApproval => (Color.Warning, Icons.Material.Filled.HourglassBottom),
+            JobOrderStatus.Issued => (Color.Info, Icons.Material.Filled.Send),
+            JobOrderStatus.Inspected => (Color.Info, Icons.Material.Filled.FactCheck),
+            JobOrderStatus.Completed => (Color.Success, Icons.Material.Filled.CheckCircle),
+            JobOrderStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+}

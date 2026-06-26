@@ -1,0 +1,613 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
+@using AMIS.Blazor.ApiClient
+@inject IJobOrderClient Client
+@inject IPurchaseRequestClient PurchaseRequestClient
+@inject IMaster_dataClient MasterDataClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            @if (_editing is not null)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Icon="@Icons.Material.Filled.Info" Class="mb-2">
+                    <MudGrid Spacing="0">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2"><strong>JO Number:</strong> @_editing.JoNumber</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.body2"><strong>JO Date:</strong> @_editing.JoDate.ToString("MM/dd/yyyy")</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudAlert>
+            }
+
+            <!-- Job Request Section -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Job Request (optional)</MudText>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="4">
+                        @if (_editing is not null)
+                        {
+                            <MudTextField Value="@(_form.JobRequestNo ?? "—")" Label="Job Request No." Variant="Variant.Outlined"
+                                          ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                                          HelperText="Source request reference" />
+                        }
+                        else
+                        {
+                            <MudAutocomplete T="PurchaseRequestSummaryDto"
+                                             Value="_selectedPurchaseRequest"
+                                             ValueChanged="OnPurchaseRequestChanged"
+                                             SearchFunc="SearchPurchaseRequests"
+                                             ToStringFunc="FormatPurchaseRequest"
+                                             Label="Link Purchase Request"
+                                             Variant="Variant.Outlined"
+                                             Placeholder="Search PR to prefill particulars..."
+                                             Clearable="true"
+                                             CoerceValue="false"
+                                             ResetValueOnEmptyText="true"
+                                             MinCharacters="0"
+                                             Dense="true" Margin="Margin.Dense"
+                                             HelperText="Optional — leave blank for a standalone JO" />
+                        }
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField @bind-Value="_form.JobRequestNo" Label="Job Request No. (optional)" Variant="Variant.Outlined"
+                                      Dense="true" Margin="Margin.Dense" HelperText="Printed on the JO form" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudTextField @bind-Value="_form.RequisitioningOffice" Label="Requisitioning Office/Dept. (optional)" Variant="Variant.Outlined"
+                                      Dense="true" Margin="Margin.Dense" />
+                    </MudItem>
+                </MudGrid>
+            </div>
+
+            <!-- Supplier Section -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Supplier Information</MudText>
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudAutocomplete T="SupplierDto"
+                                         Value="_selectedSupplier"
+                                         ValueChanged="OnSupplierChanged"
+                                         SearchFunc="SearchSuppliers"
+                                         ToStringFunc="FormatSupplier"
+                                         Label="Supplier *"
+                                         Variant="Variant.Outlined"
+                                         Placeholder="Search supplier by name or code..."
+                                         Required="true"
+                                         Clearable="true"
+                                         CoerceValue="true"
+                                         ResetValueOnEmptyText="true"
+                                         Dense="true" Margin="Margin.Dense"
+                                         HelperText="Must be an active supplier" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.SupplierAddress" Label="Supplier Address *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="Auto-filled from supplier profile" /></MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.SupplierTin" Label="TIN (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Tax Identification Number" /></MudItem>
+                </MudGrid>
+            </div>
+
+            <!-- Delivery & Payment Section -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Delivery &amp; Payment</MudText>
+
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudSelect @bind-Value="_form.ModeOfProcurement" Label="Mode of Procurement *" Variant="Variant.Outlined" T="ModeOfProcurement" Required="true" Dense="true" Margin="Margin.Dense" Size="Size.Small">
+                            @foreach (var mode in Enum.GetValues<ModeOfProcurement>())
+                            {
+                                <MudSelectItem Value="mode">@FormatModeOfProcurement(mode)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudTextField @bind-Value="_form.PlaceOfDelivery" Label="Place of Delivery *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., Office, Warehouse, Site" /></MudItem>
+                    <MudItem xs="12" sm="6" md="4"><MudDatePicker @bind-Date="_form.DateOfDeliveryNullable" Label="Delivery Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" HelperText="Optional" /></MudItem>
+                </MudGrid>
+
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.DeliveryTerm" Label="Delivery Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., 30 days" /></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.PaymentTerm" Label="Payment Term *" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" HelperText="e.g., NET30, COD" /></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="e.g., CO, GAA, SEF" /></MudItem>
+                    <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="_form.OursBursNumber" Label="BUR/OURS No. (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" HelperText="Budget reference" /></MudItem>
+                </MudGrid>
+            </div>
+
+            <!-- Particulars Section -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="section-header">Particulars <span style="color: var(--mud-palette-error);">*</span> (Renovation / Repair / Fabrication — at least one required)</MudText>
+
+                @if (!_form.LineItems.Any(li => !string.IsNullOrWhiteSpace(li.Description)))
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">
+                        <strong>Add at least one item</strong> with description, quantity, and amount.
+                    </MudAlert>
+                }
+
+                <!-- Add New Particular Form -->
+                <MudPaper Outlined="true" Class="pa-3 mb-2" Style="@(_editingLineItemIndex.HasValue ? "border-left: 4px solid var(--mud-palette-warning)" : "")">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+                        <MudText Typo="Typo.subtitle2" Style="margin-bottom: 0;">
+                            @(_editingLineItemIndex.HasValue ? "Edit Item" : "Add Item")
+                        </MudText>
+                        <MudSpacer />
+                        <MudStack Row="true" Spacing="1">
+                            @if (_editingLineItemIndex.HasValue)
+                            {
+                                <MudButton Variant="Variant.Outlined"
+                                           OnClick="@(() => { _editingLineItemIndex = null; _newLineItem = new JoLineItemRow(); })"
+                                           Size="Size.Small"
+                                           Title="Cancel editing">
+                                    Cancel
+                                </MudButton>
+                            }
+                            <MudButton StartIcon="@(_editingLineItemIndex.HasValue ? Icons.Material.Filled.Save : Icons.Material.Filled.Add)"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="AddNewLineItem"
+                                       Size="Size.Small">
+                                @(_editingLineItemIndex.HasValue ? "Update Item" : "Add Item")
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                    <MudGrid Spacing="1">
+                        <MudItem xs="12" sm="6" md="5">
+                            <MudTextField @bind-Value="_newLineItem.Description"
+                                          Label="Description *"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Margin="Margin.Dense"
+                                          Placeholder="e.g., Repaint office partitions" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4" md="2">
+                            <MudTextField @bind-Value="_newLineItem.Unit"
+                                          Label="Unit"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Margin="Margin.Dense"
+                                          Placeholder="lot / job" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4" md="2">
+                            <MudNumericField @bind-Value="_newLineItem.Quantity"
+                                             Label="Qty *"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Margin="Margin.Dense"
+                                             Min="0.01m"
+                                             Placeholder="1" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4" md="3">
+                            <MudNumericField @bind-Value="_newLineItem.UnitCost"
+                                             Label="Unit Cost *"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Margin="Margin.Dense"
+                                             Min="0m"
+                                             Format="N2"
+                                             Placeholder="0.00" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                @if (_form.LineItems.Count > 0)
+                {
+                    <MudDataGrid Items="_form.LineItems" Hover="true" Striped="true" Dense="true" Elevation="1">
+                        <Columns>
+                            <PropertyColumn Property="x => x.Description" Title="Description" />
+                            <PropertyColumn Property="x => x.Unit" Title="Unit" />
+                            <PropertyColumn Property="x => x.Quantity" Title="Qty" Sortable="false" />
+                            <PropertyColumn Property="x => x.UnitCost" Title="Unit Cost" Format="N2" Sortable="false" />
+                            <PropertyColumn Property="x => x.Quantity * x.UnitCost" Title="Amount" Format="N2" Sortable="false" />
+                            <TemplateColumn Title="Actions" Sortable="false">
+                                <CellTemplate>
+                                    <MudStack Row="true" Spacing="0">
+                                        <MudTooltip Text="Edit this item">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                           Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           OnClick="@(() => EditLineItem(_form.LineItems.IndexOf(context.Item)))" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="Remove this item">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="@(async () => await RemoveLineItemAsync(_form.LineItems.IndexOf(context.Item)))" />
+                                        </MudTooltip>
+                                    </MudStack>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+                    </MudDataGrid>
+
+                    <MudPaper Class="pa-3 mt-2 total-amount-section">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 0;">Total Amount:</MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.h6" Style="margin-bottom: 0;"><strong>@Money.Symbol@_form.LineItems.Sum(li => li.Quantity * li.UnitCost).ToString("N2")</strong></MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </div>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            @(_editing is null ? "Create JO" : "Save Changes")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public JobOrderDto? JobOrder { get; set; }
+
+    private JobOrderDto? _editing;
+    private JoForm _form = new();
+    private JoLineItemRow _newLineItem = new();
+    private int? _editingLineItemIndex;
+    private bool _busy;
+    private PurchaseRequestSummaryDto? _selectedPurchaseRequest;
+    private SupplierDto? _selectedSupplier;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (JobOrder is not null)
+        {
+            BeginEdit(JobOrder);
+        }
+        await Task.CompletedTask;
+    }
+
+    private async Task<IEnumerable<PurchaseRequestSummaryDto>> SearchPurchaseRequests(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await PurchaseRequestClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                page: 1, pageSize: 20, ct: ct);
+            return result.Items ?? Enumerable.Empty<PurchaseRequestSummaryDto>();
+        }
+        catch
+        {
+            return Enumerable.Empty<PurchaseRequestSummaryDto>();
+        }
+    }
+
+    private async Task<IEnumerable<SupplierDto>> SearchSuppliers(string value, CancellationToken ct)
+    {
+        var result = await MasterDataClient.SuppliersListAsync(
+            keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+            pageNumber: 1,
+            pageSize: 20,
+            isActive: true,
+            cancellationToken: ct);
+
+        return result?.Items ?? Enumerable.Empty<SupplierDto>();
+    }
+
+    private async Task OnPurchaseRequestChanged(PurchaseRequestSummaryDto? pr)
+    {
+        _selectedPurchaseRequest = pr;
+        if (pr is null) return;
+
+        // Prefill the JO reference fields and particulars from the chosen PR (convenience — the user can edit).
+        _form.JobRequestNo = pr.PrNumber;
+        if (string.IsNullOrWhiteSpace(_form.RequisitioningOffice))
+            _form.RequisitioningOffice = pr.DepartmentName;
+
+        try
+        {
+            var full = await PurchaseRequestClient.GetAsync(pr.Id);
+            if (full is not null && full.LineItems.Count > 0)
+            {
+                _form.LineItems = full.LineItems
+                    .Select(li => new JoLineItemRow
+                    {
+                        Unit = li.UnitOfIssue,
+                        Description = li.ItemDescription,
+                        Quantity = li.Quantity,
+                        UnitCost = li.EstimatedUnitCost
+                    })
+                    .ToList();
+                Snackbar.Add($"Prefilled particulars from PR {pr.PrNumber}.", Severity.Success);
+            }
+        }
+        catch
+        {
+            // Prefill is best-effort convenience — if the PR detail can't be loaded the user can still
+            // enter particulars manually, so a failure here is intentionally non-fatal.
+        }
+    }
+
+    private Task OnSupplierChanged(SupplierDto? supplier)
+    {
+        _selectedSupplier = supplier;
+        _form.SupplierName = supplier?.Name ?? string.Empty;
+        _form.SupplierTin = supplier?.TinNo;
+
+        if (!string.IsNullOrWhiteSpace(supplier?.Address))
+            _form.SupplierAddress = supplier.Address;
+        else if (supplier is null)
+            _form.SupplierAddress = string.Empty;
+
+        return Task.CompletedTask;
+    }
+
+    private static string FormatPurchaseRequest(PurchaseRequestSummaryDto? request)
+    {
+        if (request is null) return string.Empty;
+        return string.IsNullOrWhiteSpace(request.Purpose)
+            ? request.PrNumber
+            : $"{request.PrNumber} - {request.Purpose}";
+    }
+
+    private static string FormatSupplier(SupplierDto? supplier)
+    {
+        if (supplier is null) return string.Empty;
+        return string.IsNullOrWhiteSpace(supplier.Code)
+            ? supplier.Name
+            : $"{supplier.Name} ({supplier.Code})";
+    }
+
+    private void BeginEdit(JobOrderDto jo)
+    {
+        _editing = jo;
+        _newLineItem = new JoLineItemRow();
+        _selectedSupplier = new SupplierDto
+        {
+            Id = jo.SupplierId,
+            Code = string.Empty,
+            Name = jo.SupplierName,
+            TinNo = jo.SupplierTin,
+            Address = jo.SupplierAddress,
+            IsActive = true
+        };
+
+        _form = new JoForm
+        {
+            JobRequestNo = jo.JobRequestNo,
+            RequisitioningOffice = jo.RequisitioningOffice,
+            SupplierName = jo.SupplierName,
+            SupplierAddress = jo.SupplierAddress,
+            SupplierTin = jo.SupplierTin,
+            ModeOfProcurement = jo.ModeOfProcurement,
+            PlaceOfDelivery = jo.PlaceOfDelivery,
+            DateOfDeliveryNullable = jo.DateOfDelivery?.ToDateTime(TimeOnly.MinValue),
+            DeliveryTerm = jo.DeliveryTerm,
+            PaymentTerm = jo.PaymentTerm,
+            FundCluster = jo.FundCluster,
+            OursBursNumber = jo.OursBursNumber,
+            LineItems = jo.LineItems.Select(li => new JoLineItemRow
+            {
+                Unit = li.Unit,
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitCost = li.UnitCost
+            }).ToList()
+        };
+    }
+
+    private async Task SaveAsync()
+    {
+        var validationErrors = GetFormValidationErrors();
+        if (validationErrors.Count > 0)
+        {
+            Snackbar.Add(string.Join(" • ", validationErrors), Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var lineItems = _form.LineItems
+                .Where(li => !string.IsNullOrWhiteSpace(li.Description))
+                .Select(li => new JobOrderLineItemRequest(li.Unit, li.Description, li.Quantity, li.UnitCost))
+                .ToList();
+
+            if (_editing is null)
+            {
+                await CreateWithDuplicateRetryAsync(lineItems);
+                Snackbar.Add("Job order created.", Severity.Success);
+            }
+            else
+            {
+                await Client.UpdateAsync(_editing.Id, new UpdateJobOrderCommand(
+                    _editing.Id,
+                    string.IsNullOrWhiteSpace(_form.JobRequestNo) ? null : _form.JobRequestNo,
+                    string.IsNullOrWhiteSpace(_form.RequisitioningOffice) ? null : _form.RequisitioningOffice,
+                    _selectedSupplier!.Id,
+                    _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
+                    _form.ModeOfProcurement, _form.PlaceOfDelivery,
+                    ToDateOnly(_form.DateOfDeliveryNullable),
+                    _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems));
+                Snackbar.Add("Job order updated.", Severity.Success);
+            }
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) { Snackbar.Add($"Save failed: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task CreateWithDuplicateRetryAsync(List<JobOrderLineItemRequest> lineItems)
+    {
+        CreateJobOrderCommand Build(bool allowDuplicate) => new(
+            _selectedPurchaseRequest?.Id,
+            string.IsNullOrWhiteSpace(_form.JobRequestNo) ? null : _form.JobRequestNo,
+            string.IsNullOrWhiteSpace(_form.RequisitioningOffice) ? null : _form.RequisitioningOffice,
+            _selectedSupplier!.Id,
+            _form.SupplierName, _form.SupplierAddress, _form.SupplierTin,
+            _form.ModeOfProcurement, _form.PlaceOfDelivery,
+            ToDateOnly(_form.DateOfDeliveryNullable),
+            _form.DeliveryTerm, _form.PaymentTerm, _form.FundCluster, _form.OursBursNumber, lineItems,
+            allowDuplicate);
+
+        try
+        {
+            await Client.CreateAsync(Build(false));
+        }
+        catch (DuplicateJobOrderException dup)
+        {
+            var confirmed = await DialogService.ShowMessageBox(
+                "Possible Duplicate Job Order",
+                $"{dup.Message} Do you still want to create this JO?",
+                yesText: "Create anyway",
+                cancelText: "Cancel");
+
+            if (confirmed is not true)
+                throw new OperationCanceledException("Cancelled by user after duplicate warning.");
+
+            await Client.CreateAsync(Build(true));
+        }
+    }
+
+    private void AddNewLineItem()
+    {
+        if (string.IsNullOrWhiteSpace(_newLineItem.Description))
+        {
+            Snackbar.Add("Description is required.", Severity.Warning);
+            return;
+        }
+        if (_newLineItem.Quantity <= 0)
+        {
+            Snackbar.Add("Quantity must be greater than 0.", Severity.Warning);
+            return;
+        }
+        if (_newLineItem.UnitCost < 0)
+        {
+            Snackbar.Add("Unit Cost cannot be negative.", Severity.Warning);
+            return;
+        }
+
+        if (_editingLineItemIndex.HasValue)
+        {
+            var idx = _editingLineItemIndex.Value;
+            if (idx >= 0 && idx < _form.LineItems.Count)
+                _form.LineItems[idx] = Clone(_newLineItem);
+            _editingLineItemIndex = null;
+        }
+        else
+        {
+            _form.LineItems.Add(Clone(_newLineItem));
+        }
+
+        _newLineItem = new JoLineItemRow();
+    }
+
+    private void EditLineItem(int idx)
+    {
+        if (idx < 0 || idx >= _form.LineItems.Count) return;
+        _newLineItem = Clone(_form.LineItems[idx]);
+        _editingLineItemIndex = idx;
+        Snackbar.Add("Editing item. Click 'Update Item' to save changes.", Severity.Info);
+    }
+
+    private async Task RemoveLineItemAsync(int idx)
+    {
+        if (idx < 0 || idx >= _form.LineItems.Count) return;
+
+        var item = _form.LineItems[idx];
+        var confirmed = await DialogService.ShowMessageBox(
+            "Remove Item",
+            $"Remove \"{item.Description}\"? This action cannot be undone.",
+            yesText: "Remove",
+            cancelText: "Cancel");
+
+        if (confirmed is not true) return;
+
+        _form.LineItems.RemoveAt(idx);
+        _editingLineItemIndex = null;
+        Snackbar.Add("Item removed.", Severity.Info);
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private List<string> GetFormValidationErrors()
+    {
+        var errors = new List<string>();
+
+        if (_selectedSupplier is null)
+            errors.Add("Select a Supplier");
+
+        if (string.IsNullOrWhiteSpace(_form.SupplierAddress))
+            errors.Add("Enter Supplier Address");
+
+        if (string.IsNullOrWhiteSpace(_form.PlaceOfDelivery))
+            errors.Add("Enter Place of Delivery");
+
+        if (string.IsNullOrWhiteSpace(_form.DeliveryTerm))
+            errors.Add("Enter Delivery Term");
+
+        if (string.IsNullOrWhiteSpace(_form.PaymentTerm))
+            errors.Add("Enter Payment Term");
+
+        var validItems = _form.LineItems.Where(li => !string.IsNullOrWhiteSpace(li.Description) && li.Quantity > 0).ToList();
+        if (validItems.Count == 0)
+            errors.Add("Add at least one item with description and quantity");
+
+        return errors;
+    }
+
+    private static JoLineItemRow Clone(JoLineItemRow r) => new()
+    {
+        Unit = r.Unit,
+        Description = r.Description,
+        Quantity = r.Quantity,
+        UnitCost = r.UnitCost
+    };
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private sealed class JoForm
+    {
+        public string? JobRequestNo { get; set; }
+        public string? RequisitioningOffice { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string SupplierAddress { get; set; } = string.Empty;
+        public string? SupplierTin { get; set; }
+        public ModeOfProcurement ModeOfProcurement { get; set; } = ModeOfProcurement.SmallValueProcurement;
+        public string PlaceOfDelivery { get; set; } = string.Empty;
+        public DateTime? DateOfDeliveryNullable { get; set; }
+        public string DeliveryTerm { get; set; } = "30 days";
+        public string PaymentTerm { get; set; } = "30 days";
+        public string? FundCluster { get; set; }
+        public string? OursBursNumber { get; set; }
+        public List<JoLineItemRow> LineItems { get; set; } = [];
+    }
+
+    private sealed class JoLineItemRow
+    {
+        public string? Unit { get; set; } = "lot";
+        public string Description { get; set; } = string.Empty;
+        public decimal Quantity { get; set; } = 1;
+        public decimal UnitCost { get; set; }
+    }
+
+    private static string FormatModeOfProcurement(ModeOfProcurement mode) => mode switch
+    {
+        ModeOfProcurement.DirectAcquisition => "Direct Acquisition",
+        ModeOfProcurement.SmallValueProcurement => "Small Value Procurement (SVP)",
+        ModeOfProcurement.PublicBidding => "Public Bidding",
+        ModeOfProcurement.NegotiatedProcurement => "Negotiated Procurement",
+        ModeOfProcurement.ShoppingA => "Shopping (Two Quotes)",
+        ModeOfProcurement.ShoppingB => "Shopping (Single Quote)",
+        _ => mode.ToString()
+    };
+}
+
+<style>
+.section-header {
+    font-weight: 600;
+    color: var(--mud-palette-primary);
+    margin-bottom: 8px;
+}
+
+.total-amount-section {
+    background: var(--mud-palette-primary);
+    color: white;
+}
+</style>

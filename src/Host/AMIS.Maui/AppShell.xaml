@@ -6,6 +6,7 @@
        xmlns:scan="clr-namespace:AMIS.Maui.Features.Scan"
        xmlns:profile="clr-namespace:AMIS.Maui.Features.Profile"
        xmlns:count="clr-namespace:AMIS.Maui.Features.PhysicalCount"
+       xmlns:chat="clr-namespace:AMIS.Maui.Features.Chat"
        x:Class="AMIS.Maui.AppShell"
        Shell.FlyoutBehavior="Disabled">
 
@@ -26,6 +27,10 @@
                       Icon="scan.png"
                       ContentTemplate="{DataTemplate count:PhysicalCountSessionListPage}"
                       Route="PhysicalCountSessionListPage" />
+        <ShellContent Title="Chat"
+                      Icon="home.png"
+                      ContentTemplate="{DataTemplate chat:ChatChannelListPage}"
+                      Route="ChatChannelListPage" />
         <ShellContent Title="Profile"
                       Icon="profile.png"
                       ContentTemplate="{DataTemplate profile:ProfilePage}"

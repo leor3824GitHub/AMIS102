@@ -35,6 +35,19 @@ public static class ProcurementPermissions
         public const string Cancel = "Permissions.Procurement.PurchaseOrders.Cancel";
     }
 
+    public static class JobOrders
+    {
+        public const string View = "Permissions.Procurement.JobOrders.View";
+        public const string Create = "Permissions.Procurement.JobOrders.Create";
+        public const string Update = "Permissions.Procurement.JobOrders.Update";
+        public const string Submit = "Permissions.Procurement.JobOrders.Submit";
+        public const string CertifyFundsAvailable = "Permissions.Procurement.JobOrders.CertifyFundsAvailable";
+        public const string Issue = "Permissions.Procurement.JobOrders.Issue";
+        public const string Inspect = "Permissions.Procurement.JobOrders.Inspect";
+        public const string Accept = "Permissions.Procurement.JobOrders.Accept";
+        public const string Cancel = "Permissions.Procurement.JobOrders.Cancel";
+    }
+
     public static class SignedDocuments
     {
         public const string View = "Permissions.Procurement.SignedDocuments.View";

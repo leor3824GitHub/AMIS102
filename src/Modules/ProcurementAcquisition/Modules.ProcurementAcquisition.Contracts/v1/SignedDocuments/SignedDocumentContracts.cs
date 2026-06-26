@@ -17,7 +17,11 @@ public enum ProcurementDocumentType
     /// <summary>A single supplier's wet-signed Request for Quotation, keyed by its <c>CanvassQuotation</c> Id
     /// (up to one per quotation, so up to 3 per canvass). Unlike the Abstract of Canvass, the source document
     /// exists as soon as the quotation is recorded, so it may be uploaded at any non-cancelled canvass stage.</summary>
-    RequestForQuotation = 4
+    RequestForQuotation = 4,
+
+    /// <summary>A wet-signed Job Order (works: renovation / repair / fabrication). Signed at issue; remains a
+    /// signed record through inspection and acceptance.</summary>
+    JobOrder = 5
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

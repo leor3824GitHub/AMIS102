@@ -1,0 +1,84 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders
+@using AMIS.Blazor.ApiClient
+@inject IJobOrderClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Record the <b>Supply Officer</b> acceptance of the completed work. Your name and designation are
+                taken from your signed-in profile.
+            </MudAlert>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_invoiceNo" Label="Invoice No. (optional)" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" MaxLength="64" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_dateReceived" Label="Date Received" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-center">
+                    <MudSwitch @bind-Value="_isCompleteDelivery" Color="Color.Success" Label="Complete delivery" />
+                </MudItem>
+                @if (!_isCompleteDelivery)
+                {
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_partialNote" Label="Partial delivery — specify quantity/details *" Variant="Variant.Outlined"
+                                      Lines="2" Dense="true" Margin="Margin.Dense" MaxLength="500" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AcceptAsync" Disabled="_busy">
+            @if (_busy) { <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" /> }
+            Accept Work
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public JobOrderDto JobOrder { get; set; } = default!;
+
+    private string? _invoiceNo;
+    private DateTime? _dateReceived = DateTime.Today;
+    private bool _isCompleteDelivery = true;
+    private string? _partialNote;
+    private bool _busy;
+
+    private async Task AcceptAsync()
+    {
+        if (!_isCompleteDelivery && string.IsNullOrWhiteSpace(_partialNote))
+        {
+            Snackbar.Add("Specify the partial delivery quantity/details.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var result = await Client.AcceptAsync(JobOrder.Id, new AcceptJobOrderCommand(
+                JobOrder.Id,
+                _invoiceNo,
+                ToDateOnly(_dateReceived),
+                _isCompleteDelivery,
+                _isCompleteDelivery ? null : _partialNote));
+
+            Snackbar.Add("Acceptance recorded. Job order completed.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Acceptance failed: {ex.Message}", Severity.Error);
+        }
+        finally { _busy = false; }
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? d) => d.HasValue ? DateOnly.FromDateTime(d.Value) : null;
+
+    private void Cancel() => Dialog.Cancel();
+}

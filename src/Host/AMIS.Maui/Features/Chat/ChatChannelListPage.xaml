@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.Chat"
+             xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             x:DataType="vm:ChatChannelListViewModel"
+             x:Class="AMIS.Maui.Features.Chat.ChatChannelListPage"
+             Title="Chat"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Error banner -->
+        <Border Grid.Row="0"
+                IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 10"
+                BackgroundColor="{StaticResource DangerLight}"
+                Padding="14,10"
+                Margin="16,12,16,0">
+            <Label Text="{Binding ErrorMessage}" FontSize="12" TextColor="{StaticResource Danger}" />
+        </Border>
+
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
+            <CollectionView ItemsSource="{Binding Channels}"
+                            EmptyView="No channels yet.">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="svc:ChatChannelDto">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="16,4" Padding="16,14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ChatChannelListViewModel}}, Path=OpenChannelCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                                <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding DisplayName}"
+                                       FontFamily="InterSemiBold" FontSize="15" />
+                                <Border Grid.Row="0" Grid.Column="1"
+                                        Stroke="Transparent"
+                                        StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                        Padding="8,3">
+                                    <Label Text="{Binding ScopeLabel}"
+                                           FontFamily="InterSemiBold" FontSize="11"
+                                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                </Border>
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding Topic}"
+                                       Style="{StaticResource CaptionStyle}"
+                                       IsVisible="{Binding Topic, Converter={StaticResource IsNotNullConverter}}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

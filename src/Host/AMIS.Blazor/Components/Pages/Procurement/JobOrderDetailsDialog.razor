@@ -1,0 +1,201 @@
+@using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
+                <MudText Typo="Typo.body2">@JobOrder.JoDate.ToString("MMMM dd, yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Status</MudText>
+                <div Class="mt-1">@JoStatusChip(JobOrder.Status)</div>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Mode of Procurement</MudText>
+                <MudText Typo="Typo.body2">@JobOrder.ModeOfProcurement.ToString().Replace("_", " ")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Total Amount</MudText>
+                <MudText Typo="Typo.body2" Style="font-weight: 600;">@Money.Symbol@JobOrder.TotalAmount.ToString("N2")</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Job Request No.</MudText>
+                <MudText Typo="Typo.body2">@(JobOrder.JobRequestNo ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Requisitioning Office/Dept.</MudText>
+                <MudText Typo="Typo.body2">@(JobOrder.RequisitioningOffice ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Delivery Term</MudText>
+                <MudText Typo="Typo.body2">@JobOrder.DeliveryTerm</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Payment Term</MudText>
+                <MudText Typo="Typo.body2">@JobOrder.PaymentTerm</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="6" sm="6">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Supplier</MudText>
+                <MudText Typo="Typo.body2">@JobOrder.SupplierName</MudText>
+                <MudText Typo="Typo.caption">@JobOrder.SupplierAddress</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Place of Delivery</MudText>
+                <MudText Typo="Typo.body2">@JobOrder.PlaceOfDelivery</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudDivider Class="my-3" />
+        <MudText Typo="Typo.subtitle2" Style="margin-bottom: 8px;">Particulars</MudText>
+        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+            <thead>
+                <tr>
+                    <th style="width:40px">#</th>
+                    <th>Description</th>
+                    <th style="width:70px">Unit</th>
+                    <th style="text-align:right; width:70px">Qty</th>
+                    <th style="text-align:right; width:100px">Unit Cost</th>
+                    <th style="text-align:right; width:100px">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var li in JobOrder.LineItems)
+                {
+                    <tr>
+                        <td>@li.ItemNo</td>
+                        <td><MudText Typo="Typo.body2">@li.Description</MudText></td>
+                        <td>@(li.Unit ?? "—")</td>
+                        <td style="text-align:right">@li.Quantity.ToString("N2")</td>
+                        <td style="text-align:right">@Money.Symbol@li.UnitCost.ToString("N2")</td>
+                        <td style="text-align:right"><b>@Money.Symbol@li.Amount.ToString("N2")</b></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" style="text-align:right"><b>Total:</b></td>
+                    <td style="text-align:right"><b style="font-size:1.1em">@Money.Symbol@JobOrder.TotalAmount.ToString("N2")</b></td>
+                </tr>
+            </tfoot>
+        </MudSimpleTable>
+        @if (!string.IsNullOrWhiteSpace(JobOrder.TotalAmountInWords))
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2" Style="font-style:italic;">
+                <strong>Total in words:</strong> @JobOrder.TotalAmountInWords
+            </MudText>
+        }
+
+        <MudDivider Class="my-3" />
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Funds Available (Accountant)</MudText>
+                <MudText Typo="Typo.body2">
+                    @(string.IsNullOrWhiteSpace(JobOrder.FundsAvailableCertifiedByName)
+                        ? "— not yet certified —"
+                        : $"{JobOrder.FundsAvailableCertifiedByName.ToUpperInvariant()}{(JobOrder.FundsAvailableCertifiedOnUtc is null ? "" : $" • {JobOrder.FundsAvailableCertifiedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">Approved By (Authorized Official)</MudText>
+                <MudText Typo="Typo.body2">
+                    @(string.IsNullOrWhiteSpace(JobOrder.IssuedByName)
+                        ? "— not yet issued —"
+                        : $"{JobOrder.IssuedByName.ToUpperInvariant()}{(JobOrder.IssuedOnUtc is null ? "" : $" • {JobOrder.IssuedOnUtc.Value.ToLocalTime():MM/dd/yyyy}")}")
+                </MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">BUR/ORS No.</MudText>
+                <MudText Typo="Typo.body2">@(JobOrder.OursBursNumber ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">BUR/ORS Date</MudText>
+                <MudText Typo="Typo.body2">@(JobOrder.OursBursDate?.ToString("MM/dd/yyyy") ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Fund Cluster</MudText>
+                <MudText Typo="Typo.body2">@(JobOrder.FundCluster ?? "—")</MudText>
+            </MudItem>
+        </MudGrid>
+
+        @if (JobOrder.InspectedOnUtc is not null || JobOrder.AcceptedOnUtc is not null)
+        {
+            <MudDivider Class="my-3" />
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2">Inspection (C.O./F.O. Inspector)</MudText>
+                    @if (JobOrder.InspectedOnUtc is null)
+                    {
+                        <MudText Typo="Typo.body2">— not yet inspected —</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2">
+                            @(JobOrder.InspectedByName?.ToUpperInvariant() ?? "—") • @JobOrder.InspectedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy")
+                        </MudText>
+                        <MudText Typo="Typo.caption">
+                            @(JobOrder.FoundInOrder ? "Inspected, verified and found in order." : "See findings.")
+                        </MudText>
+                        @if (!string.IsNullOrWhiteSpace(JobOrder.InspectionFindings))
+                        {
+                            <MudText Typo="Typo.caption" Style="font-style:italic;">@JobOrder.InspectionFindings</MudText>
+                        }
+                    }
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2">Acceptance (Supply Officer)</MudText>
+                    @if (JobOrder.AcceptedOnUtc is null)
+                    {
+                        <MudText Typo="Typo.body2">— not yet accepted —</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2">
+                            @(JobOrder.AcceptedByName?.ToUpperInvariant() ?? "—") • @JobOrder.AcceptedOnUtc.Value.ToLocalTime().ToString("MM/dd/yyyy")
+                        </MudText>
+                        <MudText Typo="Typo.caption">
+                            @(JobOrder.IsCompleteDelivery ? "Complete delivery." : $"Partial delivery: {JobOrder.PartialDeliveryNote}")
+                        </MudText>
+                    }
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public JobOrderDto JobOrder { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+
+    private static RenderFragment JoStatusChip(JobOrderStatus status) => __builder =>
+    {
+        var (color, icon) = status switch
+        {
+            JobOrderStatus.Draft => (Color.Default, Icons.Material.Filled.Edit),
+            JobOrderStatus.PendingFundsAvailable => (Color.Warning, Icons.Material.Filled.AccountBalance),
+            JobOrderStatus.PendingApproval => (Color.Warning, Icons.Material.Filled.HourglassBottom),
+            JobOrderStatus.Issued => (Color.Info, Icons.Material.Filled.Send),
+            JobOrderStatus.Inspected => (Color.Info, Icons.Material.Filled.FactCheck),
+            JobOrderStatus.Completed => (Color.Success, Icons.Material.Filled.CheckCircle),
+            JobOrderStatus.Cancelled => (Color.Error, Icons.Material.Filled.Cancel),
+            _ => (Color.Default, Icons.Material.Filled.Help)
+        };
+        __builder.OpenComponent<MudChip<string>>(0);
+        __builder.AddAttribute(1, "Size", Size.Small);
+        __builder.AddAttribute(2, "Color", color);
+        __builder.AddAttribute(3, "Icon", icon);
+        __builder.AddAttribute(4, "ChildContent", (RenderFragment)(b => b.AddContent(0, status.ToString())));
+        __builder.CloseComponent();
+    };
+}

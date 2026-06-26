@@ -13,11 +13,16 @@ public sealed record ChatChannelDto(
     DateTimeOffset? LastMessageAtUtc,
     DateTimeOffset CreatedOnUtc)
 {
-    public string DisplayName =>
-        !string.IsNullOrWhiteSpace(Name) ? Name!
-        : string.Equals(Type, "Direct", StringComparison.OrdinalIgnoreCase) ? "Direct message"
-        : string.Equals(Type, "GroupDm", StringComparison.OrdinalIgnoreCase) ? "Group"
-        : "Channel";
+    public string DisplayName
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Name)) return Name!;
+            if (string.Equals(Type, "Direct", StringComparison.OrdinalIgnoreCase)) return "Direct message";
+            if (string.Equals(Type, "GroupDm", StringComparison.OrdinalIgnoreCase)) return "Group";
+            return "Channel";
+        }
+    }
 
     public bool IsGlobal => string.Equals(Scope, "Global", StringComparison.OrdinalIgnoreCase);
 
