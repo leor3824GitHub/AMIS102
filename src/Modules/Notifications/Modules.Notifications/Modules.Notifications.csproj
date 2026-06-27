@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>AMIS.Modules.Notifications</RootNamespace>
+		<AssemblyName>AMIS.Modules.Notifications</AssemblyName>
+		<PackageId>AMIS.Modules.Notifications</PackageId>
+		<NoWarn>$(NoWarn);CA1031;CA1812;CA2208;S3267;S3928;CA1062;CA1304;CA1308;CA1311;CA1862;CA2227;CA1873</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Expose internal types (handlers, services, consumers) to the test project. -->
+		<InternalsVisibleTo Include="Notifications.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Mediator.Abstractions" />
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\BuildingBlocks\Caching\Caching.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Eventing\Eventing.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
+		<ProjectReference Include="..\Modules.Notifications.Contracts\Modules.Notifications.Contracts.csproj" />
+		<!-- Consumes the @mention integration event Chat already publishes. Contracts-only reference. -->
+		<ProjectReference Include="..\..\Chat\Modules.Chat.Contracts\Modules.Chat.Contracts.csproj" />
+	</ItemGroup>
+
+</Project>

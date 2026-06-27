@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<RootNamespace>AMIS.Modules.Notifications.Contracts</RootNamespace>
+		<AssemblyName>AMIS.Modules.Notifications.Contracts</AssemblyName>
+		<PackageId>AMIS.Modules.Notifications.Contracts</PackageId>
+		<NoWarn>$(NoWarn);CA1002;CA1056;CS1572;S2094</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Mediator.Abstractions" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\BuildingBlocks\Eventing.Abstractions\Eventing.Abstractions.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Shared\Shared.csproj" />
+	</ItemGroup>
+
+</Project>

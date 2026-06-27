@@ -27,6 +27,7 @@
   <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister\Modules.AssetRegister.csproj" />
   <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Modules.ProcurementPlanning.csproj" />
 	  <ProjectReference Include="..\..\Modules\Chat\Modules.Chat\Modules.Chat.csproj" />
+	  <ProjectReference Include="..\..\Modules\Notifications\Modules.Notifications\Modules.Notifications.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
