@@ -278,6 +278,10 @@ internal static class ApiClientRegistration
         services.AddTransient<IChatClient>(sp =>
             new ChatClient(ResolveClient(sp)));
 
+        // Notifications module manual client
+        services.AddTransient<INotificationsClient>(sp =>
+            new NotificationsClient(ResolveClient(sp)));
+
         return services;
     }
 }

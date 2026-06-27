@@ -1,0 +1,133 @@
+@page "/notifications"
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
+@using AMIS.Blazor.Services.Notifications
+@using AMIS.Modules.Notifications.Contracts.Permissions
+@using AMIS.Modules.Notifications.Contracts.v1.DTOs
+@inject INotificationsClient NotificationsClient
+@inject INotificationState State
+@inject IUserProfileState UserProfileState
+@inject NavigationManager Navigation
+
+<PageTitle>Notifications</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+    @if (!_canView)
+    {
+        <MudAlert Severity="Severity.Warning">You don't have permission to view notifications.</MudAlert>
+    }
+    else
+    {
+        <div class="d-flex align-center justify-space-between mb-3">
+            <MudText Typo="Typo.h6">Notifications</MudText>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudSwitch T="bool" Value="_unreadOnly" ValueChanged="ToggleUnreadOnlyAsync"
+                           Color="Color.Primary" Label="Unread only" />
+                <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.DoneAll" OnClick="MarkAllReadAsync">
+                    Mark all read
+                </MudButton>
+            </MudStack>
+        </div>
+
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-4" />
+        }
+        else if (_items.Count == 0)
+        {
+            <MudPaper Class="pa-8" Elevation="0" Style="text-align:center;">
+                <MudIcon Icon="@Icons.Material.Outlined.NotificationsNone" Size="Size.Large" Color="Color.Tertiary" />
+                <MudText Typo="Typo.body1" Color="Color.Tertiary" Class="mt-2">You're all caught up.</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Elevation="1">
+                @foreach (var n in _items)
+                {
+                    <div class="d-flex align-center pa-3" style="@RowStyle(n)">
+                        <div style="flex:1;cursor:pointer;" @onclick="@(() => OpenAsync(n))">
+                            <MudText Typo="Typo.body1" Style="@(n.IsRead ? string.Empty : "font-weight:600;")">@n.Title</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Tertiary">@n.Body</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Tertiary">@n.CreatedOnUtc.LocalDateTime.ToString("g") · @n.Source</MudText>
+                        </div>
+                        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small"
+                                       OnClick="@(() => DismissAsync(n.Id))" Title="Dismiss" />
+                    </div>
+                    <MudDivider />
+                }
+            </MudPaper>
+        }
+    }
+</MudContainer>
+
+@code {
+    private bool _canView;
+    private bool _loading = true;
+    private bool _unreadOnly;
+    private List<NotificationDto> _items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _canView = UserProfileState.Permissions.Contains(NotificationPermissions.Notifications.View);
+        if (_canView)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = [.. await NotificationsClient.ListAsync(_unreadOnly, take: 200)];
+        }
+        catch
+        {
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ToggleUnreadOnlyAsync(bool value)
+    {
+        _unreadOnly = value;
+        await LoadAsync();
+    }
+
+    private async Task OpenAsync(NotificationDto notification)
+    {
+        if (!notification.IsRead)
+        {
+            try { await NotificationsClient.MarkReadAsync(notification.Id); } catch { /* optimistic */ }
+            State.MarkRead(notification.Id);   // keep the app-bar bell badge in sync
+        }
+
+        if (!string.IsNullOrWhiteSpace(notification.Link))
+        {
+            Navigation.NavigateTo(notification.Link);
+        }
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        try { await NotificationsClient.MarkAllReadAsync(); } catch { /* optimistic */ }
+        State.MarkAllRead();
+        await LoadAsync();
+    }
+
+    private async Task DismissAsync(Guid id)
+    {
+        try { await NotificationsClient.DismissAsync(id); } catch { /* optimistic */ }
+        State.Remove(id);
+        await LoadAsync();
+    }
+
+    private static string RowStyle(NotificationDto n) =>
+        n.IsRead ? string.Empty : "background:var(--mud-palette-action-default-hover);";
+}

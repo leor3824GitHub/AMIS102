@@ -1,6 +1,7 @@
 using System.Net.Http;
 using AMIS.Blazor.Services.Api;
 using AMIS.Modules.Chat.Contracts.v1.DTOs;
+using AMIS.Modules.Notifications.Contracts.v1.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -29,6 +30,7 @@ internal sealed class ChatHubClient : IAsyncDisposable
     private const string ChatTypingStartedEvent = "ChatTypingStarted";
     private const string PresenceChangedEvent = "PresenceChanged";
     private const string ChatMentionedEvent = "ChatMentioned";
+    private const string NotificationCreatedEvent = "NotificationCreated";
 
     private readonly ICircuitTokenCache _tokenCache;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -56,6 +58,9 @@ internal sealed class ChatHubClient : IAsyncDisposable
     public event Action<TypingNotification>? TypingStarted;
     public event Action<PresenceNotification>? PresenceChanged;
     public event Action<MentionNotification>? Mentioned;
+
+    /// <summary>Raised when a workflow notification is pushed to the current user's bell (e.g. inspection requested).</summary>
+    public event Action<NotificationDto>? NotificationReceived;
 
     /// <summary>Raised when the underlying connection state changes (connect/reconnect/close).</summary>
     public event Action? ConnectionStateChanged;
@@ -106,6 +111,7 @@ internal sealed class ChatHubClient : IAsyncDisposable
         _connection.On<TypingNotification>(ChatTypingStartedEvent, notification => TypingStarted?.Invoke(notification));
         _connection.On<PresenceNotification>(PresenceChangedEvent, notification => PresenceChanged?.Invoke(notification));
         _connection.On<MentionNotification>(ChatMentionedEvent, notification => Mentioned?.Invoke(notification));
+        _connection.On<NotificationDto>(NotificationCreatedEvent, notification => NotificationReceived?.Invoke(notification));
 
         _connection.Reconnecting += _ => { ConnectionStateChanged?.Invoke(); return Task.CompletedTask; };
         _connection.Reconnected += _ => { ConnectionStateChanged?.Invoke(); return Task.CompletedTask; };

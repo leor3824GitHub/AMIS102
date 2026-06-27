@@ -28,21 +28,18 @@ public sealed class ListMyNotificationsQueryHandler : IQueryHandler<ListMyNotifi
         var userId = _currentUser.GetUserId().ToString();
         var take = Math.Clamp(query.Take, 1, MaxTake);
 
-        var rows = _dbContext.Notifications
+        var rows = await _dbContext.Notifications
             .AsNoTracking()
-            .Where(n => n.RecipientUserId == userId);
-
-        if (query.UnreadOnly)
-        {
-            rows = rows.Where(n => !n.IsRead);
-        }
-
-        var result = await rows
-            .OrderByDescending(n => n.CreatedOnUtc)
-            .Take(take)
+            .Where(n => n.RecipientUserId == userId && (!query.UnreadOnly || !n.IsRead))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return result.Select(n => n.ToDto()).ToList();
+        // Order + page client-side: SQLite (used in tests) cannot ORDER BY a DateTimeOffset, and a per-user
+        // inbox is small. Mirrors ListMyChannelsQueryHandler. Postgres would sort this in-DB equally well.
+        return rows
+            .OrderByDescending(n => n.CreatedOnUtc)
+            .Take(take)
+            .Select(n => n.ToDto())
+            .ToList();
     }
 }

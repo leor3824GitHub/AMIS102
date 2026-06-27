@@ -53,6 +53,7 @@ else
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
             <MudSpacer />
             <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+            <NotificationBell />
             <AMISAccountMenu UserName="@_userName"
                             UserEmail="@_userEmail"
                             UserRole="@_userRole"

@@ -1,0 +1,118 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services.Chat
+@using AMIS.Blazor.Services.Notifications
+@using AMIS.Modules.Notifications.Contracts.v1.DTOs
+@implements IDisposable
+@inject INotificationsClient NotificationsClient
+@inject INotificationState State
+@inject ChatHubClient Hub
+@inject NavigationManager Navigation
+
+<MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true">
+    <ActivatorContent>
+        <MudBadge Content="@State.UnreadCount" Color="Color.Error" Overlap="true" Bordered="true"
+                  Visible="@(State.UnreadCount > 0)">
+            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" />
+        </MudBadge>
+    </ActivatorContent>
+    <ChildContent>
+        <div style="min-width:340px;max-width:380px;">
+            <div class="d-flex align-center justify-space-between px-3 py-2">
+                <MudText Typo="Typo.subtitle2">Notifications</MudText>
+                @if (State.UnreadCount > 0)
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="MarkAllReadAsync">Mark all read</MudButton>
+                }
+            </div>
+            <MudDivider />
+            @if (State.Recent.Count == 0)
+            {
+                <div class="px-3 py-6" style="text-align:center;">
+                    <MudText Typo="Typo.body2" Color="Color.Tertiary">You're all caught up.</MudText>
+                </div>
+            }
+            else
+            {
+                @foreach (var n in State.Recent)
+                {
+                    <div class="px-3 py-2" style="@RowStyle(n)" @onclick="@(() => OpenAsync(n))">
+                        <MudText Typo="Typo.body2" Style="@(n.IsRead ? string.Empty : "font-weight:600;")">@n.Title</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">@n.Body</MudText>
+                    </div>
+                    <MudDivider />
+                }
+            }
+            <div class="d-flex justify-center py-1">
+                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="SeeAll">See all</MudButton>
+            </div>
+        </div>
+    </ChildContent>
+</MudMenu>
+
+@code {
+    protected override void OnInitialized()
+    {
+        State.OnChanged += OnStateChanged;
+        Hub.NotificationReceived += OnNotificationReceived;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Idempotent — the Chat page may already have started this circuit's hub connection.
+            await Hub.StartAsync();
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var count = await NotificationsClient.GetUnreadCountAsync();
+            var recent = await NotificationsClient.ListAsync(unreadOnly: false, take: 15);
+            State.SetInitial(count, recent);
+        }
+        catch
+        {
+            // Bell degrades to empty if the API is unavailable; next push/load recovers it.
+        }
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    // Hub callback runs off the render thread; State.Add raises OnChanged which marshals the re-render.
+    private void OnNotificationReceived(NotificationDto notification) => State.Add(notification);
+
+    private async Task OpenAsync(NotificationDto notification)
+    {
+        if (!notification.IsRead)
+        {
+            try { await NotificationsClient.MarkReadAsync(notification.Id); } catch { /* optimistic */ }
+            State.MarkRead(notification.Id);
+        }
+
+        if (!string.IsNullOrWhiteSpace(notification.Link))
+        {
+            Navigation.NavigateTo(notification.Link);
+        }
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        try { await NotificationsClient.MarkAllReadAsync(); } catch { /* optimistic */ }
+        State.MarkAllRead();
+    }
+
+    private void SeeAll() => Navigation.NavigateTo("/notifications");
+
+    private static string RowStyle(NotificationDto n) =>
+        "cursor:pointer;" + (n.IsRead ? string.Empty : "background:var(--mud-palette-action-default-hover);");
+
+    public void Dispose()
+    {
+        State.OnChanged -= OnStateChanged;
+        Hub.NotificationReceived -= OnNotificationReceived;
+    }
+}

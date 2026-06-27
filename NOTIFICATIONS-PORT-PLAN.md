@@ -18,8 +18,12 @@ Two deliverables in one module:
 2. **Inspector-request notification** — the first concrete producer: ProcurementAcquisition notifies the
    JO's assigned inspector the moment the JO is Issued.
 
-It also lights up the **@mention bell** for free, by consuming the `MentionedInChannelIntegrationEvent`
-that Chat already publishes.
+**UX scope decision (2026-06-27): the bell is workflow-only.** It surfaces actionable items
+(inspection requests, approvals, …) — NOT chat @mentions, which already appear in Chat's own unread
+indicator. A non-zero badge therefore means "something is waiting on you", a signal users can trust.
+This also keeps the Notifications module **fully decoupled from Chat** (zero cross-module reference). If
+mentions are ever wanted in the bell, have Chat publish the generic `NotificationRequestedIntegrationEvent`
+itself — no adapter inside Notifications.
 
 ---
 
@@ -50,6 +54,9 @@ Optional v2: email fallback via the `Mailing` building block.
 2. **Generic event** `NotificationRequestedIntegrationEvent` that any module can publish — so future
    producers (PO approval, IAR acceptance, funds certification) reuse the same path with zero changes to
    the Notifications module.
+2b. **Workflow-only bell — chat @mentions are NOT routed in.** The mention adapter and the Chat.Contracts
+   reference were dropped; mentions stay in Chat's own unread indicator. Keeps the badge meaningful
+   ("action needed") and the module Chat-free. Reversible: Chat can publish the generic event later.
 3. **Resolve inspector → identity user at the source** (the procurement handler), so the Notifications
    module stays domain-agnostic and never references ProcurementAcquisition.
 4. **Reuse the existing `AppHub` connection** in Blazor (extend `ChatHubClient`) — no second SignalR pipe.
@@ -101,8 +108,8 @@ src/Modules/Notifications/
 │       ├── Enums/NotificationType.cs
 │       └── DTOs/NotificationDto.cs
 └── Modules.Notifications/
-    ├── Modules.Notifications.csproj                # refs: Caching, Persistence, Web, .Contracts,
-    │                                               #       Eventing, Chat.Contracts  (for the mention consumer)
+    ├── Modules.Notifications.csproj                # refs: Caching, Persistence, Web, Eventing, .Contracts
+    │                                               #       (NO Chat reference — workflow-only bell)
     ├── NotificationsModule.cs
     ├── NotificationsModuleConstants.cs
     ├── AssemblyInfo.cs                             # [assembly: AmisModule(typeof(NotificationsModule), 750)]
@@ -117,8 +124,7 @@ src/Modules/Notifications/
     │   ├── INotificationWriter.cs
     │   └── NotificationWriter.cs
     ├── Integration/
-    │   ├── NotificationRequestedConsumer.cs
-    │   └── MentionedInChannelConsumer.cs
+    │   └── NotificationRequestedConsumer.cs   # generic; no Chat-specific adapter (workflow-only bell)
     └── Features/v1/
         ├── ListMyNotifications/   (Query + Handler + Endpoint)
         ├── GetUnreadCount/        (Query + Handler + Endpoint)
@@ -248,7 +254,9 @@ internal sealed class NotificationWriter(
 }
 ```
 
-### 6.5 Consumers (Integration)
+### 6.5 Consumer (Integration)
+
+A single generic consumer — the workflow-only bell takes no Chat-specific adapter.
 
 ```csharp
 internal sealed class NotificationRequestedConsumer(INotificationWriter writer)
@@ -256,22 +264,6 @@ internal sealed class NotificationRequestedConsumer(INotificationWriter writer)
 {
     public Task HandleAsync(NotificationRequestedIntegrationEvent e, CancellationToken ct = default)
         => writer.WriteAsync(e, ct);
-}
-
-internal sealed class MentionedInChannelConsumer(INotificationWriter writer)
-    : IIntegrationEventHandler<MentionedInChannelIntegrationEvent>
-{
-    public Task HandleAsync(MentionedInChannelIntegrationEvent e, CancellationToken ct = default)
-        => writer.WriteAsync(new NotificationRequestedIntegrationEvent(
-            RecipientUserId: e.MentionedUserId,
-            Type: NotificationType.ChatMention,
-            Title: "You were mentioned",
-            Body: e.ContentPreview ?? "You were mentioned in a channel.",
-            Link: $"/chat?channel={e.ChannelId}&message={e.MessageId}",
-            Source: "Chat",
-            MetadataJson: null,
-            TenantId: e.TenantId,
-            CorrelationId: e.CorrelationId), ct);
 }
 ```
 
@@ -291,7 +283,6 @@ public void ConfigureServices(IHostApplicationBuilder builder)
 
     // Explicit registration (matches AssetRegisterModule.cs:119 style)
     services.AddScoped<IIntegrationEventHandler<NotificationRequestedIntegrationEvent>, NotificationRequestedConsumer>();
-    services.AddScoped<IIntegrationEventHandler<MentionedInChannelIntegrationEvent>, MentionedInChannelConsumer>();
 }
 
 public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -356,15 +347,29 @@ catch (Exception ex) { logger.LogWarning(ex, "Failed to publish inspection-reque
 
 ## 8. Blazor UI
 
+### Placement decision — bell is a top-bar element, NOT a left-nav item
+
+A workflow notification bell is **cross-cutting** (it spans procurement, finance, assets, …), so it belongs
+to no nav section. The primary surface is a 🔔 icon + unread badge in the top app bar; the full-history
+page is reached from the bell's "See all" link, not the sidebar.
+
+- **Remove** the standalone `Notifications` link from the **Communication** section of
+  `NavMenu.razor` (lines ~314-316). That section becomes **Chat only** — which is correct, Chat *is*
+  communication. (The current link is also a dead 404 and ungated; both are resolved by removal.)
+- The full page stays at `/notifications`, reached from the bell dropdown.
+
+### Steps
+
 | Step | File(s) | Note |
 | --- | --- | --- |
+| Remove the misfiled nav link | `Components/Layout/NavMenu.razor` | Delete the `/notifications` `MudNavLink` under "Communication" (~line 314). Bell replaces it. |
 | Handle the new event on the existing AppHub connection | `Services/Chat/ChatHubClient.cs` | Add `NotificationCreatedEvent` const, `_connection.On<NotificationDto>(...)`, and `event Action<NotificationDto>? NotificationReceived`. Reuses one connection — no second pipe. |
 | Scoped session state | `Services/Notifications/NotificationState.cs` | Mirror `IUserProfileState` (scoped, `OnChanged` event). Holds unread count + recent items. |
 | Owner / init | `Components/Layout/AMISLayout.razor` | Load initial unread count + recent list once per circuit; subscribe to `ChatHubClient.NotificationReceived` → update state; unsubscribe in `Dispose()`. |
-| Bell component | `Components/Layout/` (new `NotificationBell.razor`) | Badge with unread count + dropdown of recent items; clicking an item calls `MarkRead` and navigates to `Link`. |
-| Full page | `Components/Pages/Notifications/NotificationsPage.razor` (`@page "/notifications"`) | Wire the existing dead nav link (`NavMenu.razor:314`). Use `CollectionView`-equivalent MudList, compact controls per `blazor.md`. |
+| Bell component (top bar) | `Components/Layout/NotificationBell.razor` (new), placed in `AMISLayout`'s `MudAppBar` next to the avatar | `MudBadge` unread count over a `MudMenu` bell; dropdown lists recent items + "Mark all read" + "See all" → `/notifications`. Clicking an item calls `MarkRead` and navigates to `Link`. |
+| Full page | `Components/Pages/Notifications/NotificationsPage.razor` (`@page "/notifications"`) | Reached from the bell, not the sidebar. MudList, compact controls per `blazor.md`. |
 | Typed API client | `Services/Api/ApiClientRegistration.cs` | Register a Notifications client (follow how existing module clients are generated/registered). |
-| Permission gate | page + bell | `Notifications.View` is IsBasic, so all authenticated users qualify; still read `UserProfileState.Permissions` for the page guard per `blazor.md`. |
+| Permission gate | page + bell | `Notifications.View` is IsBasic, so all authenticated users qualify; still read `UserProfileState.Permissions` per `blazor.md`. |
 
 UTF-8 save discipline applies to all `.razor`/`.cs` (peso/em-dash glyphs) — see `blazor.md`.
 
@@ -427,20 +432,24 @@ Manual smoke (two browser sessions / users):
 2. User A issues the JO.
 3. B's bell increments live (SignalR) and the inbox row deep-links to the JO inspection screen.
 4. Reload B — the row persists (durable). Mark read → badge clears. Re-issue does not duplicate.
-5. @mention B in Chat → bell increments via the same path.
+5. (Negative check) @mention B in Chat → bell does NOT increment; the mention shows in Chat only.
 
 ---
 
 ## 13. Phase checklist
 
-- [ ] **P1** Notifications.Contracts (marker, permissions, enum, DTO, generic event)
-- [ ] **P1** Notifications module (Domain, Data, DbContext/Factory/Initializer, config, migration)
-- [ ] **P1** `NotificationWriter` + two consumers
-- [ ] **P1** Feature slices (List, UnreadCount, MarkRead, MarkAllRead, Dismiss) + endpoints
-- [ ] **P1** Module + AssemblyInfo (order 750) + host wiring + slnx
-- [ ] **P2** ProcurementAcquisition → publish inspection-requested event on Issue
-- [ ] **P3** Blazor: hub client event, `INotificationState`, bell, `/notifications` page, API client
-- [ ] **P4** Tests + build (0 warnings) + smoke test
+- [x] **P1** Notifications.Contracts (marker, permissions, enum, DTO, generic event)
+- [x] **P1** Notifications module (Domain, Data, DbContext/Factory/Initializer, config)
+- [x] **P1** `NotificationWriter` + generic consumer (workflow-only; no Chat adapter)
+- [x] **P1** Feature slices (List, UnreadCount, MarkRead, MarkAllRead, Dismiss) + endpoints
+- [x] **P1** Module + AssemblyInfo (order 750) + host wiring + slnx
+- [x] **P2** ProcurementAcquisition → publish inspection-requested event on Issue
+- [x] **P3** Blazor: hub client event, `INotificationState`, bell, `/notifications` page, API client, nav cleanup
+- [x] **P4** Tests (`NotificationWriterTests`, 4 cases) + full solution build (0 errors, 0 new warnings)
+- [ ] **Remaining (manual):** generate the EF migration `InitialNotifications` (needs a DB) — see §10.
+
+> Note: `ListMyNotificationsQueryHandler` orders/pages **client-side** (mirrors `ListMyChannelsQueryHandler`)
+> because SQLite — used in tests — cannot `ORDER BY` a `DateTimeOffset`. Postgres sorts it in-DB equally well.
 
 ---
 

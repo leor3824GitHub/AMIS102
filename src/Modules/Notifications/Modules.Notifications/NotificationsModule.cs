@@ -3,7 +3,6 @@ using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Framework.Persistence;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
-using AMIS.Modules.Chat.Contracts.Events;
 using AMIS.Modules.Notifications.Contracts.Events;
 using AMIS.Modules.Notifications.Data;
 using AMIS.Modules.Notifications.Features.v1.DismissNotification;
@@ -36,9 +35,10 @@ public class NotificationsModule : IModule
 
         services.AddScoped<INotificationWriter, NotificationWriter>();
 
-        // Integration consumers. Resolved by the in-memory event bus per published event type.
+        // Integration consumer. Any module publishing NotificationRequestedIntegrationEvent lands a row in
+        // the recipient's inbox. The bell is intentionally workflow-only — chat @mentions are NOT routed here
+        // (they surface in Chat's own unread indicator); if that changes, have Chat publish this generic event.
         services.AddScoped<IIntegrationEventHandler<NotificationRequestedIntegrationEvent>, NotificationRequestedConsumer>();
-        services.AddScoped<IIntegrationEventHandler<MentionedInChannelIntegrationEvent>, MentionedInChannelConsumer>();
 
         // FluentValidation validators are auto-discovered.
     }

@@ -8,8 +8,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Expose internal types (handlers, services, consumers) to the test project. -->
-		<InternalsVisibleTo Include="Notifications.Tests" />
+		<!-- Expose internal types (writer, consumer, mappers) to the test project. -->
+		<InternalsVisibleTo Include="Generic.Tests" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -31,8 +31,6 @@
 		<ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
 		<ProjectReference Include="..\Modules.Notifications.Contracts\Modules.Notifications.Contracts.csproj" />
-		<!-- Consumes the @mention integration event Chat already publishes. Contracts-only reference. -->
-		<ProjectReference Include="..\..\Chat\Modules.Chat.Contracts\Modules.Chat.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>
