@@ -1,0 +1,123 @@
+@page "/inspections"
+@using AMIS.Framework.Shared.Inspections
+@using AMIS.Blazor.ApiClient
+@inject IInspectionWorklistClient Client
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<AMISPageHeader Title="My Inspections"
+                Description="Everything awaiting your inspection across Job Orders, IARs and Returned Property — oldest first." />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudText Typo="Typo.h6" Class="flex-grow-1">
+                        Awaiting your inspection
+                        @if (!_loading && _items.Count > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="ml-2">@_items.Count</MudChip>
+                        }
+                    </MudText>
+                    <AMISButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                                StartIcon="@Icons.Material.Filled.Refresh"
+                                OnClick="LoadAsync" Disabled="_loading">
+                        REFRESH
+                    </AMISButton>
+                </MudStack>
+
+                @if (_loading)
+                {
+                    <div class="d-flex justify-center pa-8">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    </div>
+                }
+                else if (_items.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Class="my-2">
+                        Nothing awaiting your inspection.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudList T="PendingInspectionItem" Dense="true">
+                        @foreach (var item in _items)
+                        {
+                            var meta = MetaFor(item.SourceType);
+                            <MudListItem T="PendingInspectionItem" Icon="@meta.Icon" IconColor="@meta.Color"
+                                         OnClick="@(() => Open(item))">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudChip T="string" Size="Size.Small" Color="@meta.Color" Variant="Variant.Outlined">@meta.Label</MudChip>
+                                    <MudStack Spacing="0" Class="flex-grow-1">
+                                        <MudText Typo="Typo.body1"><b>@item.Reference</b></MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@item.Title</MudText>
+                                    </MudStack>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@Age(item.RequestedOnUtc)</MudText>
+                                    @* Visual affordance only — the whole row is the click target (MudListItem.OnClick). *@
+                                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Color="Color.Secondary" />
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private readonly List<PendingInspectionItem> _items = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _items.Clear();
+        StateHasChanged();
+
+        // Aggregate each module's "pending-for-me" endpoint in parallel. A single module failing must not blank
+        // the whole worklist — collect what succeeds and warn about the rest.
+        var procurement = SafeFetchAsync(Client.GetMyPendingProcurementAsync, "procurement");
+        var returnedProperty = SafeFetchAsync(Client.GetMyPendingReturnedPropertyAsync, "returned property");
+        var results = await Task.WhenAll(procurement, returnedProperty);
+
+        _items.AddRange(results.SelectMany(r => r).OrderBy(i => i.RequestedOnUtc));
+        _loading = false;
+    }
+
+    private async Task<IReadOnlyList<PendingInspectionItem>> SafeFetchAsync(
+        Func<CancellationToken, Task<IReadOnlyList<PendingInspectionItem>>> fetch, string source)
+    {
+        try
+        {
+            return await fetch(CancellationToken.None);
+        }
+        catch (HttpRequestException)
+        {
+            Snackbar.Add($"Could not load {source} inspections. Tap Refresh to retry.", Severity.Warning);
+            return [];
+        }
+    }
+
+    private void Open(PendingInspectionItem item) => Navigation.NavigateTo(item.ActionRoute);
+
+    private static (string Label, string Icon, Color Color) MetaFor(string sourceType) => sourceType switch
+    {
+        "JobOrder" => ("Job Order", Icons.Material.Filled.BuildCircle, Color.Primary),
+        "IAR" => ("IAR", Icons.Material.Filled.RuleFolder, Color.Secondary),
+        "ReturnedProperty" => ("Returned Property", Icons.Material.Filled.AssignmentReturn, Color.Tertiary),
+        _ => (sourceType, Icons.Material.Filled.FactCheck, Color.Default),
+    };
+
+    private static string Age(DateTimeOffset requestedOnUtc)
+    {
+        var span = DateTimeOffset.UtcNow - requestedOnUtc;
+        if (span.TotalDays >= 1) return $"{(int)span.TotalDays}d ago";
+        if (span.TotalHours >= 1) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalMinutes >= 1) return $"{(int)span.TotalMinutes}m ago";
+        return "just now";
+    }
+}

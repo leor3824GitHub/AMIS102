@@ -66,7 +66,7 @@ public sealed class IssueJobOrderCommandHandler(
                 Type: NotificationType.InspectionRequested,
                 Title: "Inspection requested",
                 Body: $"Job Order {jo.JoNumber} is issued and ready for your inspection.",
-                Link: $"/procurement/job-orders/{jo.Id}",
+                Link: $"/procurement/job-orders?inspect={jo.Id}",
                 Source: "ProcurementAcquisition",
                 MetadataJson: null,
                 TenantId: jo.TenantId,

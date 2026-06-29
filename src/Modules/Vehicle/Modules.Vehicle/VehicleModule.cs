@@ -4,9 +4,9 @@ using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Framework.Web.Modules;
 using AMIS.Modules.Vehicle.Data;
-using AMIS.Modules.Vehicle.Features.v1.Vehicles.CreateVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.EnrollVehicle;
+using AMIS.Modules.Vehicle.Features.v1.Vehicles.GetEnrollableVehicleAssets;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateVehicle;
-using AMIS.Modules.Vehicle.Features.v1.Vehicles.AssignVehicle;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.UpdateOdometer;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.RetireVehicle;
 using AMIS.Modules.Vehicle.Features.v1.Vehicles.DecommissionVehicle;
@@ -19,14 +19,9 @@ using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.CreateVehicleDailyUsage;
 using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.UpdateVehicleDailyUsage;
 using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.SearchVehicleDailyUsage;
 using AMIS.Modules.Vehicle.Features.v1.FuelOdometer.GetVehicleDailyUsageSummary;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.CreateRepairRecord;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.UpdateRepairRecord;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.StartRepair;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.CompleteRepair;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.CancelRepair;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.DeleteRepairRecord;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.GetRepairRecord;
-using AMIS.Modules.Vehicle.Features.v1.Repairs.SearchRepairRecords;
+using AMIS.Modules.Vehicle.Features.v1.MyVehicle.GetMyVehicles;
+using AMIS.Modules.Vehicle.Features.v1.MyVehicle.RecordMyVehicleFuelOdometer;
+using AMIS.Modules.Vehicle.Features.v1.MyVehicle.GetMyVehicleDailyUsage;
 using AMIS.Modules.Vehicle.Features.v1.Maintenance.CreateMaintenanceSchedule;
 using AMIS.Modules.Vehicle.Features.v1.Maintenance.UpdateMaintenanceSchedule;
 using AMIS.Modules.Vehicle.Features.v1.Maintenance.DeactivateMaintenanceSchedule;
@@ -59,11 +54,6 @@ public class VehicleModule : IModule
         new("Update Vehicles", "Update", "Vehicle.Vehicles"),
         new("Delete Vehicles", "Delete", "Vehicle.Vehicles"),
 
-        new("View Vehicle Repairs", "View", "Vehicle.Repairs", IsBasic: true),
-        new("Create Vehicle Repairs", "Create", "Vehicle.Repairs"),
-        new("Update Vehicle Repairs", "Update", "Vehicle.Repairs"),
-        new("Delete Vehicle Repairs", "Delete", "Vehicle.Repairs"),
-
         new("View Vehicle Maintenance", "View", "Vehicle.Maintenance", IsBasic: true),
         new("Create Vehicle Maintenance", "Create", "Vehicle.Maintenance"),
         new("Update Vehicle Maintenance", "Update", "Vehicle.Maintenance"),
@@ -72,6 +62,10 @@ public class VehicleModule : IModule
         new("View Vehicle Fuel & Odometer", "View", "Vehicle.FuelOdometer", IsBasic: true),
         new("Create Vehicle Fuel & Odometer", "Create", "Vehicle.FuelOdometer"),
         new("Update Vehicle Fuel & Odometer", "Update", "Vehicle.FuelOdometer"),
+
+        // Accountable-officer self-service (mirror of AssetRegister MyAccountability)
+        new("View My Vehicles", "View", "Vehicle.MyVehicle", IsBasic: true),
+        new("Record My Vehicle Fuel & Odometer", "RecordFuelOdometer", "Vehicle.MyVehicle", IsBasic: true),
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -101,17 +95,17 @@ public class VehicleModule : IModule
 
         var lookupGroup = moduleGroup.MapGroup("/lookup");
         var vehiclesGroup = moduleGroup.MapGroup("/vehicles");
+        var myVehiclesGroup = moduleGroup.MapGroup("/my-vehicles");
         var fuelOdometerGroup = moduleGroup.MapGroup("/fuel-odometer");
-        var repairsGroup = moduleGroup.MapGroup("/repairs");
         var maintenanceGroup = moduleGroup.MapGroup("/maintenance");
 
         // Lookup endpoints
         VehicleLookupEndpoint.Map(lookupGroup);
 
         // Vehicle endpoints
-        CreateVehicleEndpoint.Map(vehiclesGroup);
+        EnrollVehicleEndpoint.Map(vehiclesGroup);
+        GetEnrollableVehicleAssetsEndpoint.Map(vehiclesGroup);
         UpdateVehicleEndpoint.Map(vehiclesGroup);
-        AssignVehicleEndpoint.Map(vehiclesGroup);
         UpdateOdometerEndpoint.Map(vehiclesGroup);
         RetireVehicleEndpoint.Map(vehiclesGroup);
         DecommissionVehicleEndpoint.Map(vehiclesGroup);
@@ -121,21 +115,16 @@ public class VehicleModule : IModule
         SearchVehiclesEndpoint.Map(vehiclesGroup);
         GetMotorVehicleInventoryEndpoint.Map(vehiclesGroup);
 
+        // Accountable-officer self-service endpoints
+        GetMyVehiclesEndpoint.Map(myVehiclesGroup);
+        RecordMyVehicleFuelOdometerEndpoint.Map(myVehiclesGroup);
+        GetMyVehicleDailyUsageEndpoint.Map(myVehiclesGroup);
+
         // Fuel and odometer daily usage endpoints
         CreateVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
         UpdateVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
         SearchVehicleDailyUsageEndpoint.Map(fuelOdometerGroup);
         GetVehicleDailyUsageSummaryEndpoint.Map(fuelOdometerGroup);
-
-        // Repair endpoints
-        CreateRepairRecordEndpoint.Map(repairsGroup);
-        UpdateRepairRecordEndpoint.Map(repairsGroup);
-        StartRepairEndpoint.Map(repairsGroup);
-        CompleteRepairEndpoint.Map(repairsGroup);
-        CancelRepairEndpoint.Map(repairsGroup);
-        DeleteRepairRecordEndpoint.Map(repairsGroup);
-        GetRepairRecordEndpoint.Map(repairsGroup);
-        SearchRepairRecordsEndpoint.Map(repairsGroup);
 
         // Maintenance Schedule endpoints
         CreateMaintenanceScheduleEndpoint.Map(maintenanceGroup);

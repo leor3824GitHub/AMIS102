@@ -81,7 +81,7 @@ builder.Services.AddMediator(o =>
         typeof(NotificationsModule),
         typeof(NotificationsContractsMarker),
         typeof(VehicleModule),
-        typeof(CreateVehicleCommand),
+        typeof(EnrollVehicleCommand),
         typeof(ProcurementAcquisitionModule),
         typeof(CreatePurchaseRequestCommand),
         typeof(BudgetDisbursementModule),

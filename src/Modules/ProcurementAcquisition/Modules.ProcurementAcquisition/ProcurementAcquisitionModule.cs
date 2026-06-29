@@ -55,6 +55,7 @@ using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReport
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.RecordInspection;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.AssignPropertyNo;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports.ExpandLineByQuantity;
+using AMIS.Modules.ProcurementAcquisition.Features.v1.Inspections.GetMyPendingInspections;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.UploadSignedDocument;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.GetSignedDocument;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.SignedDocuments.DownloadSignedDocument;
@@ -149,6 +150,7 @@ public class ProcurementAcquisitionModule : IModule
         var purchaseOrdersGroup = moduleGroup.MapGroup("/purchase-orders");
         var jobOrdersGroup = moduleGroup.MapGroup("/job-orders");
         var iarGroup = moduleGroup.MapGroup("/inspection-acceptance-reports");
+        var inspectionsGroup = moduleGroup.MapGroup("/inspections");
         var signedDocumentsGroup = moduleGroup.MapGroup("/signed-documents");
 
         // Purchase Requests
@@ -212,6 +214,9 @@ public class ProcurementAcquisitionModule : IModule
         RecordIARInspectionEndpoint.Map(iarGroup);
         AssignPropertyNoEndpoint.Map(iarGroup);
         ExpandLineByQuantityEndpoint.Map(iarGroup);
+
+        // Unified inspection worklist — JO + IAR awaiting the current user (self-scoped)
+        GetMyPendingProcurementInspectionsEndpoint.Map(inspectionsGroup);
 
         // Signed Documents (wet-signed scanned copies of records)
         UploadSignedDocumentEndpoint.Map(signedDocumentsGroup);

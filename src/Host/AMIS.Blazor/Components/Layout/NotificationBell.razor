@@ -10,9 +10,9 @@
 
 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true">
     <ActivatorContent>
-        <MudBadge Content="@State.UnreadCount" Color="Color.Error" Overlap="true" Bordered="true"
-                  Visible="@(State.UnreadCount > 0)">
-            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" />
+        <MudBadge Content="@State.UnreadCount" Color="Color.Error" Overlap="true" Dense="true"
+                  Origin="Origin.TopRight" Visible="@(State.UnreadCount > 0)">
+            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" Size="Size.Small" />
         </MudBadge>
     </ActivatorContent>
     <ChildContent>

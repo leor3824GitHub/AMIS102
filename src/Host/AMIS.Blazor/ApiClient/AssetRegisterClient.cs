@@ -13,6 +13,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using AMIS.Modules.AssetRegister.Contracts.v1.Depreciation;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
+using AMIS.Modules.AssetRegister.Contracts.v1.Repairs;
 using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Blazor.ApiClient;
@@ -1749,6 +1750,98 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
             ? $"api/v1/quest-pdf-reporting/asset-register/returned-property/{id}/pdf"
             : $"api/v1/quest-pdf-reporting/asset-register/returned-property/{id}/pdf?pageWidth={pageWidth}";
         return http.GetByteArrayAsync(url, ct);
+    }
+}
+
+// ── Repairs (RPRI / Exhibit 6) ───────────────────────────────────────────────
+
+public sealed record ArRequestRepairRequest(
+    Guid AssetRegistryId, string NatureOfWork, string RequestedBy, DateOnly RequestedOn,
+    string? PartsToReplace = null, string? EngineNo = null, string? ChassisNo = null, int? OdometerReading = null);
+
+public sealed record ArPreRepairInspectionRequest(
+    string Findings, string PreInspectedBy, DateOnly PreInspectedOn, string? NotedBy = null);
+
+public sealed record ArPostRepairInspectionRequest(
+    string Findings, string PostInspectedBy, DateOnly PostInspectedOn,
+    string? RepairShop = null, string? JobOrderNo = null, string? InvoiceNo = null, DateOnly? InvoiceDate = null,
+    decimal? AmountPerJO = null, string? PrNo = null, string? PoJoNo = null, string? BurNo = null, string? DvNo = null);
+
+public sealed record ArAcceptRepairRequest(string AcceptedBy, DateOnly AcceptedOn);
+
+internal interface IArRepairClient
+{
+    Task<ArPagedResponse<PropertyRepairSummaryDto>> SearchAsync(Guid? assetRegistryId = null, string? status = null, string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<PropertyRepairDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<List<PropertyRepairSummaryDto>> GetHistoryAsync(Guid assetRegistryId, CancellationToken ct = default);
+    Task<PropertyRepairDto> RequestAsync(ArRequestRepairRequest request, CancellationToken ct = default);
+    Task<PropertyRepairDto> PreInspectAsync(Guid id, ArPreRepairInspectionRequest request, CancellationToken ct = default);
+    Task<PropertyRepairDto> PostInspectAsync(Guid id, ArPostRepairInspectionRequest request, CancellationToken ct = default);
+    Task<PropertyRepairDto> AcceptAsync(Guid id, ArAcceptRepairRequest request, CancellationToken ct = default);
+    Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default);
+}
+
+internal sealed class ArRepairClient(HttpClient http) : IArRepairClient
+{
+    private const string Base = "api/v1/asset-register/repairs";
+
+    public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = string.IsNullOrWhiteSpace(pageWidth)
+            ? $"api/v1/quest-pdf-reporting/asset-register/repairs/{id}/pdf"
+            : $"api/v1/quest-pdf-reporting/asset-register/repairs/{id}/pdf?pageWidth={pageWidth}";
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    public async Task<ArPagedResponse<PropertyRepairSummaryDto>> SearchAsync(Guid? assetRegistryId = null, string? status = null, string? keyword = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build(Base, new()
+        {
+            ["assetRegistryId"] = assetRegistryId?.ToString(),
+            ["status"] = status,
+            ["keyword"] = keyword,
+            ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture)
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<PropertyRepairSummaryDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? new ArPagedResponse<PropertyRepairSummaryDto>([], page, pageSize, 0, 0);
+    }
+
+    public Task<PropertyRepairDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<PropertyRepairDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
+
+    public async Task<List<PropertyRepairSummaryDto>> GetHistoryAsync(Guid assetRegistryId, CancellationToken ct = default)
+    {
+        var result = await http.GetFromJsonAsync<List<PropertyRepairSummaryDto>>($"{Base}/history/{assetRegistryId}", ArJsonOptions.Default, ct);
+        return result ?? [];
+    }
+
+    public async Task<PropertyRepairDto> RequestAsync(ArRequestRepairRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<PropertyRepairDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<PropertyRepairDto> PreInspectAsync(Guid id, ArPreRepairInspectionRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/pre-inspection", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<PropertyRepairDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<PropertyRepairDto> PostInspectAsync(Guid id, ArPostRepairInspectionRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/post-inspection", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<PropertyRepairDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<PropertyRepairDto> AcceptAsync(Guid id, ArAcceptRepairRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PostAsJsonAsync($"{Base}/{id}/accept", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<PropertyRepairDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 

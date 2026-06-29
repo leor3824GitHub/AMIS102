@@ -31,9 +31,6 @@ public sealed class SearchVehiclesQueryHandler(VehicleDbContext db)
         if (!string.IsNullOrWhiteSpace(query.Type) && Enum.TryParse<VehicleType>(query.Type, true, out var type))
             q = q.Where(v => v.Type == type);
 
-        if (query.AssignedDepartmentId.HasValue)
-            q = q.Where(v => v.AssignedDepartmentId == query.AssignedDepartmentId);
-
         q = q.OrderBy(v => v.PlateNumber);
 
         return await q.Select(v => v.ToDto()).ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);

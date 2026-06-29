@@ -32,6 +32,11 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
             var serial = query.SerialNo.Trim().ToLowerInvariant();
             q = q.Where(a => a.SerialNo != null && a.SerialNo.ToLower().Contains(serial));
         }
+        if (!string.IsNullOrWhiteSpace(query.PropertyClass))
+        {
+            var pc = query.PropertyClass.Trim();
+            q = q.Where(a => a.PropertyClass == pc);
+        }
         if (query.AssetType.HasValue) q = q.Where(a => a.AssetType == query.AssetType.Value);
         if (query.LifecycleState.HasValue) q = q.Where(a => a.LifecycleState == query.LifecycleState.Value);
         else if (!query.IncludeTransferredOut) q = q.Where(a => a.LifecycleState != LifecycleState.TransferredOut);

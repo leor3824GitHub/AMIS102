@@ -63,6 +63,12 @@ public class AssetRegisterModule : IModule
         new("File Unserviceable Reports",    "File",    "AssetRegister.Unserviceable"),
         new("Dispose Unserviceable Reports", "Dispose", "AssetRegister.Unserviceable"),
 
+        // PPE repair (RPRI / Exhibit 6) — repairs are PPE-wide, owned by AssetRegister.
+        new("View Repairs",    "View",    "AssetRegister.Repair", IsBasic: true),
+        new("Request Repairs", "Request", "AssetRegister.Repair", IsBasic: true),
+        new("Inspect Repairs", "Inspect", "AssetRegister.Repair"),
+        new("Accept Repairs",  "Accept",  "AssetRegister.Repair"),
+
         new("View Property Catalog",   "View",   "AssetRegister.Catalog", IsBasic: true),
         new("Create Property Catalog", "Create", "AssetRegister.Catalog"),
         new("Update Property Catalog", "Update", "AssetRegister.Catalog"),
@@ -235,6 +241,10 @@ public class AssetRegisterModule : IModule
         var unserviceable = moduleGroup.MapGroup("/unserviceable");
         Features.v1.Unserviceable.UnserviceableEndpoints.MapUnserviceableEndpoints(unserviceable);
 
+        // PPE repairs (RPRI / Exhibit 6) — PPE-wide, keyed by AssetRegistryId
+        var repairs = moduleGroup.MapGroup("/repairs");
+        Features.v1.Repairs.RepairEndpoints.MapRepairEndpoints(repairs);
+
         // Receiving reports (PPERR / SMRR)
         var receiving = moduleGroup.MapGroup("/receiving");
         Features.v1.Receiving.CreateReceivingReport.CreateReceivingReportEndpoint.Map(receiving);
@@ -257,6 +267,10 @@ public class AssetRegisterModule : IModule
         // Returned property receipts (RRSP / RRP)
         var returnedProperty = moduleGroup.MapGroup("/returned-property");
         Features.v1.ReturnedProperty.ReturnedPropertyEndpoints.MapReturnedPropertyEndpoints(returnedProperty);
+
+        // Unified inspection worklist — returned-property requests awaiting the current user (self-scoped)
+        var inspections = moduleGroup.MapGroup("/inspections");
+        Features.v1.Inspections.GetMyPendingReturnedPropertyInspectionsEndpoint.Map(inspections);
 
         // Signed document copies (scanned wet-signed RRSP / RRP)
         var signedDocuments = moduleGroup.MapGroup("/signed-documents");

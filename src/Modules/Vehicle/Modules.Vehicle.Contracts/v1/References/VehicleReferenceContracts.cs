@@ -11,11 +11,7 @@ public sealed record VehicleReferenceDto(
     int Year,
     string Type,
     string Status,
-    int Odometer,
-    Guid? AssignedDepartmentId,
-    string? AssignedDepartment,
-    Guid? AssignedDriverId,
-    string? AssignedDriver);
+    int Odometer);
 
 public sealed record GetVehicleReferenceByIdQuery(Guid Id) : IQuery<VehicleReferenceDto?>;
 
@@ -24,7 +20,6 @@ public sealed class SearchVehicleReferencesQuery : IPagedQuery, IQuery<PagedResp
     public string? Keyword { get; set; }
     public string? Status { get; set; }
     public string? Type { get; set; }
-    public Guid? AssignedDepartmentId { get; set; }
     public int? PageNumber { get; set; }
     public int? PageSize { get; set; }
     public string? Sort { get; set; }

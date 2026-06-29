@@ -1,0 +1,137 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1.Repairs
+@inject IArRepairClient RepairClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle2">@Repair.RpriNo — @Repair.PropertyNo (@Repair.Description)</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Nature of work: @Repair.NatureOfWork</MudText>
+
+            @if (Repair.Status == RepairStatusValues.Requested)
+            {
+                <MudText Typo="Typo.caption" Class="font-weight-bold">Pre-Repair Inspection (mandatory)</MudText>
+                <MudTextField @bind-Value="_findings" Label="Findings" Lines="2" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_inspector" Label="Pre-Inspected By (Property Inspector)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_notedBy" Label="Noted By (Head of Office)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudDatePicker @bind-Date="_date" Label="Inspection Date" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            }
+            else if (Repair.Status == RepairStatusValues.PreInspected || Repair.Status == RepairStatusValues.Repaired)
+            {
+                <MudText Typo="Typo.caption" Class="font-weight-bold">Post-Repair Inspection</MudText>
+                <MudTextField @bind-Value="_findings" Label="Findings" Lines="2" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_inspector" Label="Post-Inspected By" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudDatePicker @bind-Date="_date" Label="Inspection Date" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTextField @bind-Value="_repairShop" Label="Repair Shop / Contractor" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudGrid Spacing="2">
+                    <MudItem xs="6"><MudTextField @bind-Value="_jobOrderNo" Label="Job Order / Contract No." Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                    <MudItem xs="6"><MudNumericField @bind-Value="_amount" Label="Amount per JO / Payable" Min="0" Format="F2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                    <MudItem xs="6"><MudTextField @bind-Value="_invoiceNo" Label="Invoice No." Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                    <MudItem xs="6"><MudDatePicker @bind-Date="_invoiceDate" Label="Invoice Date" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                </MudGrid>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Procurement / finance refs (outsourced only — use PropertyNo to look up):</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="6"><MudTextField @bind-Value="_prNo" Label="PR No." Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                    <MudItem xs="6"><MudTextField @bind-Value="_poJoNo" Label="PO / JO No." Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                    <MudItem xs="6"><MudTextField @bind-Value="_burNo" Label="BUR No." Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                    <MudItem xs="6"><MudTextField @bind-Value="_dvNo" Label="DV No." Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                </MudGrid>
+            }
+            else if (Repair.Status == RepairStatusValues.PostInspected)
+            {
+                <MudText Typo="Typo.caption" Class="font-weight-bold">Property Custodian Acceptance</MudText>
+                <MudTextField @bind-Value="_inspector" Label="Accepted By (Property Custodian)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudDatePicker @bind-Date="_date" Label="Acceptance Date" Variant="Variant.Outlined" Margin="Margin.Dense" />
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Success" Dense="true">This RPRI is accepted and locked as repair history.</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+        @if (Repair.Status != RepairStatusValues.Accepted)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Disabled="_saving">@ActionLabel</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public PropertyRepairDto Repair { get; set; } = default!;
+
+    private string _findings = string.Empty;
+    private string _inspector = string.Empty;
+    private string? _notedBy;
+    private DateTime? _date = DateTime.Today;
+    private string? _repairShop;
+    private string? _jobOrderNo;
+    private string? _invoiceNo;
+    private DateTime? _invoiceDate;
+    private decimal? _amount;
+    private string? _prNo;
+    private string? _poJoNo;
+    private string? _burNo;
+    private string? _dvNo;
+    private bool _saving;
+
+    private string ActionLabel => Repair.Status switch
+    {
+        RepairStatusValues.Requested => "Record Pre-Inspection",
+        RepairStatusValues.PreInspected or RepairStatusValues.Repaired => "Record Post-Inspection",
+        RepairStatusValues.PostInspected => "Accept",
+        _ => "Submit"
+    };
+
+    private async Task Submit()
+    {
+        if (_date is null)
+        {
+            Snackbar.Add("Date is required.", Severity.Warning);
+            return;
+        }
+        var date = DateOnly.FromDateTime(_date.Value);
+
+        try
+        {
+            _saving = true;
+            switch (Repair.Status)
+            {
+                case RepairStatusValues.Requested:
+                    if (string.IsNullOrWhiteSpace(_findings) || string.IsNullOrWhiteSpace(_inspector)) { Warn(); return; }
+                    await RepairClient.PreInspectAsync(Repair.Id, new ArPreRepairInspectionRequest(_findings, _inspector, date, _notedBy));
+                    break;
+                case RepairStatusValues.PreInspected:
+                case RepairStatusValues.Repaired:
+                    if (string.IsNullOrWhiteSpace(_findings) || string.IsNullOrWhiteSpace(_inspector)) { Warn(); return; }
+                    await RepairClient.PostInspectAsync(Repair.Id, new ArPostRepairInspectionRequest(
+                        _findings, _inspector, date, _repairShop, _jobOrderNo, _invoiceNo,
+                        _invoiceDate.HasValue ? DateOnly.FromDateTime(_invoiceDate.Value) : null,
+                        _amount, _prNo, _poJoNo, _burNo, _dvNo));
+                    break;
+                case RepairStatusValues.PostInspected:
+                    if (string.IsNullOrWhiteSpace(_inspector)) { Warn(); return; }
+                    await RepairClient.AcceptAsync(Repair.Id, new ArAcceptRepairRequest(_inspector, date));
+                    break;
+            }
+
+            Snackbar.Add("RPRI updated.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Warn() { Snackbar.Add("Findings and the responsible person are required.", Severity.Warning); _saving = false; }
+
+    private void Cancel() => Dialog.Cancel();
+}

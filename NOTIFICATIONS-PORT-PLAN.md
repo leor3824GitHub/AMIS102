@@ -74,19 +74,24 @@ Optional v2: email fallback via the `Mailing` building block.
 ```
 ProcurementAcquisition (IssueJobOrderCommandHandler)
         │  resolve InspectorId → IdentityUserId
-        │  publish NotificationRequestedIntegrationEvent   ──┐
-Chat (SendMessageCommandHandler)                             │  IEventBus
-        │  publish MentionedInChannelIntegrationEvent  ──────┤
-        ▼                                                    ▼
-Notifications module
-        ├── NotificationRequestedConsumer  ──┐
-        ├── MentionedInChannelConsumer     ──┤→ NotificationWriter
-        │                                     │     ├── persist Notification row (denormalized)
-        │                                     │     └── IHubContext<AppHub>.Clients
-        │                                     │          .Group("user:{id}").SendAsync("NotificationCreated", dto)
-        ▼                                     ▼
-   notifications schema (DB)            AppHub  → Blazor ChatHubClient → INotificationState → bell UI
+        │  publish NotificationRequestedIntegrationEvent  ──┐ IEventBus
+        ▼                                                   ▼
+                                            Notifications module
+                                            └── NotificationRequestedConsumer
+                                                    │
+                                                    ▼
+                                              NotificationWriter
+                                                ├── persist Notification row (denormalized) ──→ notifications schema (DB)
+                                                └── IHubContext<AppHub>.Clients
+                                                      .Group("user:{id}").SendAsync("NotificationCreated", dto)
+                                                                            │
+                                                                            ▼
+                                              AppHub → Blazor ChatHubClient → INotificationState → bell UI
 ```
+
+**Workflow-only: exactly one consumer.** Chat `@mentions` are NOT routed in (no `MentionedInChannelConsumer`,
+no Chat reference) — they surface in Chat's own unread indicator. See §2 / §3.2b. Any future producer reuses
+this same single path by publishing `NotificationRequestedIntegrationEvent`.
 
 The inbox row is **denormalized** (Title / Body / Link / MetadataJson copied in) so rendering the bell
 never calls back into the source module.
@@ -176,13 +181,11 @@ public sealed record NotificationRequestedIntegrationEvent(
 {
     public Guid Id { get; } = Guid.NewGuid();
     public DateTime OccurredOnUtc { get; } = DateTime.UtcNow;
-    string IIntegrationEvent.Source => Source;   // verify exact member shape vs MentionedInChannelIntegrationEvent
 }
 ```
 
-> ⚠️ Match the **exact** `IIntegrationEvent` member surface (`Id`, `OccurredOnUtc`, `Source`, and any
-> `TenantId`) against `Chat.Contracts/Events/MentionedInChannelIntegrationEvent.cs` and
-> `Eventing.Abstractions/IIntegrationEvent.cs` when implementing — the sketch above is indicative.
+> As built: the positional `Source` parameter satisfies `IIntegrationEvent.Source` directly, so no explicit
+> interface member is needed (only `Id` + `OccurredOnUtc` are added). Cf. `Eventing.Abstractions/IIntegrationEvent.cs`.
 
 ### 6.3 `Notification` aggregate (Domain)
 
@@ -217,6 +220,9 @@ builder.ToTable("Notifications", NotificationsModuleConstants.SchemaName).IsMult
 builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();
 builder.HasIndex(x => new { x.RecipientUserId, x.IsRead });
 builder.HasIndex(x => new { x.CorrelationId, x.RecipientUserId, x.Type }).IsUnique();  // idempotency
+// NOTE: TenantId is intentionally omitted from this unique index. Safe only because the inspector
+// producer uses CorrelationId = jo.Id (a global GUID). A future producer with a non-global key
+// (e.g. "PO-2026-001") could collide across tenants — add TenantId to the index then.
 ```
 
 ### 6.4 `NotificationWriter` (the single reused path)
@@ -323,7 +329,7 @@ try
             Type: NotificationType.InspectionRequested,
             Title: "Inspection requested",
             Body: $"Job Order {jo.JoNumber} is issued and ready for your inspection.",
-            Link: $"/procurement/job-orders/{jo.Id}",
+            Link: $"/procurement/job-orders?inspect={jo.Id}",  // deep-links into the JO list page's inspect flow
             Source: "ProcurementAcquisition",
             MetadataJson: null,
             TenantId: jo.TenantId,
@@ -408,11 +414,15 @@ dotnet ef migrations add InitialNotifications `
 
 ## 11. Tests (`src/Tests`)
 
-- `NotificationWriterTests` — writes a row, pushes once, is idempotent on duplicate CorrelationId.
-- `MentionedInChannelConsumerTests` — maps a mention event to a `ChatMention` notification.
-- `IssueJobOrder` handler test — publishes `NotificationRequestedIntegrationEvent` when the inspector has a
-  linked login; **skips** publishing (and logs) when `IdentityUserId` is null; never throws on publish
-  failure.
+- ✅ `NotificationWriterTests` (`src/Tests/Generic.Tests/Notifications/`) — 4 cases: persists a denormalized
+  row + pushes once; idempotent on duplicate CorrelationId; skips an unparseable recipient; List/MarkRead are
+  scoped to the calling user.
+- ❌ ~~`MentionedInChannelConsumerTests`~~ — **dropped.** The workflow-only decision (§2 / §3.2b) removed the
+  Chat adapter entirely; there is no mention consumer to test.
+- ✅ `IssueJobOrderNotificationTests` (`src/Tests/ProcurementAcquisition.Tests/Integration/`) — 3 cases:
+  publishes `NotificationRequestedIntegrationEvent` (asserting recipient/type/source/correlation/link/tenant)
+  when the inspector has a linked login; **skips** publishing when `IdentityUserId` is null; never throws and
+  still leaves the JO `Issued` when the event bus fails. Covers `IssueJobOrderCommandHandler.NotifyInspectorAsync`.
 - Architecture tests already enforce module-boundary rules — confirm Notifications only references other
   modules' `.Contracts`.
 
@@ -445,8 +455,16 @@ Manual smoke (two browser sessions / users):
 - [x] **P1** Module + AssemblyInfo (order 750) + host wiring + slnx
 - [x] **P2** ProcurementAcquisition → publish inspection-requested event on Issue
 - [x] **P3** Blazor: hub client event, `INotificationState`, bell, `/notifications` page, API client, nav cleanup
-- [x] **P4** Tests (`NotificationWriterTests`, 4 cases) + full solution build (0 errors, 0 new warnings)
-- [ ] **Remaining (manual):** generate the EF migration `InitialNotifications` (needs a DB) — see §10.
+- [x] **P4** Tests: `NotificationWriterTests` (4 cases) + `IssueJobOrderNotificationTests` (3 cases, producer
+  hook) + full solution build (0 errors, 0 new warnings)
+- [x] **P4** EF migration `Migrations.PostgreSQL/Notifications/…_InitialNotifications` generated (schema + unique idempotency index). Applied automatically on app startup by `NotificationsDbInitializer`.
+
+> First-migration gotcha (recorded): EF's design-time scan only finds contexts that already have a migration
+> (via the migration's `[DbContext]` attribute) in the migrations assembly; its factory scan does **not** reach
+> referenced module assemblies, and the API-as-startup path is blocked while the app is running (DLL lock). To
+> bootstrap, a throwaway `IDesignTimeDbContextFactory<NotificationsDbContext>` was added **in the
+> Migrations.PostgreSQL project**, the migration generated, then the throwaway removed (the new snapshot makes
+> the context self-discoverable thereafter).
 
 > Note: `ListMyNotificationsQueryHandler` orders/pages **client-side** (mirrors `ListMyChannelsQueryHandler`)
 > because SQLite — used in tests — cannot `ORDER BY` a `DateTimeOffset`. Postgres sorts it in-DB equally well.

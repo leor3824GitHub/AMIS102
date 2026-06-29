@@ -64,6 +64,14 @@ public static class AssetRegisterPermissions
         public const string Dispose = "Permissions.AssetRegister.Unserviceable.Dispose";
     }
 
+    public static class Repair
+    {
+        public const string View    = "Permissions.AssetRegister.Repair.View";
+        public const string Request = "Permissions.AssetRegister.Repair.Request";
+        public const string Inspect = "Permissions.AssetRegister.Repair.Inspect";
+        public const string Accept  = "Permissions.AssetRegister.Repair.Accept";
+    }
+
     public static class Catalog
     {
         public const string View   = "Permissions.AssetRegister.Catalog.View";

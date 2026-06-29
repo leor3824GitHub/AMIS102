@@ -1,6 +1,7 @@
 ﻿@using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
 @using AMIS.Modules.Chat.Contracts.Permissions
+@using AMIS.Modules.Vehicle.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -12,6 +13,11 @@
         <!-- Home - Root Item -->
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
             Home
+        </MudNavLink>
+
+        <!-- Unified inspection worklist — everything awaiting the current user across modules -->
+        <MudNavLink Href="/inspections" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.FactCheck">
+            My Inspections
         </MudNavLink>
 
         <!-- Administration Section -->
@@ -215,6 +221,13 @@
         </MudNavGroup>
 
         <MudNavGroup Title="Vehicle" Icon="@Icons.Material.Outlined.DirectionsCar" @bind-Expanded="_vehicleExpanded">
+            @if (UserProfileState.Permissions.Contains(VehiclePermissions.MyVehicle.View))
+            {
+                <MudNavLink Href="/vehicle/my-vehicles" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.NoCrash">
+                    My Vehicle
+                </MudNavLink>
+            }
             <MudNavLink Href="/vehicle/vehicles" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.DirectionsCarFilled">
                 Vehicles

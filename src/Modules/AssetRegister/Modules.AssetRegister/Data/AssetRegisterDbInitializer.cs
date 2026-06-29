@@ -1,6 +1,7 @@
 using AMIS.Framework.Persistence;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Modules.AssetRegister.Contracts.v1;
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Catalog;
@@ -99,6 +100,9 @@ internal sealed class AssetRegisterDbInitializer(
             PropertyItemCatalog.Create(tenantId, "AR-PPE-PRINTER", "Network Printer", "ICT", "PPE-ICT", "unit", "10605030", 5),
             PropertyItemCatalog.Create(tenantId, "AR-PPE-AIRCON", "Split-type Air Conditioner", "EQUIP", "PPE-EQ", "unit", "10604010", 10),
             PropertyItemCatalog.Create(tenantId, "AR-PPE-TELEVISION", "Smart Television Set", "ICT", "PPE-ICT", "unit", "10605030", 5),
+            // Motor vehicles — DefaultPropertyClass "LT" (COA Account 10606010) so materialized assets
+            // are auto-detected as vehicle-class PPE and become enrollable in the Vehicle module.
+            PropertyItemCatalog.Create(tenantId, "AR-PPE-VEHICLE", "Motor Vehicle", AssetClassCodes.Vehicle, "PPE-LT", "unit", "10606010", 7),
         };
 
         var toAdd = seedItems.Where(x => !existingCodes.Contains(x.Code)).ToList();
@@ -132,8 +136,10 @@ internal sealed class AssetRegisterDbInitializer(
 
     private const string PpeReportNo = "PPERR-2026-06-9001";
     private const string SmrrReportNo = "SMRR-2026-06-9001";
+    private const string VehicleReportNo = "PPERR-2026-06-9002";
     private const string PpeIarNumber = "IAR-2026-9001";
     private const string SeIarNumber = "IAR-2026-9002";
+    private const string VehicleIarNumber = "IAR-2026-9003";
 
     private static readonly SeedReceivingItem[] PpeReceivingItems =
     [
@@ -149,6 +155,18 @@ internal sealed class AssetRegisterDbInitializer(
         new("AR-SE-LAPTOP", "Laptop Computer", 45_000m, "Lenovo",       "ThinkPad E14", "LAP-SN-0001", "2026-06-DP-0003"),
     ];
 
+    // Motor-vehicle PPE lines — each materializes an LT-class PPE asset the Vehicle module enrolls.
+    // PropertyNos here MUST match the spec map in VehicleDbInitializer so the seed can pair them.
+    private static readonly SeedReceivingItem[] VehicleReceivingItems =
+    [
+        new("AR-PPE-VEHICLE", "Toyota Innova",            950_000m,   "Toyota",     "Innova",         "ENG-LT-0001", "2026-06-LT-0001"),
+        new("AR-PPE-VEHICLE", "Toyota Vios",              850_000m,   "Toyota",     "Vios",           "ENG-LT-0002", "2026-06-LT-0002"),
+        new("AR-PPE-VEHICLE", "Isuzu D-Max",              1_200_000m, "Isuzu",      "D-Max",          "ENG-LT-0003", "2026-06-LT-0003"),
+        new("AR-PPE-VEHICLE", "Mitsubishi Montero Sport", 1_500_000m, "Mitsubishi", "Montero Sport",  "ENG-LT-0004", "2026-06-LT-0004"),
+        new("AR-PPE-VEHICLE", "Hyundai H100",             1_100_000m, "Hyundai",    "H100",           "ENG-LT-0005", "2026-06-LT-0005"),
+        new("AR-PPE-VEHICLE", "Honda City",               900_000m,   "Honda",      "City",           "ENG-LT-0006", "2026-06-LT-0006"),
+    ];
+
     // Semi-expendable low-value threshold (COA Circular 2022-004): <= P5,000 is low-valued.
     private const decimal SeLowValueThreshold = 5_000m;
 
@@ -159,7 +177,7 @@ internal sealed class AssetRegisterDbInitializer(
 
         var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
 
-        var reportNos = new[] { PpeReportNo, SmrrReportNo };
+        var reportNos = new[] { PpeReportNo, SmrrReportNo, VehicleReportNo };
         var alreadySeeded = await context.ReceivingReports
             .IgnoreQueryFilters()
             .AnyAsync(r => r.TenantId == tenantId && reportNos.Contains(r.ReportNo), cancellationToken)
@@ -209,12 +227,16 @@ internal sealed class AssetRegisterDbInitializer(
             seSupplier.Name, seSupplier.Address ?? string.Empty,
             SeReceivingItems, date, ReceivedBy(), NotedBy(), catalogByCode);
 
+        built &= BuildReport(tenantId, ReceivingDocumentKind.PPERR, VehicleReportNo, VehicleIarNumber,
+            ppeSupplier.Name, ppeSupplier.Address ?? string.Empty,
+            VehicleReceivingItems, date, ReceivedBy(), NotedBy(), catalogByCode);
+
         if (!built) return;
 
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         logger.LogInformation(
-            "[{Tenant}] seeded demo receiving reports (PPERR + SMRR) with {Count} materialized assets.",
-            tenantId, PpeReceivingItems.Length + SeReceivingItems.Length);
+            "[{Tenant}] seeded demo receiving reports (PPERR + SMRR + vehicles) with {Count} materialized assets.",
+            tenantId, PpeReceivingItems.Length + SeReceivingItems.Length + VehicleReceivingItems.Length);
     }
 
     private bool BuildReport(

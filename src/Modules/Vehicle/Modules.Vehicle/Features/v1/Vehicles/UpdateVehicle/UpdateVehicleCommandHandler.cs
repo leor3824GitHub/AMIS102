@@ -32,7 +32,7 @@ public sealed class UpdateVehicleCommandHandler(VehicleDbContext db, ICurrentUse
 
         vehicle.Update(cmd.PlateNumber, cmd.Make, cmd.Model, cmd.Year, vehicleType, cmd.Notes,
             cmd.MotorNumber, cmd.ChassisNumber, cmd.NumberOfCylinders,
-            cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse, cmd.AcquisitionCost);
+            cmd.EngineDisplacementCC, cmd.FuelType, cmd.VehicleUse);
         vehicle.SetLastModifiedBy(currentUser.GetUserId().ToString());
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return vehicle.ToDto();

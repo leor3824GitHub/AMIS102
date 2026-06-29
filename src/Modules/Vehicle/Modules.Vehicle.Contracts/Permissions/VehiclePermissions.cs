@@ -15,14 +15,6 @@ public static class VehiclePermissions
         public const string Delete = "Permissions.Vehicle.Vehicles.Delete";
     }
 
-    public static class Repairs
-    {
-        public const string View   = "Permissions.Vehicle.Repairs.View";
-        public const string Create = "Permissions.Vehicle.Repairs.Create";
-        public const string Update = "Permissions.Vehicle.Repairs.Update";
-        public const string Delete = "Permissions.Vehicle.Repairs.Delete";
-    }
-
     public static class Maintenance
     {
         public const string View   = "Permissions.Vehicle.Maintenance.View";
@@ -36,5 +28,12 @@ public static class VehiclePermissions
         public const string View = "Permissions.Vehicle.FuelOdometer.View";
         public const string Create = "Permissions.Vehicle.FuelOdometer.Create";
         public const string Update = "Permissions.Vehicle.FuelOdometer.Update";
+    }
+
+    /// <summary>Accountable-officer self-service: act only on vehicles PAR'd to the current user.</summary>
+    public static class MyVehicle
+    {
+        public const string View = "Permissions.Vehicle.MyVehicle.View";
+        public const string RecordFuelOdometer = "Permissions.Vehicle.MyVehicle.RecordFuelOdometer";
     }
 }

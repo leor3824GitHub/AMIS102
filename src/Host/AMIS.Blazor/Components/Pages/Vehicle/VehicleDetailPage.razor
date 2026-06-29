@@ -2,12 +2,13 @@
 @implements IDisposable
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
-@using AMIS.Modules.Vehicle.Contracts.v1.Repairs
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @using AMIS.Modules.Vehicle.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1.Repairs
 @using static AMIS.Modules.Vehicle.Contracts.v1.Vehicles.VehicleStatusValues
 @using AMIS.Blazor.ApiClient
 @inject IVehicleClient VehicleClient
+@inject IArRepairClient RepairClient
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -47,12 +48,10 @@ else
                             <MudChip T="string" Color="@StatusColor(_vehicle.Status)" Size="Size.Small">@DisplayVehicleStatus(_vehicle.Status)</MudChip>
                         </MudStack>
                         <MudDivider Class="my-3" />
-                        <MudText Typo="Typo.caption">Assigned Department</MudText>
-                        <MudText Typo="Typo.body2">@(_vehicle.AssignedDepartment ?? "-")</MudText>
-                        <MudText Typo="Typo.caption" Class="mt-2">Assigned Driver</MudText>
-                        <MudText Typo="Typo.body2">@(_vehicle.AssignedDriver ?? "-")</MudText>
-                        <MudText Typo="Typo.caption" Class="mt-2">Accountable Officer Title</MudText>
-                        <MudText Typo="Typo.body2">@(_vehicle.AccountableOfficerTitle ?? "-")</MudText>
+                        <MudText Typo="Typo.caption">Property No</MudText>
+                        <MudText Typo="Typo.body2">@_vehicle.PropertyNo</MudText>
+                        <MudText Typo="Typo.caption" Class="mt-2">Acquisition Date</MudText>
+                        <MudText Typo="Typo.body2">@_vehicle.AcquisitionDate.ToString("yyyy-MM-dd")</MudText>
                         <MudText Typo="Typo.caption" Class="mt-2">Odometer</MudText>
                         <MudText Typo="Typo.body2">@_vehicle.Odometer km</MudText>
 
@@ -71,7 +70,7 @@ else
                         <MudText Typo="Typo.caption" Class="mt-2">Vehicle Use</MudText>
                         <MudText Typo="Typo.body2">@(_vehicle.VehicleUse ?? "-")</MudText>
                         <MudText Typo="Typo.caption" Class="mt-2">Acquisition Cost</MudText>
-                        <MudText Typo="Typo.body2">@(_vehicle.AcquisitionCost?.ToString("N2") ?? "-")</MudText>
+                        <MudText Typo="Typo.body2">@(_vehicle.AcquisitionCost?.ToString("N2") ?? "-") <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">(from PPE asset)</MudText></MudText>
                         <MudStack Row="true" Spacing="1">
                             @if (_vehicle.Status == Active && _canUpdate)
                             {
@@ -121,51 +120,27 @@ else
                                 <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.EngineDisplacementCC" Label="Engine Displacement (CC)" Min="0" /></MudItem>
                                 <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.FuelType" Label="Fuel Type" Placeholder="e.g., Diesel, Gasoline, Hybrid" /></MudItem>
                                 <MudItem xs="12" sm="6"><MudTextField @bind-Value="_edit.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV" /></MudItem>
-                                <MudItem xs="12" sm="6"><MudNumericField @bind-Value="_edit.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2" /></MudItem>
                             </MudGrid>
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveVehicle">Save</MudButton>
                         </MudStack>
                     </MudTabPanel>
 
-                    <MudTabPanel Text="Assignment/Odometer">
-                        <MudGrid>
-                            <MudItem xs="12" sm="6">
-                                <MudAutocomplete T="EmployeeReferenceDto"
-                                                 Value="_selectedDriver"
-                                                 ValueChanged="OnDriverChanged"
-                                                 SearchFunc="SearchDrivers"
-                                                 ToStringFunc="FormatDriver"
-                                                 Label="Driver Name"
-                                                 Variant="Variant.Outlined"
-                                                 Placeholder="Search employee..."
-                                                 Clearable="true"
-                                                 CoerceValue="true"
-                                                 ResetValueOnEmptyText="true" />
-                            </MudItem>
-                            <MudItem xs="12" sm="6">
-                                <MudTextField @bind-Value="_assignment.AccountableOfficerTitle"
-                                              Label="Accountable Officer Title"
-                                              Placeholder="e.g., Truck Driver" />
-                            </MudItem>
-                        </MudGrid>
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-2" OnClick="AssignVehicle">Update Assignment</MudButton>
-
-                        <MudDivider Class="my-3" />
+                    <MudTabPanel Text="Odometer">
                         <MudNumericField @bind-Value="_newOdometer" Label="New Odometer" Min="0" />
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2" OnClick="UpdateOdometer">Update Odometer</MudButton>
                     </MudTabPanel>
                     }
 
                     <MudTabPanel Text="Recent Records">
-                        <MudText Typo="Typo.subtitle2" Class="mb-2">Repairs</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Repairs (RPRI)</MudText>
                         <MudSimpleTable Dense="true">
-                            <thead><tr><th>Date</th><th>Description</th><th>Status</th></tr></thead>
+                            <thead><tr><th>RPRI No</th><th>Nature of Work</th><th>Status</th></tr></thead>
                             <tbody>
                                 @foreach (var row in _repairs.Take(5))
                                 {
                                     <tr>
-                                        <td>@row.RepairDate.ToString("yyyy-MM-dd")</td>
-                                        <td>@row.Description</td>
+                                        <td>@row.RpriNo</td>
+                                        <td>@row.NatureOfWork</td>
                                         <td><MudChip T="string" Size="Size.Small" Color="@RepairStatusColor(row.Status)">@row.Status</MudChip></td>
                                     </tr>
                                 }
@@ -219,12 +194,10 @@ else
 
     private VehicleDto? _vehicle;
     private VehicleEditModel _edit = new();
-    private AssignmentModel _assignment = new();
-    private EmployeeReferenceDto? _selectedDriver;
     private int _newOdometer;
     private bool _isLoading;
 
-    private List<RepairRecordDto> _repairs = [];
+    private List<PropertyRepairSummaryDto> _repairs = [];
     private List<MaintenanceScheduleDto> _schedules = [];
     private List<MaintenanceLogDto> _logs = [];
 
@@ -263,24 +236,13 @@ else
                 NumberOfCylinders = _vehicle.NumberOfCylinders,
                 EngineDisplacementCC = _vehicle.EngineDisplacementCC,
                 FuelType = _vehicle.FuelType,
-                VehicleUse = _vehicle.VehicleUse,
-                AcquisitionCost = _vehicle.AcquisitionCost
+                VehicleUse = _vehicle.VehicleUse
             };
 
             _newOdometer = _vehicle.Odometer;
-            _assignment = new AssignmentModel
-            {
-                DepartmentName = _vehicle.AssignedDepartment,
-                DepartmentIdText = _vehicle.AssignedDepartmentId?.ToString(),
-                DriverName = _vehicle.AssignedDriver,
-                DriverIdText = _vehicle.AssignedDriverId?.ToString(),
-                AccountableOfficerTitle = _vehicle.AccountableOfficerTitle
-            };
 
-            await HydrateAssignmentSelectionsAsync();
-
-            var repairs = await VehicleClient.SearchRepairsAsync(new SearchRepairRecordsQuery { VehicleId = Id, PageNumber = 1, PageSize = 5 });
-            _repairs = repairs.Items?.ToList() ?? [];
+            var repairs = await RepairClient.SearchAsync(assetRegistryId: _vehicle.AssetRegistryId, page: 1, pageSize: 5);
+            _repairs = repairs.Items.ToList();
             _schedules = await VehicleClient.SearchMaintenanceSchedulesAsync(new MaintenanceScheduleSearchRequest(null, Id, null));
             _logs = await VehicleClient.SearchMaintenanceLogsAsync(new MaintenanceLogSearchRequest(null, Id, null, null, null));
         }
@@ -316,8 +278,7 @@ else
                 _edit.NumberOfCylinders,
                 _edit.EngineDisplacementCC,
                 _edit.FuelType,
-                _edit.VehicleUse,
-                _edit.AcquisitionCost));
+                _edit.VehicleUse));
 
             Snackbar.Add("Vehicle updated.", Severity.Success);
             await Load();
@@ -329,42 +290,6 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Update failed: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task AssignVehicle()
-    {
-        if (_vehicle is null)
-        {
-            return;
-        }
-
-        if (HasPartialAssignment(_assignment.DriverIdText, _assignment.DriverName))
-        {
-            Snackbar.Add("Driver ID and name must both be provided or both left blank.", Severity.Warning);
-            return;
-        }
-
-        try
-        {
-            await VehicleClient.AssignVehicleAsync(_vehicle.Id, new AssignVehicleCommand(
-                _vehicle.Id,
-                ParseGuid(_assignment.DepartmentIdText),
-                EmptyToNull(_assignment.DepartmentName),
-                ParseGuid(_assignment.DriverIdText),
-                EmptyToNull(_assignment.DriverName),
-                EmptyToNull(_assignment.AccountableOfficerTitle)));
-
-            Snackbar.Add("Assignment updated.", Severity.Success);
-            await Load();
-        }
-        catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
-        {
-            ShowValidationMessages(apiEx.Response, "Assignment update failed validation.");
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Assignment failed: {ex.Message}", Severity.Error);
         }
     }
 
@@ -468,95 +393,6 @@ else
         return null;
     }
 
-    private static Guid? ParseGuid(string? text) => Guid.TryParse(text, out var id) ? id : null;
-    private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
-    private static bool HasPartialAssignment(string? idText, string? name) =>
-        Guid.TryParse(idText, out _) != !string.IsNullOrWhiteSpace(name);
-
-    private async Task<IEnumerable<EmployeeReferenceDto>> SearchDrivers(string value, CancellationToken token)
-    {
-        try
-        {
-            var response = await LookupClient.EmployeesGetAsync(
-                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                isActive: true,
-                pageNumber: 1,
-                pageSize: 20,
-                cancellationToken: token);
-
-            return response.Items ?? Enumerable.Empty<EmployeeReferenceDto>();
-        }
-        catch
-        {
-            // Fallback to an empty list when lookup endpoint is unavailable.
-            return Enumerable.Empty<EmployeeReferenceDto>();
-        }
-    }
-
-    private Task OnDriverChanged(EmployeeReferenceDto? driver)
-    {
-        _selectedDriver = driver;
-        _assignment.DriverIdText = driver?.Id.ToString();
-        _assignment.DriverName = driver is null ? null : FormatDriver(driver);
-        _assignment.DepartmentIdText = driver?.DepartmentId == Guid.Empty ? null : driver?.DepartmentId.ToString();
-        _assignment.DepartmentName = driver?.DepartmentName;
-        return Task.CompletedTask;
-    }
-
-    private static string FormatDriver(EmployeeReferenceDto? employee)
-    {
-        if (employee is null)
-        {
-            return string.Empty;
-        }
-
-        var fullName = $"{employee.FirstName} {employee.LastName}".Trim();
-        return string.IsNullOrWhiteSpace(fullName) ? employee.EmployeeNumber : fullName;
-    }
-
-    private async Task HydrateAssignmentSelectionsAsync()
-    {
-        if (Guid.TryParse(_assignment.DriverIdText, out var driverId))
-        {
-            try
-            {
-                _selectedDriver = await LookupClient.EmployeesGetAsync(driverId);
-                return;
-            }
-            catch
-            {
-                // Fall back to a lightweight display object if lookup fails.
-            }
-        }
-
-        if (string.IsNullOrWhiteSpace(_assignment.DriverName))
-        {
-            _selectedDriver = null;
-            return;
-        }
-
-        _selectedDriver = new EmployeeReferenceDto
-        {
-            Id = ParseGuid(_assignment.DriverIdText) ?? Guid.Empty,
-            EmployeeNumber = string.Empty,
-            FirstName = _assignment.DriverName,
-            LastName = string.Empty,
-            WorkEmail = string.Empty,
-            OfficeId = Guid.Empty,
-            OfficeCode = string.Empty,
-            OfficeName = string.Empty,
-            DepartmentId = ParseGuid(_assignment.DepartmentIdText) ?? Guid.Empty,
-            DepartmentCode = string.Empty,
-            DepartmentName = _assignment.DepartmentName ?? string.Empty,
-            PositionId = Guid.Empty,
-            PositionCode = string.Empty,
-            PositionName = string.Empty,
-            DefaultUnitOfMeasureCode = string.Empty,
-            DefaultUnitOfMeasureName = string.Empty,
-            IsActive = true
-        };
-    }
-
     private static Color StatusColor(string status) => status switch
     {
         Active => Color.Success,
@@ -568,10 +404,11 @@ else
 
     private static Color RepairStatusColor(string status) => status switch
     {
-        "Pending" => Color.Warning,
-        "InProgress" => Color.Info,
-        "Completed" => Color.Success,
-        "Cancelled" => Color.Error,
+        RepairStatusValues.Requested => Color.Warning,
+        RepairStatusValues.PreInspected => Color.Info,
+        RepairStatusValues.Repaired => Color.Info,
+        RepairStatusValues.PostInspected => Color.Primary,
+        RepairStatusValues.Accepted => Color.Success,
         _ => Color.Default
     };
 
@@ -642,16 +479,6 @@ else
         public int? EngineDisplacementCC { get; set; }
         public string? FuelType { get; set; }
         public string? VehicleUse { get; set; }
-        public decimal? AcquisitionCost { get; set; }
-    }
-
-    private sealed class AssignmentModel
-    {
-        public string? DepartmentName { get; set; }
-        public string? DriverName { get; set; }
-        public string? DepartmentIdText { get; set; }
-        public string? DriverIdText { get; set; }
-        public string? AccountableOfficerTitle { get; set; }
     }
 }
 

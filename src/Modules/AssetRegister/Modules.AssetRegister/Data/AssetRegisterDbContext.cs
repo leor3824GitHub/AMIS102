@@ -32,6 +32,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<PhysicalCountSession> PhysicalCountSessions => Set<PhysicalCountSession>();
     public DbSet<PropertyIncidentReport> PropertyIncidentReports => Set<PropertyIncidentReport>();
     public DbSet<UnserviceablePropertyReport> UnserviceablePropertyReports => Set<UnserviceablePropertyReport>();
+    public DbSet<Domain.Repairs.PropertyRepair> PropertyRepairs => Set<Domain.Repairs.PropertyRepair>();
     public DbSet<ReceivingReport> ReceivingReports => Set<ReceivingReport>();
     public DbSet<PPERRFormSeries> PPERRFormSeries => Set<PPERRFormSeries>();
     public DbSet<ReturnedPropertyReceipt> ReturnedPropertyReceipts => Set<ReturnedPropertyReceipt>();

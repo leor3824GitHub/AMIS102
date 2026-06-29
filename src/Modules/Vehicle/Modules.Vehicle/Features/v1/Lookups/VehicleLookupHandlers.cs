@@ -24,11 +24,7 @@ public sealed class GetVehicleReferenceByIdQueryHandler(VehicleDbContext dbConte
                 v.Year,
                 v.Type.ToString(),
                 v.Status.ToString(),
-                v.Odometer,
-                v.AssignedDepartmentId,
-                v.AssignedDepartment,
-                v.AssignedDriverId,
-                v.AssignedDriver))
+                v.Odometer))
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -49,8 +45,7 @@ public sealed class SearchVehicleReferencesQueryHandler(VehicleDbContext dbConte
                     v.PlateNumber.Contains(query.Keyword) ||
                     v.Make.Contains(query.Keyword) ||
                     v.Model.Contains(query.Keyword) ||
-                    (v.AssignedDepartment != null && v.AssignedDepartment.Contains(query.Keyword)) ||
-                    (v.AssignedDriver != null && v.AssignedDriver.Contains(query.Keyword)));
+                    v.PropertyNo.Contains(query.Keyword));
             }
 
             if (!string.IsNullOrWhiteSpace(query.Status) &&
@@ -63,11 +58,6 @@ public sealed class SearchVehicleReferencesQueryHandler(VehicleDbContext dbConte
                 Enum.TryParse<VehicleType>(query.Type, ignoreCase: true, out var type))
             {
                 vehicleQuery = vehicleQuery.Where(v => v.Type == type);
-            }
-
-            if (query.AssignedDepartmentId.HasValue)
-            {
-                vehicleQuery = vehicleQuery.Where(v => v.AssignedDepartmentId == query.AssignedDepartmentId.Value);
             }
 
             vehicleQuery = vehicleQuery
@@ -84,11 +74,7 @@ public sealed class SearchVehicleReferencesQueryHandler(VehicleDbContext dbConte
                     v.Year,
                     v.Type.ToString(),
                     v.Status.ToString(),
-                    v.Odometer,
-                    v.AssignedDepartmentId,
-                    v.AssignedDepartment,
-                    v.AssignedDriverId,
-                    v.AssignedDriver))
+                    v.Odometer))
                 .ToPagedResponseAsync(query, cancellationToken)
                 .ConfigureAwait(false);
         }

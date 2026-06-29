@@ -1,3 +1,4 @@
+using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using AMIS.Modules.Vehicle.Data;
 using AMIS.Modules.Vehicle.Domain.Vehicles;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.Vehicle.Features.v1.Vehicles.GetMotorVehicleInventory;
 
-public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db)
+public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db, IMediator mediator)
     : IQueryHandler<GetMotorVehicleInventoryQuery, List<MotorVehicleInventoryItemDto>>
 {
     public async ValueTask<List<MotorVehicleInventoryItemDto>> Handle(
@@ -24,23 +25,31 @@ public sealed class GetMotorVehicleInventoryQueryHandler(VehicleDbContext db)
             .OrderBy(v => v.Make).ThenBy(v => v.Model)
             .ToListAsync(cancellationToken);
 
-        return vehicles.Select(v => new MotorVehicleInventoryItemDto(
-            Qty: 1,
-            Description: $"{v.Make} {v.Model}",
-            MotorNumber: v.MotorNumber,
-            ChassisNumber: v.ChassisNumber,
-            VehicleClassification: BuildClassification(v),
-            PlateNumber: v.PlateNumber,
-            VehicleUse: v.VehicleUse,
-            NumberOfCylinders: v.NumberOfCylinders,
-            EngineDisplacementCC: v.EngineDisplacementCC,
-            FuelType: v.FuelType,
-            Year: v.Year,
-            AcquisitionCost: v.AcquisitionCost,
-            RunningCondition: BuildRunningCondition(v.Status),
-            AccountableOfficer: v.AssignedDriver,
-            AccountableOfficerTitle: v.AccountableOfficerTitle
-        )).ToList();
+        // Source the accountable officer from each vehicle's active PAR (batch — avoids N+1).
+        var officers = await mediator.Send(
+            new GetAccountableOfficersByAssetIdsQuery(vehicles.ConvertAll(v => v.AssetRegistryId)),
+            cancellationToken).ConfigureAwait(false);
+
+        return vehicles.Select(v =>
+        {
+            officers.TryGetValue(v.AssetRegistryId, out var officer);
+            return new MotorVehicleInventoryItemDto(
+                Qty: 1,
+                Description: $"{v.Make} {v.Model}",
+                MotorNumber: v.MotorNumber,
+                ChassisNumber: v.ChassisNumber,
+                VehicleClassification: BuildClassification(v),
+                PlateNumber: v.PlateNumber,
+                VehicleUse: v.VehicleUse,
+                NumberOfCylinders: v.NumberOfCylinders,
+                EngineDisplacementCC: v.EngineDisplacementCC,
+                FuelType: v.FuelType,
+                Year: v.Year,
+                AcquisitionCost: v.AcquisitionCost,
+                RunningCondition: BuildRunningCondition(v.Status),
+                AccountableOfficer: officer?.Name,
+                AccountableOfficerTitle: officer?.Designation);
+        }).ToList();
     }
 
     private static string BuildClassification(Domain.Vehicles.Vehicle v)

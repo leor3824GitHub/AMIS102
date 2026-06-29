@@ -13,6 +13,8 @@ public static class VehicleStatusValues
 
 public record VehicleDto(
     Guid Id,
+    Guid AssetRegistryId,
+    string PropertyNo,
     string PlateNumber,
     string Make,
     string Model,
@@ -20,11 +22,6 @@ public record VehicleDto(
     string Type,
     string Status,
     int Odometer,
-    Guid? AssignedDepartmentId,
-    string? AssignedDepartment,
-    Guid? AssignedDriverId,
-    string? AssignedDriver,
-    string? AccountableOfficerTitle,
     string? Notes,
     // Technical specifications
     string? MotorNumber,
@@ -34,12 +31,18 @@ public record VehicleDto(
     string? FuelType,
     string? VehicleUse,
     decimal? AcquisitionCost,
+    DateOnly AcquisitionDate,
     DateTimeOffset CreatedOnUtc,
     string? CreatedBy,
     DateTimeOffset? LastModifiedOnUtc,
     string? LastModifiedBy);
 
-public record CreateVehicleCommand(
+/// <summary>
+/// Enrolls a fleet vehicle from a canonical PPE motor-vehicle asset (AssetRegister). Acquisition
+/// cost/date/property number are read from the asset server-side — never supplied by the caller.
+/// </summary>
+public record EnrollVehicleCommand(
+    Guid AssetRegistryId,
     string PlateNumber,
     string Make,
     string Model,
@@ -52,8 +55,7 @@ public record CreateVehicleCommand(
     int? NumberOfCylinders = null,
     int? EngineDisplacementCC = null,
     string? FuelType = null,
-    string? VehicleUse = null,
-    decimal? AcquisitionCost = null) : ICommand<VehicleDto>;
+    string? VehicleUse = null) : ICommand<VehicleDto>;
 
 public record UpdateVehicleCommand(
     Guid Id,
@@ -68,16 +70,17 @@ public record UpdateVehicleCommand(
     int? NumberOfCylinders = null,
     int? EngineDisplacementCC = null,
     string? FuelType = null,
-    string? VehicleUse = null,
-    decimal? AcquisitionCost = null) : ICommand<VehicleDto>;
+    string? VehicleUse = null) : ICommand<VehicleDto>;
 
-public record AssignVehicleCommand(
-    Guid Id,
-    Guid? DepartmentId,
-    string? DepartmentName,
-    Guid? DriverId,
-    string? DriverName,
-    string? AccountableOfficerTitle = null) : ICommand<Unit>;
+/// <summary>A PPE motor-vehicle asset that is eligible for enrollment (LT class, not yet enrolled).</summary>
+public sealed record EnrollableVehicleAssetDto(
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string Description,
+    decimal UnitCost,
+    DateOnly AcquisitionDate);
+
+public sealed record GetEnrollableVehicleAssetsQuery(string? Keyword = null) : IQuery<List<EnrollableVehicleAssetDto>>;
 
 public record UpdateOdometerCommand(Guid Id, int Reading) : ICommand<Unit>;
 
@@ -91,12 +94,33 @@ public record DeleteVehicleCommand(Guid Id) : ICommand<Unit>;
 
 public record GetVehicleQuery(Guid Id) : IQuery<VehicleDto?>;
 
+// ============= ACCOUNTABLE-OFFICER SELF-SERVICE (MY VEHICLE) =============
+
+/// <summary>The vehicles the current user is the accountable officer for (accepted PAR).</summary>
+public sealed record GetMyVehiclesQuery : IQuery<List<VehicleDto>>;
+
+/// <summary>Records fuel/odometer for a vehicle the current user is accountable for (ownership-guarded server-side).</summary>
+public record RecordMyVehicleFuelOdometerCommand(
+    Guid VehicleId,
+    DateOnly Date,
+    int OdometerStart,
+    int OdometerEnd,
+    decimal FuelLiters,
+    decimal FuelCost,
+    string? Destination,
+    string? Remarks) : ICommand<VehicleDailyUsageDto>;
+
+/// <summary>Fuel/odometer usage summary for one of the current user's vehicles (ownership-guarded).</summary>
+public sealed record GetMyVehicleDailyUsageQuery(
+    Guid VehicleId,
+    DateOnly? DateFrom = null,
+    DateOnly? DateTo = null) : IQuery<VehicleDailyUsageSummaryDto>;
+
 public sealed class SearchVehiclesQuery : IPagedQuery, IQuery<PagedResponse<VehicleDto>>
 {
     public string? Keyword { get; set; }
     public string? Status { get; set; }
     public string? Type { get; set; }
-    public Guid? AssignedDepartmentId { get; set; }
     public int? PageNumber { get; set; }
     public int? PageSize { get; set; }
     public string? Sort { get; set; }

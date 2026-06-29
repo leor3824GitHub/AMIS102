@@ -223,6 +223,12 @@
     private static bool IsSignedJo(JobOrderStatus status) =>
         status is JobOrderStatus.Issued or JobOrderStatus.Inspected or JobOrderStatus.Completed;
 
+    // Deep-link target from a notification: open the inspect dialog for this JO on arrival.
+    [Parameter, SupplyParameterFromQuery(Name = "inspect")]
+    public Guid? Inspect { get; set; }
+
+    private Guid? _handledInspectId;
+
     private List<JobOrderSummaryDto> _items = [];
     private bool _loaded;
     private string _keyword = string.Empty;
@@ -242,6 +248,17 @@
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    // Auto-open the inspect dialog when arriving via a notification deep-link (?inspect={id}). Guarded by the
+    // handled id so it fires once per distinct target, whether the page mounts fresh or the query changes in place.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Inspect is { } id && _handledInspectId != id)
+        {
+            _handledInspectId = id;
+            await InspectAsync(id);
+        }
+    }
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 

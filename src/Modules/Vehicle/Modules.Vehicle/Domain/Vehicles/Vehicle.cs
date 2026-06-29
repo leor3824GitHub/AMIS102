@@ -32,6 +32,13 @@ public enum VehicleStatus
 public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 {
     public string TenantId { get; private set; } = default!;
+
+    // Link to the canonical PPE asset (AssetRegister). Required & unique — enrollment is the only path.
+    public Guid AssetRegistryId { get; private set; }
+    // Read-mirrors copied from the PPE asset at enrollment (asset-owned, read-only here).
+    public string PropertyNo { get; private set; } = default!;
+    public DateOnly AcquisitionDate { get; private set; }
+
     public string PlateNumber { get; private set; } = default!;
     public string Make { get; private set; } = default!;
     public string Model { get; private set; } = default!;
@@ -47,13 +54,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public int? EngineDisplacementCC { get; private set; }
     public string? FuelType { get; private set; }       // Diesel, Gasoline, Electric, Hybrid
     public string? VehicleUse { get; private set; }     // e.g. GOV'T-UV, GOV'T-MPV
-    public decimal? AcquisitionCost { get; private set; }
-
-    public Guid? AssignedDepartmentId { get; private set; }
-    public string? AssignedDepartment { get; private set; }
-    public Guid? AssignedDriverId { get; private set; }
-    public string? AssignedDriver { get; private set; }
-    public string? AccountableOfficerTitle { get; private set; }  // Driver designation, e.g. Truck Driver
+    public decimal? AcquisitionCost { get; private set; }  // mirrored from PPE asset UnitCost at enrollment
 
     public string? Notes { get; set; }
     public byte[] Version { get; private set; } = [];
@@ -69,16 +70,27 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public DateTimeOffset? DeletedOnUtc { get; private set; }
     public string? DeletedBy { get; private set; }
 
-    public static Vehicle Create(string tenantId, string plateNumber, string make, string model,
+    /// <summary>
+    /// Enroll a vehicle from a canonical PPE motor-vehicle asset (AssetRegister). The acquisition
+    /// cost / date / property number are mirrored read-only from the asset; enrollment is the only
+    /// path to create a fleet vehicle.
+    /// </summary>
+    public static Vehicle Enroll(string tenantId, Guid assetRegistryId, string propertyNo,
+        decimal? acquisitionCost, DateOnly acquisitionDate,
+        string plateNumber, string make, string model,
         int year, VehicleType type, int odometer = 0, string? notes = null,
         string? motorNumber = null, string? chassisNumber = null,
         int? numberOfCylinders = null, int? engineDisplacementCC = null,
-        string? fuelType = null, string? vehicleUse = null, decimal? acquisitionCost = null)
+        string? fuelType = null, string? vehicleUse = null)
     {
         var vehicle = new Vehicle
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
+            AssetRegistryId = assetRegistryId,
+            PropertyNo = propertyNo,
+            AcquisitionDate = acquisitionDate,
+            AcquisitionCost = acquisitionCost,
             PlateNumber = plateNumber.ToUpperInvariant(),
             Make = make,
             Model = model,
@@ -93,7 +105,6 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             EngineDisplacementCC = engineDisplacementCC,
             FuelType = fuelType,
             VehicleUse = vehicleUse,
-            AcquisitionCost = acquisitionCost,
             CreatedOnUtc = DateTimeOffset.UtcNow,
             Version = NewVersion()
         };
@@ -107,7 +118,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public void Update(string plateNumber, string make, string model, int year, VehicleType type, string? notes,
         string? motorNumber = null, string? chassisNumber = null,
         int? numberOfCylinders = null, int? engineDisplacementCC = null,
-        string? fuelType = null, string? vehicleUse = null, decimal? acquisitionCost = null)
+        string? fuelType = null, string? vehicleUse = null)
     {
         PlateNumber = plateNumber.ToUpperInvariant();
         Make = make;
@@ -121,22 +132,6 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         EngineDisplacementCC = engineDisplacementCC;
         FuelType = fuelType;
         VehicleUse = vehicleUse;
-        AcquisitionCost = acquisitionCost;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
-
-    public void AssignTo(Guid? departmentId, string? departmentName, Guid? driverId, string? driverName,
-        string? accountableOfficerTitle = null)
-    {
-        ValidateAssignmentPair(departmentId, departmentName, "department");
-        ValidateAssignmentPair(driverId, driverName, "driver");
-
-        AssignedDepartmentId = departmentId;
-        AssignedDepartment = departmentName;
-        AssignedDriverId = driverId;
-        AssignedDriver = driverName;
-        AccountableOfficerTitle = accountableOfficerTitle;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }
@@ -227,15 +222,6 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     internal void SetLastModifiedOnUtc(DateTimeOffset utcNow)
     {
         LastModifiedOnUtc = utcNow;
-    }
-
-    private static void ValidateAssignmentPair(Guid? id, string? name, string label)
-    {
-        var hasId = id.HasValue;
-        var hasName = !string.IsNullOrWhiteSpace(name);
-
-        if (hasId != hasName)
-            throw new InvalidOperationException($"{label} ID and name must both be provided or both omitted.");
     }
 }
 

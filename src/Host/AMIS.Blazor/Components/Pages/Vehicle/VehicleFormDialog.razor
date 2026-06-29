@@ -6,6 +6,37 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
+            <MudText Typo="Typo.caption" Class="font-weight-bold">PPE Asset</MudText>
+            <MudSelect T="EnrollableVehicleAssetDto" @bind-Value="SelectedAsset" Label="Select Motor Vehicle Asset"
+                       Required="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                       Disabled="_isLoadingAssets" ToStringFunc="@AssetLabel">
+                @foreach (var asset in _assets)
+                {
+                    <MudSelectItem Value="@asset">@AssetLabel(asset)</MudSelectItem>
+                }
+            </MudSelect>
+            @if (_isLoadingAssets)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Loading enrollable assets…</MudText>
+            }
+            else if (_assets.Count == 0)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Warning">
+                    No unenrolled motor-vehicle (LT) PPE assets are available. Receive a vehicle in Asset Register first.
+                </MudText>
+            }
+            @if (_selectedAsset is not null)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Property No: <b>@_selectedAsset.PropertyNo</b> &nbsp;·&nbsp;
+                    Acquisition Cost: <b>₱@_selectedAsset.UnitCost.ToString("N2")</b> &nbsp;·&nbsp;
+                    Acquisition Date: <b>@_selectedAsset.AcquisitionDate.ToString("yyyy-MM-dd")</b>
+                </MudText>
+            }
+
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.caption" Class="font-weight-bold">Fleet Details</MudText>
+
             <MudTextField @bind-Value="_form.PlateNumber" Label="Plate Number" Required="true"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
             <MudTextField @bind-Value="_form.Make" Label="Make" Required="true"
@@ -39,8 +70,6 @@
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
             <MudTextField @bind-Value="_form.VehicleUse" Label="Vehicle Use" Placeholder="e.g., GOV'T-UV, GOV'T-MPV"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <MudNumericField @bind-Value="_form.AcquisitionCost" Label="Acquisition Cost" Min="0" Format="F2"
-                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
 
             <MudTextField @bind-Value="_form.Notes" Label="Notes" Lines="2"
                           Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
@@ -48,8 +77,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateVehicle" Disabled="_isLoading">
-            Create
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EnrollVehicle" Disabled="_isLoading">
+            Enroll
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -59,8 +88,49 @@
 
     private VehicleForm _form = new();
     private bool _isLoading;
+    private bool _isLoadingAssets = true;
+    private List<EnrollableVehicleAssetDto> _assets = [];
+    private EnrollableVehicleAssetDto? _selectedAsset;
+
+    private EnrollableVehicleAssetDto? SelectedAsset
+    {
+        get => _selectedAsset;
+        set
+        {
+            _selectedAsset = value;
+            PrefillFromAsset(value);
+        }
+    }
 
     private static readonly string[] VehicleTypes = ["Other", "Sedan", "SUV", "Van", "Truck", "Motorcycle", "Bus", "PickUp", "MPV", "Hatchback", "Crossover", "Wagon", "Minibus"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _assets = await VehicleClient.GetEnrollableVehicleAssetsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load enrollable assets: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoadingAssets = false;
+        }
+    }
+
+    private static string AssetLabel(EnrollableVehicleAssetDto? a) =>
+        a is null ? string.Empty : $"{a.PropertyNo} — {a.Description} (₱{a.UnitCost:N2})";
+
+    private void PrefillFromAsset(EnrollableVehicleAssetDto? asset)
+    {
+        if (asset is null) return;
+        // Description is "Make Model" for seeded vehicle assets — prefill best-effort.
+        var parts = asset.Description.Split(' ', 2, StringSplitOptions.TrimEntries);
+        if (string.IsNullOrWhiteSpace(_form.Make) && parts.Length > 0) _form.Make = parts[0];
+        if (string.IsNullOrWhiteSpace(_form.Model) && parts.Length > 1) _form.Model = parts[1];
+    }
 
     public sealed class VehicleForm
     {
@@ -77,11 +147,16 @@
         public int? EngineDisplacementCC { get; set; }
         public string? FuelType { get; set; }
         public string? VehicleUse { get; set; }
-        public decimal? AcquisitionCost { get; set; }
     }
 
-    private async Task CreateVehicle()
+    private async Task EnrollVehicle()
     {
+        if (_selectedAsset is null)
+        {
+            Snackbar.Add("Select a PPE motor-vehicle asset to enroll.", Severity.Warning);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_form.PlateNumber) || string.IsNullOrWhiteSpace(_form.Make) ||
             string.IsNullOrWhiteSpace(_form.Model) || string.IsNullOrWhiteSpace(_form.Type))
         {
@@ -92,7 +167,8 @@
         try
         {
             _isLoading = true;
-            await VehicleClient.CreateVehicleAsync(new CreateVehicleCommand(
+            await VehicleClient.EnrollVehicleAsync(new EnrollVehicleCommand(
+                _selectedAsset.AssetRegistryId,
                 _form.PlateNumber,
                 _form.Make,
                 _form.Model,
@@ -105,10 +181,9 @@
                 _form.NumberOfCylinders,
                 _form.EngineDisplacementCC,
                 _form.FuelType,
-                _form.VehicleUse,
-                _form.AcquisitionCost));
+                _form.VehicleUse));
 
-            Snackbar.Add("Vehicle created.", Severity.Success);
+            Snackbar.Add("Vehicle enrolled.", Severity.Success);
             Dialog.Close(DialogResult.Ok(true));
         }
         catch (ApiException apiEx) when (apiEx.StatusCode == StatusCodes.Status400BadRequest)
@@ -123,12 +198,12 @@
             }
             else
             {
-                Snackbar.Add("Vehicle creation failed validation. Please check your inputs and try again.", Severity.Warning);
+                Snackbar.Add("Vehicle enrollment failed validation. Please check your inputs and try again.", Severity.Warning);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Create failed: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Enroll failed: {ex.Message}", Severity.Error);
         }
         finally
         {

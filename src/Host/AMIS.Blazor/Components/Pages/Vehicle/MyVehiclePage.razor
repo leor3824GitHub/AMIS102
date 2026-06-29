@@ -1,0 +1,188 @@
+@page "/vehicle/my-vehicles"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.Permissions
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="My Vehicle" Description="Record fuel &amp; odometer for vehicles assigned to you (accepted PAR)" />
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="5">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-2">My Vehicles</MudText>
+                @if (_loading)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_vehicles.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        No vehicles are currently assigned to you. A vehicle appears here once you accept its PAR.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudList T="VehicleDto" SelectedValue="_selected" SelectedValueChanged="OnSelected" Dense="true">
+                        @foreach (var v in _vehicles)
+                        {
+                            <MudListItem T="VehicleDto" Value="v" Icon="@Icons.Material.Outlined.DirectionsCar">
+                                <MudText Typo="Typo.body2"><b>@v.PlateNumber</b> — @v.Make @v.Model</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@v.PropertyNo · @v.Odometer km</MudText>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="7">
+        @if (_selected is not null)
+        {
+            <MudCard Elevation="1" Class="mb-3">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">@_selected.PlateNumber — @_selected.Make @_selected.Model</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">Property No: @_selected.PropertyNo</MudText>
+                    @if (_summary is not null)
+                    {
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Records</MudText><MudText Typo="Typo.body1">@_summary.RecordCount</MudText></MudItem>
+                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Distance (km)</MudText><MudText Typo="Typo.body1">@_summary.TotalDistanceKm</MudText></MudItem>
+                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Fuel (L)</MudText><MudText Typo="Typo.body1">@_summary.TotalFuelLiters.ToString("N2")</MudText></MudItem>
+                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Fuel Cost</MudText><MudText Typo="Typo.body1">₱@_summary.TotalFuelCost.ToString("N2")</MudText></MudItem>
+                        </MudGrid>
+                    }
+                </MudCardContent>
+            </MudCard>
+
+            @if (_canRecord)
+            {
+                <MudCard Elevation="1">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Record Fuel &amp; Odometer</MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6"><MudDatePicker @bind-Date="_date" Label="Date" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.OdometerStart" Label="Odometer Start" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.OdometerEnd" Label="Odometer End" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.FuelLiters" Label="Fuel (L)" Min="0" Format="F2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.FuelCost" Label="Fuel Cost" Min="0" Format="F2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_form.Destination" Label="Destination" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                            <MudItem xs="12"><MudTextField @bind-Value="_form.Remarks" Label="Remarks" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
+                        </MudGrid>
+                        <MudButton Class="mt-2" Variant="Variant.Filled" Color="Color.Primary" OnClick="Record" Disabled="_saving">Save Record</MudButton>
+                    </MudCardContent>
+                </MudCard>
+            }
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">Select a vehicle to view usage and record fuel/odometer.</MudAlert>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private bool _loading = true;
+    private bool _saving;
+    private List<VehicleDto> _vehicles = [];
+    private VehicleDto? _selected;
+    private VehicleDailyUsageSummaryDto? _summary;
+    private DateTime? _date = DateTime.Today;
+    private RecordForm _form = new();
+
+    private bool _canRecord => UserProfileState.Permissions.Contains(VehiclePermissions.MyVehicle.RecordFuelOdometer);
+
+    protected override void OnInitialized() => UserProfileState.OnProfileChanged += OnProfileChanged;
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    protected override async Task OnInitializedAsync() => await LoadVehicles();
+
+    private async Task LoadVehicles()
+    {
+        _loading = true;
+        try
+        {
+            _vehicles = await VehicleClient.GetMyVehiclesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load your vehicles: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnSelected(VehicleDto? vehicle)
+    {
+        _selected = vehicle;
+        _summary = null;
+        if (vehicle is not null)
+        {
+            await LoadSummary(vehicle.Id);
+        }
+    }
+
+    private async Task LoadSummary(Guid vehicleId)
+    {
+        try
+        {
+            _summary = await VehicleClient.GetMyVehicleDailyUsageAsync(new GetMyVehicleDailyUsageQuery(vehicleId));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load usage: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Record()
+    {
+        if (_selected is null || _date is null)
+        {
+            Snackbar.Add("Select a vehicle and date.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _saving = true;
+            await VehicleClient.RecordMyVehicleFuelOdometerAsync(new RecordMyVehicleFuelOdometerCommand(
+                _selected.Id,
+                DateOnly.FromDateTime(_date.Value),
+                _form.OdometerStart,
+                _form.OdometerEnd,
+                _form.FuelLiters,
+                _form.FuelCost,
+                _form.Destination,
+                _form.Remarks));
+
+            Snackbar.Add("Record saved.", Severity.Success);
+            _form = new RecordForm();
+            await LoadSummary(_selected.Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private sealed class RecordForm
+    {
+        public int OdometerStart { get; set; }
+        public int OdometerEnd { get; set; }
+        public decimal FuelLiters { get; set; }
+        public decimal FuelCost { get; set; }
+        public string? Destination { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

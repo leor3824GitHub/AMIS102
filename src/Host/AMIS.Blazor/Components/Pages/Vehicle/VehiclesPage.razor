@@ -24,8 +24,8 @@
                     {
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
                                    OnClick="OpenCreateDialog"
-                                   Title="Create a new vehicle">
-                            NEW VEHICLE
+                                   Title="Enroll a vehicle from a PPE asset">
+                            ENROLL VEHICLE
                         </MudButton>
                     }
                 </MudStack>
@@ -167,7 +167,7 @@
         if (!_canCreate) return;
 
         var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
-        var dialog = await DialogService.ShowAsync<VehicleFormDialog>("Create Vehicle", options);
+        var dialog = await DialogService.ShowAsync<VehicleFormDialog>("Enroll Vehicle", options);
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {

@@ -3,6 +3,13 @@ using Mediator;
 
 namespace AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 
+/// <summary>COA property class codes (2-char) shared across modules.</summary>
+public static class AssetClassCodes
+{
+    /// <summary>Motor Vehicles — COA Account 10606010.</summary>
+    public const string Vehicle = "LT";
+}
+
 public sealed record AssetRegistryDto(
     Guid Id,
     string PropertyNo,
@@ -116,6 +123,24 @@ public sealed record GetAssetByPropertyNoQuery(string PropertyNo) : IQuery<Asset
 
 public sealed record GetAssetScanDetailByPropertyNoQuery(string PropertyNo) : IQuery<AssetScanDetailDto?>;
 
+/// <summary>
+/// Resolves the set of AssetRegistry ids the <em>authenticated</em> user is the current accountable
+/// officer for, via Active PAR lines (accepted-PAR gate). Identity is resolved server-side — the
+/// query carries no employee id. Mediator-only; no REST endpoint.
+/// </summary>
+public sealed record GetMyAccountableAssetIdsQuery(AssetType AssetType = AssetType.PPE)
+    : IQuery<IReadOnlySet<Guid>>;
+
+/// <summary>Current accountable officer of an asset (denormalized from the active PAR's ReceivedBy).</summary>
+public sealed record AccountableOfficerDto(Guid EmployeeId, string Name, string? Designation);
+
+/// <summary>
+/// Batch lookup of the current accountable officer for a set of assets — keyed by AssetRegistryId.
+/// Used by reports to avoid N+1 officer lookups. Assets with no active accountability are omitted.
+/// </summary>
+public sealed record GetAccountableOfficersByAssetIdsQuery(IReadOnlyCollection<Guid> AssetRegistryIds)
+    : IQuery<IReadOnlyDictionary<Guid, AccountableOfficerDto>>;
+
 public sealed record SearchAssetsQuery(
     string? Keyword = null,
     string? SerialNo = null,
@@ -124,5 +149,6 @@ public sealed record SearchAssetsQuery(
     Guid? CurrentCustodianId = null,
     bool IncludeTransferredOut = false,
     int PageNumber = 1,
-    int PageSize = 10) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
+    int PageSize = 10,
+    string? PropertyClass = null) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
 

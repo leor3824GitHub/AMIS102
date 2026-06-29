@@ -263,6 +263,8 @@ internal static class ApiClientRegistration
             new ArIssuanceReportClient(ResolveClient(sp)));
         services.AddTransient<IArUnserviceableReportClient>(sp =>
             new ArUnserviceableReportClient(ResolveClient(sp)));
+        services.AddTransient<IArRepairClient>(sp =>
+            new ArRepairClient(ResolveClient(sp)));
         services.AddTransient<IArReceivingReportClient>(sp =>
             new ArReceivingReportClient(ResolveClient(sp)));
         services.AddTransient<IArReturnedPropertyClient>(sp =>
@@ -281,6 +283,10 @@ internal static class ApiClientRegistration
         // Notifications module manual client
         services.AddTransient<INotificationsClient>(sp =>
             new NotificationsClient(ResolveClient(sp)));
+
+        // Unified inspection worklist (aggregates each module's "pending-for-me" endpoint)
+        services.AddTransient<IInspectionWorklistClient>(sp =>
+            new InspectionWorklistClient(ResolveClient(sp)));
 
         return services;
     }

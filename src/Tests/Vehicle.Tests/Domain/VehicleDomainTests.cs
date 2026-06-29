@@ -29,16 +29,6 @@ public sealed class VehicleDomainTests
     }
 
     [Fact]
-    public void AssignTo_WhenPairIsIncomplete_Throws()
-    {
-        var vehicle = CreateVehicle();
-
-        var act = () => vehicle.AssignTo(Guid.NewGuid(), null, null, null);
-
-        act.ShouldThrow<InvalidOperationException>();
-    }
-
-    [Fact]
     public void Reactivate_WhenVehicleIsRetired_SetsStatusToActive()
     {
         var vehicle = CreateVehicle();
@@ -50,5 +40,6 @@ public sealed class VehicleDomainTests
     }
 
     private static VehicleAggregate CreateVehicle() =>
-        VehicleAggregate.Create("tenant-1", "ABC-123", "Toyota", "Corolla", DateTime.UtcNow.Year, VehicleType.Sedan, 100);
+        VehicleAggregate.Enroll("tenant-1", Guid.NewGuid(), "2026-06-LT-0001", 950000m,
+            new DateOnly(2020, 1, 1), "ABC-123", "Toyota", "Corolla", DateTime.UtcNow.Year, VehicleType.Sedan, 100);
 }
