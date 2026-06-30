@@ -6,6 +6,7 @@
 @using AssetCategory = AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory
 @using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
 @using LifecycleState = AMIS.Modules.AssetRegister.Contracts.v1.LifecycleState
+@using AccountabilityType = AMIS.Modules.AssetRegister.Contracts.v1.AccountabilityType
 @inject IAssetRegistryClient Client
 @inject IArDepreciationClient DepreciationClient
 @inject IDialogService DialogService
@@ -66,9 +67,34 @@
                 }
                 else
                 {
+                    @if (_canIssue && _picked.Count > 0)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+                            <MudText Typo="Typo.body2"><strong>@_picked.Count</strong> item(s) selected</MudText>
+                            @if (SelectedSingleType() is null)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">
+                                    Mixed SE + PPE — select one type per document
+                                </MudChip>
+                            }
+                            <MudSpacer />
+                            <AMISButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                        OnClick="ClearSelection" Disabled="_busy">Clear</AMISButton>
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                                        StartIcon="@Icons.Material.Outlined.AssignmentInd"
+                                        OnClick="OpenIssueDialogAsync"
+                                        Disabled="_busy || SelectedSingleType() is null">
+                                Issue @IssueLabel()
+                            </AMISButton>
+                        </MudStack>
+                    }
                     <MudTable Items="_items" Dense="true" Hover="true" Striped="true"
                               OnRowClick="OnRowClick" T="AssetRegistrySummaryDto" RowClass="cursor-pointer">
                         <HeaderContent>
+                            @if (_canIssue)
+                            {
+                                <MudTh Style="width:48px"></MudTh>
+                            }
                             <MudTh>Property No.</MudTh>
                             <MudTh>Type</MudTh>
                             <MudTh>Description</MudTh>
@@ -78,6 +104,22 @@
                             <MudTh>Condition</MudTh>
                         </HeaderContent>
                         <RowTemplate>
+                            @if (_canIssue)
+                            {
+                                <MudTd>
+                                    @{
+                                        var selectable = context.LifecycleState == LifecycleState.Available;
+                                    }
+                                    @* Stop the tick from bubbling to OnRowClick (which opens the detail panel). *@
+                                    <div @onclick:stopPropagation="true">
+                                        <MudTooltip Text="@(selectable ? "Select for ICS / PAR issuance" : "Only Available assets can be issued")">
+                                            <MudCheckBox T="bool" Dense="true" Disabled="!selectable"
+                                                         Value="@_picked.ContainsKey(context.Id)"
+                                                         ValueChanged="@((bool v) => TogglePick(context, v))" />
+                                        </MudTooltip>
+                                    </div>
+                                </MudTd>
+                            }
                             <MudTd>
                                 <MudText Typo="Typo.body2"><strong>@context.PropertyNo</strong></MudText>
                             </MudTd>
@@ -286,8 +328,13 @@
     private AssetRegistryDto? _selected;
     private AssetCondition _newCondition;
 
+    // Assets ticked for issuance. Keyed by Id so selection survives paging/searching; only
+    // Available assets are selectable (enforced in the checkbox + when launching the dialog).
+    private readonly Dictionary<Guid, AssetRegistrySummaryDto> _picked = [];
+
     private bool _canUpdate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.Update);
     private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.View);
+    private bool _canIssue => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.Issue);
 
     protected override async Task OnInitializedAsync()
     {
@@ -339,6 +386,59 @@
         {
             _busy = false;
         }
+    }
+
+    // ── Selection → issue ICS / PAR ──────────────────────────────────────────
+
+    private void TogglePick(AssetRegistrySummaryDto item, bool selected)
+    {
+        if (item.LifecycleState != LifecycleState.Available) return;
+        if (selected) _picked[item.Id] = item;
+        else _picked.Remove(item.Id);
+    }
+
+    private void ClearSelection() => _picked.Clear();
+
+    // ICS is for Semi-Expendable, PAR for PPE — a single document can't mix the two. Returns the
+    // common type, or null when the selection is empty or mixed (issue button stays disabled).
+    private AssetType? SelectedSingleType()
+    {
+        if (_picked.Count == 0) return null;
+        var types = _picked.Values.Select(a => a.AssetType).Distinct().ToList();
+        return types.Count == 1 ? types[0] : null;
+    }
+
+    private string IssueLabel() => SelectedSingleType() switch
+    {
+        AssetType.SE => "ICS",
+        AssetType.PPE => "PAR",
+        _ => "ICS / PAR"
+    };
+
+    private async Task OpenIssueDialogAsync()
+    {
+        var type = SelectedSingleType();
+        if (type is null)
+        {
+            Snackbar.Add("Select only Semi-Expendable (ICS) or only PPE (PAR) items — a document can't mix both.", Severity.Warning);
+            return;
+        }
+
+        var accountabilityType = type == AssetType.SE ? AccountabilityType.SE_ICS : AccountabilityType.PPE_PAR;
+        var parameters = new DialogParameters<IssueAccountabilityDialog>
+        {
+            { x => x.InitialType, accountabilityType },
+            { x => x.PreselectedAssets, _picked.Values.ToList() }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<IssueAccountabilityDialog>(
+            accountabilityType == AccountabilityType.SE_ICS ? "New ICS" : "New PAR", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
+        // Issued — the picked assets are now Assigned; clear selection and refresh the ledger.
+        ClearSelection();
+        await LoadAsync();
     }
 
     private async Task UpdateConditionAsync()

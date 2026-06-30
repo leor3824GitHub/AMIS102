@@ -34,6 +34,11 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
     public string RequestedBy { get; private set; } = default!;
     public DateOnly RequestedOn { get; private set; }
 
+    // Inspector assigned to perform the (mandatory) pre-repair inspection. Selected on the request so the
+    // person can be notified; denormalized name kept for display without a join. Null when unassigned.
+    public Guid? InspectorId { get; private set; }
+    public string? InspectorName { get; private set; }
+
     // Vehicle-specific optional fields (blank for non-vehicle PPE)
     public string? EngineNo { get; private set; }
     public string? ChassisNo { get; private set; }
@@ -88,7 +93,9 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
         string? chassisNo,
         int? odometerReading,
         string? natureOfLastRepair,
-        DateOnly? dateOfLastRepair)
+        DateOnly? dateOfLastRepair,
+        Guid? inspectorId = null,
+        string? inspectorName = null)
     {
         if (assetRegistryId == Guid.Empty)
             throw new ArgumentException("AssetRegistryId is required.", nameof(assetRegistryId));
@@ -106,6 +113,8 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
             PartsToReplace = partsToReplace,
             RequestedBy = requestedBy,
             RequestedOn = requestedOn,
+            InspectorId = inspectorId,
+            InspectorName = inspectorName,
             EngineNo = engineNo,
             ChassisNo = chassisNo,
             OdometerReading = odometerReading,

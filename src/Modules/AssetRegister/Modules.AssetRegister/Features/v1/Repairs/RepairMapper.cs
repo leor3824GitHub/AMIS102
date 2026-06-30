@@ -22,6 +22,8 @@ internal static class RepairMapper
         r.PartsToReplace,
         r.RequestedBy,
         r.RequestedOn,
+        r.InspectorId,
+        r.InspectorName,
         r.EngineNo,
         r.ChassisNo,
         r.OdometerReading,

@@ -56,7 +56,7 @@
                 <MudItem xs="12" md="3">
                     <MudTextField Value="@SmrrNumberDisplay" Label="SMRR No." Variant="Variant.Outlined"
                                   ReadOnly="true" Dense="true" Margin="Margin.Dense"
-                                  HelperText="Next available — assigned on save; may differ if another is saved first" />
+                                  HelperText="@SmrrNumberHelper" />
                 </MudItem>
             }
             <MudItem xs="12" md="3">
@@ -364,9 +364,13 @@
             : "No active series";
 
     // SMRR has no accountable-form series — its number is date-based and allocated server-side
-    // at save. This is a best-effort preview of the next available number for the chosen date.
+    // at save. With a single property custodian per tenant there are no concurrent saves, so the
+    // previewed next number for the chosen date is the number that will be assigned.
     private string? _peekedSmrrNumber;
     private string SmrrNumberDisplay => _peekedSmrrNumber ?? "Assigned on save";
+    private string SmrrNumberHelper => _peekedSmrrNumber is null
+        ? "Will be assigned on save"
+        : "Next available — pre-assigned for this report";
 
     private async Task OnDateChangedAsync()
     {

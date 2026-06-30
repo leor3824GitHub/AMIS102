@@ -2,6 +2,7 @@
 @using AMIS.Framework.Shared.Multitenancy
 @using AMIS.Modules.Chat.Contracts.Permissions
 @using AMIS.Modules.Vehicle.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -157,6 +158,13 @@
                         Icon="@Icons.Material.Outlined.DeleteSweep">
                 Unserviceable Reports
             </MudNavLink>
+            @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Repair.View))
+            {
+                <MudNavLink Href="/asset-register/repairs" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.Build">
+                    Repairs (RPRI)
+                </MudNavLink>
+            }
         </MudNavGroup>
 
         <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">
@@ -231,9 +239,6 @@
             <MudNavLink Href="/vehicle/vehicles" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.DirectionsCarFilled">
                 Vehicles
-            </MudNavLink>
-            <MudNavLink Href="/vehicle/repairs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Build">
-                Repairs
             </MudNavLink>
             <MudNavLink Href="/vehicle/maintenance/schedules" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.EventRepeat">

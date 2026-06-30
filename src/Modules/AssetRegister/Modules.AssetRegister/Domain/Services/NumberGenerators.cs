@@ -10,6 +10,18 @@ public interface IAccountabilityNumberGenerator
 
     /// <summary>PAR-YYYY-MM-NNNN.</summary>
     Task<string> NextParAsync(DateOnly issueDate, CancellationToken ct);
+
+    /// <summary>
+    /// Previews the ICS number <see cref="NextIcsAsync"/> would assign, WITHOUT consuming it.
+    /// Best-effort — a concurrent create may change the actual number before save.
+    /// </summary>
+    Task<string> PeekIcsAsync(AssetCategory category, DateOnly issueDate, CancellationToken ct);
+
+    /// <summary>
+    /// Previews the PAR number <see cref="NextParAsync"/> would assign, WITHOUT consuming it.
+    /// Best-effort — a concurrent create may change the actual number before save.
+    /// </summary>
+    Task<string> PeekParAsync(DateOnly issueDate, CancellationToken ct);
 }
 
 public interface IInventoryTransferNumberGenerator

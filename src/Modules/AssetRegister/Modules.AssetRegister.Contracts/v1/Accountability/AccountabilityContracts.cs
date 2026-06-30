@@ -132,6 +132,18 @@ public sealed record AcceptAccountabilityCommand(Guid AccountabilityId, DateOnly
 
 // ── Queries ────────────────────────────────────────────────────────────────
 
+/// <summary>
+/// Previews the next ICS / PAR document number for the given type/date WITHOUT consuming it.
+/// Scoped to the current tenant. Backs the "next number" preview on the issue dialog.
+/// PAR is purely date-based; ICS uses the SPLV (low-valued) or SPHV (high-valued) counter —
+/// <paramref name="HighValued"/> selects which, inferred from the selected assets. Best-effort —
+/// a concurrent create may change the actual number before save.
+/// </summary>
+public sealed record PeekAccountabilityNumberQuery(
+    AccountabilityType Type,
+    DateOnly Date,
+    bool HighValued = false) : IQuery<string>;
+
 public sealed record GetAccountabilityQuery(Guid Id) : IQuery<PropertyAccountabilityDto?>;
 
 public sealed record SearchAccountabilitiesQuery(

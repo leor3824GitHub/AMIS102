@@ -26,6 +26,7 @@ internal sealed class PropertyRepairConfiguration : IEntityTypeConfiguration<Pro
         builder.Property(x => x.NatureOfWork).IsRequired().HasMaxLength(2000);
         builder.Property(x => x.PartsToReplace).HasMaxLength(2000);
         builder.Property(x => x.RequestedBy).IsRequired().HasMaxLength(200);
+        builder.Property(x => x.InspectorName).HasMaxLength(200);
 
         builder.Property(x => x.EngineNo).HasMaxLength(100);
         builder.Property(x => x.ChassisNo).HasMaxLength(100);

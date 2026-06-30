@@ -31,6 +31,8 @@ public sealed record PropertyRepairDto(
     string? PartsToReplace,
     string RequestedBy,
     DateOnly RequestedOn,
+    Guid? InspectorId,
+    string? InspectorName,
     string? EngineNo,
     string? ChassisNo,
     int? OdometerReading,
@@ -81,7 +83,11 @@ public sealed record RequestRepairCommand(
     string? PartsToReplace = null,
     string? EngineNo = null,
     string? ChassisNo = null,
-    int? OdometerReading = null) : ICommand<PropertyRepairDto>;
+    int? OdometerReading = null,
+    // Inspector assigned to perform the mandatory pre-repair inspection. When set, only that person is
+    // notified; when null, every user who can inspect (Repair.Inspect) is notified.
+    Guid? InspectorId = null,
+    string? InspectorName = null) : ICommand<PropertyRepairDto>;
 
 public sealed record RecordPreRepairInspectionCommand(
     Guid RepairId,

@@ -12,7 +12,12 @@
     <DialogContent>
         <MudStack Spacing="2" Style="min-width:720px;">
             <MudGrid Spacing="2">
-                <MudItem xs="12" md="4">
+                <MudItem xs="12" md="3">
+                    <MudTextField Value="@DocumentNumberDisplay" Label="@DocumentNumberLabel" Variant="Variant.Outlined"
+                                  ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                                  HelperText="@DocumentNumberHelper" />
+                </MudItem>
+                <MudItem xs="12" md="3">
                     <MudSelect Value="_form.Type" Label="Type" Variant="Variant.Outlined" T="AccountabilityType"
                                Required="true" Dense="true" Margin="Margin.Dense"
                                ValueChanged="OnTypeChangedForm">
@@ -20,12 +25,12 @@
                         <MudSelectItem T="AccountabilityType" Value="AccountabilityType.PPE_PAR">PAR — Property, Plant &amp; Equipment</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="12" md="4">
+                <MudItem xs="12" md="3">
                     <MudDatePicker Date="_form.IssuedOnNullable" DateChanged="OnIssuedOnChanged" Label="Issued On"
                                    Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true"
                                    Dense="true" Margin="Margin.Dense" />
                 </MudItem>
-                <MudItem xs="12" md="4">
+                <MudItem xs="12" md="3">
                     <MudDatePicker @bind-Date="_form.ExpiresOnNullable" Label="Expires On" Variant="Variant.Outlined"
                                    DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense"
                                    ReadOnly="@(_form.Type == AccountabilityType.PPE_PAR)"
@@ -130,12 +135,83 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
+    // Optional pre-fill when launched from the Asset Registry: the custodian ticks available
+    // assets there, and we open the dialog already scoped to the right document type with one
+    // line per picked asset. Falls back to a single empty row when launched standalone.
+    [Parameter] public AccountabilityType? InitialType { get; set; }
+    [Parameter] public IReadOnlyList<AssetRegistrySummaryDto>? PreselectedAssets { get; set; }
+
     private bool _issuing;
     private readonly IssueForm _form = new();
 
-    protected override void OnInitialized() => _form.Items.Add(new IssueItemRow());
+    // Best-effort preview of the document number the server will mint at save. PAR is purely
+    // date-based; ICS uses the SPLV (low-valued) / SPHV (high-valued) counter — the prefix is
+    // inferred from the attached assets (any high-valued line ⇒ SPHV), so the ICS preview only
+    // appears once at least one item is added and updates as the item mix changes. With a single
+    // property custodian per tenant there are no concurrent saves, so the preview is authoritative.
+    private string? _peekedNumber;
+    private string DocumentNumberDisplay => _peekedNumber ?? "Assigned on save";
+    private string DocumentNumberLabel => _form.Type == AccountabilityType.SE_ICS ? "ICS No." : "PAR No.";
+    private string DocumentNumberHelper
+    {
+        get
+        {
+            if (_peekedNumber is not null)
+                return "Next available — pre-assigned for this report";
+            return _form.Type == AccountabilityType.SE_ICS
+                ? "Assigned on save — add items to preview"
+                : "Will be assigned on save";
+        }
+    }
 
-    private void OnTypeChangedForm(AccountabilityType value)
+    protected override async Task OnInitializedAsync()
+    {
+        if (InitialType.HasValue)
+            _form.Type = InitialType.Value;
+        ApplyExpiryPolicy();
+
+        if (PreselectedAssets is { Count: > 0 })
+        {
+            foreach (var summary in PreselectedAssets)
+            {
+                var row = new IssueItemRow { Selected = summary };
+                _form.Items.Add(row);
+                await AttachAssetAsync(row, summary.Id);
+            }
+        }
+
+        if (_form.Items.Count == 0)
+            _form.Items.Add(new IssueItemRow());
+
+        await PeekNumberAsync();
+    }
+
+    // Re-previews the next document number for the current type, date and (for ICS) item mix.
+    private async Task PeekNumberAsync()
+    {
+        if (_form.IssuedOnNullable is null) { _peekedNumber = null; return; }
+
+        // ICS prefix depends on the attached assets; with none attached the prefix is unknown.
+        var highValued = false;
+        if (_form.Type == AccountabilityType.SE_ICS)
+        {
+            var attached = _form.Items.Where(i => i.Asset is not null).Select(i => i.Asset!).ToList();
+            if (attached.Count == 0) { _peekedNumber = null; return; }
+            highValued = attached.Any(a => a.Category == AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory.HighValuedSemi);
+        }
+
+        try
+        {
+            _peekedNumber = await Client.PeekNumberAsync(
+                _form.Type, DateOnly.FromDateTime(_form.IssuedOnNullable.Value), highValued);
+        }
+        catch
+        {
+            _peekedNumber = null;
+        }
+    }
+
+    private async Task OnTypeChangedForm(AccountabilityType value)
     {
         _form.Type = value;
         ApplyExpiryPolicy();
@@ -147,12 +223,14 @@
             item.Location = null;
             item.LookupError = null;
         }
+        await PeekNumberAsync();
     }
 
-    private void OnIssuedOnChanged(DateTime? date)
+    private async Task OnIssuedOnChanged(DateTime? date)
     {
         _form.IssuedOnNullable = date;
         ApplyExpiryPolicy();
+        await PeekNumberAsync();
     }
 
     // PAR expiry is fixed at issued + 3 years (server-authoritative) — mirror it here so the
@@ -169,9 +247,10 @@
 
     private void AddItem() => _form.Items.Add(new IssueItemRow());
 
-    private void RemoveItem(int idx)
+    private async Task RemoveItem(int idx)
     {
         if (_form.Items.Count > 1) _form.Items.RemoveAt(idx);
+        await PeekNumberAsync();
     }
 
     private async Task<IEnumerable<AssetRegistrySummaryDto>> SearchAvailableAssets(string? value, CancellationToken ct)
@@ -200,7 +279,7 @@
         row.Selected = summary;
         row.Asset = null;
         row.LookupError = null;
-        if (summary is null) return;
+        if (summary is null) { await PeekNumberAsync(); return; }
 
         if (SelectedAssetIds().Contains(summary.Id))
         {
@@ -210,6 +289,7 @@
         }
 
         await AttachAssetAsync(row, summary.Id);
+        await PeekNumberAsync();
     }
 
     // Resolve the full asset and validate eligibility for the current document type.
@@ -295,6 +375,7 @@
             await AttachAssetAsync(row, summary.Id);
         }
         if (_form.Items.Count == 0) _form.Items.Add(new IssueItemRow());
+        await PeekNumberAsync();
     }
 
     private async Task IssueAsync()

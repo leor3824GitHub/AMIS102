@@ -185,6 +185,7 @@ public class AssetRegisterModule : IModule
         // Accountability (ICS / PAR)
         var accountability = moduleGroup.MapGroup("/accountability");
         Features.v1.Accountability.IssueAccountability.IssueAccountabilityEndpoint.Map(accountability);
+        Features.v1.Accountability.PeekAccountabilityNumber.PeekAccountabilityNumberEndpoint.Map(accountability);
         Features.v1.Accountability.UpdateAccountability.UpdateAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.DeleteAccountability.DeleteAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.RenewAccountability.RenewAccountabilityEndpoint.Map(accountability);
@@ -194,6 +195,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Accountability.SearchAccountabilities.SearchAccountabilitiesEndpoint.Map(accountability);
         // Employee self-service (My Accountability) — server-scoped to the current employee.
         Features.v1.Accountability.GetMyAccountabilities.GetMyAccountabilitiesEndpoint.Map(accountability);
+        Features.v1.Accountability.GetMyAccountableAssets.GetMyAccountableAssetsEndpoint.Map(accountability);
         Features.v1.Accountability.GetMyAccountabilityDetail.GetMyAccountabilityDetailEndpoint.Map(accountability);
         Features.v1.Accountability.AcceptAccountability.AcceptAccountabilityEndpoint.Map(accountability);
 
@@ -203,6 +205,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Issuance.UpdateIssuanceReportDepreciation.UpdateIssuanceReportDepreciationEndpoint.Map(issuance);
         Features.v1.Issuance.GetIssuanceReport.GetIssuanceReportEndpoint.Map(issuance);
         Features.v1.Issuance.SearchIssuanceReports.SearchIssuanceReportsEndpoint.Map(issuance);
+        Features.v1.Issuance.PeekIssuanceReportNumber.PeekIssuanceReportNumberEndpoint.Map(issuance);
 
         // PPEIR Form Series (pre-printed accountable form management)
         var ppEirSeries = moduleGroup.MapGroup("/ppeir-series");

@@ -152,3 +152,15 @@ public sealed record SearchAssetsQuery(
     int PageSize = 10,
     string? PropertyClass = null) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
 
+/// <summary>
+/// Self-service per-asset view backing the "By Asset" tab of My Accountability: the individual
+/// units the authenticated user is currently the accountable officer (custodian) for. Identity is
+/// resolved server-side — the query carries no employee id, mirroring GetMyAccountabilitiesQuery.
+/// </summary>
+public sealed record GetMyAccountableAssetsQuery(
+    string? Keyword = null,
+    AssetType? AssetType = null,
+    LifecycleState? LifecycleState = null,
+    int PageNumber = 1,
+    int PageSize = 10) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
+

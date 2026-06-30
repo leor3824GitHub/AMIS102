@@ -1,0 +1,157 @@
+@using AMIS.Blazor.ApiClient
+@inject IAssetRegistryClient AssetClient
+@inject IArRepairClient RepairClient
+@inject ILookupClient LookupClient
+@inject IUserProfileState UserProfileState
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.caption" Class="font-weight-bold">Request Pre/Post Repair Inspection (RPRI)</MudText>
+
+            @if (PreselectedAsset is not null)
+            {
+                <MudField Label="Property" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    <strong>@PreselectedAsset.PropertyNo</strong> — @PreselectedAsset.Description
+                </MudField>
+            }
+            else
+            {
+                <MudAutocomplete T="AssetRegistrySummaryDto" Value="_asset" ValueChanged="OnAssetSelected"
+                                 SearchFunc="SearchAssets" ToStringFunc="FormatAsset" Label="Property / Asset" Required="true"
+                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
+                                 ResetValueOnEmptyText="true" Placeholder="Search any PPE / SE asset — e.g. 2026-06-LT-0001">
+                    <ItemTemplate Context="asset">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.body2"><strong>@asset.PropertyNo</strong> — @asset.Description</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@asset.AssetType · @asset.CurrentCondition</MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            }
+
+            <MudTextField @bind-Value="_natureOfWork" Label="Nature & Scope of Work" Lines="2" Required="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField @bind-Value="_parts" Label="Parts to be Supplied / Replaced" Lines="2"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudTextField Value="_requestedBy" Label="Requested By" ReadOnly="true"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Person"
+                          HelperText="Auto-captured from your account" />
+            <MudAutocomplete T="EmployeeReferenceDto" Value="_inspector" ValueChanged="OnInspectorSelected"
+                             SearchFunc="SearchInspectors" ToStringFunc="FormatEmployee" Label="Assign Inspector"
+                             Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
+                             ResetValueOnEmptyText="true" Placeholder="Search employee by name or number"
+                             HelperText="Notified to perform the pre-repair inspection. Leave blank to notify all inspectors.">
+                <ItemTemplate Context="emp">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2"><strong>@emp.FirstName @emp.LastName</strong></MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@emp.EmployeeNumber@(string.IsNullOrWhiteSpace(emp.PositionName) ? "" : " · " + emp.PositionName)</MudText>
+                    </MudStack>
+                </ItemTemplate>
+            </MudAutocomplete>
+            <MudDatePicker @bind-Date="_requestedOn" Label="Date Requested" Variant="Variant.Outlined" Margin="Margin.Dense" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Disabled="_saving">Request Repair</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    /// <summary>When supplied (e.g. from My Accountability → By Asset), the asset is fixed and the picker is hidden.</summary>
+    [Parameter] public AssetRegistrySummaryDto? PreselectedAsset { get; set; }
+
+    private AssetRegistrySummaryDto? _asset;
+    private EmployeeReferenceDto? _inspector;
+    private string _natureOfWork = string.Empty;
+    private string? _parts;
+    private string _requestedBy = string.Empty;
+    private DateTime? _requestedOn = DateTime.Today;
+    private bool _saving;
+
+    protected override void OnInitialized()
+    {
+        if (PreselectedAsset is not null) _asset = PreselectedAsset;
+
+        // Requested By is auto-captured from the signed-in identity — the linked employee's full
+        // name, falling back to the account username when no employee record is linked.
+        _requestedBy = !string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName)
+            ? UserProfileState.EmployeeFullName
+            : UserProfileState.UserName;
+    }
+
+    // RPRI is PPE-wide — any registered asset (PPE or SE) can be sent for repair inspection, not just vehicles.
+    private async Task<IEnumerable<AssetRegistrySummaryDto>> SearchAssets(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await AssetClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                page: 1, pageSize: 20, ct: ct);
+            return result.Items;
+        }
+        catch { return []; }
+    }
+
+    private static string FormatAsset(AssetRegistrySummaryDto? a) =>
+        a is null ? "" : $"{a.PropertyNo} — {a.Description}";
+
+    private void OnAssetSelected(AssetRegistrySummaryDto? a) => _asset = a;
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchInspectors(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true, pageNumber: 1, pageSize: 20, cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+
+    private void OnInspectorSelected(EmployeeReferenceDto? e) => _inspector = e;
+
+    private async Task Submit()
+    {
+        if (_asset is null || string.IsNullOrWhiteSpace(_natureOfWork) || string.IsNullOrWhiteSpace(_requestedBy) || _requestedOn is null)
+        {
+            Snackbar.Add("Property, nature of work, requested by, and date are required.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _saving = true;
+            await RepairClient.RequestAsync(new ArRequestRepairRequest(
+                _asset.Id,
+                _natureOfWork,
+                _requestedBy,
+                DateOnly.FromDateTime(_requestedOn.Value),
+                _parts,
+                InspectorId: _inspector?.Id,
+                InspectorName: _inspector is null ? null : $"{_inspector.FirstName} {_inspector.LastName}".Trim()));
+
+            Snackbar.Add("Repair requested (RPRI created).", Severity.Success);
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Request failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+}

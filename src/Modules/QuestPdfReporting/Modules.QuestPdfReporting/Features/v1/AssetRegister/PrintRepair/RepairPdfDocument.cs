@@ -146,11 +146,16 @@ internal sealed class RepairPdfDocument(
             col.Item().Border(0.75f).Padding(4).Column(inner =>
             {
                 Field(inner.Item(), "Findings", repair.PreInspectionFindings);
+                // "Noted By" is the Head of Office — sourced from the Organization Profile (Approving
+                // Official). Falls back to the name captured on the inspection only when the profile is unset.
+                var headOfOffice = !string.IsNullOrWhiteSpace(org?.ApprovingOfficialName)
+                    ? org!.ApprovingOfficialName
+                    : repair.NotedBy;
                 inner.Item().PaddingTop(8).Row(r =>
                 {
                     SignatureCell(r.RelativeItem(), "Pre-Inspected By (Property Inspector)", repair.PreInspectedBy, repair.PreInspectedOn);
                     r.ConstantItem(20);
-                    SignatureCell(r.RelativeItem(), "Noted By (Head of Office)", repair.NotedBy, repair.PreInspectedOn);
+                    SignatureCell(r.RelativeItem(), "Noted By (Head of Office)", headOfOffice, repair.PreInspectedOn);
                 });
             });
         });
@@ -205,9 +210,14 @@ internal sealed class RepairPdfDocument(
         container.Column(col =>
         {
             col.Item().Element(c => SectionTitle(c, "PROPERTY CUSTODIAN ACCEPTANCE"));
+            // The accepting signatory is the Property Custodian / Supply Officer — sourced from the
+            // Organization Profile. Falls back to the name captured on acceptance when the profile is unset.
+            var custodian = !string.IsNullOrWhiteSpace(org?.PropertyCustodianName)
+                ? org!.PropertyCustodianName
+                : repair.AcceptedBy;
             col.Item().Border(0.75f).Padding(4).Row(r =>
             {
-                SignatureCell(r.RelativeItem(), "Accepted By (Property Custodian)", repair.AcceptedBy, repair.AcceptedOn);
+                SignatureCell(r.RelativeItem(), "Accepted By (Property Custodian)", custodian, repair.AcceptedOn);
                 r.ConstantItem(20);
                 r.RelativeItem();
             });

@@ -15,10 +15,25 @@ internal sealed class AccountabilityNumberGenerator(AssetRegisterDbContext db, C
 
     public Task<string> NextParAsync(DateOnly issueDate, CancellationToken ct) => NextAsync("PAR", issueDate, ct);
 
+    public Task<string> PeekIcsAsync(AssetCategory category, DateOnly issueDate, CancellationToken ct)
+    {
+        var prefix = category == AssetCategory.LowValuedSemi ? "SPLV" : "SPHV";
+        return PeekAsync(prefix, issueDate, ct);
+    }
+
+    public Task<string> PeekParAsync(DateOnly issueDate, CancellationToken ct) => PeekAsync("PAR", issueDate, ct);
+
     private async Task<string> NextAsync(string prefix, DateOnly date, CancellationToken ct)
     {
         var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
         var serial = await allocator.NextSerialAsync(tenantId, date.Year, date.Month, prefix, ct).ConfigureAwait(false);
+        return $"{prefix}-{date.Year:D4}-{date.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
+    }
+
+    private async Task<string> PeekAsync(string prefix, DateOnly date, CancellationToken ct)
+    {
+        var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+        var serial = await allocator.PeekSerialAsync(tenantId, date.Year, date.Month, prefix, ct).ConfigureAwait(false);
         return $"{prefix}-{date.Year:D4}-{date.Month:D2}-{serial.ToString("D4", CultureInfo.InvariantCulture)}";
     }
 }

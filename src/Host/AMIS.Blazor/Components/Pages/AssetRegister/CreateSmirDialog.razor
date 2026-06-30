@@ -14,7 +14,7 @@
             <MudItem xs="12" md="3">
                 <MudTextField Value="@SmirNumberDisplay" Label="SMIR No." Variant="Variant.Outlined"
                               ReadOnly="true" Dense="true" Margin="Margin.Dense"
-                              HelperText="Next available — assigned on save; may differ if another is saved first" />
+                              HelperText="@SmirNumberHelper" />
             </MudItem>
             <MudItem xs="12" md="3">
                 <MudSelect @bind-Value="_form.Nature" Label="Nature of Issuance" Variant="Variant.Outlined"
@@ -153,9 +153,13 @@
     private readonly CreateFormModel _form = new();
 
     // SMIR (RSPI) has no accountable-form series — its number is date-based and allocated
-    // server-side at save. This is a best-effort preview of the next available number.
+    // server-side at save. With a single property custodian per tenant there are no concurrent
+    // saves, so the previewed next number is the number that will be assigned.
     private string? _peekedNumber;
     private string SmirNumberDisplay => _peekedNumber ?? "Assigned on save";
+    private string SmirNumberHelper => _peekedNumber is null
+        ? "Will be assigned on save"
+        : "Next available — pre-assigned for this report";
 
     protected override Task OnInitializedAsync() => PeekNumberAsync();
 

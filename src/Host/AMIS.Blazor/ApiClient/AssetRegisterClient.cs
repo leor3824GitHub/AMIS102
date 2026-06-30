@@ -83,7 +83,9 @@ internal sealed record ArAssetSnapshotDto(
 
 // ── Asset Registry ─────────────────────────────────────────────────────────
 
-internal sealed record AssetRegistrySummaryDto(
+// Public (not internal) so it can be passed as a [Parameter] to the generated (public)
+// IssueAccountabilityDialog component without tripping CS0053 inconsistent-accessibility.
+public sealed record AssetRegistrySummaryDto(
     Guid Id,
     string PropertyNo,
     ArContracts.AssetType AssetType,
@@ -424,9 +426,13 @@ internal interface IArAccountabilityClient
 {
     Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, Guid? receivedByEmployeeId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArPagedResponse<ArAccountabilitySummaryDto>> GetMineAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    /// <summary>Per-asset view of My Accountability: the individual units currently issued to the current employee.</summary>
+    Task<ArPagedResponse<AssetRegistrySummaryDto>> GetMineAssetsAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArAccountabilityDto?> GetMineDetailAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto> IssueAsync(IssueAccountabilityRequest request, CancellationToken ct = default);
+    /// <summary>Previews the next ICS / PAR document number (best-effort) without consuming it.</summary>
+    Task<string> PeekNumberAsync(AccountabilityType type, DateOnly date, bool highValued = false, CancellationToken ct = default);
     Task<ArAccountabilityDto> UpdateAsync(Guid id, UpdateAccountabilityRequest request, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<ArAccountabilityDto> AcceptAsync(Guid id, DateOnly acceptedOn, CancellationToken ct = default);
@@ -470,6 +476,20 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
         return result ?? new ArPagedResponse<ArAccountabilitySummaryDto>([], page, pageSize, 0, 0);
     }
 
+    public async Task<ArPagedResponse<AssetRegistrySummaryDto>> GetMineAssetsAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/mine/assets", new()
+        {
+            ["keyword"] = keyword,
+            ["assetType"] = assetType?.ToString(),
+            ["lifecycleState"] = lifecycleState?.ToString(),
+            ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<AssetRegistrySummaryDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? new ArPagedResponse<AssetRegistrySummaryDto>([], page, pageSize, 0, 0);
+    }
+
     public Task<ArAccountabilityDto?> GetMineDetailAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<ArAccountabilityDto>($"{Base}/mine/{id}", ArJsonOptions.Default, ct);
 
@@ -481,6 +501,17 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<string> PeekNumberAsync(AccountabilityType type, DateOnly date, bool highValued = false, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/next-number", new()
+        {
+            ["type"] = type.ToString(),
+            ["date"] = date.ToString("o", CultureInfo.InvariantCulture),
+            ["highValued"] = highValued ? "true" : "false",
+        });
+        return await http.GetFromJsonAsync<string>(url, ArJsonOptions.Default, ct) ?? string.Empty;
     }
 
     public async Task<ArAccountabilityDto> UpdateAsync(Guid id, UpdateAccountabilityRequest request, CancellationToken ct = default)
@@ -1757,7 +1788,8 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
 
 public sealed record ArRequestRepairRequest(
     Guid AssetRegistryId, string NatureOfWork, string RequestedBy, DateOnly RequestedOn,
-    string? PartsToReplace = null, string? EngineNo = null, string? ChassisNo = null, int? OdometerReading = null);
+    string? PartsToReplace = null, string? EngineNo = null, string? ChassisNo = null, int? OdometerReading = null,
+    Guid? InspectorId = null, string? InspectorName = null);
 
 public sealed record ArPreRepairInspectionRequest(
     string Findings, string PreInspectedBy, DateOnly PreInspectedOn, string? NotedBy = null);
