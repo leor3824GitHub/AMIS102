@@ -2,15 +2,18 @@
 @implements IDisposable
 @using AMIS.Blazor.ApiClient
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.Permissions
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="My Vehicle" Description="Record fuel &amp; odometer for vehicles assigned to you (accepted PAR)" />
+<AMISPageHeader Title="My Vehicle" Description="Record fuel &amp; odometer and track maintenance for vehicles assigned to you (accepted PAR)" />
 
 <MudGrid Spacing="3">
-    <MudItem xs="12" md="5">
+    <!-- ============ LEFT: my vehicles list ============ -->
+    <MudItem xs="12" md="4">
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-2">My Vehicles</MudText>
@@ -30,8 +33,13 @@
                         @foreach (var v in _vehicles)
                         {
                             <MudListItem T="VehicleDto" Value="v" Icon="@Icons.Material.Outlined.DirectionsCar">
-                                <MudText Typo="Typo.body2"><b>@v.PlateNumber</b> — @v.Make @v.Model</MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">@v.PropertyNo · @v.Odometer km</MudText>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="1">
+                                    <div>
+                                        <MudText Typo="Typo.body2"><b>@v.PlateNumber</b> — @v.Make @v.Model</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@v.PropertyNo · @v.Odometer.ToString("N0") km</MudText>
+                                    </div>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@StatusColor(v.Status)">@StatusLabel(v.Status)</MudChip>
+                                </MudStack>
                             </MudListItem>
                         }
                     </MudList>
@@ -40,61 +48,248 @@
         </MudCard>
     </MudItem>
 
-    <MudItem xs="12" md="7">
-        @if (_selected is not null)
+    <!-- ============ RIGHT: selected vehicle detail ============ -->
+    <MudItem xs="12" md="8">
+        @if (_selected is null)
         {
-            <MudCard Elevation="1" Class="mb-3">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6">@_selected.PlateNumber — @_selected.Make @_selected.Model</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">Property No: @_selected.PropertyNo</MudText>
-                    @if (_summary is not null)
-                    {
-                        <MudGrid Spacing="2">
-                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Records</MudText><MudText Typo="Typo.body1">@_summary.RecordCount</MudText></MudItem>
-                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Distance (km)</MudText><MudText Typo="Typo.body1">@_summary.TotalDistanceKm</MudText></MudItem>
-                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Fuel (L)</MudText><MudText Typo="Typo.body1">@_summary.TotalFuelLiters.ToString("N2")</MudText></MudItem>
-                            <MudItem xs="6" sm="3"><MudText Typo="Typo.caption">Fuel Cost</MudText><MudText Typo="Typo.body1">₱@_summary.TotalFuelCost.ToString("N2")</MudText></MudItem>
-                        </MudGrid>
-                    }
-                </MudCardContent>
-            </MudCard>
-
-            @if (_canRecord)
-            {
-                <MudCard Elevation="1">
-                    <MudCardContent>
-                        <MudText Typo="Typo.subtitle1" Class="mb-2">Record Fuel &amp; Odometer</MudText>
-                        <MudGrid Spacing="2">
-                            <MudItem xs="12" sm="6"><MudDatePicker @bind-Date="_date" Label="Date" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.OdometerStart" Label="Odometer Start" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.OdometerEnd" Label="Odometer End" Min="0" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.FuelLiters" Label="Fuel (L)" Min="0" Format="F2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="6" sm="3"><MudNumericField @bind-Value="_form.FuelCost" Label="Fuel Cost" Min="0" Format="F2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="12" sm="6"><MudTextField @bind-Value="_form.Destination" Label="Destination" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                            <MudItem xs="12"><MudTextField @bind-Value="_form.Remarks" Label="Remarks" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudItem>
-                        </MudGrid>
-                        <MudButton Class="mt-2" Variant="Variant.Filled" Color="Color.Primary" OnClick="Record" Disabled="_saving">Save Record</MudButton>
-                    </MudCardContent>
-                </MudCard>
-            }
+            <MudAlert Severity="Severity.Info" Dense="true">Select a vehicle to view usage, maintenance and record fuel/odometer.</MudAlert>
         }
         else
         {
-            <MudAlert Severity="Severity.Info" Dense="true">Select a vehicle to view usage and record fuel/odometer.</MudAlert>
+            <!-- Header -->
+            <MudCard Elevation="1" Class="mb-3">
+                <MudCardContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween" Spacing="2">
+                        <div>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.h6">@_selected.PlateNumber — @_selected.Make @_selected.Model</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@StatusColor(_selected.Status)">@StatusLabel(_selected.Status)</MudChip>
+                            </MudStack>
+                            <MudStack Row="true" Spacing="3" Class="mt-1" Wrap="Wrap.Wrap">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Property No: <b>@_selected.PropertyNo</b></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Year: <b>@_selected.Year</b></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Odometer: <b>@_selected.Odometer.ToString("N0") km</b></MudText>
+                                @if (!string.IsNullOrWhiteSpace(_selected.FuelType))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Fuel: <b>@_selected.FuelType</b></MudText>
+                                }
+                            </MudStack>
+                        </div>
+                        @if (_canRecord)
+                        {
+                            <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenRecordDialogAsync"
+                                        StartIcon="@Icons.Material.Filled.Add">Record Fuel &amp; Odometer</AMISButton>
+                        }
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Usage summary -->
+            <MudGrid Spacing="2" Class="mb-3">
+                <MudItem xs="6" sm="4" md="2">
+                    <MudPaper Class="pa-3 AMIS-card" Elevation="0" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Records</MudText>
+                        <MudText Typo="Typo.h6">@(_summary?.RecordCount ?? 0)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="4" md="2">
+                    <MudPaper Class="pa-3 AMIS-card" Elevation="0" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Distance</MudText>
+                        <MudText Typo="Typo.h6">@((_summary?.TotalDistanceKm ?? 0).ToString("N0")) <MudText Typo="Typo.caption" Inline="true">km</MudText></MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="4" md="2">
+                    <MudPaper Class="pa-3 AMIS-card" Elevation="0" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Fuel</MudText>
+                        <MudText Typo="Typo.h6">@((_summary?.TotalFuelLiters ?? 0m).ToString("N2")) <MudText Typo="Typo.caption" Inline="true">L</MudText></MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="4" md="2">
+                    <MudPaper Class="pa-3 AMIS-card" Elevation="0" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Fuel Cost</MudText>
+                        <MudText Typo="Typo.h6">₱@((_summary?.TotalFuelCost ?? 0m).ToString("N2"))</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="4" md="2">
+                    <MudPaper Class="pa-3 AMIS-card" Elevation="0" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Avg km/L</MudText>
+                        <MudText Typo="Typo.h6">@((_summary?.AverageKmPerLiter ?? 0m).ToString("N2"))</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="6" sm="4" md="2">
+                    <MudPaper Class="pa-3 AMIS-card" Elevation="0" Outlined="true">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Avg ₱/km</MudText>
+                        <MudText Typo="Typo.h6">₱@((_summary?.AverageCostPerKm ?? 0m).ToString("N2"))</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Maintenance -->
+            <MudCard Elevation="1">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-2">Maintenance</MudText>
+
+                    @if (!_canViewMaintenance)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            Maintenance schedules and logs require the Vehicle Maintenance view permission. Contact your fleet administrator for access.
+                        </MudAlert>
+                    }
+                    else if (_maintLoading)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                    }
+                    else
+                    {
+                        <!-- Summary chips -->
+                        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Overdue: @_overdueCount</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Filled.Schedule">Due soon: @_dueSoonCount</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" Icon="@Icons.Material.Filled.EventRepeat">Active schedules: @_schedules.Count(s => s.IsActive)</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info" Icon="@Icons.Material.Filled.Build">Logs: @_logs.Count</MudChip>
+                        </MudStack>
+
+                        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-3">
+                            <!-- DUE -->
+                            <MudTabPanel Text="Due" Icon="@Icons.Material.Filled.NotificationsActive"
+                                         BadgeData="@(_due.Count == 0 ? null : _due.Count)"
+                                         BadgeColor="@(_overdueCount > 0 ? Color.Error : Color.Warning)">
+                                @if (_due.Count == 0)
+                                {
+                                    <MudAlert Severity="Severity.Success" Dense="true">No maintenance due within the next @DueWindowDays days.</MudAlert>
+                                }
+                                else
+                                {
+                                    <MudTable Items="_due" Dense="true" Hover="true" Striped="true"
+                                              RowClassFunc="@((row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)">
+                                        <HeaderContent>
+                                            <MudTh>Type</MudTh>
+                                            <MudTh>Due Date</MudTh>
+                                            <MudTh>Due Mileage</MudTh>
+                                            <MudTh>Status</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Type">@context.MaintenanceType</MudTd>
+                                            <MudTd DataLabel="Due Date">@(context.DueDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                                            <MudTd DataLabel="Due Mileage">@(context.DueMileage?.ToString("N0") ?? "-")</MudTd>
+                                            <MudTd DataLabel="Status">
+                                                @if (IsOverdue(context))
+                                                {
+                                                    <MudChip T="string" Color="Color.Error" Size="Size.Small">Overdue</MudChip>
+                                                }
+                                                else
+                                                {
+                                                    <MudChip T="string" Color="Color.Warning" Size="Size.Small">Upcoming</MudChip>
+                                                }
+                                            </MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </MudTabPanel>
+
+                            <!-- SCHEDULES -->
+                            <MudTabPanel Text="Schedules" Icon="@Icons.Material.Filled.EventRepeat"
+                                         BadgeData="@(_schedules.Count == 0 ? null : _schedules.Count)" BadgeColor="Color.Default">
+                                @if (_schedules.Count == 0)
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true">No maintenance schedules planned for this vehicle.</MudAlert>
+                                }
+                                else
+                                {
+                                    <MudTable Items="_schedules" Dense="true" Hover="true" Striped="true"
+                                              RowClassFunc="@((row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)">
+                                        <HeaderContent>
+                                            <MudTh>Type</MudTh>
+                                            <MudTh>Interval</MudTh>
+                                            <MudTh>Next Due</MudTh>
+                                            <MudTh>Last Done</MudTh>
+                                            <MudTh>Status</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Type">@context.MaintenanceType</MudTd>
+                                            <MudTd DataLabel="Interval">@IntervalText(context)</MudTd>
+                                            <MudTd DataLabel="Next Due">
+                                                @if (context.DueDate is not null)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Color="@(IsOverdue(context) ? Color.Error : Color.Default)">@context.DueDate.Value.ToString("yyyy-MM-dd")</MudChip>
+                                                }
+                                                else if (context.DueMileage is not null)
+                                                {
+                                                    <MudText Typo="Typo.body2">@context.DueMileage.Value.ToString("N0") km</MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText>-</MudText>
+                                                }
+                                            </MudTd>
+                                            <MudTd DataLabel="Last Done">@LastDoneText(context)</MudTd>
+                                            <MudTd DataLabel="Status">
+                                                <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip>
+                                            </MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </MudTabPanel>
+
+                            <!-- LOGS -->
+                            <MudTabPanel Text="Logs" Icon="@Icons.Material.Filled.Build"
+                                         BadgeData="@(_logs.Count == 0 ? null : _logs.Count)" BadgeColor="Color.Default">
+                                @if (_logs.Count == 0)
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true">No maintenance has been logged for this vehicle yet.</MudAlert>
+                                }
+                                else
+                                {
+                                    <MudTable Items="_logs" Dense="true" Hover="true" Striped="true">
+                                        <HeaderContent>
+                                            <MudTh>Date</MudTh>
+                                            <MudTh>Type</MudTh>
+                                            <MudTh>Odometer</MudTh>
+                                            <MudTh>Performed By</MudTh>
+                                            <MudTh Style="text-align:right">Cost</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd DataLabel="Date">@context.PerformedDate.ToString("yyyy-MM-dd")</MudTd>
+                                            <MudTd DataLabel="Type">@context.MaintenanceType</MudTd>
+                                            <MudTd DataLabel="Odometer">@(context.OdometerAtService?.ToString("N0") ?? "-")</MudTd>
+                                            <MudTd DataLabel="Performed By">@(string.IsNullOrWhiteSpace(context.PerformedBy) ? "-" : context.PerformedBy)</MudTd>
+                                            <MudTd DataLabel="Cost" Style="text-align:right">@(context.Cost is null ? "-" : $"₱{context.Cost.Value:N2}")</MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+                            </MudTabPanel>
+                        </MudTabs>
+                    }
+                </MudCardContent>
+            </MudCard>
         }
     </MudItem>
 </MudGrid>
 
+<style>
+    .overdue-row {
+        background-color: rgba(244, 67, 54, 0.08);
+    }
+</style>
+
 @code {
+    private const int DueWindowDays = 60;
+
     private bool _loading = true;
-    private bool _saving;
+    private bool _maintLoading;
     private List<VehicleDto> _vehicles = [];
     private VehicleDto? _selected;
     private VehicleDailyUsageSummaryDto? _summary;
-    private DateTime? _date = DateTime.Today;
-    private RecordForm _form = new();
+
+    private readonly List<MaintenanceScheduleDto> _due = [];
+    private readonly List<MaintenanceScheduleDto> _schedules = [];
+    private readonly List<MaintenanceLogDto> _logs = [];
+
+    private int _overdueCount => _due.Count(IsOverdue);
+    private int _dueSoonCount => _due.Count(x => !IsOverdue(x));
 
     private bool _canRecord => UserProfileState.Permissions.Contains(VehiclePermissions.MyVehicle.RecordFuelOdometer);
+    private bool _canViewMaintenance => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.View);
 
     protected override void OnInitialized() => UserProfileState.OnProfileChanged += OnProfileChanged;
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
@@ -123,9 +318,22 @@
     {
         _selected = vehicle;
         _summary = null;
+        _due.Clear();
+        _schedules.Clear();
+        _logs.Clear();
+
         if (vehicle is not null)
         {
-            await LoadSummary(vehicle.Id);
+            await LoadDetail(vehicle.Id);
+        }
+    }
+
+    private async Task LoadDetail(Guid vehicleId)
+    {
+        await LoadSummary(vehicleId);
+        if (_canViewMaintenance)
+        {
+            await LoadMaintenance(vehicleId);
         }
     }
 
@@ -141,48 +349,91 @@
         }
     }
 
-    private async Task Record()
+    private async Task LoadMaintenance(Guid vehicleId)
     {
-        if (_selected is null || _date is null)
-        {
-            Snackbar.Add("Select a vehicle and date.", Severity.Warning);
-            return;
-        }
-
+        _maintLoading = true;
         try
         {
-            _saving = true;
-            await VehicleClient.RecordMyVehicleFuelOdometerAsync(new RecordMyVehicleFuelOdometerCommand(
-                _selected.Id,
-                DateOnly.FromDateTime(_date.Value),
-                _form.OdometerStart,
-                _form.OdometerEnd,
-                _form.FuelLiters,
-                _form.FuelCost,
-                _form.Destination,
-                _form.Remarks));
+            var dueTask = VehicleClient.GetDueMaintenanceSchedulesAsync(new DueMaintenanceScheduleSearchRequest(vehicleId, DueWindowDays));
+            var schedulesTask = VehicleClient.SearchMaintenanceSchedulesAsync(new MaintenanceScheduleSearchRequest(null, vehicleId, null));
+            var logsTask = VehicleClient.SearchMaintenanceLogsAsync(new MaintenanceLogSearchRequest(null, vehicleId, null, null, null));
 
-            Snackbar.Add("Record saved.", Severity.Success);
-            _form = new RecordForm();
-            await LoadSummary(_selected.Id);
+            await Task.WhenAll(dueTask, schedulesTask, logsTask);
+
+            _due.Clear();
+            _due.AddRange((await dueTask).OrderBy(x => x.DueDate ?? DateOnly.MaxValue));
+
+            _schedules.Clear();
+            _schedules.AddRange((await schedulesTask).OrderByDescending(x => x.IsActive).ThenBy(x => x.DueDate ?? DateOnly.MaxValue));
+
+            _logs.Clear();
+            _logs.AddRange((await logsTask).OrderByDescending(x => x.PerformedDate));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Could not load maintenance: {ex.Message}", Severity.Error);
         }
         finally
         {
-            _saving = false;
+            _maintLoading = false;
         }
     }
 
-    private sealed class RecordForm
+    private async Task OpenRecordDialogAsync()
     {
-        public int OdometerStart { get; set; }
-        public int OdometerEnd { get; set; }
-        public decimal FuelLiters { get; set; }
-        public decimal FuelCost { get; set; }
-        public string? Destination { get; set; }
-        public string? Remarks { get; set; }
+        if (_selected is null || !_canRecord) return;
+
+        var parameters = new DialogParameters<RecordFuelOdometerDialog> { { x => x.Vehicle, _selected } };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Medium };
+        var dialog = await DialogService.ShowAsync<RecordFuelOdometerDialog>(
+            $"Record Fuel & Odometer — {_selected.PlateNumber}", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            // Refresh odometer readings (carried forward server-side), usage totals and maintenance.
+            var vehicleId = _selected.Id;
+            await LoadVehicles();
+            _selected = _vehicles.FirstOrDefault(v => v.Id == vehicleId);
+            if (_selected is not null)
+                await LoadDetail(_selected.Id);
+            else
+                _summary = null;
+        }
     }
+
+    private static bool IsOverdue(MaintenanceScheduleDto item) =>
+        item.DueDate.HasValue && item.DueDate.Value < DateOnly.FromDateTime(DateTime.Today);
+
+    private static string IntervalText(MaintenanceScheduleDto s)
+    {
+        var parts = new List<string>();
+        if (s.IntervalDays is > 0) parts.Add($"{s.IntervalDays} days");
+        if (s.IntervalMileage is > 0) parts.Add($"{s.IntervalMileage.Value:N0} km");
+        return parts.Count == 0 ? "-" : string.Join(" / ", parts);
+    }
+
+    private static string LastDoneText(MaintenanceScheduleDto s)
+    {
+        if (s.LastDoneDate is null && s.LastDoneMileage is null) return "-";
+        var parts = new List<string>();
+        if (s.LastDoneDate is not null) parts.Add(s.LastDoneDate.Value.ToString("yyyy-MM-dd"));
+        if (s.LastDoneMileage is not null) parts.Add($"{s.LastDoneMileage.Value:N0} km");
+        return string.Join(" · ", parts);
+    }
+
+    private static Color StatusColor(string status) => status switch
+    {
+        VehicleStatusValues.Active => Color.Success,
+        VehicleStatusValues.UnderRepair => Color.Warning,
+        VehicleStatusValues.Retired => Color.Default,
+        VehicleStatusValues.Decommissioned => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string StatusLabel(string status) => status switch
+    {
+        VehicleStatusValues.UnderRepair => "Under Repair",
+        _ => status
+    };
 }

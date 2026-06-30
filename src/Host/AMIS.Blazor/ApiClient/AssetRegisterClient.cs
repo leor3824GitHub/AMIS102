@@ -1789,10 +1789,10 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
 public sealed record ArRequestRepairRequest(
     Guid AssetRegistryId, string NatureOfWork, string RequestedBy, DateOnly RequestedOn,
     string? PartsToReplace = null, string? EngineNo = null, string? ChassisNo = null, int? OdometerReading = null,
-    Guid? InspectorId = null, string? InspectorName = null);
+    Guid? InspectorId = null, string? InspectorName = null, string? NotedBy = null);
 
 public sealed record ArPreRepairInspectionRequest(
-    string Findings, string PreInspectedBy, DateOnly PreInspectedOn, string? NotedBy = null);
+    string Findings, string PreInspectedBy, DateOnly PreInspectedOn);
 
 public sealed record ArPostRepairInspectionRequest(
     string Findings, string PostInspectedBy, DateOnly PostInspectedOn,

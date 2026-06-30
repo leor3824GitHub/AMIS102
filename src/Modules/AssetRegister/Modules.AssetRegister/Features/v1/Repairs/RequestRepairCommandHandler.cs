@@ -44,7 +44,7 @@ public sealed class RequestRepairCommandHandler(
             cmd.NatureOfWork, cmd.PartsToReplace, cmd.RequestedBy, cmd.RequestedOn,
             cmd.EngineNo, cmd.ChassisNo, cmd.OdometerReading,
             lastAccepted?.NatureOfWork, lastAccepted?.AcceptedOn,
-            cmd.InspectorId, cmd.InspectorName);
+            cmd.InspectorId, cmd.InspectorName, cmd.NotedBy);
         repair.SetCreatedBy(currentUser.GetUserId().ToString());
 
         db.PropertyRepairs.Add(repair);

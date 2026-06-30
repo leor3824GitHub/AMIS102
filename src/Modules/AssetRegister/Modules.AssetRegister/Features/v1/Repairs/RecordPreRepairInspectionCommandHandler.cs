@@ -17,7 +17,7 @@ public sealed class RecordPreRepairInspectionCommandHandler(AssetRegisterDbConte
         var repair = await db.PropertyRepairs.FirstOrDefaultAsync(x => x.Id == cmd.RepairId, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException("Repair (RPRI) not found.");
 
-        repair.RecordPreRepairInspection(cmd.Findings, cmd.PreInspectedBy, cmd.NotedBy, cmd.PreInspectedOn);
+        repair.RecordPreRepairInspection(cmd.Findings, cmd.PreInspectedBy, cmd.PreInspectedOn);
         repair.SetLastModifiedBy(currentUser.GetUserId().ToString());
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

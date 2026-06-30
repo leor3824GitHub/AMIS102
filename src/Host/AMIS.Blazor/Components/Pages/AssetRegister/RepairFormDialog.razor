@@ -3,6 +3,7 @@
 @inject IArRepairClient RepairClient
 @inject ILookupClient LookupClient
 @inject IUserProfileState UserProfileState
+@inject IOrganizationProfileState OrgProfileState
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -51,6 +52,9 @@
                     </MudStack>
                 </ItemTemplate>
             </MudAutocomplete>
+            <MudTextField @bind-Value="_notedBy" Label="Noted By (Head of Office)"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                          HelperText="Defaults to the agency's approving official" />
             <MudDatePicker @bind-Date="_requestedOn" Label="Date Requested" Variant="Variant.Outlined" Margin="Margin.Dense" />
         </MudStack>
     </DialogContent>
@@ -71,6 +75,7 @@
     private string _natureOfWork = string.Empty;
     private string? _parts;
     private string _requestedBy = string.Empty;
+    private string? _notedBy;
     private DateTime? _requestedOn = DateTime.Today;
     private bool _saving;
 
@@ -83,6 +88,9 @@
         _requestedBy = !string.IsNullOrWhiteSpace(UserProfileState.EmployeeFullName)
             ? UserProfileState.EmployeeFullName
             : UserProfileState.UserName;
+
+        // "Noted By (Head of Office)" defaults to the agency's approving official from the org profile.
+        _notedBy = OrgProfileState.Profile?.ApprovingOfficialName;
     }
 
     // RPRI is PPE-wide — any registered asset (PPE or SE) can be sent for repair inspection, not just vehicles.
@@ -138,7 +146,8 @@
                 DateOnly.FromDateTime(_requestedOn.Value),
                 _parts,
                 InspectorId: _inspector?.Id,
-                InspectorName: _inspector is null ? null : $"{_inspector.FirstName} {_inspector.LastName}".Trim()));
+                InspectorName: _inspector is null ? null : $"{_inspector.FirstName} {_inspector.LastName}".Trim(),
+                NotedBy: string.IsNullOrWhiteSpace(_notedBy) ? null : _notedBy.Trim()));
 
             Snackbar.Add("Repair requested (RPRI created).", Severity.Success);
             Dialog.Close(DialogResult.Ok(true));

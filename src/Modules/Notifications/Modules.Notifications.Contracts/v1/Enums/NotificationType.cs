@@ -9,4 +9,7 @@ public enum NotificationType
     General = 0,
     ChatMention = 1,
     InspectionRequested = 2,
+
+    /// <summary>An ICS/PAR was issued to the accountable person and is awaiting their acceptance.</summary>
+    AccountabilityIssued = 3,
 }

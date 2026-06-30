@@ -14,6 +14,7 @@ public sealed class RequestRepairCommandValidator : AbstractValidator<RequestRep
         RuleFor(x => x.PartsToReplace).MaximumLength(2000).When(x => x.PartsToReplace is not null);
         RuleFor(x => x.EngineNo).MaximumLength(100).When(x => x.EngineNo is not null);
         RuleFor(x => x.ChassisNo).MaximumLength(100).When(x => x.ChassisNo is not null);
+        RuleFor(x => x.NotedBy).MaximumLength(200).When(x => x.NotedBy is not null);
     }
 }
 
@@ -25,7 +26,6 @@ public sealed class RecordPreRepairInspectionCommandValidator : AbstractValidato
         RuleFor(x => x.Findings).NotEmpty().MaximumLength(2000);
         RuleFor(x => x.PreInspectedBy).NotEmpty().MaximumLength(200);
         RuleFor(x => x.PreInspectedOn).NotEmpty();
-        RuleFor(x => x.NotedBy).MaximumLength(200).When(x => x.NotedBy is not null);
     }
 }
 

@@ -13,8 +13,14 @@
             {
                 <MudText Typo="Typo.caption" Class="font-weight-bold">Pre-Repair Inspection (mandatory)</MudText>
                 <MudTextField @bind-Value="_findings" Label="Findings" Lines="2" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                <MudTextField @bind-Value="_inspector" Label="Pre-Inspected By (Property Inspector)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
-                <MudTextField @bind-Value="_notedBy" Label="Noted By (Head of Office)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                @if (!string.IsNullOrWhiteSpace(Repair.InspectorName))
+                {
+                    <MudField Label="Pre-Inspected By (Property Inspector)" Variant="Variant.Outlined" Margin="Margin.Dense">@Repair.InspectorName</MudField>
+                }
+                else
+                {
+                    <MudTextField @bind-Value="_inspector" Label="Pre-Inspected By (Property Inspector)" Required="true" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                }
                 <MudDatePicker @bind-Date="_date" Label="Inspection Date" Variant="Variant.Outlined" Margin="Margin.Dense" />
             }
             else if (Repair.Status == RepairStatusValues.PreInspected || Repair.Status == RepairStatusValues.Repaired)
@@ -65,7 +71,6 @@
 
     private string _findings = string.Empty;
     private string _inspector = string.Empty;
-    private string? _notedBy;
     private DateTime? _date = DateTime.Today;
     private string? _repairShop;
     private string? _jobOrderNo;
@@ -101,8 +106,11 @@
             switch (Repair.Status)
             {
                 case RepairStatusValues.Requested:
-                    if (string.IsNullOrWhiteSpace(_findings) || string.IsNullOrWhiteSpace(_inspector)) { Warn(); return; }
-                    await RepairClient.PreInspectAsync(Repair.Id, new ArPreRepairInspectionRequest(_findings, _inspector, date, _notedBy));
+                    // The inspector is the one assigned at RPRI creation; fall back to manual entry only
+                    // when none was assigned.
+                    var preInspectedBy = string.IsNullOrWhiteSpace(Repair.InspectorName) ? _inspector : Repair.InspectorName;
+                    if (string.IsNullOrWhiteSpace(_findings) || string.IsNullOrWhiteSpace(preInspectedBy)) { Warn(); return; }
+                    await RepairClient.PreInspectAsync(Repair.Id, new ArPreRepairInspectionRequest(_findings, preInspectedBy, date));
                     break;
                 case RepairStatusValues.PreInspected:
                 case RepairStatusValues.Repaired:

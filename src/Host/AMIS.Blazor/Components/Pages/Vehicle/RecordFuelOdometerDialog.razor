@@ -1,0 +1,146 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
+@inject IVehicleClient VehicleClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3 d-block">
+            Odometer start is pre-filled from the last record's end reading — adjust if needed.
+        </MudText>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="_date" Label="Date" Variant="Variant.Outlined" Margin="Margin.Dense"
+                               DateFormat="yyyy-MM-dd" MaxDate="DateTime.Today" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField @bind-Value="_form.OdometerStart" Label="Odometer Start" Min="0" Immediate="true"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Adornment="Adornment.End" AdornmentText="km" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField @bind-Value="_form.OdometerEnd" Label="Odometer End" Min="0" Immediate="true"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Adornment="Adornment.End" AdornmentText="km"
+                                 Error="_hasOdometerError" ErrorText="End cannot be less than start." />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField @bind-Value="_form.FuelLiters" Label="Fuel" Min="0" Step="0.001m" Format="F2" Immediate="true"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Adornment="Adornment.End" AdornmentText="L" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField @bind-Value="_form.FuelCost" Label="Fuel Cost" Min="0" Step="0.01m" Format="F2" Immediate="true"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense"
+                                 Adornment="Adornment.Start" AdornmentText="₱" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_form.Destination" Label="Destination" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Immediate="true" MaxLength="250" Counter="250" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_form.Remarks" Label="Remarks" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Immediate="true" MaxLength="1000" Counter="1000" />
+            </MudItem>
+        </MudGrid>
+
+        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mt-3">
+            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined"
+                     Icon="@Icons.Material.Outlined.Route">Distance: @_distanceKm.ToString("N0") km</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined"
+                     Icon="@Icons.Material.Outlined.LocalGasStation">@_kmPerLiter.ToString("N2") km/L</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">₱@_costPerLiter.ToString("N2")/L</MudChip>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   Disabled="_saving || _hasOdometerError || _date is null">
+            @(_saving ? "Saving..." : "Save Record")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    /// <summary>The vehicle being recorded against. Odometer start is pre-filled from its last record's end reading.</summary>
+    [Parameter] public VehicleDto Vehicle { get; set; } = default!;
+
+    private DateTime? _date = DateTime.Today;
+    private RecordForm _form = new();
+    private bool _saving;
+
+    // Live, computed feedback for the record form (mirrors the server-side calculations).
+    private int _distanceKm => Math.Max(0, _form.OdometerEnd - _form.OdometerStart);
+    private decimal _kmPerLiter => _form.FuelLiters > 0 ? Math.Round(_distanceKm / _form.FuelLiters, 2) : 0m;
+    private decimal _costPerLiter => _form.FuelLiters > 0 ? Math.Round(_form.FuelCost / _form.FuelLiters, 2) : 0m;
+    private bool _hasOdometerError => _form.OdometerEnd > 0 && _form.OdometerEnd < _form.OdometerStart;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Pre-fill Odometer Start from the vehicle's most recent record (its Odometer End).
+        // Falls back to the vehicle's current reading when no prior record exists.
+        var latest = await VehicleClient.SearchVehicleDailyUsageAsync(new SearchVehicleDailyUsageQuery
+        {
+            VehicleId = Vehicle.Id,
+            PageNumber = 1,
+            PageSize = 1
+        });
+
+        _form.OdometerStart = latest.Items?.FirstOrDefault()?.OdometerEnd ?? Vehicle.Odometer;
+    }
+
+    private async Task Save()
+    {
+        if (_date is null)
+        {
+            Snackbar.Add("Select a date.", Severity.Warning);
+            return;
+        }
+
+        if (_hasOdometerError)
+        {
+            Snackbar.Add("Odometer end cannot be less than odometer start.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _saving = true;
+            var saved = await VehicleClient.RecordMyVehicleFuelOdometerAsync(new RecordMyVehicleFuelOdometerCommand(
+                Vehicle.Id,
+                DateOnly.FromDateTime(_date.Value),
+                _form.OdometerStart,
+                _form.OdometerEnd,
+                _form.FuelLiters,
+                _form.FuelCost,
+                string.IsNullOrWhiteSpace(_form.Destination) ? null : _form.Destination!.Trim(),
+                string.IsNullOrWhiteSpace(_form.Remarks) ? null : _form.Remarks!.Trim()));
+
+            Snackbar.Add($"Recorded {saved.DistanceKm:N0} km for {Vehicle.PlateNumber}.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(saved));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private sealed class RecordForm
+    {
+        public int OdometerStart { get; set; }
+        public int OdometerEnd { get; set; }
+        public decimal FuelLiters { get; set; }
+        public decimal FuelCost { get; set; }
+        public string? Destination { get; set; }
+        public string? Remarks { get; set; }
+    }
+}

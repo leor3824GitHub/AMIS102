@@ -53,6 +53,8 @@ public sealed class RepairPdfDocumentTests
         PartsToReplace: "Front brake pads, oil filter",
         RequestedBy: "Juan dela Cruz",
         RequestedOn: new DateOnly(2026, 6, 1),
+        InspectorId: Guid.NewGuid(),
+        InspectorName: "Inspector A",
         EngineNo: "4ZZ-000123",
         ChassisNo: "J28S-000456",
         OdometerReading: 450_000,

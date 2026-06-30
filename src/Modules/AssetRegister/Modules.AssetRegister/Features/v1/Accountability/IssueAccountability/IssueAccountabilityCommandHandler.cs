@@ -1,3 +1,4 @@
+using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
@@ -5,15 +6,22 @@ using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Domain.Accountability;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.MasterData.Contracts.v1.References;
+using AMIS.Modules.Notifications.Contracts.Events;
+using AMIS.Modules.Notifications.Contracts.v1.Enums;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.IssueAccountability;
 
 public sealed class IssueAccountabilityCommandHandler(
     AssetRegisterDbContext db,
     IAccountabilityNumberGenerator numberGenerator,
-    ICountFreezeGuard freezeGuard)
+    ICountFreezeGuard freezeGuard,
+    IMediator mediator,
+    IEventBus eventBus,
+    ILogger<IssueAccountabilityCommandHandler> logger)
     : ICommandHandler<IssueAccountabilityCommand, PropertyAccountabilityDto>
 {
     public async ValueTask<PropertyAccountabilityDto> Handle(IssueAccountabilityCommand cmd, CancellationToken cancellationToken)
@@ -70,7 +78,51 @@ public sealed class IssueAccountabilityCommandHandler(
         db.PropertyAccountabilities.Add(accountability);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
+        // The ICS/PAR is now PendingAcceptance — notify the accountable person so they can review and accept it.
+        await NotifyReceivingEmployeeAsync(accountability, cancellationToken).ConfigureAwait(false);
+
         return AccountabilityMapper.ToDto(accountability);
+    }
+
+    /// <summary>
+    /// Best-effort: resolve the receiving employee's login account and drop an "awaiting acceptance" notification
+    /// in their bell. Runs after commit and never throws — a notification failure must not fail the issuance.
+    /// A receiver with no linked login (<c>IdentityUserId</c> null) has no inbox to target, so it is skipped.
+    /// </summary>
+    private async Task NotifyReceivingEmployeeAsync(PropertyAccountability accountability, CancellationToken cancellationToken)
+    {
+        var docLabel = accountability.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR";
+        try
+        {
+            var receiver = await mediator
+                .Send(new GetEmployeeReferenceByIdQuery(accountability.ReceivedBy.EmployeeId), cancellationToken)
+                .ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(receiver?.IdentityUserId))
+            {
+                logger.LogWarning(
+                    "{DocLabel} {DocumentNo}: receiving employee {EmployeeId} has no linked login account; acceptance notification skipped.",
+                    docLabel, accountability.DocumentNo, accountability.ReceivedBy.EmployeeId);
+                return;
+            }
+
+            var notification = new NotificationRequestedIntegrationEvent(
+                RecipientUserId: receiver.IdentityUserId,
+                Type: NotificationType.AccountabilityIssued,
+                Title: $"{docLabel} issued for your acceptance",
+                Body: $"{docLabel} {accountability.DocumentNo} has been issued to you. Please review and accept it.",
+                Link: "/asset-register/my-accountability",
+                Source: "AssetRegister",
+                MetadataJson: null,
+                TenantId: accountability.TenantId,
+                CorrelationId: accountability.Id.ToString());
+
+            await eventBus.PublishAsync(notification, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to publish acceptance notification for {DocLabel} {DocumentId}.", docLabel, accountability.Id);
+        }
     }
 
     private static AssetCategory InferIcsCategory(IEnumerable<AssetRegistry> assets)

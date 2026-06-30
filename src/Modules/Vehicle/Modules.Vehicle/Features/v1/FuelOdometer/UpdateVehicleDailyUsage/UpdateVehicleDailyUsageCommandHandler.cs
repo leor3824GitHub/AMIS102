@@ -31,15 +31,6 @@ public sealed class UpdateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
             throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.Id), "Cannot update daily usage for a decommissioned vehicle.")]);
 
-        var duplicate = await db.VehicleDailyUsages
-            .AsNoTracking()
-            .AnyAsync(x => x.VehicleId == usage.VehicleId && x.Date == cmd.Date && x.Id != cmd.Id, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (duplicate)
-            throw new FluentValidation.ValidationException(
-            [new ValidationFailure(nameof(cmd.Date), "A daily usage record for this vehicle and date already exists.")]);
-
         usage.Update(
             cmd.Date,
             cmd.OdometerStart,

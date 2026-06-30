@@ -87,14 +87,16 @@ public sealed record RequestRepairCommand(
     // Inspector assigned to perform the mandatory pre-repair inspection. When set, only that person is
     // notified; when null, every user who can inspect (Repair.Inspect) is notified.
     Guid? InspectorId = null,
-    string? InspectorName = null) : ICommand<PropertyRepairDto>;
+    string? InspectorName = null,
+    // Head of Office who notes the request. Captured here (defaults to the agency's approving official)
+    // rather than at pre-inspection time.
+    string? NotedBy = null) : ICommand<PropertyRepairDto>;
 
 public sealed record RecordPreRepairInspectionCommand(
     Guid RepairId,
     string Findings,
     string PreInspectedBy,
-    DateOnly PreInspectedOn,
-    string? NotedBy = null) : ICommand<PropertyRepairDto>;
+    DateOnly PreInspectedOn) : ICommand<PropertyRepairDto>;
 
 public sealed record RecordPostRepairInspectionCommand(
     Guid RepairId,

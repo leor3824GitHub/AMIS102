@@ -23,15 +23,6 @@ public sealed class CreateVehicleDailyUsageCommandHandler(VehicleDbContext db, I
             throw new FluentValidation.ValidationException(
             [new ValidationFailure(nameof(cmd.VehicleId), "Cannot record daily usage for a decommissioned vehicle.")]);
 
-        var exists = await db.VehicleDailyUsages
-            .AsNoTracking()
-            .AnyAsync(x => x.VehicleId == cmd.VehicleId && x.Date == cmd.Date, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (exists)
-            throw new FluentValidation.ValidationException(
-            [new ValidationFailure(nameof(cmd.Date), "A daily usage record for this vehicle and date already exists.")]);
-
         var usage = VehicleDailyUsage.Create(
             currentUser.GetTenant() ?? string.Empty,
             cmd.VehicleId,

@@ -27,7 +27,8 @@ public sealed class VehicleDailyUsageConfiguration : IEntityTypeConfiguration<Ve
             .HasForeignKey(x => x.VehicleId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(x => new { x.TenantId, x.VehicleId, x.Date }).IsUnique();
+        // Non-unique: a vehicle may have multiple travel records on the same date.
+        builder.HasIndex(x => new { x.TenantId, x.VehicleId, x.Date });
         builder.HasIndex(x => new { x.TenantId, x.Date });
 
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

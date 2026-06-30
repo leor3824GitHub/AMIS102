@@ -95,7 +95,8 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
         string? natureOfLastRepair,
         DateOnly? dateOfLastRepair,
         Guid? inspectorId = null,
-        string? inspectorName = null)
+        string? inspectorName = null,
+        string? notedBy = null)
     {
         if (assetRegistryId == Guid.Empty)
             throw new ArgumentException("AssetRegistryId is required.", nameof(assetRegistryId));
@@ -115,6 +116,7 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
             RequestedOn = requestedOn,
             InspectorId = inspectorId,
             InspectorName = inspectorName,
+            NotedBy = notedBy,
             EngineNo = engineNo,
             ChassisNo = chassisNo,
             OdometerReading = odometerReading,
@@ -124,8 +126,11 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
         };
     }
 
-    /// <summary>Pre-repair inspection — MANDATORY to leave Requested.</summary>
-    public void RecordPreRepairInspection(string findings, string preInspectedBy, string? notedBy, DateOnly inspectedOn)
+    /// <summary>
+    /// Pre-repair inspection — MANDATORY to leave Requested. The inspector and "Noted By" head of office
+    /// are captured on the request, so they are not supplied here.
+    /// </summary>
+    public void RecordPreRepairInspection(string findings, string preInspectedBy, DateOnly inspectedOn)
     {
         if (Status != RepairStatus.Requested)
             throw new InvalidOperationException("Pre-repair inspection can only be recorded on a Requested RPRI.");
@@ -134,7 +139,6 @@ public sealed class PropertyRepair : AggregateRoot<Guid>, IHasTenant, IAuditable
 
         PreInspectionFindings = findings;
         PreInspectedBy = preInspectedBy;
-        NotedBy = notedBy;
         PreInspectedOn = inspectedOn;
         Status = RepairStatus.PreInspected;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
