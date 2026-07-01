@@ -121,6 +121,13 @@ else
 
     private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View);
 
+    protected override void OnInitialized()
+    {
+        var today = DateTime.Today;
+        _to = today;
+        _from = today.AddMonths(-1);
+    }
+
     private static DateOnly? ToDateOnly(DateTime? value) => value is { } v ? DateOnly.FromDateTime(v) : null;
 
     private async Task LoadAsync()

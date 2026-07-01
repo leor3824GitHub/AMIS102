@@ -229,8 +229,8 @@ else if (!_loading)
     private List<DepartmentIssuanceSummaryDto> _reportData = [];
     private List<DepartmentReferenceDto> _departments = [];
     private Guid? _selectedDepartmentId;
-    private DateTime? _filterFrom;
-    private DateTime? _filterTo;
+    private DateTime? _filterFrom = DateTime.Today.AddMonths(-1);
+    private DateTime? _filterTo = DateTime.Today;
     private string _serialNo = string.Empty;
     private string _dateRangeLabel = string.Empty;
     private const string ReportKey = "quest-department-issuance";

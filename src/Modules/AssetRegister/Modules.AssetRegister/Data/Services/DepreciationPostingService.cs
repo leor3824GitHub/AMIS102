@@ -14,13 +14,12 @@ namespace AMIS.Modules.AssetRegister.Data.Services;
 /// </summary>
 public sealed class DepreciationPostingService(AssetRegisterDbContext db)
 {
-    /// <summary>Tenant-scoped run (HTTP-invoked): respects the ambient multi-tenant filter.</summary>
+    /// <summary>
+    /// Tenant-scoped run: respects the ambient multi-tenant filter. Invoked both by the HTTP endpoint
+    /// and, per tenant, by the monthly recurring job (which sets the tenant context before each call).
+    /// </summary>
     public Task<RunDepreciationResultDto> PostThroughAsync(DateOnly asOfPeriod, CancellationToken ct)
         => PostCoreAsync(db.AssetRegistries, asOfPeriod, ct);
-
-    /// <summary>All-tenants run for the recurring Hangfire job, which executes without a tenant context.</summary>
-    public Task<RunDepreciationResultDto> PostAllTenantsThroughAsync(DateOnly asOfPeriod, CancellationToken ct)
-        => PostCoreAsync(db.AssetRegistries.IgnoreQueryFilters(), asOfPeriod, ct);
 
     private async Task<RunDepreciationResultDto> PostCoreAsync(
         IQueryable<AssetRegistry> source, DateOnly asOfPeriod, CancellationToken ct)

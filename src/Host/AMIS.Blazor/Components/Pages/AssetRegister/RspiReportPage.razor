@@ -28,13 +28,6 @@ else
                                    Margin="Margin.Dense" DateFormat="yyyy-MM-dd" Clearable="true" />
                 </MudItem>
                 <MudItem xs="12" sm="6" md="3">
-                    <MudSelect T="AssetType?" @bind-Value="_assetType" Label="Asset Type (All)"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Clearable="true">
-                        <MudSelectItem T="AssetType?" Value="@((AssetType?)AssetType.SE)">Semi-Expendable</MudSelectItem>
-                        <MudSelectItem T="AssetType?" Value="@((AssetType?)AssetType.PPE)">PPE</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
                     <MudSwitch T="bool" @bind-Value="_activeOnly" Color="Color.Primary" Label="Active only" />
                 </MudItem>
                 <MudItem xs="12">
@@ -124,11 +117,17 @@ else
     private string? _error;
     private DateTime? _from;
     private DateTime? _to;
-    private AssetType? _assetType;
     private bool _activeOnly = true;
     private RspiReportDto? _report;
 
     private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View);
+
+    protected override void OnInitialized()
+    {
+        var today = DateTime.Today;
+        _to = today;
+        _from = today.AddMonths(-1);
+    }
 
     private static DateOnly? ToDateOnly(DateTime? value) => value is { } v ? DateOnly.FromDateTime(v) : null;
 
@@ -139,7 +138,7 @@ else
         try
         {
             _report = await ReportsClient.GetRspiReportAsync(
-                ToDateOnly(_from), ToDateOnly(_to), _assetType, _activeOnly, pageNumber: 1, pageSize: 1000);
+                ToDateOnly(_from), ToDateOnly(_to), assetType: null, _activeOnly, pageNumber: 1, pageSize: 1000);
         }
         catch (Exception ex)
         {
@@ -157,7 +156,7 @@ else
         try
         {
             var bytes = await ReportsClient.GetRspiPdfAsync(
-                ToDateOnly(_from), ToDateOnly(_to), _assetType, _activeOnly);
+                ToDateOnly(_from), ToDateOnly(_to), assetType: null, _activeOnly);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
             Snackbar.Add("PDF ready.", Severity.Success);

@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Blazor.Services.AssetRegister;
@@ -32,6 +34,14 @@ public interface IAssetRegisterReportsClient
 
 public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRegisterReportsClient
 {
+    // The API serializes all enums as strings (global JsonStringEnumConverter in AMIS.Api/Program.cs).
+    // GetFromJsonAsync's default web options do NOT include that converter, so enum fields like
+    // AccountabilityStatus must be deserialized with these options or conversion fails.
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public Task<RegSpiReportDto?> GetRegSpiReportAsync(
         DateOnly asOfDate,
         Guid? custodianId = null,
@@ -43,7 +53,7 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
             ["custodianId"] = custodianId?.ToString()
         });
 
-        return httpClient.GetFromJsonAsync<RegSpiReportDto>(url, cancellationToken);
+        return httpClient.GetFromJsonAsync<RegSpiReportDto>(url, JsonOptions, cancellationToken);
     }
 
     public Task<RspiReportDto?> GetRspiReportAsync(
@@ -60,7 +70,7 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture)
         });
 
-        return httpClient.GetFromJsonAsync<RspiReportDto>(url, cancellationToken);
+        return httpClient.GetFromJsonAsync<RspiReportDto>(url, JsonOptions, cancellationToken);
     }
 
     public Task<RpiReportDto?> GetRpiReportAsync(
@@ -75,23 +85,23 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture)
         });
 
-        return httpClient.GetFromJsonAsync<RpiReportDto>(url, cancellationToken);
+        return httpClient.GetFromJsonAsync<RpiReportDto>(url, JsonOptions, cancellationToken);
     }
 
     public Task<PhysicalCountReportDto?> GetPhysicalCountReportAsync(Guid sessionId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<PhysicalCountReportDto>($"api/v1/asset-register/reports/count/{sessionId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<PhysicalCountReportDto>($"api/v1/asset-register/reports/count/{sessionId}", JsonOptions, cancellationToken);
 
     public Task<IssuanceReportDocumentDto?> GetIssuanceReportAsync(Guid reportId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<IssuanceReportDocumentDto>($"api/v1/asset-register/reports/issuance/{reportId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<IssuanceReportDocumentDto>($"api/v1/asset-register/reports/issuance/{reportId}", JsonOptions, cancellationToken);
 
     public Task<AccountabilityReportDto?> GetAccountabilityReportAsync(Guid accountabilityId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<AccountabilityReportDto>($"api/v1/asset-register/reports/accountability/{accountabilityId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<AccountabilityReportDto>($"api/v1/asset-register/reports/accountability/{accountabilityId}", JsonOptions, cancellationToken);
 
     public Task<IncidentReportDocumentDto?> GetIncidentReportAsync(Guid incidentReportId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<IncidentReportDocumentDto>($"api/v1/asset-register/reports/incidents/{incidentReportId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<IncidentReportDocumentDto>($"api/v1/asset-register/reports/incidents/{incidentReportId}", JsonOptions, cancellationToken);
 
     public Task<UnserviceableReportDocumentDto?> GetUnserviceableReportAsync(Guid reportId, CancellationToken cancellationToken = default)
-        => httpClient.GetFromJsonAsync<UnserviceableReportDocumentDto>($"api/v1/asset-register/reports/unserviceable/{reportId}", cancellationToken);
+        => httpClient.GetFromJsonAsync<UnserviceableReportDocumentDto>($"api/v1/asset-register/reports/unserviceable/{reportId}", JsonOptions, cancellationToken);
 
     private const string PdfBase = "api/v1/quest-pdf-reporting/asset-register";
 

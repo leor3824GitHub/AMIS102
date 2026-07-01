@@ -9,6 +9,14 @@ public interface ITenantService
 {
     Task<PagedResponse<TenantDto>> GetAllAsync(GetTenantsQuery query, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Returns every tenant's full <see cref="AppTenantInfo"/> (including connection string) read
+    /// directly from the tenant registry. Use for background/cross-tenant work that must set the
+    /// multi-tenant context per tenant; unlike the Finbuckle store's GetAllAsync this is reliable
+    /// regardless of whether a non-enumerable distributed-cache store is configured.
+    /// </summary>
+    Task<IReadOnlyList<AppTenantInfo>> GetAllTenantInfosAsync(CancellationToken cancellationToken = default);
+
     Task<bool> ExistsWithIdAsync(string id, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsWithNameAsync(string name, CancellationToken cancellationToken = default);

@@ -141,6 +141,12 @@ public sealed class TenantService : ITenantService
             .ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<AppTenantInfo>> GetAllTenantInfosAsync(CancellationToken cancellationToken = default) =>
+        await _dbContext.TenantInfo
+            .AsNoTracking()
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public async Task<TenantStatusDto> GetStatusAsync(string id, CancellationToken cancellationToken = default)
     {
         var tenant = await GetTenantInfoAsync(id, cancellationToken).ConfigureAwait(false);

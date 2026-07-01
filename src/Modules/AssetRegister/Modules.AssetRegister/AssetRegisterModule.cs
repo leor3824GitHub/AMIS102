@@ -315,6 +315,10 @@ public class AssetRegisterModule : IModule
 
         try
         {
+            // Drop the retired AssetManagement module's recurring job. Its assembly no longer exists,
+            // so Hangfire throws a JobLoadException every schedule tick trying to deserialize it.
+            jobManager.RemoveIfExists("asset-management-ics-expiry");
+
             // Monthly: post COA straight-line depreciation for all PPE assets across every tenant.
             jobManager.AddOrUpdate(
                 "asset-register-monthly-depreciation",
