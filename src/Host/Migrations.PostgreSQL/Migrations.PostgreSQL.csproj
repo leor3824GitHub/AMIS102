@@ -23,7 +23,6 @@
 	  <ProjectReference Include="..\..\Modules\Vehicle\Modules.Vehicle\Modules.Vehicle.csproj" />
   <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition\Modules.ProcurementAcquisition.csproj" />
   <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement\Modules.BudgetDisbursement.csproj" />
-  <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement\Modules.AssetManagement.csproj" />
   <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister\Modules.AssetRegister.csproj" />
   <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning\Modules.ProcurementPlanning.csproj" />
 	  <ProjectReference Include="..\..\Modules\Chat\Modules.Chat\Modules.Chat.csproj" />

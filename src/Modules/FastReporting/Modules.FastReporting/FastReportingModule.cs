@@ -46,7 +46,6 @@ public sealed class FastReportingModule : IModule
         // One line per area. Add the new area's extension method and the rest stays untouched.
         moduleGroup.MapProcurementFastReports();
         moduleGroup.MapAssetRegisterFastReports();
-        moduleGroup.MapAssetManagementFastReports();
         moduleGroup.MapExpendableFastReports();
         moduleGroup.MapVehicleFastReports();
         // moduleGroup.MapFinanceFastReports();

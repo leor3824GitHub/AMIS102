@@ -42,8 +42,6 @@
     <ProjectReference Include="..\..\Modules\ProcurementAcquisition\Modules.ProcurementAcquisition\Modules.ProcurementAcquisition.csproj" />
     <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement.Contracts\Modules.BudgetDisbursement.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\BudgetDisbursement\Modules.BudgetDisbursement\Modules.BudgetDisbursement.csproj" />
-    <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement.Contracts\Modules.AssetManagement.Contracts.csproj" />
-    <ProjectReference Include="..\..\Modules\AssetManagement\Modules.AssetManagement\Modules.AssetManagement.csproj" />
     <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
     <ProjectReference Include="..\..\Modules\AssetRegister\Modules.AssetRegister\Modules.AssetRegister.csproj" />
     <ProjectReference Include="..\..\Modules\ProcurementPlanning\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />

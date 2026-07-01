@@ -17,12 +17,14 @@
     <MudItem xs="12" md="6">
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-3">Agency Details</MudText>
-            <MudStack Spacing="3">
+            <MudStack Spacing="2">
                 <MudAutocomplete T="string"
                               @bind-Value="_form.Name"
                               @bind-Value:after="OnOfficeNameSelected"
                               Label="Agency / Organization Name"
                               Variant="Variant.Outlined"
+                              Dense="true"
+                              Margin="Margin.Dense"
                               Required="true"
                               MaxLength="200"
                               Placeholder="e.g. National Food Authority"
@@ -36,6 +38,8 @@
                 <MudTextField @bind-Value="_form.ShortName"
                               Label="Short Name / Acronym"
                               Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Dense="true"
                               CharacterCounter="true"
                               MaxLength="80"
                               Placeholder="e.g. NFA" />
@@ -43,7 +47,8 @@
                 <MudTextField @bind-Value="_form.Address"
                               Label="Address"
                               Variant="Variant.Outlined"
-                              Lines="3"
+                              Margin="Margin.Dense"
+                              Lines="2"
                               CharacterCounter="true"
                               MaxLength="400"
                               Placeholder="e.g. NFA Complex, Visayas Avenue, Diliman, Quezon City" />
@@ -51,6 +56,8 @@
                 <MudTextField @bind-Value="_form.LogoUrl"
                               Label="Logo URL"
                               Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Dense="true"
                               CharacterCounter="true"
                               MaxLength="500"
                               Placeholder="https://..." />
@@ -58,6 +65,8 @@
                 <MudTextField @bind-Value="_form.AnnexECode"
                               Label="Office Code (Annex E)"
                               Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Dense="true"
                               CharacterCounter="true"
                               MaxLength="8"
                               Placeholder="e.g. 00B"
@@ -69,114 +78,146 @@
 
         <MudPaper Elevation="1" Class="pa-4 mt-3">
             <MudText Typo="Typo.h6" Class="mb-3">Key Officers</MudText>
-            <MudStack Spacing="3">
-                <MudAutocomplete T="EmployeeReferenceDto"
-                                 Value="_form.RegionalManager"
-                                 ValueChanged="OnRegionalManagerChanged"
-                                 Label="Approving Official — Name"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync"
-                                 ToStringFunc="EmployeeDisplayName"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 MinCharacters="1"
-                                 Clearable="true"
-                                 HelperText="Type to search employees" />
-                <MudField Label="Approving Official — Designation"
-                          Variant="Variant.Outlined"
-                          HelperText="Auto-filled from the selected employee's position">
-                    @(NullIfEmpty(_form.RegionalManagerDesignation) ?? "—")
-                </MudField>
+            <MudStack Spacing="2">
+                <MudGrid Spacing="2">
+                    <MudItem xs="8">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_form.RegionalManager"
+                                         ValueChanged="OnRegionalManagerChanged"
+                                         Label="Approving Official"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         SearchFunc="SearchEmployeesAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Clearable="true" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @(NullIfEmpty(_form.RegionalManagerDesignation) ?? "—")
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
 
-                <MudAutocomplete T="EmployeeReferenceDto"
-                                 Value="_form.AssistantRegionalManager"
-                                 ValueChanged="OnAssistantRegionalManagerChanged"
-                                 Label="Co-Approving Official — Name"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync"
-                                 ToStringFunc="EmployeeDisplayName"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 MinCharacters="1"
-                                 Clearable="true"
-                                 HelperText="Type to search employees" />
-                <MudField Label="Co-Approving Official — Designation"
-                          Variant="Variant.Outlined"
-                          HelperText="Auto-filled from the selected employee's position">
-                    @(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "—")
-                </MudField>
+                <MudGrid Spacing="2">
+                    <MudItem xs="8">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_form.AssistantRegionalManager"
+                                         ValueChanged="OnAssistantRegionalManagerChanged"
+                                         Label="Co-Approving Official"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         SearchFunc="SearchEmployeesAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Clearable="true" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "—")
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
 
-                <MudAutocomplete T="EmployeeReferenceDto"
-                                 Value="_form.Accountant"
-                                 ValueChanged="OnAccountantChanged"
-                                 Label="Accountant — Name"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync"
-                                 ToStringFunc="EmployeeDisplayName"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 MinCharacters="1"
-                                 Clearable="true"
-                                 HelperText="Type to search employees" />
-                <MudField Label="Accountant — Designation"
-                          Variant="Variant.Outlined"
-                          HelperText="Auto-filled from the selected employee's position">
-                    @(NullIfEmpty(_form.AccountantDesignation) ?? "—")
-                </MudField>
+                <MudGrid Spacing="2">
+                    <MudItem xs="8">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_form.Accountant"
+                                         ValueChanged="OnAccountantChanged"
+                                         Label="Accountant"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         SearchFunc="SearchEmployeesAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Clearable="true" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @(NullIfEmpty(_form.AccountantDesignation) ?? "—")
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
 
-                <MudAutocomplete T="EmployeeReferenceDto"
-                                 Value="_form.SupervisingAdminOfficer"
-                                 ValueChanged="OnSupervisingAdminOfficerChanged"
-                                 Label="Administrative Officer — Name"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync"
-                                 ToStringFunc="EmployeeDisplayName"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 MinCharacters="1"
-                                 Clearable="true"
-                                 HelperText="Type to search employees" />
-                <MudField Label="Administrative Officer — Designation"
-                          Variant="Variant.Outlined"
-                          HelperText="Auto-filled from the selected employee's position">
-                    @(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "—")
-                </MudField>
+                <MudGrid Spacing="2">
+                    <MudItem xs="8">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_form.SupervisingAdminOfficer"
+                                         ValueChanged="OnSupervisingAdminOfficerChanged"
+                                         Label="Administrative Officer"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         SearchFunc="SearchEmployeesAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Clearable="true" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "—")
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
 
-                <MudAutocomplete T="EmployeeReferenceDto"
-                                 Value="_form.BudgetOfficer"
-                                 ValueChanged="OnBudgetOfficerChanged"
-                                 Label="Budget Officer — Name"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync"
-                                 ToStringFunc="EmployeeDisplayName"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 MinCharacters="1"
-                                 Clearable="true"
-                                 HelperText="Type to search employees — certifies budget availability (BURS Box B)" />
-                <MudField Label="Budget Officer — Designation"
-                          Variant="Variant.Outlined"
-                          HelperText="Auto-filled from the selected employee's position">
-                    @(NullIfEmpty(_form.BudgetOfficerDesignation) ?? "—")
-                </MudField>
+                <MudGrid Spacing="2">
+                    <MudItem xs="8">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_form.BudgetOfficer"
+                                         ValueChanged="OnBudgetOfficerChanged"
+                                         Label="Budget Officer"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         SearchFunc="SearchEmployeesAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Clearable="true"
+                                         HelperText="Certifies budget availability (BURS Box B)" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @(NullIfEmpty(_form.BudgetOfficerDesignation) ?? "—")
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
 
-                <MudAutocomplete T="EmployeeReferenceDto"
-                                 Value="_form.PropertyCustodian"
-                                 ValueChanged="OnPropertyCustodianChanged"
-                                 Label="Property Custodian — Name"
-                                 Variant="Variant.Outlined"
-                                 SearchFunc="SearchEmployeesAsync"
-                                 ToStringFunc="EmployeeDisplayName"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 MinCharacters="1"
-                                 Clearable="true"
-                                 HelperText="Type to search employees — signs as receiving Property/Supply Custodian (ICS/PAR)" />
-                <MudField Label="Property Custodian — Designation"
-                          Variant="Variant.Outlined"
-                          HelperText="Auto-filled from the selected employee's position">
-                    @(NullIfEmpty(_form.PropertyCustodianDesignation) ?? "—")
-                </MudField>
+                <MudGrid Spacing="2">
+                    <MudItem xs="8">
+                        <MudAutocomplete T="EmployeeReferenceDto"
+                                         Value="_form.PropertyCustodian"
+                                         ValueChanged="OnPropertyCustodianChanged"
+                                         Label="Property Custodian"
+                                         Variant="Variant.Outlined"
+                                         Dense="true"
+                                         Margin="Margin.Dense"
+                                         SearchFunc="SearchEmployeesAsync"
+                                         ToStringFunc="EmployeeDisplayName"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         MinCharacters="1"
+                                         Clearable="true"
+                                         HelperText="Signs as receiving Property/Supply Custodian (ICS/PAR)" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
+                            @(NullIfEmpty(_form.PropertyCustodianDesignation) ?? "—")
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
             </MudStack>
         </MudPaper>
 
@@ -215,60 +256,6 @@
                         <MudText Typo="Typo.body2">@_form.Address</MudText>
                     }
                 </MudStack>
-
-                @if (_form.RegionalManager is not null || _form.AssistantRegionalManager is not null ||
-                     _form.Accountant is not null || _form.SupervisingAdminOfficer is not null ||
-                     _form.BudgetOfficer is not null || _form.PropertyCustodian is not null)
-                {
-                    <MudDivider Class="my-3" />
-                    <MudText Typo="Typo.subtitle2" Class="mb-2">Key Officers</MudText>
-                    <MudSimpleTable Dense="true">
-                        <tbody>
-                            @if (_form.RegionalManager is not null)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.RegionalManagerDesignation) ?? "Approving Official")</MudText></td>
-                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.RegionalManager.FirstName} {_form.RegionalManager.LastName}")</b></MudText></td>
-                                </tr>
-                            }
-                            @if (_form.AssistantRegionalManager is not null)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "Co-Approving Official")</MudText></td>
-                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.AssistantRegionalManager.FirstName} {_form.AssistantRegionalManager.LastName}")</b></MudText></td>
-                                </tr>
-                            }
-                            @if (_form.Accountant is not null)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.AccountantDesignation) ?? "Accountant")</MudText></td>
-                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.Accountant.FirstName} {_form.Accountant.LastName}")</b></MudText></td>
-                                </tr>
-                            }
-                            @if (_form.SupervisingAdminOfficer is not null)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "Administrative Officer")</MudText></td>
-                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.SupervisingAdminOfficer.FirstName} {_form.SupervisingAdminOfficer.LastName}")</b></MudText></td>
-                                </tr>
-                            }
-                            @if (_form.BudgetOfficer is not null)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.BudgetOfficerDesignation) ?? "Budget Officer")</MudText></td>
-                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.BudgetOfficer.FirstName} {_form.BudgetOfficer.LastName}")</b></MudText></td>
-                                </tr>
-                            }
-                            @if (_form.PropertyCustodian is not null)
-                            {
-                                <tr>
-                                    <td><MudText Typo="Typo.caption" Color="Color.Secondary">@(NullIfEmpty(_form.PropertyCustodianDesignation) ?? "Property Custodian")</MudText></td>
-                                    <td><MudText Typo="Typo.body2"><b>@($"{_form.PropertyCustodian.FirstName} {_form.PropertyCustodian.LastName}")</b></MudText></td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-                }
             </MudPaper>
         </MudItem>
     }

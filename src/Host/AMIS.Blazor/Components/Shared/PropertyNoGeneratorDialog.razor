@@ -2,7 +2,7 @@
 @using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
 @inject IOrganizationProfileClient OrgProfileClient
 @inject IPropertyClassClient PropertyClassClient
-@inject ITangibleItemClient TangibleItemClient
+@inject IAssetRegistryClient AssetRegistryClient
 
 <MudDialog>
     <TitleContent>
@@ -272,7 +272,7 @@
         _loadingSeq = true;
         try
         {
-            _seq = await TangibleItemClient.GetNextSequenceAsync(_year, _officeCode, classCode, itemCode);
+            _seq = await AssetRegistryClient.GetNextPropertyNoSequenceAsync(_year, _officeCode, classCode);
         }
         catch { /* leave current seq */ }
         finally { _loadingSeq = false; }

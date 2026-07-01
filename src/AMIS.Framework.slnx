@@ -45,10 +45,6 @@
     <Project Path="Modules/BudgetDisbursement/Modules.BudgetDisbursement.Contracts/Modules.BudgetDisbursement.Contracts.csproj" />
     <Project Path="Modules/BudgetDisbursement/Modules.BudgetDisbursement/Modules.BudgetDisbursement.csproj" />
   </Folder>
-  <Folder Name="/Modules/AssetManagement/">
-    <Project Path="Modules/AssetManagement/Modules.AssetManagement.Contracts/Modules.AssetManagement.Contracts.csproj" />
-    <Project Path="Modules/AssetManagement/Modules.AssetManagement/Modules.AssetManagement.csproj" />
-  </Folder>
   <Folder Name="/Modules/AssetRegister/">
     <Project Path="Modules/AssetRegister/Modules.AssetRegister.Contracts/Modules.AssetRegister.Contracts.csproj" />
     <Project Path="Modules/AssetRegister/Modules.AssetRegister/Modules.AssetRegister.csproj" />
@@ -88,7 +84,6 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Architecture.Tests/Architecture.Tests.csproj" />
-    <Project Path="Tests/AssetManagement.Tests/AssetManagement.Tests.csproj" />
     <Project Path="Tests/AssetRegister.Tests/AssetRegister.Tests.csproj" />
     <Project Path="Tests/Auditing.Tests/Auditing.Tests.csproj" />
     <Project Path="Tests/Expendable.Tests/Expendable.Tests.csproj" />

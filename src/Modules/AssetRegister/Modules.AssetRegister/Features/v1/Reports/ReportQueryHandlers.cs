@@ -1,6 +1,7 @@
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -227,6 +228,198 @@ public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db)
             rows,
             rows.Count,
             rows.Sum(r => r.Amount));
+    }
+}
+
+public sealed class GetRspiReportQueryHandler(AssetRegisterDbContext db, IMediator mediator)
+    : IQueryHandler<GetRspiReportQuery, RspiReportDto>
+{
+    public async ValueTask<RspiReportDto> Handle(GetRspiReportQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
+        var pageSize   = query.PageSize   <= 0 ? 20 : query.PageSize;
+
+        // SE property issued via ICS. Active (or, when ActiveOnly is false, Active + Renewed); returned
+        // lines are dropped. NOTE: including Renewed alongside its Active successor can double-count the
+        // carried-over assets — revisit if renewal volume grows.
+        var baseQuery =
+            from a in db.PropertyAccountabilities.AsNoTracking()
+            where a.AccountabilityType == AccountabilityType.SE_ICS
+            where query.ActiveOnly
+                ? a.Status == AccountabilityStatus.Active
+                : a.Status == AccountabilityStatus.Active || a.Status == AccountabilityStatus.Renewed
+            from l in a.Lines
+            where l.LineStatus == AccountabilityLineStatus.Active
+            select new { a, l };
+
+        if (query.DateFrom.HasValue)
+            baseQuery = baseQuery.Where(x => x.a.IssuedOn >= query.DateFrom.Value);
+        if (query.DateTo.HasValue)
+            baseQuery = baseQuery.Where(x => x.a.IssuedOn <= query.DateTo.Value);
+        if (query.AssetType.HasValue)
+            baseQuery = baseQuery.Where(x => x.l.Snapshot.AssetType == query.AssetType.Value);
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+        // Cast to decimal? so an empty result set yields SQL NULL → 0 instead of throwing on SUM over no rows.
+        var overallAmountTotal = (await baseQuery
+            .Select(x => (decimal?)(x.l.Snapshot.UnitCost * x.l.IssuedQty))
+            .SumAsync(cancellationToken)
+            .ConfigureAwait(false)) ?? 0m;
+
+        var pageRows = await baseQuery
+            .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo)
+            .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+            .Select(x => new
+            {
+                x.a.Id,
+                x.a.DocumentNo,
+                x.a.IssuedOn,
+                x.a.Status,
+                x.a.FundCluster,
+                x.a.ExpiresOn,
+                ReceivedById          = x.a.ReceivedBy.EmployeeId,
+                ReceivedByName        = x.a.ReceivedBy.PrintedName,
+                ReceivedByDesignation = x.a.ReceivedBy.Designation,
+                IssuedById            = x.a.IssuedBy.EmployeeId,
+                IssuedByName          = x.a.IssuedBy.PrintedName,
+                IssuedByDesignation   = x.a.IssuedBy.Designation,
+                x.l.AssetRegistryId,
+                x.l.Snapshot.PropertyNo,
+                x.l.Snapshot.Description,
+                x.l.Snapshot.AssetType,
+                x.l.Snapshot.Unit,
+                x.l.Snapshot.UnitCost,
+                x.l.IssuedQty
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var offices = await ResolveOfficesAsync(
+            pageRows.Select(r => r.ReceivedById).Concat(pageRows.Select(r => r.IssuedById)),
+            mediator, cancellationToken).ConfigureAwait(false);
+
+        var items = pageRows
+            .Select(r => new RspiRowDto(
+                r.Id, r.DocumentNo, r.IssuedOn, r.Status, r.FundCluster, r.ExpiresOn,
+                r.ReceivedById, r.ReceivedByName, r.ReceivedByDesignation, offices.GetValueOrDefault(r.ReceivedById),
+                r.IssuedById, r.IssuedByName, r.IssuedByDesignation, offices.GetValueOrDefault(r.IssuedById),
+                r.AssetRegistryId, r.PropertyNo, r.Description, r.AssetType, r.Unit, r.UnitCost,
+                r.IssuedQty, r.UnitCost * r.IssuedQty))
+            .ToList();
+
+        return new RspiReportDto(
+            query.DateFrom, query.DateTo, query.AssetType, query.ActiveOnly,
+            items, pageNumber, pageSize, totalCount, overallAmountTotal);
+    }
+
+    // Office/department is not carried on the frozen AssetSnapshot/EmployeeRef, so it is resolved from
+    // MasterData at query time. Printed names/designations stay sourced from the snapshot so historical
+    // reports survive employee renames.
+    private static async ValueTask<IReadOnlyDictionary<Guid, string?>> ResolveOfficesAsync(
+        IEnumerable<Guid> employeeIds, IMediator mediator, CancellationToken cancellationToken)
+    {
+        var ids = employeeIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return new Dictionary<Guid, string?>();
+
+        var map = await mediator
+            .Send(new GetEmployeeReferencesByIdsQuery(ids), cancellationToken)
+            .ConfigureAwait(false);
+
+        return map.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value.OfficeName);
+    }
+}
+
+public sealed class GetRpiReportQueryHandler(AssetRegisterDbContext db, IMediator mediator)
+    : IQueryHandler<GetRpiReportQuery, RpiReportDto>
+{
+    public async ValueTask<RpiReportDto> Handle(GetRpiReportQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        var pageNumber = query.PageNumber <= 0 ? 1 : query.PageNumber;
+        var pageSize   = query.PageSize   <= 0 ? 20 : query.PageSize;
+
+        // PPE issued via PAR. Active + Renewed; returned lines dropped. (See RSPI handler note on renewal.)
+        var baseQuery =
+            from a in db.PropertyAccountabilities.AsNoTracking()
+            where a.AccountabilityType == AccountabilityType.PPE_PAR
+            where a.Status == AccountabilityStatus.Active || a.Status == AccountabilityStatus.Renewed
+            from l in a.Lines
+            where l.LineStatus == AccountabilityLineStatus.Active
+            select new { a, l };
+
+        if (query.DateFrom.HasValue)
+            baseQuery = baseQuery.Where(x => x.a.IssuedOn >= query.DateFrom.Value);
+        if (query.DateTo.HasValue)
+            baseQuery = baseQuery.Where(x => x.a.IssuedOn <= query.DateTo.Value);
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+        var overallAmountTotal = (await baseQuery
+            .Select(x => (decimal?)(x.l.Snapshot.UnitCost * x.l.IssuedQty))
+            .SumAsync(cancellationToken)
+            .ConfigureAwait(false)) ?? 0m;
+
+        var pageRows = await baseQuery
+            .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo)
+            .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+            .Select(x => new
+            {
+                x.a.Id,
+                x.a.DocumentNo,
+                x.a.IssuedOn,
+                x.a.Status,
+                x.a.FundCluster,
+                x.a.ExpiresOn,
+                ReceivedById          = x.a.ReceivedBy.EmployeeId,
+                ReceivedByName        = x.a.ReceivedBy.PrintedName,
+                ReceivedByDesignation = x.a.ReceivedBy.Designation,
+                IssuedById            = x.a.IssuedBy.EmployeeId,
+                IssuedByName          = x.a.IssuedBy.PrintedName,
+                IssuedByDesignation   = x.a.IssuedBy.Designation,
+                x.l.AssetRegistryId,
+                x.l.Snapshot.PropertyNo,
+                x.l.Snapshot.Description,
+                x.l.Snapshot.Unit,
+                x.l.Snapshot.UnitCost,
+                x.l.IssuedQty,
+                x.l.Snapshot.EstimatedUsefulLifeYears,
+                x.l.Snapshot.AcquisitionDate
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var offices = await ResolveOfficesAsync(
+            pageRows.Select(r => r.ReceivedById).Concat(pageRows.Select(r => r.IssuedById)),
+            mediator, cancellationToken).ConfigureAwait(false);
+
+        var items = pageRows
+            .Select(r => new RpiRowDto(
+                r.Id, r.DocumentNo, r.IssuedOn, r.Status, r.FundCluster, r.ExpiresOn,
+                r.ReceivedById, r.ReceivedByName, r.ReceivedByDesignation, offices.GetValueOrDefault(r.ReceivedById),
+                r.IssuedById, r.IssuedByName, r.IssuedByDesignation, offices.GetValueOrDefault(r.IssuedById),
+                r.AssetRegistryId, r.PropertyNo, r.Description, r.Unit, r.IssuedQty, r.UnitCost,
+                r.UnitCost * r.IssuedQty, r.EstimatedUsefulLifeYears, r.AcquisitionDate))
+            .ToList();
+
+        return new RpiReportDto(
+            query.DateFrom, query.DateTo, items, pageNumber, pageSize, totalCount, overallAmountTotal);
+    }
+
+    private static async ValueTask<IReadOnlyDictionary<Guid, string?>> ResolveOfficesAsync(
+        IEnumerable<Guid> employeeIds, IMediator mediator, CancellationToken cancellationToken)
+    {
+        var ids = employeeIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return new Dictionary<Guid, string?>();
+
+        var map = await mediator
+            .Send(new GetEmployeeReferencesByIdsQuery(ids), cancellationToken)
+            .ConfigureAwait(false);
+
+        return map.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value.OfficeName);
     }
 }
 

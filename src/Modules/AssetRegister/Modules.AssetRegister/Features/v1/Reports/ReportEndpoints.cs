@@ -40,6 +40,18 @@ public static class ReportEndpoints
             .Produces<RegSpiReportDto>()
             .RequirePermission(AssetRegisterPermissions.Accountability.View);
 
+        endpoints.MapGet("/rspi", HandleRspiReport)
+            .WithModuleName<GetRspiReportQuery>()
+            .WithSummary("Generate RSPI (Report of Semi-Expendable Property Issued) — from ICS accountabilities")
+            .Produces<RspiReportDto>()
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
+
+        endpoints.MapGet("/rpi", HandleRpiReport)
+            .WithModuleName<GetRpiReportQuery>()
+            .WithSummary("Generate RPI (Report on Property Issued) — PPE from PAR accountabilities")
+            .Produces<RpiReportDto>()
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
+
         endpoints.MapGet("/incidents/{id:guid}", HandleIncidentReport)
             .WithModuleName<GetIncidentReportDocumentQuery>()
             .WithSummary("Generate incident document view (RLSDDSP)")
@@ -87,6 +99,36 @@ public static class ReportEndpoints
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetRegSpiReportQuery(asOfDate, assetType, custodianId), cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> HandleRspiReport(
+        IMediator mediator,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        AssetType? assetType,
+        bool? activeOnly,
+        int? pageNumber,
+        int? pageSize,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetRspiReportQuery(dateFrom, dateTo, assetType, activeOnly ?? true, pageNumber ?? 1, pageSize ?? 20),
+            cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> HandleRpiReport(
+        IMediator mediator,
+        DateOnly? dateFrom,
+        DateOnly? dateTo,
+        int? pageNumber,
+        int? pageSize,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetRpiReportQuery(dateFrom, dateTo, pageNumber ?? 1, pageSize ?? 20),
+            cancellationToken);
         return TypedResults.Ok(result);
     }
 

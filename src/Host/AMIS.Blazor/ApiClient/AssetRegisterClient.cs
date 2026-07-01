@@ -154,7 +154,10 @@ internal interface IAssetRegistryClient
     Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default);
     Task<AssetRegistryDto> UpdateConditionAsync(Guid id, ArContracts.AssetCondition condition, CancellationToken ct = default);
     Task<AssetRegistryDto> UpdateDepreciationAsync(Guid id, decimal residualValue, int estimatedUsefulLifeYears, DepreciationMethod method, CancellationToken ct = default);
+    Task<int> GetNextPropertyNoSequenceAsync(int year, string officeCode, string classCode, CancellationToken ct = default);
 }
+
+internal sealed record NextPropertyNoSequenceResponse(int NextSequence);
 
 internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClient
 {
@@ -207,6 +210,18 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/depreciation", body, ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<int> GetNextPropertyNoSequenceAsync(int year, string officeCode, string classCode, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/next-property-no-sequence", new()
+        {
+            ["year"] = year.ToString(CultureInfo.InvariantCulture),
+            ["officeCode"] = officeCode,
+            ["classCode"] = classCode,
+        });
+        var result = await http.GetFromJsonAsync<NextPropertyNoSequenceResponse>(url, ArJsonOptions.Default, ct);
+        return result?.NextSequence ?? 1;
     }
 }
 

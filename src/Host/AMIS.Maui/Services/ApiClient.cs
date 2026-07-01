@@ -129,11 +129,11 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         return result?.Items?.Select(c => new CatalogItemDto(c.Id, c.Code, c.Description, c.DefaultUnit)).ToList() ?? [];
     }
 
-    // Locations master data — still served by the AssetManagement module (reference) during migration.
+    // Locations master data — served by the AssetRegister module.
     public async Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default)
     {
         var result = await httpClient.GetFromJsonAsync<ArPaged<LocationDto>>(
-            "api/v1/asset-management/locations?pageNumber=1&pageSize=200", ct);
+            "api/v1/asset-register/locations?pageNumber=1&pageSize=200", ct);
         return result?.Items ?? [];
     }
 

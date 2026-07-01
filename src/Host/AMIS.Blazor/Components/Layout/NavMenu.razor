@@ -165,6 +165,7 @@
                     Repairs (RPRI)
                 </MudNavLink>
             }
+
         </MudNavGroup>
 
         <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">
@@ -373,10 +374,7 @@
     private bool _procurementPlanningExpanded;
     private bool _procurementExpanded;
     private bool _financeExpanded;
-    private bool _assetManagementExpanded;
     private bool _assetRegisterExpanded;
-    private bool _seExpanded;
-    private bool _ppeExpanded;
 
     protected override async Task OnInitializedAsync()
     {
@@ -393,20 +391,7 @@
         _financeExpanded = uri.Contains("/finance", StringComparison.OrdinalIgnoreCase);
         _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
                            || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);
-        _assetManagementExpanded = uri.Contains("/asset-management", StringComparison.OrdinalIgnoreCase);
         _assetRegisterExpanded = uri.Contains("/asset-register", StringComparison.OrdinalIgnoreCase);
-        _seExpanded = uri.Contains("/asset-management/receiving-reports", StringComparison.OrdinalIgnoreCase)
-                   || uri.Contains("/asset-management/inventory-custodian-slips", StringComparison.OrdinalIgnoreCase)
-                   || uri.Contains("/asset-management/issuance-records", StringComparison.OrdinalIgnoreCase)
-                   || uri.Contains("/asset-management/returned-properties", StringComparison.OrdinalIgnoreCase)
-                   || uri.Contains("/asset-management/incident-reports", StringComparison.OrdinalIgnoreCase)
-                   || uri.Contains("/asset-management/unserviceable-reports", StringComparison.OrdinalIgnoreCase)
-                   || uri.Contains("/asset-management/reports", StringComparison.OrdinalIgnoreCase);
-        _ppeExpanded = uri.Contains("/asset-management/ppe-receiving-reports", StringComparison.OrdinalIgnoreCase)
-                    || uri.Contains("/asset-management/property-acknowledgement-receipts", StringComparison.OrdinalIgnoreCase)
-                    || uri.Contains("/asset-management/ppe-issuance-reports", StringComparison.OrdinalIgnoreCase)
-                    || uri.Contains("/asset-management/ppe-transfer-reports", StringComparison.OrdinalIgnoreCase)
-                    || uri.Contains("/asset-management/receipts-for-returned-ppe", StringComparison.OrdinalIgnoreCase);
         await CheckRootTenantAdmin();
     }
 

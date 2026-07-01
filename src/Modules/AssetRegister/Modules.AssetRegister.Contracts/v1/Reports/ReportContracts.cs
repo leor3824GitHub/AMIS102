@@ -197,3 +197,106 @@ public sealed record GetRegSpiReportQuery(
 public sealed record GetIncidentReportDocumentQuery(Guid IncidentReportId) : IQuery<IncidentReportDocumentDto?>;
 
 public sealed record GetUnserviceableReportDocumentQuery(Guid ReportId) : IQuery<UnserviceableReportDocumentDto?>;
+
+// ── RSPI (Report of Semi-Expendable Property Issued — sourced from SE ICS accountabilities) ──────
+//
+// COA periodic listing of semi-expendable property issued to accountable officers via ICS.
+// Sourced from PropertyAccountability where AccountabilityType == SE_ICS. Line/item detail and
+// employee printed names come from the frozen snapshots on each line; office/department are resolved
+// from MasterData at query time (not carried on the snapshot).
+
+public sealed record RspiRowDto(
+    Guid AccountabilityId,
+    string DocumentNo,
+    DateOnly IssuedOn,
+    AccountabilityStatus Status,
+    string FundCluster,
+    DateOnly? ExpiresOn,
+    Guid ReceivedByEmployeeId,
+    string ReceivedByName,
+    string? ReceivedByDesignation,
+    string? ReceivedByOfficeName,
+    Guid IssuedByEmployeeId,
+    string IssuedByName,
+    string? IssuedByDesignation,
+    string? IssuedByOfficeName,
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string Description,
+    AssetType AssetType,
+    string Unit,
+    decimal UnitCost,
+    int Quantity,
+    decimal Amount);
+
+public sealed record RspiReportDto(
+    DateOnly? DateFrom,
+    DateOnly? DateTo,
+    AssetType? AssetType,
+    bool ActiveOnly,
+    IReadOnlyList<RspiRowDto> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount,
+    decimal OverallAmountTotal);
+
+/// <summary>
+/// Report of Semi-Expendable Property Issued (RSPI). Lists SE assets currently issued via ICS
+/// accountabilities. <paramref name="ActiveOnly"/> (default) keeps only Active accountabilities;
+/// when false it also includes Renewed. Returned/Cancelled/PendingAcceptance are always excluded.
+/// </summary>
+public sealed record GetRspiReportQuery(
+    DateOnly? DateFrom = null,
+    DateOnly? DateTo = null,
+    AssetType? AssetType = null,
+    bool ActiveOnly = true,
+    int PageNumber = 1,
+    int PageSize = 20) : IQuery<RspiReportDto>;
+
+// ── RPI (Report on Property Issued — PPE, sourced from PAR accountabilities) ─────────────────────
+//
+// PPE counterpart of the RSPI. Sourced from PropertyAccountability where AccountabilityType == PPE_PAR.
+
+public sealed record RpiRowDto(
+    Guid AccountabilityId,
+    string DocumentNo,
+    DateOnly IssuedOn,
+    AccountabilityStatus Status,
+    string FundCluster,
+    DateOnly? ExpiresOn,
+    Guid ReceivedByEmployeeId,
+    string ReceivedByName,
+    string? ReceivedByDesignation,
+    string? ReceivedByOfficeName,
+    Guid IssuedByEmployeeId,
+    string IssuedByName,
+    string? IssuedByDesignation,
+    string? IssuedByOfficeName,
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string Description,
+    string Unit,
+    int Quantity,
+    decimal UnitCost,
+    decimal Amount,
+    int EstimatedUsefulLifeYears,
+    DateOnly DateAcquired);
+
+public sealed record RpiReportDto(
+    DateOnly? DateFrom,
+    DateOnly? DateTo,
+    IReadOnlyList<RpiRowDto> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount,
+    decimal OverallAmountTotal);
+
+/// <summary>
+/// Report on Property Issued (RPI). Lists PPE assets currently issued via PAR accountabilities
+/// (Active + Renewed; Returned/Cancelled/PendingAcceptance excluded).
+/// </summary>
+public sealed record GetRpiReportQuery(
+    DateOnly? DateFrom = null,
+    DateOnly? DateTo = null,
+    int PageNumber = 1,
+    int PageSize = 20) : IQuery<RpiReportDto>;

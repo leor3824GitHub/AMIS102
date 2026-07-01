@@ -23,7 +23,6 @@
 		<ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
 		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
 		<ProjectReference Include="..\..\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
-		<ProjectReference Include="..\..\AssetManagement\Modules.AssetManagement.Contracts\Modules.AssetManagement.Contracts.csproj" />
 		<ProjectReference Include="..\..\Expendable\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
 		<ProjectReference Include="..\..\Vehicle\Modules.Vehicle.Contracts\Modules.Vehicle.Contracts.csproj" />
 	</ItemGroup>
