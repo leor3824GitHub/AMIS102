@@ -166,6 +166,27 @@
                 </MudNavLink>
             }
 
+            <MudNavGroup Title="Reports" Icon="@Icons.Material.Outlined.Assessment">
+                @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View))
+                {
+                    <MudNavLink Href="/asset-register/reports/rspi" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.Assessment">
+                        RSPI (SE Issued)
+                    </MudNavLink>
+                    <MudNavLink Href="/asset-register/reports/rpi" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.Assessment">
+                        RPI (PPE Issued)
+                    </MudNavLink>
+                }
+                @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View))
+                {
+                    <MudNavLink Href="/asset-register/reports/ptr" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.SwapHoriz">
+                        PTR (Property Transfer)
+                    </MudNavLink>
+                }
+            </MudNavGroup>
+
         </MudNavGroup>
 
         <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">

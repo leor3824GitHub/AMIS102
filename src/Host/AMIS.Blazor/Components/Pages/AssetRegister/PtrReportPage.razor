@@ -1,0 +1,160 @@
+@page "/asset-register/reports/ptr"
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services.AssetRegister
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
+@inject IArIssuanceReportClient IssuanceClient
+@inject IAssetRegisterReportsClient ReportsClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Property Transfer Report (PTR)"
+               Description="Generate the PTR for a PPE Issuance Report (PPEIR). Pick the PPEIR to print its transfer form." />
+
+@if (!_canView)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">You don't have permission to view this report.</MudAlert>
+}
+else
+{
+    <MudCard Elevation="1" Class="mb-4">
+        <MudCardContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudTextField @bind-Value="_keyword" Label="PPEIR No. / Keyword" Variant="Variant.Outlined"
+                              Dense="true" Margin="Margin.Dense"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                              OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                            StartIcon="@Icons.Material.Outlined.Search" OnClick="SearchAsync" Disabled="_busy">
+                    Search
+                </AMISButton>
+            </MudStack>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Elevation="1">
+        <MudCardContent>
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+            }
+            else if (_items.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">No PPEIR found.</MudAlert>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                    <thead>
+                        <tr>
+                            <th>PPEIR No.</th>
+                            <th>Date</th>
+                            <th>Nature</th>
+                            <th>Lines</th>
+                            <th class="text-right">Total Amount (@Money.Symbol)</th>
+                            <th class="text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in _items)
+                        {
+                            <tr>
+                                <td><b>@r.ReportNo</b></td>
+                                <td>@r.Date.ToString("MM/dd/yyyy")</td>
+                                <td>@r.Nature</td>
+                                <td><MudChip T="string" Size="Size.Small" Color="Color.Secondary">@r.LineCount lines</MudChip></td>
+                                <td class="text-right">@r.TotalAmount.ToString("N2")</td>
+                                <td>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Justify="Justify.FlexEnd">
+                                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                                                    StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                                    OnClick="@(() => PrintPtrAsync(r.Id))">
+                                            Print PTR
+                                        </AMISButton>
+                                    </MudStack>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
+                    <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
+                    <MudStack Row="true" Spacing="1">
+                        <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
+                                        Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
+                        <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
+                                        Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
+                    </MudStack>
+                </MudStack>
+            }
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private string? _keyword;
+    private int _page = 1;
+    private int _totalPages = 1;
+    private int _totalCount;
+    private const int PageSize = 20;
+    private List<ArIssuanceReportSummaryDto> _items = [];
+
+    private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_canView) await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await IssuanceClient.SearchAsync(_keyword, IssuanceReportType.PPEIR, null, page: _page, pageSize: PageSize);
+            _items = result.Items.ToList();
+            _totalCount = result.TotalCount;
+            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task PrintPtrAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await ReportsClient.GetPtrPdfAsync(id);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PTR ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PTR generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _page = 1; await SearchAsync(); }
+    }
+
+    private async Task PrevPage() { _page--; await SearchAsync(); }
+    private async Task NextPage() { _page++; await SearchAsync(); }
+}

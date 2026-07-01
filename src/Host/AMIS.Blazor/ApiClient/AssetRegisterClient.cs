@@ -3,12 +3,6 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-// AssetRegister contract enums. Cannot use `using namespace` alone because
-// AssetManagementClient.cs declares enums of the same name (AssetType,
-// AssetCategory, DisposalMethod, PropertyIncidentType, ReceiptType) in the
-// same ApiClient namespace; same-namespace types shadow `using` aliases per
-// C# name-resolution rules. Each conflicting type is fully-qualified at the
-// point of use below. Non-conflicting types come in via the namespace import.
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using AMIS.Modules.AssetRegister.Contracts.v1.Depreciation;

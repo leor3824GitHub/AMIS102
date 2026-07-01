@@ -43,7 +43,6 @@ public sealed class RdlcReportingModule : IModule
 
         // One line per area. Add the new area's extension method and the rest stays untouched.
         moduleGroup.MapProcurementRdlcReports();
-        // moduleGroup.MapAssetManagementRdlcReports();
         // moduleGroup.MapExpendableRdlcReports();
         // moduleGroup.MapVehicleRdlcReports();
         // moduleGroup.MapFinanceRdlcReports();

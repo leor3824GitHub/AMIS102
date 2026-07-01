@@ -160,8 +160,7 @@ public sealed record AddFoundAtStationResult(
     Guid EntryId,
     string PropertyNumber);
 
-// Location reference for the "counting at" picker (shared master data; currently served by the
-// AssetManagement locations endpoint, which remains available as reference during migration).
+// Location reference for the "counting at" picker (shared master data).
 public sealed record LocationDto(Guid Id, string Code, string Name);
 
 // ─────────────────────────────────────────────────────────────────────────────

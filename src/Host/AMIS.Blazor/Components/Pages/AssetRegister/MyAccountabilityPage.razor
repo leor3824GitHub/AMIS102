@@ -3,11 +3,6 @@
 @using AMIS.Modules.AssetRegister.Contracts.v1
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
-@* AssetType / LifecycleState / AssetCondition also exist in the globally-imported AMIS.Blazor.ApiClient
-   namespace (AssetManagementClient), so alias the AssetRegister contract versions to disambiguate. *@
-@using AssetType = AMIS.Modules.AssetRegister.Contracts.v1.AssetType
-@using LifecycleState = AMIS.Modules.AssetRegister.Contracts.v1.LifecycleState
-@using AssetCondition = AMIS.Modules.AssetRegister.Contracts.v1.AssetCondition
 @inject IArAccountabilityClient Client
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState

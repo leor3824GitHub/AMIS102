@@ -19,14 +19,18 @@ src/
 │   ├── Identity/           # Auth, users, roles, permissions
 │   ├── Multitenancy/       # Tenant management (Finbuckle)
 │   ├── Auditing/           # Audit logging
-│   ├── MasterData/         # Reference data (units, categories, etc.)
-│   ├── Expendable/         # Expendable supplies management
-│   ├── AssetManagement/    # Fixed asset tracking
-│   ├── AssetProcurement/   # Asset procurement workflow
-│   ├── Vehicle/            # Fleet/vehicle management
-│   ├── Finance/            # Disbursement vouchers, budget utilization
-│   ├── ProcurementPlanning/    # Annual procurement planning
-│   └── ProcurementAcquisition/ # Purchase requests, orders, canvass
+│   ├── MasterData/             # Reference data (offices, employees, suppliers, categories)
+│   ├── Expendable/             # Expendable supplies (products, requests, warehouse)
+│   ├── AssetRegister/          # Fixed asset tracking - SE + PPE unified, depreciation
+│   ├── Vehicle/                # Fleet management (fuel, odometer, maintenance)
+│   ├── BudgetDisbursement/     # Disbursement vouchers + budget utilization requests
+│   ├── ProcurementPlanning/    # Annual procurement planning (PPMP, APP)
+│   ├── ProcurementAcquisition/ # Purchase requests, canvass, POs, job orders
+│   ├── Notifications/          # In-app notifications
+│   ├── Chat/                   # Messaging / chat
+│   ├── FastReporting/          # FastReport PDF reports
+│   ├── QuestPdfReporting/      # QuestPDF PDF reports
+│   └── RdlcReporting/          # RDLC PDF reports
 ├── Host/               # Executable hosts and reference clients
 │   ├── AMIS.AppHost/  # .NET Aspire orchestration
 │   ├── AMIS.Api/          # API host
@@ -168,7 +172,7 @@ public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
 - **CQRS:** Mediator library (commands/queries)
 - **DDD:** Rich domain models, aggregates, value objects
 - **Multi-Tenancy:** Finbuckle.MultiTenant (shared DB, tenant isolation)
-- **Modules:** 3 core (Identity, Multitenancy, Auditing) + 8 business modules (MasterData, Expendable, AssetManagement, AssetProcurement, Vehicle, Finance, ProcurementPlanning, ProcurementAcquisition)
+- **Modules:** 3 core (Identity, Multitenancy, Auditing) + 12 business modules (MasterData, Expendable, AssetRegister, Vehicle, BudgetDisbursement, ProcurementPlanning, ProcurementAcquisition, Notifications, Chat, FastReporting, QuestPdfReporting, RdlcReporting)
 - **BuildingBlocks:** 11 packages (Core, Persistence, Caching, Jobs, Web, etc.)
 - **MAUI Client:** `AMIS.Maui` — Android · iOS · Windows; CommunityToolkit.Mvvm, ZXing.Net.MAUI, sqlite-net-pcl
 

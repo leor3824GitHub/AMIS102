@@ -2,11 +2,13 @@
 @implements IDisposable
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Pages.Procurement
+@using AMIS.Blazor.Services.AssetRegister
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
 @using IssuanceNature = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceNature
 @inject IArIssuanceReportClient Client
+@inject IAssetRegisterReportsClient ReportsClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
@@ -102,6 +104,11 @@
                                                 <MudMenuItem Icon="@Icons.Material.Filled.Layers"
                                                              OnClick="@(() => PrintDataOnlyAsync(r.Id))">
                                                     Print – data only (pre-printed form)…
+                                                </MudMenuItem>
+                                                <MudDivider />
+                                                <MudMenuItem Icon="@Icons.Material.Filled.SwapHoriz"
+                                                             OnClick="@(() => DownloadPtrPdfAsync(r.Id))">
+                                                    Property Transfer Report (PTR)
                                                 </MudMenuItem>
                                                 <MudDivider />
                                                 <MudMenuItem Icon="@Icons.Material.Filled.Settings"
@@ -373,6 +380,21 @@
         catch (Exception ex)
         {
             Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadPtrPdfAsync(Guid id)
+    {
+        try
+        {
+            var bytes = await ReportsClient.GetPtrPdfAsync(id);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PTR ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PTR generation failed: {ex.Message}", Severity.Error);
         }
     }
 

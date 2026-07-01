@@ -13,7 +13,7 @@ public static class AcceptInspectionAcceptanceReportEndpoint
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
         endpoints.MapPost("/{id:guid}/accept", Handle)
             .WithName($"Procurement.{nameof(AcceptInspectionAcceptanceReportCommand)}")
-            .WithSummary("Accept an asset IAR â€” triggers TangibleItem creation in AssetManagement")
+            .WithSummary("Accept an asset IAR - triggers asset creation in AssetRegister")
             .Produces<InspectionAcceptanceReportDto>()
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(ProcurementPermissions.InspectionAcceptanceReports.Accept);

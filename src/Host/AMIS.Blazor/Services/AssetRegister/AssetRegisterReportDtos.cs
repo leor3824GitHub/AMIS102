@@ -182,3 +182,74 @@ public sealed record UnserviceableReportDocumentDto(
     string AccountableOfficerDesignation,
     IReadOnlyCollection<UnserviceableReportItemDocumentDto> Items,
     decimal TotalCarryingAmount);
+
+// ── RSPI (Report of Semi-Expendable Property Issued — SE, via ICS) ────────────────────────────────
+public sealed record RspiRowDto(
+    Guid AccountabilityId,
+    string DocumentNo,
+    DateOnly IssuedOn,
+    AccountabilityStatus Status,
+    string FundCluster,
+    DateOnly? ExpiresOn,
+    Guid ReceivedByEmployeeId,
+    string ReceivedByName,
+    string? ReceivedByDesignation,
+    string? ReceivedByOfficeName,
+    Guid IssuedByEmployeeId,
+    string IssuedByName,
+    string? IssuedByDesignation,
+    string? IssuedByOfficeName,
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string Description,
+    AssetType AssetType,
+    string Unit,
+    decimal UnitCost,
+    int Quantity,
+    decimal Amount);
+
+public sealed record RspiReportDto(
+    DateOnly? DateFrom,
+    DateOnly? DateTo,
+    AssetType? AssetType,
+    bool ActiveOnly,
+    IReadOnlyList<RspiRowDto> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount,
+    decimal OverallAmountTotal);
+
+// ── RPI (Report on Property Issued — PPE, via PAR) ────────────────────────────────────────────────
+public sealed record RpiRowDto(
+    Guid AccountabilityId,
+    string DocumentNo,
+    DateOnly IssuedOn,
+    AccountabilityStatus Status,
+    string FundCluster,
+    DateOnly? ExpiresOn,
+    Guid ReceivedByEmployeeId,
+    string ReceivedByName,
+    string? ReceivedByDesignation,
+    string? ReceivedByOfficeName,
+    Guid IssuedByEmployeeId,
+    string IssuedByName,
+    string? IssuedByDesignation,
+    string? IssuedByOfficeName,
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string Description,
+    string Unit,
+    int Quantity,
+    decimal UnitCost,
+    decimal Amount,
+    int EstimatedUsefulLifeYears,
+    DateOnly DateAcquired);
+
+public sealed record RpiReportDto(
+    DateOnly? DateFrom,
+    DateOnly? DateTo,
+    IReadOnlyList<RpiRowDto> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount,
+    decimal OverallAmountTotal);
