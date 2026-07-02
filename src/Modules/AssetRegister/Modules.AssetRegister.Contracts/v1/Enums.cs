@@ -225,3 +225,19 @@ public enum ReturnedPropertyReceiptStatus
     Cancelled = 4
 }
 
+/// <summary>
+/// Movement kind on a RegSPI (COA Annex A.4) registry row. Each transaction is its own line on the
+/// registry, filling exactly one of the form's column groups (Issued / Returned / Re-issued / Disposed).
+/// </summary>
+public enum RegSpiTransactionType
+{
+    /// <summary>First issue of the asset to an end-user via ICS.</summary>
+    Issued = 0,
+    /// <summary>Return of the asset to the property office (RRSP or legacy line return).</summary>
+    Returned = 1,
+    /// <summary>Subsequent issue of a previously returned asset to an end-user.</summary>
+    Reissued = 2,
+    /// <summary>Disposal recorded through an unserviceable property report.</summary>
+    Disposed = 3
+}
+

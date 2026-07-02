@@ -93,13 +93,13 @@ internal sealed class AssetRegisterDbInitializer(
 
         var seedItems = new[]
         {
-            PropertyItemCatalog.Create(tenantId, "AR-SE-CHAIR", "Office Chair", "FURN", "SE-FURN", "piece", "50203010", 5),
-            PropertyItemCatalog.Create(tenantId, "AR-SE-TABLE", "Office Table", "FURN", "SE-FURN", "piece", "50203010", 10),
-            PropertyItemCatalog.Create(tenantId, "AR-SE-LAPTOP", "Laptop Computer", "ICT", "SE-ICT", "unit", "50215030", 3),
-            PropertyItemCatalog.Create(tenantId, "AR-PPE-DESKTOP", "Desktop Computer Set", "ICT", "PPE-ICT", "set", "10605030", 5),
-            PropertyItemCatalog.Create(tenantId, "AR-PPE-PRINTER", "Network Printer", "ICT", "PPE-ICT", "unit", "10605030", 5),
+            PropertyItemCatalog.Create(tenantId, "AR-SE-CHAIR", "Office Chair", "FF", "SE-FURN", "piece", "50203010", 5),
+            PropertyItemCatalog.Create(tenantId, "AR-SE-TABLE", "Office Table", "FF", "SE-FURN", "piece", "50203010", 10),
+            PropertyItemCatalog.Create(tenantId, "AR-SE-LAPTOP", "Laptop Computer", "DP", "SE-ICT", "unit", "50215030", 3),
+            PropertyItemCatalog.Create(tenantId, "AR-PPE-DESKTOP", "Desktop Computer Set", "DP", "PPE-ICT", "set", "10605030", 5),
+            PropertyItemCatalog.Create(tenantId, "AR-PPE-PRINTER", "Network Printer", "DP", "PPE-ICT", "unit", "10605030", 5),
             PropertyItemCatalog.Create(tenantId, "AR-PPE-AIRCON", "Split-type Air Conditioner", "EQUIP", "PPE-EQ", "unit", "10604010", 10),
-            PropertyItemCatalog.Create(tenantId, "AR-PPE-TELEVISION", "Smart Television Set", "ICT", "PPE-ICT", "unit", "10605030", 5),
+            PropertyItemCatalog.Create(tenantId, "AR-PPE-TELEVISION", "Smart Television Set", "DP", "PPE-ICT", "unit", "10605030", 5),
             // Motor vehicles — DefaultPropertyClass "LT" (COA Account 10606010) so materialized assets
             // are auto-detected as vehicle-class PPE and become enrollable in the Vehicle module.
             PropertyItemCatalog.Create(tenantId, "AR-PPE-VEHICLE", "Motor Vehicle", AssetClassCodes.Vehicle, "PPE-LT", "unit", "10606010", 7),

@@ -36,36 +36,37 @@ public sealed record AccountabilityReportDto(
     int TotalReturnedQty,
     decimal TotalAmount);
 
-public sealed record RegSpiRowDto(
-    Guid AccountabilityId,
-    string DocumentNo,
-    DateOnly IssuedOn,
-    Guid CustodianId,
-    string CustodianName,
-    string CustodianDesignation,
-    Guid AccountabilityLineId,
+public sealed record RegSpiLedgerRowDto(
+    DateOnly Date,
+    string ReferenceNo,
     Guid AssetRegistryId,
     string PropertyNo,
     string Description,
-    AssetType AssetType,
-    string Unit,
-    decimal UnitCost,
-    int Quantity,
+    int EstimatedUsefulLifeYears,
+    RegSpiTransactionType TransactionType,
+    int Qty,
+    string? OfficeOfficer,
+    int Balance,
     decimal Amount,
-    string? ResponsibilityCenterCode);
+    string? Remarks);
 
 public sealed record RegSpiClassificationGroupDto(
     string? PropertyClass,
     string ClassificationName,
-    IReadOnlyCollection<RegSpiRowDto> Rows,
-    int TotalItems,
-    decimal TotalAmount);
+    int SheetNo,
+    IReadOnlyCollection<RegSpiLedgerRowDto> Rows,
+    int IssuedQty,
+    int ReturnedQty,
+    int ReissuedQty,
+    int DisposedQty,
+    int BalanceQty,
+    decimal BalanceAmount);
 
 public sealed record RegSpiFundClusterGroupDto(
     string FundCluster,
     IReadOnlyCollection<RegSpiClassificationGroupDto> Classifications,
-    int TotalItems,
-    decimal TotalAmount);
+    int BalanceQty,
+    decimal BalanceAmount);
 
 public sealed record RegSpiReportDto(
     DateOnly AsOfDate,
@@ -73,8 +74,9 @@ public sealed record RegSpiReportDto(
     string? FundCluster,
     string? PropertyClass,
     IReadOnlyCollection<RegSpiFundClusterGroupDto> Groups,
-    int TotalItems,
-    decimal TotalAmount);
+    int TotalTransactions,
+    int BalanceQty,
+    decimal BalanceAmount);
 
 public sealed record PhysicalCountReportEntryDto(
     Guid EntryId,

@@ -1,17 +1,21 @@
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.QuestPdfReporting.Services;
 using QuestPDF.Fluent;
-using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRegSpi;
 
-/// <summary>Registry of Semi-Expendable Property Issued (RegSPI), grouped by accountable custodian.</summary>
+/// <summary>
+/// Registry of Semi-Expendable Property Issued (RegSPI) — COA Annex A.4. One sheet per
+/// Fund Cluster × SE classification; each row is one transaction (issue / return / re-issue /
+/// disposal) filling exactly one of the form's column groups, with a running Balance column.
+/// </summary>
 internal sealed class RegSpiPdfDocument(
     RegSpiReportDto          report,
     OrganizationProfileDto?  org,
-    string                   paperSize   = "a4",
+    string                   paperSize   = "legal",
     string                   orientation = "landscape",
     float                    marginMm    = 12f) : IDocument
 {
@@ -26,7 +30,7 @@ internal sealed class RegSpiPdfDocument(
         container.Page(page =>
         {
             QuestPdfPaperSize.Apply(page, paperSize, orientation, marginMm);
-            page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
+            page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Arial"));
             page.Header().Element(ComposeHeader);
             page.Content().Element(ComposeBody);
             page.Footer().Element(ComposeFooter);
@@ -37,18 +41,9 @@ internal sealed class RegSpiPdfDocument(
     {
         container.Column(col =>
         {
-            col.Item().AlignCenter().Text("Republic of the Philippines").FontSize(9);
-            col.Item().AlignCenter().Text("NATIONAL FOOD AUTHORITY").Bold().FontSize(10);
-            if (org is not null)
-            {
-                col.Item().AlignCenter().Text(org.Name).Bold().FontSize(11);
-                if (!string.IsNullOrWhiteSpace(org.Address))
-                    col.Item().AlignCenter().Text(org.Address).FontSize(8);
-            }
-            col.Item().PaddingTop(6).AlignCenter().Text("REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED").Bold().FontSize(11);
+            col.Item().AlignRight().Text("Annex A.4").Italic().FontSize(8);
+            col.Item().AlignCenter().Text("REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED").Bold().FontSize(11);
             col.Item().AlignCenter().Text($"As of {report.AsOfDate:MMMM d, yyyy}").FontSize(8);
-            if (!string.IsNullOrWhiteSpace(report.FundCluster))
-                col.Item().AlignCenter().Text($"Fund Cluster: {report.FundCluster}").FontSize(8);
             col.Item().PaddingTop(4).LineHorizontal(1);
         });
     }
@@ -57,104 +52,160 @@ internal sealed class RegSpiPdfDocument(
     {
         container.PaddingTop(4).Column(col =>
         {
-            if (report.TotalItems == 0)
+            if (report.TotalTransactions == 0)
             {
                 col.Item().Border(0.5f).Padding(6).AlignCenter()
-                    .Text("No semi-expendable property issued as of this date.").Italic().FontSize(8);
+                    .Text("No semi-expendable property transactions as of this date.").Italic().FontSize(8);
                 return;
             }
 
-            // COA Annex A.4 scopes one sheet per Fund Cluster × SE classification — render each fund
-            // cluster as its own section (page-broken), with a sub-section + subtotal per classification.
-            var fundClusters = report.Groups.ToList();
-            for (var fi = 0; fi < fundClusters.Count; fi++)
+            // COA Annex A.4 scopes one sheet per Fund Cluster × SE classification — each sheet gets its
+            // own header block (Entity Name / Fund Cluster / Semi-expendable Property / Sheet No.) and
+            // its own ledger table, page-broken from the next.
+            var sheets = report.Groups
+                .SelectMany(fc => fc.Classifications.Select(cls => (fc.FundCluster, Sheet: cls)))
+                .ToList();
+
+            for (var si = 0; si < sheets.Count; si++)
             {
-                var fc = fundClusters[fi];
-                var fcLabel = string.IsNullOrWhiteSpace(fc.FundCluster) ? "(Unspecified)" : fc.FundCluster;
+                var (fundCluster, sheet) = sheets[si];
+                var fcLabel = string.IsNullOrWhiteSpace(fundCluster) ? "(Unspecified)" : fundCluster;
 
-                col.Item().PaddingTop(fi == 0 ? 0 : 4)
-                    .Text($"Fund Cluster: {fcLabel}").Bold().FontSize(9);
-
-                foreach (var cls in fc.Classifications)
+                col.Item().Row(row =>
                 {
-                    col.Item().PaddingTop(4)
-                        .Text($"Semi-Expendable Property: {cls.ClassificationName}").SemiBold().FontSize(8);
-                    col.Item().PaddingTop(2).Element(c => ComposeClassificationTable(c, cls));
-                    col.Item().PaddingTop(2).AlignRight().Text(t =>
+                    row.RelativeItem().Column(left =>
                     {
-                        t.Span("Subtotal: ").SemiBold().FontSize(8);
-                        t.Span($"{cls.TotalItems} item(s)    ₱{cls.TotalAmount:N2}").Bold().FontSize(8);
+                        left.Item().Text(t =>
+                        {
+                            t.Span("Entity Name: ").FontSize(8);
+                            t.Span(org?.Name ?? string.Empty).Bold().FontSize(8);
+                        });
+                        left.Item().Text(t =>
+                        {
+                            t.Span("Semi-expendable Property: ").FontSize(8);
+                            t.Span(sheet.ClassificationName).Bold().FontSize(8);
+                        });
                     });
-                }
+                    row.ConstantItem(220).Column(right =>
+                    {
+                        right.Item().Text(t =>
+                        {
+                            t.Span("Fund Cluster: ").FontSize(8);
+                            t.Span(fcLabel).Bold().FontSize(8);
+                        });
+                        right.Item().Text(t =>
+                        {
+                            t.Span("Sheet No.: ").FontSize(8);
+                            t.Span(sheet.SheetNo.ToString()).Bold().FontSize(8);
+                        });
+                    });
+                });
+
+                col.Item().PaddingTop(4).Element(c => ComposeSheetTable(c, sheet));
 
                 col.Item().PaddingTop(3).AlignRight().Text(t =>
                 {
-                    t.Span($"Fund Cluster {fcLabel} total: ").SemiBold().FontSize(8);
-                    t.Span($"{fc.TotalItems} item(s)    ₱{fc.TotalAmount:N2}").Bold().FontSize(8);
+                    t.Span($"Issued: {sheet.IssuedQty}    Returned: {sheet.ReturnedQty}    " +
+                           $"Re-issued: {sheet.ReissuedQty}    Disposed: {sheet.DisposedQty}    ").SemiBold().FontSize(8);
+                    t.Span($"Balance: {sheet.BalanceQty} item(s)    ₱{sheet.BalanceAmount:N2}").Bold().FontSize(8);
                 });
 
-                if (fi < fundClusters.Count - 1)
+                if (si < sheets.Count - 1)
                     col.Item().PageBreak();
             }
 
             col.Item().PaddingTop(8).LineHorizontal(1);
             col.Item().PaddingTop(4).AlignRight().Text(t =>
             {
-                t.Span($"GRAND TOTAL — items: {report.TotalItems}    ").SemiBold().FontSize(9);
+                t.Span($"GRAND TOTAL — balance: {report.BalanceQty} item(s)    ").SemiBold().FontSize(9);
                 t.Span("amount: ").SemiBold().FontSize(9);
-                t.Span($"₱{report.TotalAmount:N2}").Bold().FontSize(9);
+                t.Span($"₱{report.BalanceAmount:N2}").Bold().FontSize(9);
             });
         });
     }
 
-    private static void ComposeClassificationTable(IContainer container, RegSpiClassificationGroupDto cls)
+    private static void ComposeSheetTable(IContainer container, RegSpiClassificationGroupDto sheet)
     {
-        var style = TextStyle.Default.Bold().FontSize(8);
+        var headStyle = TextStyle.Default.Bold().FontSize(7.5f);
 
         container.Table(table =>
         {
             table.ColumnsDefinition(c =>
             {
-                c.ConstantColumn(24);   // No.
-                c.RelativeColumn(3);     // Custodian
-                c.RelativeColumn(2);     // ICS No.
-                c.ConstantColumn(60);    // Date
-                c.RelativeColumn(3);     // Property No.
-                c.RelativeColumn(4);     // Description
-                c.RelativeColumn(1);     // Unit
-                c.ConstantColumn(40);    // Qty
-                c.ConstantColumn(70);    // Unit Cost
-                c.ConstantColumn(75);    // Amount
+                c.ConstantColumn(48);    //  1 Date
+                c.RelativeColumn(2.3f);  //  2 ICS/RRSP No.
+                c.RelativeColumn(2.3f);  //  3 Semi-expendable Property No.
+                c.RelativeColumn(3.2f);  //  4 Item Description
+                c.ConstantColumn(36);    //  5 Estimated Useful Life
+                c.ConstantColumn(24);    //  6 Issued Qty
+                c.RelativeColumn(2.6f);  //  7 Issued Office/Officer
+                c.ConstantColumn(24);    //  8 Returned Qty
+                c.RelativeColumn(2.6f);  //  9 Returned Office/Officer
+                c.ConstantColumn(24);    // 10 Re-issued Qty
+                c.RelativeColumn(2.6f);  // 11 Re-issued Office/Officer
+                c.ConstantColumn(28);    // 12 Disposed Qty
+                c.ConstantColumn(28);    // 13 Balance Qty
+                c.ConstantColumn(56);    // 14 Amount
+                c.RelativeColumn(2.0f);  // 15 Remarks
             });
 
+            // Two-tier Annex A.4 header: grouped columns (Reference / Issued / Returned / Re-issued /
+            // Disposed / Balance) with Qty + Office/Officer sub-columns. Repeats on every page.
             table.Header(h =>
             {
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("No.").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Accountable Officer").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("ICS/PAR No.").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Date").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Property No.").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Description").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Qty").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit Cost (₱)").Style(style);
-                h.Cell().Border(1).Padding(2).AlignCenter().Text("Amount (₱)").Style(style);
+                static IContainer HeadCell(IContainer c) =>
+                    c.Border(1).Padding(2).AlignCenter().AlignMiddle();
+
+                h.Cell().RowSpan(2).Element(HeadCell).Text("Date").Style(headStyle);
+                h.Cell().ColumnSpan(2).Element(HeadCell).Text("Reference").Style(headStyle);
+                h.Cell().RowSpan(2).Element(HeadCell).Text("Item Description").Style(headStyle);
+                h.Cell().RowSpan(2).Element(HeadCell).Text("Estimated Useful Life").Style(headStyle);
+                h.Cell().ColumnSpan(2).Element(HeadCell).Text("Issued").Style(headStyle);
+                h.Cell().ColumnSpan(2).Element(HeadCell).Text("Returned").Style(headStyle);
+                h.Cell().ColumnSpan(2).Element(HeadCell).Text("Re-issued").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Disposed").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Balance").Style(headStyle);
+                h.Cell().RowSpan(2).Element(HeadCell).Text("Amount (₱)").Style(headStyle);
+                h.Cell().RowSpan(2).Element(HeadCell).Text("Remarks").Style(headStyle);
+
+                h.Cell().Element(HeadCell).Text("ICS/RRSP No.").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Semi-expendable Property No.").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Qty.").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Office/Officer").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Qty.").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Office/Officer").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Qty.").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Office/Officer").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Qty.").Style(headStyle);
+                h.Cell().Element(HeadCell).Text("Qty.").Style(headStyle);
             });
 
-            var no = 1;
-            foreach (var r in cls.Rows)
+            foreach (var r in sheet.Rows)
             {
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(no.ToString()).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).Text(r.CustodianName).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).Text(r.DocumentNo).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.IssuedOn.ToString("yyyy-MM-dd")).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).Text(r.PropertyNo).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).Text(r.Description).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.Unit).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.Quantity.ToString()).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(r.UnitCost.ToString("N2")).FontSize(8);
-                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(r.Amount.ToString("N2")).FontSize(8);
-                no++;
+                static IContainer BodyCell(IContainer c) => c.Border(0.5f).Padding(2);
+
+                var issued   = r.TransactionType == RegSpiTransactionType.Issued;
+                var returned = r.TransactionType == RegSpiTransactionType.Returned;
+                var reissued = r.TransactionType == RegSpiTransactionType.Reissued;
+                var disposed = r.TransactionType == RegSpiTransactionType.Disposed;
+
+                table.Cell().Element(BodyCell).AlignCenter().Text(r.Date.ToString("yyyy-MM-dd")).FontSize(7);
+                table.Cell().Element(BodyCell).Text(r.ReferenceNo).FontSize(7);
+                table.Cell().Element(BodyCell).Text(r.PropertyNo).FontSize(7);
+                table.Cell().Element(BodyCell).Text(r.Description).FontSize(7);
+                table.Cell().Element(BodyCell).AlignCenter().Text($"{r.EstimatedUsefulLifeYears} yr(s)").FontSize(7);
+
+                table.Cell().Element(BodyCell).AlignCenter().Text(issued ? r.Qty.ToString() : string.Empty).FontSize(7);
+                table.Cell().Element(BodyCell).Text(issued ? r.OfficeOfficer ?? string.Empty : string.Empty).FontSize(7);
+                table.Cell().Element(BodyCell).AlignCenter().Text(returned ? r.Qty.ToString() : string.Empty).FontSize(7);
+                table.Cell().Element(BodyCell).Text(returned ? r.OfficeOfficer ?? string.Empty : string.Empty).FontSize(7);
+                table.Cell().Element(BodyCell).AlignCenter().Text(reissued ? r.Qty.ToString() : string.Empty).FontSize(7);
+                table.Cell().Element(BodyCell).Text(reissued ? r.OfficeOfficer ?? string.Empty : string.Empty).FontSize(7);
+                table.Cell().Element(BodyCell).AlignCenter().Text(disposed ? r.Qty.ToString() : string.Empty).FontSize(7);
+
+                table.Cell().Element(BodyCell).AlignCenter().Text(r.Balance.ToString()).FontSize(7);
+                table.Cell().Element(BodyCell).AlignRight().Text(r.Amount.ToString("N2")).FontSize(7);
+                table.Cell().Element(BodyCell).Text(r.Remarks ?? string.Empty).FontSize(7);
             }
         });
     }

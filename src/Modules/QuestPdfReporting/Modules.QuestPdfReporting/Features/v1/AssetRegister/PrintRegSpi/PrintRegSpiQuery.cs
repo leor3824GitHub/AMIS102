@@ -10,6 +10,6 @@ public sealed record PrintRegSpiQuery(
     Guid? CustodianId,
     string? FundCluster = null,
     string? PropertyClass = null,
-    string PaperSize = "a4",
+    string PaperSize = "legal",
     string Orientation = "landscape",
     double Margin = 12d) : IQuery<byte[]>;

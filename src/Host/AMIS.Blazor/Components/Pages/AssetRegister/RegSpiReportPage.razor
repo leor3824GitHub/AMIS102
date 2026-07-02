@@ -12,7 +12,7 @@
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Registry of Semi-Expendable Property Issued (RegSPI)"
-               Description="Semi-expendable property on issue via ICS as at a given date — grouped by Fund Cluster and SE classification (COA Annex A.4)." />
+               Description="Transaction registry of semi-expendable property — every issue, return, re-issue and disposal up to the as-of date, one sheet per Fund Cluster and SE classification with a running balance (COA Annex A.4)." />
 
 @if (!_canView)
 {
@@ -62,7 +62,7 @@ else
                         </AMISButton>
                         <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
                                     StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync"
-                                    Disabled="_busy || _report is null || _report.TotalItems == 0">
+                                    Disabled="_busy || _report is null || _report.TotalTransactions == 0">
                             Download PDF
                         </AMISButton>
                     </MudStack>
@@ -83,9 +83,9 @@ else
     {
         <MudCard Elevation="1">
             <MudCardContent>
-                @if (_report.TotalItems == 0)
+                @if (_report.TotalTransactions == 0)
                 {
-                    <MudAlert Severity="Severity.Info" Dense="true">No semi-expendable property on issue for the selected filters.</MudAlert>
+                    <MudAlert Severity="Severity.Info" Dense="true">No semi-expendable property transactions for the selected filters.</MudAlert>
                 }
                 else
                 {
@@ -95,52 +95,62 @@ else
 
                         @foreach (var cls in fc.Classifications)
                         {
-                            <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">Semi-Expendable Property: @cls.ClassificationName</MudText>
+                            <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">
+                                Semi-Expendable Property: @cls.ClassificationName
+                                <MudText Typo="Typo.caption" Inline="true" Class="ml-2">Sheet No. @cls.SheetNo</MudText>
+                            </MudText>
                             <MudSimpleTable Dense="true" Hover="true" Striped="true">
                                 <thead>
                                     <tr>
-                                        <th>#</th>
-                                        <th>ICS No.</th>
-                                        <th>Date Issued</th>
-                                        <th>Custodian</th>
+                                        <th>Date</th>
+                                        <th>ICS/RRSP No.</th>
                                         <th>Property No.</th>
                                         <th>Description</th>
-                                        <th>Unit</th>
+                                        <th class="text-right">Est. Useful Life</th>
+                                        <th>Transaction</th>
                                         <th class="text-right">Qty</th>
-                                        <th class="text-right">Unit Cost (@Money.Symbol)</th>
+                                        <th>Office/Officer</th>
+                                        <th class="text-right">Balance</th>
                                         <th class="text-right">Amount (@Money.Symbol)</th>
+                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @{ var i = 1; }
                                     @foreach (var r in cls.Rows)
                                     {
                                         <tr>
-                                            <td>@i</td>
-                                            <td>@r.DocumentNo</td>
-                                            <td>@r.IssuedOn.ToString("yyyy-MM-dd")</td>
-                                            <td>@r.CustodianName</td>
+                                            <td>@r.Date.ToString("yyyy-MM-dd")</td>
+                                            <td>@r.ReferenceNo</td>
                                             <td>@r.PropertyNo</td>
                                             <td>@r.Description</td>
-                                            <td>@r.Unit</td>
-                                            <td class="text-right">@r.Quantity</td>
-                                            <td class="text-right">@r.UnitCost.ToString("N2")</td>
+                                            <td class="text-right">@r.EstimatedUsefulLifeYears yr(s)</td>
+                                            <td>
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                                                         Color="@TransactionColor(r.TransactionType)">
+                                                    @TransactionLabel(r.TransactionType)
+                                                </MudChip>
+                                            </td>
+                                            <td class="text-right">@r.Qty</td>
+                                            <td>@r.OfficeOfficer</td>
+                                            <td class="text-right">@r.Balance</td>
                                             <td class="text-right">@r.Amount.ToString("N2")</td>
+                                            <td>@r.Remarks</td>
                                         </tr>
-                                        i++;
                                     }
                                 </tbody>
                             </MudSimpleTable>
                             <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-1 mb-2">
                                 <MudText Typo="Typo.body2">
-                                    Subtotal: @cls.TotalItems item(s) &nbsp;·&nbsp; @Money.Symbol@cls.TotalAmount.ToString("N2")
+                                    Issued: @cls.IssuedQty &nbsp;·&nbsp; Returned: @cls.ReturnedQty &nbsp;·&nbsp;
+                                    Re-issued: @cls.ReissuedQty &nbsp;·&nbsp; Disposed: @cls.DisposedQty &nbsp;·&nbsp;
+                                    <b>Balance: @cls.BalanceQty item(s) &nbsp;·&nbsp; @Money.Symbol@cls.BalanceAmount.ToString("N2")</b>
                                 </MudText>
                             </MudStack>
                         }
 
                         <MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-3">
                             <MudText Typo="Typo.subtitle2">
-                                Fund Cluster total: @fc.TotalItems item(s) &nbsp;·&nbsp; @Money.Symbol@fc.TotalAmount.ToString("N2")
+                                Fund Cluster balance: @fc.BalanceQty item(s) &nbsp;·&nbsp; @Money.Symbol@fc.BalanceAmount.ToString("N2")
                             </MudText>
                         </MudStack>
                     }
@@ -148,7 +158,7 @@ else
                     <MudDivider Class="my-2" />
                     <MudStack Row="true" Justify="Justify.FlexEnd">
                         <MudText Typo="Typo.subtitle1">
-                            <b>Grand total:</b> @_report.TotalItems item(s) &nbsp;·&nbsp; @Money.Symbol@_report.TotalAmount.ToString("N2")
+                            <b>Grand total balance:</b> @_report.BalanceQty item(s) &nbsp;·&nbsp; @Money.Symbol@_report.BalanceAmount.ToString("N2")
                         </MudText>
                     </MudStack>
                 }
@@ -213,9 +223,27 @@ else
         }
     }
 
+    private static Color TransactionColor(RegSpiTransactionType type) => type switch
+    {
+        RegSpiTransactionType.Issued => Color.Primary,
+        RegSpiTransactionType.Returned => Color.Warning,
+        RegSpiTransactionType.Reissued => Color.Success,
+        RegSpiTransactionType.Disposed => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string TransactionLabel(RegSpiTransactionType type) => type switch
+    {
+        RegSpiTransactionType.Issued => "Issued",
+        RegSpiTransactionType.Returned => "Returned",
+        RegSpiTransactionType.Reissued => "Re-issued",
+        RegSpiTransactionType.Disposed => "Disposed",
+        _ => type.ToString()
+    };
+
     private async Task DownloadPdfAsync()
     {
-        if (_report is null || _report.TotalItems == 0) return;
+        if (_report is null || _report.TotalTransactions == 0) return;
         try
         {
             var bytes = await ReportsClient.GetRegSpiPdfAsync(ToDateOnly(_asOf), _custodian?.Id, _fundCluster, _propertyClass);

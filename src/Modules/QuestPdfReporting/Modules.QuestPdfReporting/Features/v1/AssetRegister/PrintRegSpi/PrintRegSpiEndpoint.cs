@@ -27,7 +27,8 @@ internal static class PrintRegSpiEndpoint
         DateOnly? asOfDate, AssetType? assetType, Guid? custodianId, string? fundCluster, string? propertyClass, IMediator mediator,
         string? pageWidth, string? orientation, double? marginMm, CancellationToken ct)
     {
-        var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
+        // Annex A.4 has 15 leaf columns — legal landscape is the default fit.
+        var paperSize = (pageWidth ?? "legal").ToLowerInvariant();
         var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
         var margin = marginMm is > 0 ? marginMm.Value : 12d;
 
