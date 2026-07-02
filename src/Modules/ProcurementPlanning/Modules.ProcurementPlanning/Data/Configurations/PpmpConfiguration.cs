@@ -43,6 +43,7 @@ internal sealed class PpmpItemConfiguration : IEntityTypeConfiguration<PpmpItem>
         builder.Property(x => x.ProcurementEnd).HasMaxLength(10).IsRequired();
         builder.Property(x => x.ExpectedDelivery).HasMaxLength(10).IsRequired();
         builder.Property(x => x.SourceOfFunds).HasMaxLength(256).IsRequired();
+        builder.Property(x => x.FundingSourceCode).HasMaxLength(32);
         builder.Property(x => x.EstimatedBudget).HasColumnType("numeric(18,2)");
         builder.Property(x => x.SupportingDocuments).HasMaxLength(500);
         builder.Property(x => x.Remarks).HasMaxLength(500);

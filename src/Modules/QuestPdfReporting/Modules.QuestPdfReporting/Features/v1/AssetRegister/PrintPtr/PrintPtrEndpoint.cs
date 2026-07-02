@@ -18,6 +18,7 @@ internal static class PrintPtrEndpoint
             .WithName("QuestPdfReporting_PrintPtr")
             .WithSummary("Generate the PTR (Property Transfer Report) PDF from a PPEIR")
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
+            .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(AssetRegisterPermissions.Issuance.View);
     }

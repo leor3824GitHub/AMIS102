@@ -25,6 +25,8 @@ public class MasterDataDbContext : BaseDbContext
     public DbSet<CapitalizationThreshold> CapitalizationThresholds => Set<CapitalizationThreshold>();
     public DbSet<PropertyClass> PropertyClasses => Set<PropertyClass>();
     public DbSet<PropertyClassItem> PropertyClassItems => Set<PropertyClassItem>();
+    public DbSet<FundCluster> FundClusters => Set<FundCluster>();
+    public DbSet<FundingSourceCode> FundingSourceCodes => Set<FundingSourceCode>();
 
     public MasterDataDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

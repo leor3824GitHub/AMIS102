@@ -57,6 +57,16 @@ using AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClass;
 using AMIS.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClass;
 using AMIS.Modules.MasterData.Features.v1.PropertyClasses.CreatePropertyClassItem;
 using AMIS.Modules.MasterData.Features.v1.PropertyClasses.UpdatePropertyClassItem;
+using AMIS.Modules.MasterData.Features.v1.FundClusters.CreateFundCluster;
+using AMIS.Modules.MasterData.Features.v1.FundClusters.UpdateFundCluster;
+using AMIS.Modules.MasterData.Features.v1.FundClusters.DeleteFundCluster;
+using AMIS.Modules.MasterData.Features.v1.FundClusters.GetFundClusterById;
+using AMIS.Modules.MasterData.Features.v1.FundClusters.GetFundClusters;
+using AMIS.Modules.MasterData.Features.v1.FundingSourceCodes.CreateFundingSourceCode;
+using AMIS.Modules.MasterData.Features.v1.FundingSourceCodes.UpdateFundingSourceCode;
+using AMIS.Modules.MasterData.Features.v1.FundingSourceCodes.DeleteFundingSourceCode;
+using AMIS.Modules.MasterData.Features.v1.FundingSourceCodes.GetFundingSourceCodeById;
+using AMIS.Modules.MasterData.Features.v1.FundingSourceCodes.GetFundingSourceCodes;
 using AMIS.Framework.Eventing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -126,7 +136,17 @@ public class MasterDataModule : IModule
         new("View Property Classes", "View", "MasterData.PropertyClasses", IsBasic: true),
         new("Create Property Classes", "Create", "MasterData.PropertyClasses"),
         new("Update Property Classes", "Update", "MasterData.PropertyClasses"),
-        new("Delete Property Classes", "Delete", "MasterData.PropertyClasses")
+        new("Delete Property Classes", "Delete", "MasterData.PropertyClasses"),
+
+        new("View Fund Clusters", "View", "MasterData.FundClusters", IsBasic: true),
+        new("Create Fund Clusters", "Create", "MasterData.FundClusters"),
+        new("Update Fund Clusters", "Update", "MasterData.FundClusters"),
+        new("Delete Fund Clusters", "Delete", "MasterData.FundClusters"),
+
+        new("View Funding Source Codes", "View", "MasterData.FundingSourceCodes", IsBasic: true),
+        new("Create Funding Source Codes", "Create", "MasterData.FundingSourceCodes"),
+        new("Update Funding Source Codes", "Update", "MasterData.FundingSourceCodes"),
+        new("Delete Funding Source Codes", "Delete", "MasterData.FundingSourceCodes")
     ];
 
     public void ConfigureServices(IHostApplicationBuilder builder)
@@ -169,6 +189,8 @@ public class MasterDataModule : IModule
         var organizationProfileGroup = moduleGroup.MapGroup("/organization-profile");
         var capitalizationThresholdsGroup = moduleGroup.MapGroup("/capitalization-thresholds");
         var propertyClassesGroup = moduleGroup.MapGroup("/property-classes");
+        var fundClustersGroup = moduleGroup.MapGroup("/fund-clusters");
+        var fundingSourceCodesGroup = moduleGroup.MapGroup("/funding-source-codes");
 
         MasterDataLookupEndpoint.Map(lookupGroup);
         GetMyEmployeeEndpoint.Map(employeesGroup);
@@ -224,6 +246,18 @@ public class MasterDataModule : IModule
         UpdatePropertyClassEndpoint.Map(propertyClassesGroup);
         CreatePropertyClassItemEndpoint.Map(propertyClassesGroup);
         UpdatePropertyClassItemEndpoint.Map(propertyClassesGroup);
+
+        GetFundClustersEndpoint.Map(fundClustersGroup);
+        GetFundClusterByIdEndpoint.Map(fundClustersGroup);
+        CreateFundClusterEndpoint.Map(fundClustersGroup);
+        UpdateFundClusterEndpoint.Map(fundClustersGroup);
+        DeleteFundClusterEndpoint.Map(fundClustersGroup);
+
+        GetFundingSourceCodesEndpoint.Map(fundingSourceCodesGroup);
+        GetFundingSourceCodeByIdEndpoint.Map(fundingSourceCodesGroup);
+        CreateFundingSourceCodeEndpoint.Map(fundingSourceCodesGroup);
+        UpdateFundingSourceCodeEndpoint.Map(fundingSourceCodesGroup);
+        DeleteFundingSourceCodeEndpoint.Map(fundingSourceCodesGroup);
     }
 }
 

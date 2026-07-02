@@ -1,0 +1,202 @@
+@page "/asset-register/reports/pc"
+@using AMIS.Blazor.Services.AssetRegister
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.AssetRegister.Contracts.v1.Reports
+@inject IArDepreciationClient DepreciationClient
+@inject IAssetRegisterReportsClient ReportsClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Property Card (PC)"
+               Description="COA chronological movement history for a PPE asset — acquisition, issue/return, transfer, disposal." />
+
+@if (!_canView)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">You don't have permission to view this report.</MudAlert>
+}
+else
+{
+    <MudCard Elevation="1" Class="mb-4">
+        <MudCardContent>
+            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                <MudItem xs="12" sm="6" md="4">
+                    <AMISTextField Label="Property No." @bind-Value="_propertyNo" Placeholder="e.g. 2026-01-0001"
+                                   OnKeyDown="OnKeyDownAsync" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="2">
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Filled.Search" OnClick="LoadAsync" Disabled="_busy">
+                        Load
+                    </AMISButton>
+                </MudItem>
+                @if (_card is not null && _card.AssetType == AssetType.PPE)
+                {
+                    <MudItem xs="12" sm="12" md="6">
+                        <MudStack Row="true" Justify="Justify.FlexEnd">
+                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                                        StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync" Disabled="_busy">
+                                Download PDF
+                            </AMISButton>
+                        </MudStack>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    @if (_busy)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+    }
+    else if (_card is not null)
+    {
+        @if (_card.AssetType != AssetType.PPE)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true">
+                @_card.PropertyNo is registered as Semi-Expendable —
+                <MudLink Href="@($"/asset-register/reports/spc?propertyNo={_card.PropertyNo}")">open the SPC report</MudLink> instead.
+            </MudAlert>
+        }
+        else
+        {
+            <MudCard Elevation="1">
+                <MudCardContent>
+                    <MudGrid Spacing="2" Class="mb-2">
+                        <MudItem xs="4">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Property No.</MudText>
+                            <MudText Typo="Typo.body2"><strong>@_card.PropertyNo</strong></MudText>
+                        </MudItem>
+                        <MudItem xs="5">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Description</MudText>
+                            <MudText Typo="Typo.body2">@_card.Description</MudText>
+                        </MudItem>
+                        <MudItem xs="3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Current State</MudText>
+                            <MudText Typo="Typo.body2">@_card.CurrentState</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    @if (_card.Movements.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">No movements recorded for this asset.</MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Movement</th>
+                                    <th>Source</th>
+                                    <th>Document No.</th>
+                                    <th>Party</th>
+                                    <th style="text-align:right">Amount (@Money.Symbol)</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var m in _card.Movements)
+                                {
+                                    <tr>
+                                        <td>@m.Date.ToString("yyyy-MM-dd")</td>
+                                        <td>@m.MovementType</td>
+                                        <td>@m.Source</td>
+                                        <td>@(m.DocumentNo ?? "—")</td>
+                                        <td>@(m.Party ?? "—")</td>
+                                        <td style="text-align:right">@(m.Amount?.ToString("N2") ?? "—")</td>
+                                        <td>@(m.Remarks ?? "")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+    }
+    else
+    {
+        <MudPaper Class="pa-6" Elevation="0">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Enter a Property No. and click <b>Load</b> to view the PPE Property Card.
+            </MudText>
+        </MudPaper>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyNo")]
+    public string? PropertyNoQuery { get; set; }
+
+    private string _propertyNo = "";
+    private bool _busy;
+    private string? _error;
+    private PropertyCardDto? _card;
+
+    private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.View);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(PropertyNoQuery))
+        {
+            _propertyNo = PropertyNoQuery.Trim().ToUpperInvariant();
+            await LoadAsync();
+        }
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var normalized = _propertyNo.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            Snackbar.Add("Enter a Property No. first.", Severity.Warning);
+            return;
+        }
+
+        _propertyNo = normalized;
+        _busy = true;
+        _error = null;
+        _card = null;
+        try
+        {
+            _card = await DepreciationClient.GetPropertyCardAsync(normalized);
+            if (_card is null)
+                _error = $"No asset found with Property No. \"{normalized}\".";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_card is null) return;
+        try
+        {
+            var bytes = await ReportsClient.GetPropertyCardPdfAsync(_card.PropertyNo);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+}

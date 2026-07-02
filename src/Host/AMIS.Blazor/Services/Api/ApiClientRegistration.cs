@@ -146,6 +146,12 @@ internal static class ApiClientRegistration
         services.AddTransient<IModeOfProcurementClient>(sp =>
             new ModeOfProcurementClient(ResolveClient(sp)));
 
+        services.AddTransient<IFundClusterClient>(sp =>
+            new FundClusterClient(ResolveClient(sp)));
+
+        services.AddTransient<IFundingSourceCodeClient>(sp =>
+            new FundingSourceCodeClient(ResolveClient(sp)));
+
         // Budget Disbursement module manual clients
         services.AddTransient<IDisbursementVoucherClient>(sp =>
             new DisbursementVoucherClient(ResolveClient(sp)));

@@ -9,7 +9,8 @@ namespace AMIS.Blazor.Services.AssetRegister;
 
 public interface IAssetRegisterReportsClient
 {
-    Task<RegSpiReportDto?> GetRegSpiReportAsync(DateOnly asOfDate, Guid? custodianId = null, CancellationToken cancellationToken = default);
+    Task<RegSpiReportDto?> GetRegSpiReportAsync(DateOnly asOfDate, Guid? custodianId = null, string? fundCluster = null, string? propertyClass = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> GetRegSpiFundClustersAsync(CancellationToken cancellationToken = default);
     Task<RspiReportDto?> GetRspiReportAsync(DateOnly? dateFrom, DateOnly? dateTo, AssetType? assetType, bool activeOnly, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<RpiReportDto?> GetRpiReportAsync(DateOnly? dateFrom, DateOnly? dateTo, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<PhysicalCountReportDto?> GetPhysicalCountReportAsync(Guid sessionId, CancellationToken cancellationToken = default);
@@ -20,7 +21,7 @@ public interface IAssetRegisterReportsClient
 
     // ── PDF (QuestPDF) ──────────────────────────────────────────────────────
     Task<byte[]> GetPhysicalCountPdfAsync(Guid sessionId, bool ppe, string? pageWidth = null, CancellationToken cancellationToken = default);
-    Task<byte[]> GetRegSpiPdfAsync(DateOnly? asOfDate = null, Guid? custodianId = null, string? pageWidth = null, CancellationToken cancellationToken = default);
+    Task<byte[]> GetRegSpiPdfAsync(DateOnly? asOfDate = null, Guid? custodianId = null, string? fundCluster = null, string? propertyClass = null, string? pageWidth = null, CancellationToken cancellationToken = default);
     Task<byte[]> GetRspiPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, AssetType? assetType = null, bool activeOnly = true, string? pageWidth = null, CancellationToken cancellationToken = default);
     Task<byte[]> GetRpiPdfAsync(DateOnly? dateFrom = null, DateOnly? dateTo = null, string? pageWidth = null, CancellationToken cancellationToken = default);
     Task<byte[]> GetPtrPdfAsync(Guid reportId, string? pageWidth = null, CancellationToken cancellationToken = default);
@@ -45,15 +46,26 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
     public Task<RegSpiReportDto?> GetRegSpiReportAsync(
         DateOnly asOfDate,
         Guid? custodianId = null,
+        string? fundCluster = null,
+        string? propertyClass = null,
         CancellationToken cancellationToken = default)
     {
         var url = BuildUrl("api/v1/asset-register/reports/regspi", new Dictionary<string, string?>
         {
             ["asOfDate"] = asOfDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-            ["custodianId"] = custodianId?.ToString()
+            ["custodianId"] = custodianId?.ToString(),
+            ["fundCluster"] = fundCluster,
+            ["propertyClass"] = propertyClass
         });
 
         return httpClient.GetFromJsonAsync<RegSpiReportDto>(url, JsonOptions, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> GetRegSpiFundClustersAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await httpClient.GetFromJsonAsync<List<string>>(
+            "api/v1/asset-register/reports/regspi/fund-clusters", JsonOptions, cancellationToken);
+        return result ?? [];
     }
 
     public Task<RspiReportDto?> GetRspiReportAsync(
@@ -112,12 +124,14 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
         return httpClient.GetByteArrayAsync(url, cancellationToken);
     }
 
-    public Task<byte[]> GetRegSpiPdfAsync(DateOnly? asOfDate = null, Guid? custodianId = null, string? pageWidth = null, CancellationToken cancellationToken = default)
+    public Task<byte[]> GetRegSpiPdfAsync(DateOnly? asOfDate = null, Guid? custodianId = null, string? fundCluster = null, string? propertyClass = null, string? pageWidth = null, CancellationToken cancellationToken = default)
     {
         var url = BuildUrl($"{PdfBase}/regspi/pdf", new()
         {
             ["asOfDate"] = asOfDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ["custodianId"] = custodianId?.ToString(),
+            ["fundCluster"] = fundCluster,
+            ["propertyClass"] = propertyClass,
             ["pageWidth"] = pageWidth
         });
         return httpClient.GetByteArrayAsync(url, cancellationToken);

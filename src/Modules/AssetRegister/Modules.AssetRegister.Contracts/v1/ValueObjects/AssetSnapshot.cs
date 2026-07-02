@@ -10,6 +10,18 @@ public sealed class AssetSnapshot
     public string PropertyNo { get; private set; } = default!;
     public string Description { get; private set; } = default!;
     public AssetType AssetType { get; private set; }
+
+    /// <summary>
+    /// SE/PPE classification code frozen at issue (e.g. "DP" = ICT Equipment) — sourced from the
+    /// master <c>AssetRegistry.PropertyClass</c> (MasterData PropertyClass library). The friendly
+    /// classification name is resolved from MasterData at report time, since names may be renamed.
+    /// Nullable: snapshots taken before classification snapshotting was introduced carry null.
+    /// </summary>
+    public string? PropertyClass { get; private set; }
+
+    /// <summary>Category code within the classification frozen at issue (e.g. "01" = Personal Computers). Nullable for legacy snapshots.</summary>
+    public string? CategoryCode { get; private set; }
+
     public decimal UnitCost { get; private set; }
     public string Unit { get; private set; } = default!;
     public int EstimatedUsefulLifeYears { get; private set; }
@@ -40,12 +52,16 @@ public sealed class AssetSnapshot
         string? serialNo,
         string? brand,
         string? model,
-        decimal netBookValue) =>
+        decimal netBookValue,
+        string? propertyClass = null,
+        string? categoryCode = null) =>
         new()
         {
             PropertyNo = propertyNo,
             Description = description,
             AssetType = assetType,
+            PropertyClass = propertyClass,
+            CategoryCode = categoryCode,
             UnitCost = unitCost,
             Unit = unit,
             EstimatedUsefulLifeYears = estimatedUsefulLifeYears,

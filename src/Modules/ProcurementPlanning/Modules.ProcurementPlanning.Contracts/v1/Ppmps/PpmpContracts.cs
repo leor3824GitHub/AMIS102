@@ -46,7 +46,8 @@ public sealed record PpmpItemDto(
     string SourceOfFunds,
     decimal EstimatedBudget,
     string? SupportingDocuments,
-    string? Remarks);
+    string? Remarks,
+    string? FundingSourceCode = null);
 
 public sealed record PpmpDto(
     Guid Id,
@@ -106,7 +107,8 @@ public sealed record PpmpItemRequest(
     string SourceOfFunds,
     decimal EstimatedBudget,
     string? SupportingDocuments,
-    string? Remarks);
+    string? Remarks,
+    string? FundingSourceCode = null);
 
 // ── Commands ─────────────────────────────────────────────────────────────────
 

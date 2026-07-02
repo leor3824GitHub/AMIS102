@@ -1,3 +1,4 @@
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.QuestPdfReporting.Services;
@@ -7,7 +8,11 @@ using QuestPDF.Infrastructure;
 
 namespace AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertyCard;
 
-/// <summary>Property Card / Stock Card — chronological movements for one asset (COA §6.3.1.a).</summary>
+/// <summary>
+/// Property Card (PPE) / Semi-Expendable Property Card (SE) — chronological movements for one
+/// asset (COA §6.3.1.a). Same underlying movement projection for both; only the COA form title
+/// differs, since PC and SPC are distinct prescribed forms despite sharing this ledger shape.
+/// </summary>
 internal sealed class PropertyCardPdfDocument(
     PropertyCardDto          card,
     OrganizationProfileDto?  org,
@@ -15,9 +20,11 @@ internal sealed class PropertyCardPdfDocument(
     string                   orientation = "landscape",
     float                    marginMm    = 12f) : IDocument
 {
+    private string FormTitle => card.AssetType == AssetType.SE ? "Semi-Expendable Property Card" : "Property Card";
+
     public DocumentMetadata GetMetadata() => new()
     {
-        Title  = $"Property Card — {card.PropertyNo}",
+        Title  = $"{FormTitle} — {card.PropertyNo}",
         Author = org?.Name ?? string.Empty
     };
 
@@ -45,7 +52,7 @@ internal sealed class PropertyCardPdfDocument(
                 if (!string.IsNullOrWhiteSpace(org.Address))
                     col.Item().AlignCenter().Text(org.Address).FontSize(8);
             }
-            col.Item().PaddingTop(6).AlignCenter().Text("PROPERTY CARD").Bold().FontSize(12);
+            col.Item().PaddingTop(6).AlignCenter().Text(FormTitle.ToUpperInvariant()).Bold().FontSize(12);
 
             col.Item().PaddingTop(6).Row(row =>
             {

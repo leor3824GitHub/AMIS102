@@ -101,6 +101,13 @@ else
                         </tbody>
                     </MudSimpleTable>
 
+                    @if (_report.Items.Count < _report.TotalCount)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                            Showing the first @_report.Items.Count of @_report.TotalCount rows — narrow the date range, or use Download PDF for the complete report.
+                        </MudAlert>
+                    }
+
                     <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
                         <MudText Typo="Typo.subtitle2">
                             Total items: @_report.TotalCount &nbsp;·&nbsp; Total amount: @Money.Symbol@_report.OverallAmountTotal.ToString("N2")

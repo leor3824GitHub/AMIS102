@@ -1886,6 +1886,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasColumnType("character varying(200)")
                                 .HasColumnName("Snapshot_Brand");
 
+                            b1.Property<string>("CategoryCode")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_CategoryCode");
+
                             b1.Property<string>("Description")
                                 .IsRequired()
                                 .HasMaxLength(500)
@@ -1905,6 +1910,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("Snapshot_NetBookValue");
+
+                            b1.Property<string>("PropertyClass")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_PropertyClass");
 
                             b1.Property<string>("PropertyNo")
                                 .IsRequired()
@@ -2009,6 +2019,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasColumnType("character varying(200)")
                                 .HasColumnName("Snapshot_Brand");
 
+                            b1.Property<string>("CategoryCode")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_CategoryCode");
+
                             b1.Property<string>("Description")
                                 .IsRequired()
                                 .HasMaxLength(500)
@@ -2028,6 +2043,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("Snapshot_NetBookValue");
+
+                            b1.Property<string>("PropertyClass")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_PropertyClass");
 
                             b1.Property<string>("PropertyNo")
                                 .IsRequired()
@@ -2192,6 +2212,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasColumnType("character varying(200)")
                                 .HasColumnName("Snapshot_Brand");
 
+                            b1.Property<string>("CategoryCode")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_CategoryCode");
+
                             b1.Property<string>("Description")
                                 .IsRequired()
                                 .HasMaxLength(500)
@@ -2211,6 +2236,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("Snapshot_NetBookValue");
+
+                            b1.Property<string>("PropertyClass")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_PropertyClass");
 
                             b1.Property<string>("PropertyNo")
                                 .IsRequired()
@@ -2437,6 +2467,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasColumnType("character varying(200)")
                                 .HasColumnName("Snapshot_Brand");
 
+                            b1.Property<string>("CategoryCode")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_CategoryCode");
+
                             b1.Property<string>("Description")
                                 .IsRequired()
                                 .HasMaxLength(500)
@@ -2456,6 +2491,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("Snapshot_NetBookValue");
+
+                            b1.Property<string>("PropertyClass")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_PropertyClass");
 
                             b1.Property<string>("PropertyNo")
                                 .IsRequired()
@@ -2728,6 +2768,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasColumnType("character varying(200)")
                                 .HasColumnName("Snapshot_Brand");
 
+                            b1.Property<string>("CategoryCode")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_CategoryCode");
+
                             b1.Property<string>("Description")
                                 .IsRequired()
                                 .HasMaxLength(500)
@@ -2747,6 +2792,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("Snapshot_NetBookValue");
+
+                            b1.Property<string>("PropertyClass")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_PropertyClass");
 
                             b1.Property<string>("PropertyNo")
                                 .IsRequired()
@@ -2813,6 +2863,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasColumnType("character varying(200)")
                                 .HasColumnName("Snapshot_Brand");
 
+                            b1.Property<string>("CategoryCode")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_CategoryCode");
+
                             b1.Property<string>("Description")
                                 .IsRequired()
                                 .HasMaxLength(500)
@@ -2832,6 +2887,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("Snapshot_NetBookValue");
+
+                            b1.Property<string>("PropertyClass")
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("Snapshot_PropertyClass");
 
                             b1.Property<string>("PropertyNo")
                                 .IsRequired()

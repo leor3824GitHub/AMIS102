@@ -32,7 +32,8 @@ internal static class PpmpMapper
                 i.Id, i.ItemNo, i.GeneralDescription, i.ProjectType,
                 i.Quantity, i.Unit, i.ModeOfProcurement, i.PreProcurementConference,
                 i.ProcurementStart, i.ProcurementEnd, i.ExpectedDelivery,
-                i.SourceOfFunds, i.EstimatedBudget, i.SupportingDocuments, i.Remarks))
+                i.SourceOfFunds, i.EstimatedBudget, i.SupportingDocuments, i.Remarks,
+                i.FundingSourceCode))
             .ToList(),
             ppmp.CreatedOnUtc,
             ppmp.CreatedBy,
@@ -42,6 +43,7 @@ internal static class PpmpMapper
         new(r.GeneralDescription, r.ProjectType, r.Quantity, r.Unit,
             r.ModeOfProcurement, r.PreProcurementConference,
             r.ProcurementStart, r.ProcurementEnd, r.ExpectedDelivery,
-            r.SourceOfFunds, r.EstimatedBudget, r.SupportingDocuments, r.Remarks);
+            r.SourceOfFunds, r.EstimatedBudget, r.SupportingDocuments, r.Remarks,
+            r.FundingSourceCode);
 }
 

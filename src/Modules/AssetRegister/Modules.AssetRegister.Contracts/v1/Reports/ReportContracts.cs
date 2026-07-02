@@ -117,11 +117,27 @@ public sealed record RegSpiRowDto(
     decimal Amount,
     string? ResponsibilityCenterCode);
 
+/// <summary>Rows for one SE classification (e.g. "ICT Equipment") within a fund cluster, with a subtotal.</summary>
+public sealed record RegSpiClassificationGroupDto(
+    string? PropertyClass,
+    string ClassificationName,
+    IReadOnlyCollection<RegSpiRowDto> Rows,
+    int TotalItems,
+    decimal TotalAmount);
+
+/// <summary>One fund cluster's classifications, matching the COA Annex A.4 per-sheet scoping (Fund Cluster × SE classification).</summary>
+public sealed record RegSpiFundClusterGroupDto(
+    string FundCluster,
+    IReadOnlyCollection<RegSpiClassificationGroupDto> Classifications,
+    int TotalItems,
+    decimal TotalAmount);
+
 public sealed record RegSpiReportDto(
     DateOnly AsOfDate,
-    AssetType? AssetType,
     Guid? CustodianId,
-    IReadOnlyCollection<RegSpiRowDto> Rows,
+    string? FundCluster,
+    string? PropertyClass,
+    IReadOnlyCollection<RegSpiFundClusterGroupDto> Groups,
     int TotalItems,
     decimal TotalAmount);
 
@@ -192,7 +208,12 @@ public sealed record GetPhysicalCountReportQuery(Guid SessionId, AssetType? Asse
 public sealed record GetRegSpiReportQuery(
     DateOnly? AsOfDate = null,
     AssetType? AssetType = null,
-    Guid? CustodianId = null) : IQuery<RegSpiReportDto>;
+    Guid? CustodianId = null,
+    string? FundCluster = null,
+    string? PropertyClass = null) : IQuery<RegSpiReportDto>;
+
+/// <summary>Distinct fund clusters present on active SE-ICS accountabilities — populates the RegSPI filter dropdown.</summary>
+public sealed record GetRegSpiFundClustersQuery() : IQuery<IReadOnlyList<string>>;
 
 public sealed record GetIncidentReportDocumentQuery(Guid IncidentReportId) : IQuery<IncidentReportDocumentDto?>;
 

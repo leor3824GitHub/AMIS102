@@ -14,9 +14,9 @@ internal static class PrintRegSpiEndpoint
     {
         endpoints.MapGet("/regspi/pdf",
             (IMediator mediator, CancellationToken ct,
-             DateOnly? asOfDate, AssetType? assetType, Guid? custodianId,
+             DateOnly? asOfDate, AssetType? assetType, Guid? custodianId, string? fundCluster, string? propertyClass,
              string? pageWidth, string? orientation, double? marginMm) =>
-                PrintAsync(asOfDate, assetType, custodianId, mediator, pageWidth, orientation, marginMm, ct))
+                PrintAsync(asOfDate, assetType, custodianId, fundCluster, propertyClass, mediator, pageWidth, orientation, marginMm, ct))
             .WithName("QuestPdfReporting_PrintRegSpi")
             .WithSummary("Generate the RegSPI (Registry of Semi-Expendable Property Issued) PDF")
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
@@ -24,14 +24,14 @@ internal static class PrintRegSpiEndpoint
     }
 
     private static async Task<IResult> PrintAsync(
-        DateOnly? asOfDate, AssetType? assetType, Guid? custodianId, IMediator mediator,
+        DateOnly? asOfDate, AssetType? assetType, Guid? custodianId, string? fundCluster, string? propertyClass, IMediator mediator,
         string? pageWidth, string? orientation, double? marginMm, CancellationToken ct)
     {
         var paperSize = (pageWidth ?? "a4").ToLowerInvariant();
         var orient = (orientation ?? "landscape").ToLowerInvariant() == "portrait" ? "portrait" : "landscape";
         var margin = marginMm is > 0 ? marginMm.Value : 12d;
 
-        var bytes = await mediator.Send(new PrintRegSpiQuery(asOfDate, assetType, custodianId, paperSize, orient, margin), ct);
+        var bytes = await mediator.Send(new PrintRegSpiQuery(asOfDate, assetType, custodianId, fundCluster, propertyClass, paperSize, orient, margin), ct);
         return TypedResults.File(bytes, "application/pdf", "RegSPI.pdf");
     }
 }

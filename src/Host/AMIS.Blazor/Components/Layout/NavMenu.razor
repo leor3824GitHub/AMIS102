@@ -177,12 +177,27 @@
                                 Icon="@Icons.Material.Outlined.Assessment">
                         RPI (PPE Issued)
                     </MudNavLink>
+                    <MudNavLink Href="/asset-register/reports/regspi" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.MenuBook">
+                        RegSPI (SE Registry)
+                    </MudNavLink>
                 }
                 @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View))
                 {
                     <MudNavLink Href="/asset-register/reports/ptr" Match="NavLinkMatch.Prefix"
                                 Icon="@Icons.Material.Outlined.SwapHoriz">
                         PTR (Property Transfer)
+                    </MudNavLink>
+                }
+                @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Assets.View))
+                {
+                    <MudNavLink Href="/asset-register/reports/pc" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.CreditCard">
+                        PC (Property Card)
+                    </MudNavLink>
+                    <MudNavLink Href="/asset-register/reports/spc" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.CreditCard">
+                        SPC (SE Property Card)
                     </MudNavLink>
                 }
             </MudNavGroup>
@@ -318,6 +333,14 @@
             <MudNavLink Href="/master-data/modes-of-procurement" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Rule">
                 Modes of Procurement
+            </MudNavLink>
+            <MudNavLink Href="/master-data/fund-clusters" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.AccountBalanceWallet">
+                Fund Clusters
+            </MudNavLink>
+            <MudNavLink Href="/master-data/funding-source-codes" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.Numbers">
+                Funding Source Codes
             </MudNavLink>
             <MudNavLink Href="/master-data/report-signatories" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Draw">

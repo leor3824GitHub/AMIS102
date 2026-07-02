@@ -308,6 +308,150 @@ namespace AMIS.Playground.Migrations.PostgreSQL.MasterData
                     b.ToTable("EmployeeProfiles", "masterdata");
                 });
 
+            modelBuilder.Entity("AMIS.Modules.MasterData.Domain.FundCluster", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("FundClusters", "masterdata");
+                });
+
+            modelBuilder.Entity("AMIS.Modules.MasterData.Domain.FundingSourceCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgencyName")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Authorization")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DepartmentName")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("FinancingSource")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("FundCategory")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("FundClusterCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("FundSubCategory")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("FundClusterCode");
+
+                    b.ToTable("FundingSourceCodes", "masterdata");
+                });
+
             modelBuilder.Entity("AMIS.Modules.MasterData.Domain.ModeOfProcurement", b =>
                 {
                     b.Property<Guid>("Id")

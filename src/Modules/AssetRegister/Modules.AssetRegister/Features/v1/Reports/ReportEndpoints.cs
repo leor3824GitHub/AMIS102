@@ -40,6 +40,12 @@ public static class ReportEndpoints
             .Produces<RegSpiReportDto>()
             .RequirePermission(AssetRegisterPermissions.Accountability.View);
 
+        endpoints.MapGet("/regspi/fund-clusters", HandleRegSpiFundClusters)
+            .WithModuleName<GetRegSpiFundClustersQuery>()
+            .WithSummary("List distinct fund clusters available for the RegSPI filter")
+            .Produces<IReadOnlyList<string>>()
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
+
         endpoints.MapGet("/rspi", HandleRspiReport)
             .WithModuleName<GetRspiReportQuery>()
             .WithSummary("Generate RSPI (Report of Semi-Expendable Property Issued) — from ICS accountabilities")
@@ -96,9 +102,17 @@ public static class ReportEndpoints
         DateOnly? asOfDate,
         AssetType? assetType,
         Guid? custodianId,
+        string? fundCluster,
+        string? propertyClass,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetRegSpiReportQuery(asOfDate, assetType, custodianId), cancellationToken);
+        var result = await mediator.Send(new GetRegSpiReportQuery(asOfDate, assetType, custodianId, fundCluster, propertyClass), cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> HandleRegSpiFundClusters(IMediator mediator, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetRegSpiFundClustersQuery(), cancellationToken);
         return TypedResults.Ok(result);
     }
 

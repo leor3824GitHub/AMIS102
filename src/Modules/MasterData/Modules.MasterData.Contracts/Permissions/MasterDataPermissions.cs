@@ -98,4 +98,20 @@ public static class MasterDataPermissions
         public const string Update = "Permissions.MasterData.PropertyClasses.Update";
         public const string Delete = "Permissions.MasterData.PropertyClasses.Delete";
     }
+
+    public static class FundClusters
+    {
+        public const string View = "Permissions.MasterData.FundClusters.View";
+        public const string Create = "Permissions.MasterData.FundClusters.Create";
+        public const string Update = "Permissions.MasterData.FundClusters.Update";
+        public const string Delete = "Permissions.MasterData.FundClusters.Delete";
+    }
+
+    public static class FundingSourceCodes
+    {
+        public const string View = "Permissions.MasterData.FundingSourceCodes.View";
+        public const string Create = "Permissions.MasterData.FundingSourceCodes.Create";
+        public const string Update = "Permissions.MasterData.FundingSourceCodes.Update";
+        public const string Delete = "Permissions.MasterData.FundingSourceCodes.Delete";
+    }
 }

@@ -1,0 +1,249 @@
+@page "/asset-register/reports/regspi"
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services.AssetRegister
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+@inject IAssetRegisterReportsClient ReportsClient
+@inject ILookupClient LookupClient
+@inject IPropertyClassClient PropertyClassClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Registry of Semi-Expendable Property Issued (RegSPI)"
+               Description="Semi-expendable property on issue via ICS as at a given date — grouped by Fund Cluster and SE classification (COA Annex A.4)." />
+
+@if (!_canView)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">You don't have permission to view this report.</MudAlert>
+}
+else
+{
+    <MudCard Elevation="1" Class="mb-4">
+        <MudCardContent>
+            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker @bind-Date="_asOf" Label="As of Date" Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <AMISSelect T="string" @bind-Value="_fundCluster"
+                                Label="Fund Cluster (optional — all when empty)" Clearable="@true">
+                        @foreach (var fc in _fundClusters)
+                        {
+                            <MudSelectItem T="string" Value="@fc">@fc</MudSelectItem>
+                        }
+                    </AMISSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <AMISSelect T="string" @bind-Value="_propertyClass"
+                                Label="Classification (optional — all when empty)" Clearable="@true">
+                        @foreach (var c in _classes)
+                        {
+                            <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
+                        }
+                    </AMISSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudAutocomplete T="EmployeeReferenceDto"
+                                     @bind-Value="_custodian"
+                                     SearchFunc="SearchEmployees"
+                                     ToStringFunc="FormatEmployee"
+                                     Label="Custodian (optional — all when empty)" Variant="Variant.Outlined"
+                                     Clearable="true" ResetValueOnEmptyText="true"
+                                     Dense="true" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                    StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_busy">
+                            Generate Report
+                        </AMISButton>
+                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync"
+                                    Disabled="_busy || _report is null || _report.TotalItems == 0">
+                            Download PDF
+                        </AMISButton>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    @if (_busy)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+    }
+    else if (_report is not null)
+    {
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_report.TotalItems == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">No semi-expendable property on issue for the selected filters.</MudAlert>
+                }
+                else
+                {
+                    @foreach (var fc in _report.Groups)
+                    {
+                        <MudText Typo="Typo.h6" Class="mt-2">Fund Cluster: @(string.IsNullOrWhiteSpace(fc.FundCluster) ? "(Unspecified)" : fc.FundCluster)</MudText>
+
+                        @foreach (var cls in fc.Classifications)
+                        {
+                            <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">Semi-Expendable Property: @cls.ClassificationName</MudText>
+                            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>ICS No.</th>
+                                        <th>Date Issued</th>
+                                        <th>Custodian</th>
+                                        <th>Property No.</th>
+                                        <th>Description</th>
+                                        <th>Unit</th>
+                                        <th class="text-right">Qty</th>
+                                        <th class="text-right">Unit Cost (@Money.Symbol)</th>
+                                        <th class="text-right">Amount (@Money.Symbol)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ var i = 1; }
+                                    @foreach (var r in cls.Rows)
+                                    {
+                                        <tr>
+                                            <td>@i</td>
+                                            <td>@r.DocumentNo</td>
+                                            <td>@r.IssuedOn.ToString("yyyy-MM-dd")</td>
+                                            <td>@r.CustodianName</td>
+                                            <td>@r.PropertyNo</td>
+                                            <td>@r.Description</td>
+                                            <td>@r.Unit</td>
+                                            <td class="text-right">@r.Quantity</td>
+                                            <td class="text-right">@r.UnitCost.ToString("N2")</td>
+                                            <td class="text-right">@r.Amount.ToString("N2")</td>
+                                        </tr>
+                                        i++;
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-1 mb-2">
+                                <MudText Typo="Typo.body2">
+                                    Subtotal: @cls.TotalItems item(s) &nbsp;·&nbsp; @Money.Symbol@cls.TotalAmount.ToString("N2")
+                                </MudText>
+                            </MudStack>
+                        }
+
+                        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-3">
+                            <MudText Typo="Typo.subtitle2">
+                                Fund Cluster total: @fc.TotalItems item(s) &nbsp;·&nbsp; @Money.Symbol@fc.TotalAmount.ToString("N2")
+                            </MudText>
+                        </MudStack>
+                    }
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" Justify="Justify.FlexEnd">
+                        <MudText Typo="Typo.subtitle1">
+                            <b>Grand total:</b> @_report.TotalItems item(s) &nbsp;·&nbsp; @Money.Symbol@_report.TotalAmount.ToString("N2")
+                        </MudText>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    }
+}
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private DateTime? _asOf;
+    private string? _fundCluster;
+    private string? _propertyClass;
+    private IReadOnlyList<string> _fundClusters = [];
+    private IReadOnlyList<PropertyClassDto> _classes = [];
+    private EmployeeReferenceDto? _custodian;
+    private RegSpiReportDto? _report;
+
+    private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _asOf = DateTime.Today;
+        if (!_canView) return;
+        try
+        {
+            _fundClusters = await ReportsClient.GetRegSpiFundClustersAsync();
+        }
+        catch
+        {
+            _fundClusters = [];
+        }
+        try
+        {
+            _classes = await PropertyClassClient.GetTreeAsync() ?? [];
+        }
+        catch
+        {
+            _classes = [];
+        }
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? value) => value is { } v ? DateOnly.FromDateTime(v) : null;
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var asOf = ToDateOnly(_asOf) ?? DateOnly.FromDateTime(DateTime.Today);
+            _report = await ReportsClient.GetRegSpiReportAsync(asOf, _custodian?.Id, _fundCluster, _propertyClass);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_report is null || _report.TotalItems == 0) return;
+        try
+        {
+            var bytes = await ReportsClient.GetRegSpiPdfAsync(ToDateOnly(_asOf), _custodian?.Id, _fundCluster, _propertyClass);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+}

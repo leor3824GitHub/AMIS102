@@ -8,6 +8,8 @@ public sealed record PrintRegSpiQuery(
     DateOnly? AsOfDate,
     AssetType? AssetType,
     Guid? CustodianId,
+    string? FundCluster = null,
+    string? PropertyClass = null,
     string PaperSize = "a4",
     string Orientation = "landscape",
     double Margin = 12d) : IQuery<byte[]>;

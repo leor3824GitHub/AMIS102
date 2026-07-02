@@ -14,6 +14,8 @@ internal static class OwnedTypeConfigurations
         builder.Property(x => x.PropertyNo).IsRequired().HasMaxLength(32).HasColumnName($"{columnPrefix}_PropertyNo");
         builder.Property(x => x.Description).IsRequired().HasMaxLength(500).HasColumnName($"{columnPrefix}_Description");
         builder.Property(x => x.AssetType).HasColumnName($"{columnPrefix}_AssetType");
+        builder.Property(x => x.PropertyClass).HasMaxLength(16).HasColumnName($"{columnPrefix}_PropertyClass");
+        builder.Property(x => x.CategoryCode).HasMaxLength(16).HasColumnName($"{columnPrefix}_CategoryCode");
         builder.Property(x => x.UnitCost).HasPrecision(18, 2).HasColumnName($"{columnPrefix}_UnitCost");
         builder.Property(x => x.Unit).IsRequired().HasMaxLength(64).HasColumnName($"{columnPrefix}_Unit");
         builder.Property(x => x.EstimatedUsefulLifeYears).HasColumnName($"{columnPrefix}_EstimatedUsefulLifeYears");

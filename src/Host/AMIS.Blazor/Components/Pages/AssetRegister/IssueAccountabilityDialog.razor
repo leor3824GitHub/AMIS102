@@ -1,7 +1,9 @@
 @using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using AMIS.Blazor.ApiClient
 @inject IArAccountabilityClient Client
 @inject IAssetRegistryClient AssetClient
+@inject IFundClusterClient FundClusterClient
 @inject ILookupClient LookupClient
 @inject ILocationLookupClient LocationClient
 @inject ISnackbar Snackbar
@@ -37,8 +39,24 @@
                                    HelperText="@(_form.Type == AccountabilityType.SE_ICS ? "ICS (SE) requires an expiry date." : "Expires three (3) years after the issued date.")" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
-                                  Required="true" MaxLength="64" Dense="true" Margin="Margin.Dense" />
+                    @if (_fundClusterDerived)
+                    {
+                        <MudTextField Value="@_derivedClusterDisplay" Label="Fund Cluster" Variant="Variant.Outlined"
+                                      ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                                      HelperText="Auto-filled from the selected items' fund cluster." />
+                    }
+                    else
+                    {
+                        <MudSelect Value="_form.FundCluster" T="string" Label="Fund Cluster" Variant="Variant.Outlined"
+                                   Required="true" Dense="true" Margin="Margin.Dense" Clearable="true"
+                                   ValueChanged="OnFundClusterManualChanged"
+                                   HelperText="@(_fundClusterConflict ? _fundClusterConflictMessage : "Select the applicable fund cluster.")">
+                            @foreach (var c in _fundClusters)
+                            {
+                                <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudAutocomplete T="EmployeeReferenceDto"
@@ -144,6 +162,16 @@
     private bool _issuing;
     private readonly IssueForm _form = new();
 
+    // Fund cluster is a property of the funding transaction, not entered by hand: every asset
+    // already carries its FundCluster (procurement → receiving → AssetRegistry). We derive it from
+    // the attached assets. Single shared cluster ⇒ read-only auto-fill; assets spanning multiple
+    // clusters ⇒ manual select + warning; no cluster-bearing items ⇒ manual select fallback.
+    private List<FundClusterDto> _fundClusters = [];
+    private bool _fundClusterDerived;
+    private bool _fundClusterConflict;
+    private string? _fundClusterConflictMessage;
+    private string? _derivedClusterDisplay;
+
     // Best-effort preview of the document number the server will mint at save. PAR is purely
     // date-based; ICS uses the SPLV (low-valued) / SPHV (high-valued) counter — the prefix is
     // inferred from the attached assets (any high-valued line ⇒ SPHV), so the ICS preview only
@@ -170,6 +198,8 @@
             _form.Type = InitialType.Value;
         ApplyExpiryPolicy();
 
+        await LoadFundClustersAsync();
+
         if (PreselectedAssets is { Count: > 0 })
         {
             foreach (var summary in PreselectedAssets)
@@ -183,7 +213,24 @@
         if (_form.Items.Count == 0)
             _form.Items.Add(new IssueItemRow());
 
+        RecomputeFundCluster();
         await PeekNumberAsync();
+    }
+
+    private async Task LoadFundClustersAsync()
+    {
+        try
+        {
+            var response = await FundClusterClient.SearchAsync(pageSize: 200);
+            _fundClusters = response?.Items?
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code, StringComparer.Ordinal)
+                .ToList() ?? [];
+        }
+        catch
+        {
+            _fundClusters = [];
+        }
     }
 
     // Re-previews the next document number for the current type, date and (for ICS) item mix.
@@ -223,6 +270,7 @@
             item.Location = null;
             item.LookupError = null;
         }
+        RecomputeFundCluster();
         await PeekNumberAsync();
     }
 
@@ -250,6 +298,7 @@
     private async Task RemoveItem(int idx)
     {
         if (_form.Items.Count > 1) _form.Items.RemoveAt(idx);
+        RecomputeFundCluster();
         await PeekNumberAsync();
     }
 
@@ -289,6 +338,7 @@
         }
 
         await AttachAssetAsync(row, summary.Id);
+        RecomputeFundCluster();
         await PeekNumberAsync();
     }
 
@@ -375,6 +425,7 @@
             await AttachAssetAsync(row, summary.Id);
         }
         if (_form.Items.Count == 0) _form.Items.Add(new IssueItemRow());
+        RecomputeFundCluster();
         await PeekNumberAsync();
     }
 
@@ -488,6 +539,53 @@
                 UserProfileState.EmployeeId,
                 UserProfileState.EmployeeFullName.Trim(),
                 string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim());
+
+    // Derives the fund cluster from the assets attached to the form. Called after any change to the
+    // item set. Assets store the cluster code (e.g. "01"); we resolve the name for display only.
+    private void RecomputeFundCluster()
+    {
+        var wasDerived = _fundClusterDerived;
+
+        var codes = _form.Items
+            .Where(i => i.Asset is not null && !string.IsNullOrWhiteSpace(i.Asset!.FundCluster))
+            .Select(i => i.Asset!.FundCluster.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (codes.Count == 1)
+        {
+            _form.FundCluster = codes[0];
+            _fundClusterDerived = true;
+            _fundClusterConflict = false;
+            _fundClusterConflictMessage = null;
+            _derivedClusterDisplay = ClusterDisplay(codes[0]);
+        }
+        else if (codes.Count > 1)
+        {
+            _fundClusterDerived = false;
+            _fundClusterConflict = true;
+            _fundClusterConflictMessage =
+                $"Selected items span multiple fund clusters ({string.Join(", ", codes)}). Pick the one that applies.";
+            _derivedClusterDisplay = null;
+        }
+        else
+        {
+            _fundClusterDerived = false;
+            _fundClusterConflict = false;
+            _fundClusterConflictMessage = null;
+            _derivedClusterDisplay = null;
+            // Only clear a previously auto-filled value; keep a manual choice intact.
+            if (wasDerived) _form.FundCluster = null;
+        }
+    }
+
+    private string ClusterDisplay(string code)
+    {
+        var match = _fundClusters.FirstOrDefault(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase));
+        return match is null ? code : $"{match.Code} — {match.Name}";
+    }
+
+    private void OnFundClusterManualChanged(string? value) => _form.FundCluster = value;
 
     private void Cancel() => MudDialog.Cancel();
 

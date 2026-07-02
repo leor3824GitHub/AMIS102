@@ -13,7 +13,7 @@ public sealed class PrintRegSpiQueryHandler(IMediator mediator)
         ArgumentNullException.ThrowIfNull(query);
 
         var report = await mediator.Send(
-            new GetRegSpiReportQuery(query.AsOfDate, query.AssetType, query.CustodianId), cancellationToken).ConfigureAwait(false);
+            new GetRegSpiReportQuery(query.AsOfDate, query.AssetType, query.CustodianId, query.FundCluster, query.PropertyClass), cancellationToken).ConfigureAwait(false);
 
         var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
 

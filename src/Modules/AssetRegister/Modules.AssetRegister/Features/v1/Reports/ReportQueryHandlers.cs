@@ -1,6 +1,7 @@
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -172,7 +173,7 @@ public sealed class GetPhysicalCountReportQueryHandler(AssetRegisterDbContext db
     }
 }
 
-public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db)
+public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db, IMediator mediator)
     : IQueryHandler<GetRegSpiReportQuery, RegSpiReportDto>
 {
     public async ValueTask<RegSpiReportDto> Handle(GetRegSpiReportQuery query, CancellationToken cancellationToken)
@@ -181,53 +182,177 @@ public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db)
 
         var asOfDate = query.AsOfDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
-        // Filter by custodian in the database — a RegSPI is almost always pulled for one custodian, so
-        // materializing the whole active register and filtering in memory would over-fetch dramatically.
+        // RegSPI (COA Annex A.4) is the SE registry — sourced from ICS accountabilities only. Cancel()
+        // leaves line statuses Active, so document Status must be filtered here too: Active + Renewed,
+        // never Cancelled/PendingAcceptance. (See RSPI handler note on Renewed double-counting.)
         var accountabilitiesQuery = db.PropertyAccountabilities
             .AsNoTracking()
             .Include(a => a.Lines)
+            .Where(a => a.AccountabilityType == AccountabilityType.SE_ICS)
+            .Where(a => a.Status == AccountabilityStatus.Active || a.Status == AccountabilityStatus.Renewed)
             .Where(a => a.IssuedOn <= asOfDate);
 
         if (query.CustodianId is not null)
             accountabilitiesQuery = accountabilitiesQuery.Where(a => a.ReceivedBy.EmployeeId == query.CustodianId);
 
+        if (!string.IsNullOrWhiteSpace(query.FundCluster))
+            accountabilitiesQuery = accountabilitiesQuery.Where(a => a.FundCluster == query.FundCluster);
+
         var accountabilities = await accountabilitiesQuery
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var rows = accountabilities
+        // Flatten active lines. FundCluster comes from the accountability; the SE classification
+        // (PropertyClass) is frozen on the line snapshot. Lines issued before classification snapshotting
+        // carry null and are back-filled from the master AssetRegistry below.
+        var flat = accountabilities
             .SelectMany(a => a.Lines
                 .Where(l => l.LineStatus == AccountabilityLineStatus.Active)
                 .Where(l => query.AssetType is null || l.Snapshot.AssetType == query.AssetType)
-                .Select(l => new RegSpiRowDto(
-                    a.Id,
-                    a.DocumentNo,
-                    a.IssuedOn,
-                    a.ReceivedBy.EmployeeId,
-                    a.ReceivedBy.PrintedName,
-                    a.ReceivedBy.Designation ?? string.Empty,
-                    l.Id,
-                    l.AssetRegistryId,
-                    l.Snapshot.PropertyNo,
-                    l.Snapshot.Description,
-                    l.Snapshot.AssetType,
-                    l.Snapshot.Unit,
-                    l.Snapshot.UnitCost,
-                    l.IssuedQty,
-                    l.Snapshot.UnitCost * l.IssuedQty,
-                    l.SnapshotResponsibilityCenterCode)))
-            .OrderBy(r => r.CustodianName)
-            .ThenBy(r => r.DocumentNo)
-            .ThenBy(r => r.PropertyNo)
+                .Select(l => new FlatRegSpiRow(
+                    a.FundCluster,
+                    l.Snapshot.PropertyClass,
+                    new RegSpiRowDto(
+                        a.Id,
+                        a.DocumentNo,
+                        a.IssuedOn,
+                        a.ReceivedBy.EmployeeId,
+                        a.ReceivedBy.PrintedName,
+                        a.ReceivedBy.Designation ?? string.Empty,
+                        l.Id,
+                        l.AssetRegistryId,
+                        l.Snapshot.PropertyNo,
+                        l.Snapshot.Description,
+                        l.Snapshot.AssetType,
+                        l.Snapshot.Unit,
+                        l.Snapshot.UnitCost,
+                        l.IssuedQty,
+                        l.Snapshot.UnitCost * l.IssuedQty,
+                        l.SnapshotResponsibilityCenterCode))))
+            .ToList();
+
+        // Legacy fallback: resolve PropertyClass from the master AssetRegistry for snapshots that predate
+        // classification snapshotting (null code). One batched lookup keyed by AssetRegistryId.
+        var missingIds = flat
+            .Where(f => string.IsNullOrWhiteSpace(f.PropertyClass))
+            .Select(f => f.Row.AssetRegistryId)
+            .Distinct()
+            .ToList();
+        if (missingIds.Count > 0)
+        {
+            var byId = await db.AssetRegistries
+                .AsNoTracking()
+                .Where(ar => missingIds.Contains(ar.Id))
+                .Select(ar => new { ar.Id, ar.PropertyClass })
+                .ToDictionaryAsync(x => x.Id, x => x.PropertyClass, cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var f in flat)
+                if (string.IsNullOrWhiteSpace(f.PropertyClass) && byId.TryGetValue(f.Row.AssetRegistryId, out var pc))
+                    f.PropertyClass = pc;
+        }
+
+        // Optional classification filter — applied after fallback so legacy rows are filterable too.
+        if (!string.IsNullOrWhiteSpace(query.PropertyClass))
+            flat = flat
+                .Where(f => string.Equals(f.PropertyClass, query.PropertyClass, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+        var nameByCode = await ResolveClassificationNamesAsync(cancellationToken).ConfigureAwait(false);
+
+        // Group Fund Cluster → SE classification, matching the COA Annex A.4 per-sheet scoping.
+        var groups = flat
+            .GroupBy(f => f.FundCluster)
+            .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(fcGroup =>
+            {
+                var classes = fcGroup
+                    .GroupBy(f => f.PropertyClass ?? string.Empty)
+                    .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(clsGroup =>
+                    {
+                        var code = string.IsNullOrWhiteSpace(clsGroup.Key) ? null : clsGroup.Key;
+                        var groupRows = clsGroup
+                            .Select(f => f.Row)
+                            .OrderBy(r => r.CustodianName)
+                            .ThenBy(r => r.DocumentNo)
+                            .ThenBy(r => r.PropertyNo)
+                            .ToList();
+                        return new RegSpiClassificationGroupDto(
+                            code,
+                            ResolveName(code, nameByCode),
+                            groupRows,
+                            groupRows.Count,
+                            groupRows.Sum(r => r.Amount));
+                    })
+                    .ToList();
+
+                return new RegSpiFundClusterGroupDto(
+                    fcGroup.Key,
+                    classes,
+                    classes.Sum(c => c.TotalItems),
+                    classes.Sum(c => c.TotalAmount));
+            })
             .ToList();
 
         return new RegSpiReportDto(
             asOfDate,
-            query.AssetType,
             query.CustodianId,
-            rows,
-            rows.Count,
-            rows.Sum(r => r.Amount));
+            query.FundCluster,
+            query.PropertyClass,
+            groups,
+            groups.Sum(g => g.TotalItems),
+            groups.Sum(g => g.TotalAmount));
+    }
+
+    private static string ResolveName(string? code, IReadOnlyDictionary<string, string> nameByCode)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return "(Unclassified)";
+
+        return nameByCode.TryGetValue(code, out var name) && !string.IsNullOrWhiteSpace(name) ? name : code;
+    }
+
+    // Friendly classification names are resolved live from the MasterData PropertyClass library (not frozen
+    // on the snapshot): names are cosmetic and rename rarely, while the frozen code is the stable grouping key.
+    private async ValueTask<IReadOnlyDictionary<string, string>> ResolveClassificationNamesAsync(CancellationToken cancellationToken)
+    {
+        var tree = await mediator.Send(new GetPropertyClassTreeQuery(), cancellationToken).ConfigureAwait(false);
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var c in tree)
+            map[c.Code] = c.Name;
+        return map;
+    }
+
+    private sealed class FlatRegSpiRow(string fundCluster, string? propertyClass, RegSpiRowDto row)
+    {
+        public string FundCluster { get; } = fundCluster;
+        public string? PropertyClass { get; set; } = propertyClass;
+        public RegSpiRowDto Row { get; } = row;
+    }
+}
+
+public sealed class GetRegSpiFundClustersQueryHandler(AssetRegisterDbContext db)
+    : IQueryHandler<GetRegSpiFundClustersQuery, IReadOnlyList<string>>
+{
+    public async ValueTask<IReadOnlyList<string>> Handle(GetRegSpiFundClustersQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        // Only fund clusters that can actually appear on a RegSPI — same source set as the report itself
+        // (SE-ICS accountabilities that are Active or Renewed). Keeps the filter dropdown free of stale values.
+        var clusters = await db.PropertyAccountabilities
+            .AsNoTracking()
+            .Where(a => a.AccountabilityType == AccountabilityType.SE_ICS)
+            .Where(a => a.Status == AccountabilityStatus.Active || a.Status == AccountabilityStatus.Renewed)
+            .Where(a => a.FundCluster != null && a.FundCluster != "")
+            .Select(a => a.FundCluster)
+            .Distinct()
+            .OrderBy(fc => fc)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return clusters;
     }
 }
 
@@ -268,9 +393,13 @@ public sealed class GetRspiReportQueryHandler(AssetRegisterDbContext db, IMediat
             .SumAsync(cancellationToken)
             .ConfigureAwait(false)) ?? 0m;
 
+        // Clamp via long math — (pageNumber - 1) * pageSize overflows int for crafted query params
+        // (e.g. pageNumber=3&pageSize=int.MaxValue), which would produce a negative SQL OFFSET.
+        var skip = (int)Math.Min((long)(pageNumber - 1) * pageSize, int.MaxValue);
+
         var pageRows = await baseQuery
             .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo)
-            .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+            .Skip(skip).Take(pageSize)
             .Select(x => new
             {
                 x.a.Id,
@@ -362,9 +491,12 @@ public sealed class GetRpiReportQueryHandler(AssetRegisterDbContext db, IMediato
             .SumAsync(cancellationToken)
             .ConfigureAwait(false)) ?? 0m;
 
+        // Clamp via long math — see RSPI handler note on int overflow for crafted query params.
+        var skip = (int)Math.Min((long)(pageNumber - 1) * pageSize, int.MaxValue);
+
         var pageRows = await baseQuery
             .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo)
-            .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+            .Skip(skip).Take(pageSize)
             .Select(x => new
             {
                 x.a.Id,

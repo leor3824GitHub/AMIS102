@@ -28,6 +28,7 @@ internal sealed class PpmpItemRequestValidator : AbstractValidator<PpmpItemReque
         RuleFor(x => x.ProcurementEnd).NotEmpty().Matches(@"^\d{2}/\d{4}$").WithMessage("ProcurementEnd must be MM/YYYY.");
         RuleFor(x => x.ExpectedDelivery).NotEmpty().Matches(@"^\d{2}/\d{4}$").WithMessage("ExpectedDelivery must be MM/YYYY.");
         RuleFor(x => x.SourceOfFunds).NotEmpty().MaximumLength(256);
+        RuleFor(x => x.FundingSourceCode).MaximumLength(32);
     }
 }
 

@@ -1,0 +1,224 @@
+@page "/master-data/fund-clusters"
+@implements IDisposable
+@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
+@using AMIS.Modules.MasterData.Contracts.Permissions
+@using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Blazor.ApiClient
+@inject IFundClusterClient FundClusterClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Fund Clusters" Description="National COA/UACS fund clusters used on ICS/PAR and procurement planning">
+    <ActionContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
+            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search clusters..."
+                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await SearchAsync())"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="SearchAsync">
+                Search
+            </MudButton>
+            @if (_canCreate)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                    New
+                </MudButton>
+            }
+        </MudStack>
+    </ActionContent>
+</AMISPageHeader>
+
+<div class="mt-4">
+    <MudGrid Spacing="2">
+        <MudItem xs="12">
+            <MudCard Class="AMIS-card">
+                <MudCardContent>
+                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h6" Class="flex-grow-1">Fund Cluster List</MudText>
+                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+                    </MudStack>
+
+                    @if (_isLoading)
+                    {
+                        <MudProgressLinear Indeterminate="true" />
+                    }
+                    else if (_items.Any())
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in _items.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
+                                {
+                                    <tr>
+                                        <td>@item.Code</td>
+                                        <td>@item.Name</td>
+                                        <td>@(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)</td>
+                                        <td>
+                                            <MudChip T="string" Size="Size.Small" Color="@(item.IsActive ? Color.Success : Color.Default)">
+                                                @(item.IsActive ? "Active" : "Inactive")
+                                            </MudChip>
+                                        </td>
+                                        <td>
+                                            <MudStack Row="true" Spacing="1">
+                                                @if (_canUpdate)
+                                                {
+                                                    <MudTooltip Text="Edit cluster">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                                       Color="Color.Primary" OnClick="@(() => OpenEditDialog(item))" />
+                                                    </MudTooltip>
+                                                }
+                                                @if (_canDelete)
+                                                {
+                                                    <MudTooltip Text="Delete cluster">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(item.Id))" />
+                                                    </MudTooltip>
+                                                }
+                                            </MudStack>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        @if (_items.Count > PageSize)
+                        {
+                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_items.Count / (double)PageSize))"
+                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                        }
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">No fund clusters yet. Create one to get started.</MudAlert>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</div>
+
+@code {
+    private const int PageSize = 10;
+    private List<FundClusterDto> _items = [];
+    private List<FundClusterDto> _allItems = [];
+    private bool _isLoading;
+    private string _searchKeyword = string.Empty;
+    private string _statusFilter = "All";
+    private int _pageIndex = 1;
+
+    private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.FundClusters.Create);
+    private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.FundClusters.Update);
+    private bool _canDelete => UserProfileState.Permissions.Contains(MasterDataPermissions.FundClusters.Delete);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserProfileState.OnProfileChanged += OnProfileChanged;
+        await LoadAsync();
+    }
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task LoadAsync(string? keyword = null)
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await FundClusterClient.SearchAsync(keyword: keyword, pageSize: 200);
+            _allItems = response?.Items?.ToList() ?? [];
+            ApplyLocalFilters();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load fund clusters: {ex.Message}", Severity.Error);
+            _items = [];
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchAsync() => await LoadAsync(_searchKeyword);
+
+    private async Task OpenCreateDialog()
+    {
+        if (!_canCreate) return;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<FundClusterFormDialog>("Create Fund Cluster", options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync(_searchKeyword);
+        }
+    }
+
+    private async Task OpenEditDialog(FundClusterDto item)
+    {
+        var parameters = new DialogParameters { ["Existing"] = item };
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<FundClusterFormDialog>($"Edit {item.Code}", parameters, options);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAsync(_searchKeyword);
+        }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync("this fund cluster"))
+            return;
+
+        try
+        {
+            _isLoading = true;
+            await FundClusterClient.DeleteAsync(id);
+            Snackbar.Add("Fund cluster deleted.", Severity.Success);
+            await LoadAsync(_searchKeyword);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OnStatusFilterChanged(string value)
+    {
+        _statusFilter = value;
+        _pageIndex = 1;
+        ApplyLocalFilters();
+    }
+
+    private void ApplyLocalFilters()
+    {
+        IEnumerable<FundClusterDto> query = _allItems;
+
+        if (_statusFilter == "Active")
+            query = query.Where(x => x.IsActive);
+        else if (_statusFilter == "Inactive")
+            query = query.Where(x => !x.IsActive);
+
+        _items = query.OrderBy(x => x.Code).ToList();
+
+        var maxPage = Math.Max(1, (int)Math.Ceiling(_items.Count / (double)PageSize));
+        if (_pageIndex > maxPage)
+            _pageIndex = maxPage;
+    }
+}

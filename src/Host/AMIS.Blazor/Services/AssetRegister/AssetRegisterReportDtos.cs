@@ -54,11 +54,25 @@ public sealed record RegSpiRowDto(
     decimal Amount,
     string? ResponsibilityCenterCode);
 
+public sealed record RegSpiClassificationGroupDto(
+    string? PropertyClass,
+    string ClassificationName,
+    IReadOnlyCollection<RegSpiRowDto> Rows,
+    int TotalItems,
+    decimal TotalAmount);
+
+public sealed record RegSpiFundClusterGroupDto(
+    string FundCluster,
+    IReadOnlyCollection<RegSpiClassificationGroupDto> Classifications,
+    int TotalItems,
+    decimal TotalAmount);
+
 public sealed record RegSpiReportDto(
     DateOnly AsOfDate,
-    AssetType? AssetType,
     Guid? CustodianId,
-    IReadOnlyCollection<RegSpiRowDto> Rows,
+    string? FundCluster,
+    string? PropertyClass,
+    IReadOnlyCollection<RegSpiFundClusterGroupDto> Groups,
     int TotalItems,
     decimal TotalAmount);
 

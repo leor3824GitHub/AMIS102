@@ -274,7 +274,7 @@
                         @if (_canView)
                         {
                             <AMISButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.History"
-                                        OnClick="OpenPropertyCard">Property Card</AMISButton>
+                                        OnClick="OpenPropertyCard">@(_selected.AssetType == AssetType.SE ? "SPC" : "Property Card")</AMISButton>
                         }
                         @if (_selected.AssetType == AssetType.PPE)
                         {
@@ -485,7 +485,8 @@
         if (_selected is null) return Task.CompletedTask;
         var parameters = new DialogParameters<PropertyCardDialog> { { x => x.PropertyNo, _selected.PropertyNo } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
-        return DialogService.ShowAsync<PropertyCardDialog>($"Property Card — {_selected.PropertyNo}", parameters, options);
+        var formTitle = _selected.AssetType == AssetType.SE ? "Semi-Expendable Property Card" : "Property Card";
+        return DialogService.ShowAsync<PropertyCardDialog>($"{formTitle} — {_selected.PropertyNo}", parameters, options);
     }
 
     private Task OpenLedgerCard()

@@ -2,6 +2,7 @@
 @implements IDisposable
 @using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
 @using AMIS.Modules.ProcurementPlanning.Contracts.Permissions
+@using AMIS.Modules.MasterData.Contracts.v1.FundingSourceCodes
 @using AMIS.Framework.Shared.Persistence
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Shared
@@ -9,6 +10,7 @@
 @using System.Security.Claims
 @inject IPpmpClient PpmpClient
 @inject IModeOfProcurementClient ModeOfProcurementClient
+@inject IFundingSourceCodeClient FundingSourceCodeClient
 @inject IOrganizationProfileClient OrgProfileClient
 @inject ILookupClient LookupClient
 @inject AuthenticationStateProvider AuthStateProvider
@@ -87,9 +89,26 @@
                               Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
             </MudItem>
 
-            <MudItem xs="12" sm="9">
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="string" Value="_itemForm.FundingSourceCode" ValueChanged="OnFundingSourceCodeChanged"
+                                 Label="Funding Source (UACS)" Variant="Variant.Outlined"
+                                 SearchFunc="SearchFundingSourceCodes" ResetValueOnEmptyText="true"
+                                 CoerceText="true" Clearable="true"
+                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                                 Placeholder="Search UACS code or category..."
+                                 HelperText="Full UACS code — its first 2 digits are the fund cluster">
+                    <ItemTemplate Context="uacs">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.body2"><strong>@uacs</strong>@FundingSourceSuffix(uacs)</MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="_itemForm.SourceOfFunds" Label="Source of Funds"
-                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" />
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                              HelperText="Auto-filled from the UACS code; editable" />
             </MudItem>
 
             <MudItem xs="12" sm="3" Style="display:flex;align-items:center">
@@ -432,6 +451,12 @@
                                         </td>
                                         <td style="vertical-align:middle">
                                             <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
+                                            @if (!string.IsNullOrWhiteSpace(item.FundingSourceCode))
+                                            {
+                                                <MudTooltip Text="@item.SourceOfFunds">
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-family:monospace">@item.FundingSourceCode</MudText>
+                                                </MudTooltip>
+                                            }
                                         </td>
                                         <td style="vertical-align:middle; text-align:center">
                                             @if (item.PreProcurementConference)
@@ -536,9 +561,60 @@
         public string ProcurementEnd { get; set; } = $"03/{DateTime.Now.Year + 1}";
         public string ExpectedDelivery { get; set; } = $"04/{DateTime.Now.Year + 1}";
         public string SourceOfFunds { get; set; } = "General Fund";
+        // Full UACS funding source code (e.g. 01101101). Its first two digits are the fund cluster
+        // (01 = Regular Agency Fund). Nullable while the picker is optional.
+        public string? FundingSourceCode { get; set; }
         public decimal EstimatedBudget { get; set; }
         public string Remarks { get; set; } = string.Empty;
     }
+
+    // code → dto cache from the funding-source picker, used for item templates and auto-fill.
+    private readonly Dictionary<string, FundingSourceCodeDto> _fundingSourceCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private async Task<IEnumerable<string>> SearchFundingSourceCodes(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var response = await FundingSourceCodeClient.SearchAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                pageSize: 30,
+                cancellationToken: ct);
+            var items = response?.Items ?? [];
+            foreach (var dto in items)
+                _fundingSourceCache[dto.Code] = dto;
+            return items.Select(i => i.Code);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnFundingSourceCodeChanged(string? code)
+    {
+        _itemForm.FundingSourceCode = code;
+        if (!string.IsNullOrWhiteSpace(code) && _fundingSourceCache.TryGetValue(code, out var dto))
+        {
+            // Keep the printed "Source of Funds" column consistent with the chosen UACS code.
+            var label = FirstNonEmpty(dto.FinancingSource, dto.FundCategory, dto.Description);
+            if (!string.IsNullOrWhiteSpace(label))
+                _itemForm.SourceOfFunds = label!;
+        }
+    }
+
+    private string FundingSourceSuffix(string code)
+    {
+        if (_fundingSourceCache.TryGetValue(code, out var dto))
+        {
+            var label = FirstNonEmpty(dto.FundSubCategory, dto.FundCategory, dto.FinancingSource);
+            if (!string.IsNullOrWhiteSpace(label))
+                return $" — {label}";
+        }
+        return string.Empty;
+    }
+
+    private static string? FirstNonEmpty(params string?[] values) =>
+        values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
 
     // -- Lifecycle ----------------------------------------------------
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Create);
@@ -704,6 +780,7 @@
                 ProcurementEnd = i.ProcurementEnd,
                 ExpectedDelivery = i.ExpectedDelivery,
                 SourceOfFunds = i.SourceOfFunds,
+                FundingSourceCode = i.FundingSourceCode,
                 EstimatedBudget = i.EstimatedBudget,
                 Remarks = i.Remarks ?? string.Empty
             }).ToList()
@@ -737,6 +814,7 @@
             ProcurementEnd = src.ProcurementEnd,
             ExpectedDelivery = src.ExpectedDelivery,
             SourceOfFunds = src.SourceOfFunds,
+            FundingSourceCode = src.FundingSourceCode,
             EstimatedBudget = src.EstimatedBudget,
             Remarks = src.Remarks
         };
@@ -778,6 +856,7 @@
             target.ProcurementEnd = _itemForm.ProcurementEnd;
             target.ExpectedDelivery = _itemForm.ExpectedDelivery;
             target.SourceOfFunds = _itemForm.SourceOfFunds;
+            target.FundingSourceCode = _itemForm.FundingSourceCode;
             target.EstimatedBudget = _itemForm.EstimatedBudget;
             target.Remarks = _itemForm.Remarks;
         }
@@ -795,6 +874,7 @@
                 ProcurementEnd = _itemForm.ProcurementEnd,
                 ExpectedDelivery = _itemForm.ExpectedDelivery,
                 SourceOfFunds = _itemForm.SourceOfFunds,
+                FundingSourceCode = _itemForm.FundingSourceCode,
                 EstimatedBudget = _itemForm.EstimatedBudget,
                 Remarks = _itemForm.Remarks
             });
@@ -877,7 +957,7 @@
                 i.ModeOfProcurement, i.PreProcurementConference,
                 i.ProcurementStart, i.ProcurementEnd, i.ExpectedDelivery,
                 i.SourceOfFunds, i.EstimatedBudget,
-                null, i.Remarks)).ToList();
+                null, i.Remarks, i.FundingSourceCode)).ToList();
 
             if (_editing is null)
             {

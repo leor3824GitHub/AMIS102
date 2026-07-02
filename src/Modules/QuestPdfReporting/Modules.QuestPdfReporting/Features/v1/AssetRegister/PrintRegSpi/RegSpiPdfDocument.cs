@@ -47,73 +47,115 @@ internal sealed class RegSpiPdfDocument(
             }
             col.Item().PaddingTop(6).AlignCenter().Text("REGISTRY OF SEMI-EXPENDABLE PROPERTY ISSUED").Bold().FontSize(11);
             col.Item().AlignCenter().Text($"As of {report.AsOfDate:MMMM d, yyyy}").FontSize(8);
+            if (!string.IsNullOrWhiteSpace(report.FundCluster))
+                col.Item().AlignCenter().Text($"Fund Cluster: {report.FundCluster}").FontSize(8);
             col.Item().PaddingTop(4).LineHorizontal(1);
         });
     }
 
     private void ComposeBody(IContainer container)
     {
-        var style = TextStyle.Default.Bold().FontSize(8);
-
         container.PaddingTop(4).Column(col =>
         {
-            col.Item().Table(table =>
+            if (report.TotalItems == 0)
             {
-                table.ColumnsDefinition(c =>
-                {
-                    c.ConstantColumn(24);   // No.
-                    c.RelativeColumn(3);     // Custodian
-                    c.RelativeColumn(2);     // ICS No.
-                    c.ConstantColumn(60);    // Date
-                    c.RelativeColumn(3);     // Property No.
-                    c.RelativeColumn(4);     // Description
-                    c.RelativeColumn(1);     // Unit
-                    c.ConstantColumn(40);    // Qty
-                    c.ConstantColumn(70);    // Unit Cost
-                    c.ConstantColumn(75);    // Amount
-                });
+                col.Item().Border(0.5f).Padding(6).AlignCenter()
+                    .Text("No semi-expendable property issued as of this date.").Italic().FontSize(8);
+                return;
+            }
 
-                table.Header(h =>
-                {
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("No.").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Accountable Officer").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("ICS/PAR No.").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Date").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Property No.").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Description").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Qty").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit Cost (₱)").Style(style);
-                    h.Cell().Border(1).Padding(2).AlignCenter().Text("Amount (₱)").Style(style);
-                });
+            // COA Annex A.4 scopes one sheet per Fund Cluster × SE classification — render each fund
+            // cluster as its own section (page-broken), with a sub-section + subtotal per classification.
+            var fundClusters = report.Groups.ToList();
+            for (var fi = 0; fi < fundClusters.Count; fi++)
+            {
+                var fc = fundClusters[fi];
+                var fcLabel = string.IsNullOrWhiteSpace(fc.FundCluster) ? "(Unspecified)" : fc.FundCluster;
 
-                var no = 1;
-                foreach (var r in report.Rows.OrderBy(r => r.CustodianName).ThenBy(r => r.DocumentNo))
+                col.Item().PaddingTop(fi == 0 ? 0 : 4)
+                    .Text($"Fund Cluster: {fcLabel}").Bold().FontSize(9);
+
+                foreach (var cls in fc.Classifications)
                 {
-                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(no.ToString()).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).Text(r.CustodianName).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).Text(r.DocumentNo).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.IssuedOn.ToString("yyyy-MM-dd")).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).Text(r.PropertyNo).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).Text(r.Description).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.Unit).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.Quantity.ToString()).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).AlignRight().Text(r.UnitCost.ToString("N2")).FontSize(8);
-                    table.Cell().Border(0.5f).Padding(2).AlignRight().Text(r.Amount.ToString("N2")).FontSize(8);
-                    no++;
+                    col.Item().PaddingTop(4)
+                        .Text($"Semi-Expendable Property: {cls.ClassificationName}").SemiBold().FontSize(8);
+                    col.Item().PaddingTop(2).Element(c => ComposeClassificationTable(c, cls));
+                    col.Item().PaddingTop(2).AlignRight().Text(t =>
+                    {
+                        t.Span("Subtotal: ").SemiBold().FontSize(8);
+                        t.Span($"{cls.TotalItems} item(s)    ₱{cls.TotalAmount:N2}").Bold().FontSize(8);
+                    });
                 }
 
-                if (report.Rows.Count == 0)
-                    table.Cell().ColumnSpan(10).Border(0.5f).Padding(6).AlignCenter()
-                        .Text("No semi-expendable property issued as of this date.").Italic().FontSize(8);
-            });
+                col.Item().PaddingTop(3).AlignRight().Text(t =>
+                {
+                    t.Span($"Fund Cluster {fcLabel} total: ").SemiBold().FontSize(8);
+                    t.Span($"{fc.TotalItems} item(s)    ₱{fc.TotalAmount:N2}").Bold().FontSize(8);
+                });
 
-            col.Item().PaddingTop(6).AlignRight().Text(t =>
+                if (fi < fundClusters.Count - 1)
+                    col.Item().PageBreak();
+            }
+
+            col.Item().PaddingTop(8).LineHorizontal(1);
+            col.Item().PaddingTop(4).AlignRight().Text(t =>
             {
-                t.Span($"Total items: {report.TotalItems}    ").SemiBold().FontSize(9);
-                t.Span("Total amount: ").SemiBold().FontSize(9);
+                t.Span($"GRAND TOTAL — items: {report.TotalItems}    ").SemiBold().FontSize(9);
+                t.Span("amount: ").SemiBold().FontSize(9);
                 t.Span($"₱{report.TotalAmount:N2}").Bold().FontSize(9);
             });
+        });
+    }
+
+    private static void ComposeClassificationTable(IContainer container, RegSpiClassificationGroupDto cls)
+    {
+        var style = TextStyle.Default.Bold().FontSize(8);
+
+        container.Table(table =>
+        {
+            table.ColumnsDefinition(c =>
+            {
+                c.ConstantColumn(24);   // No.
+                c.RelativeColumn(3);     // Custodian
+                c.RelativeColumn(2);     // ICS No.
+                c.ConstantColumn(60);    // Date
+                c.RelativeColumn(3);     // Property No.
+                c.RelativeColumn(4);     // Description
+                c.RelativeColumn(1);     // Unit
+                c.ConstantColumn(40);    // Qty
+                c.ConstantColumn(70);    // Unit Cost
+                c.ConstantColumn(75);    // Amount
+            });
+
+            table.Header(h =>
+            {
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("No.").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Accountable Officer").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("ICS/PAR No.").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Date").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Property No.").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Description").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Qty").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Unit Cost (₱)").Style(style);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("Amount (₱)").Style(style);
+            });
+
+            var no = 1;
+            foreach (var r in cls.Rows)
+            {
+                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(no.ToString()).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).Text(r.CustodianName).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).Text(r.DocumentNo).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.IssuedOn.ToString("yyyy-MM-dd")).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).Text(r.PropertyNo).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).Text(r.Description).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.Unit).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).AlignCenter().Text(r.Quantity.ToString()).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(r.UnitCost.ToString("N2")).FontSize(8);
+                table.Cell().Border(0.5f).Padding(2).AlignRight().Text(r.Amount.ToString("N2")).FontSize(8);
+                no++;
+            }
         });
     }
 

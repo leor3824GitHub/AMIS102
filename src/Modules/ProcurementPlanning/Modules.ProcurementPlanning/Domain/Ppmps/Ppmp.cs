@@ -17,7 +17,8 @@ public sealed record PpmpItemData(
     string SourceOfFunds,
     decimal EstimatedBudget,
     string? SupportingDocuments,
-    string? Remarks);
+    string? Remarks,
+    string? FundingSourceCode = null);
 
 public sealed class PpmpItem
 {
@@ -37,6 +38,10 @@ public sealed class PpmpItem
     public decimal EstimatedBudget { get; private set; }
     public string? SupportingDocuments { get; private set; }
     public string? Remarks { get; private set; }
+
+    // UACS funding source code (MasterData FundingSourceCode.Code). Structured link behind the
+    // free-text SourceOfFunds column; nullable while historical/legacy rows are backfilled.
+    public string? FundingSourceCode { get; private set; }
 
     private PpmpItem() { }
 
@@ -58,7 +63,8 @@ public sealed class PpmpItem
             SourceOfFunds = data.SourceOfFunds,
             EstimatedBudget = data.EstimatedBudget,
             SupportingDocuments = data.SupportingDocuments,
-            Remarks = data.Remarks
+            Remarks = data.Remarks,
+            FundingSourceCode = data.FundingSourceCode
         };
 
     internal static PpmpItem Clone(Guid ppmpId, int itemNo, PpmpItem source) =>
@@ -79,7 +85,8 @@ public sealed class PpmpItem
             SourceOfFunds = source.SourceOfFunds,
             EstimatedBudget = source.EstimatedBudget,
             SupportingDocuments = source.SupportingDocuments,
-            Remarks = source.Remarks
+            Remarks = source.Remarks,
+            FundingSourceCode = source.FundingSourceCode
         };
 }
 

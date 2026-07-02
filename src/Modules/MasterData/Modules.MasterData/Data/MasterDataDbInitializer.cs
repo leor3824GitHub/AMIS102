@@ -413,6 +413,33 @@ internal sealed class MasterDataDbInitializer(
             await context.CapitalizationThresholds.AddAsync(threshold, cancellationToken).ConfigureAwait(false);
         }
 
+        // Fund Clusters — national COA/UACS funding-source rollup (fixed 7, shared across tenants)
+        if (!await context.FundClusters.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var fundClusters = new[]
+            {
+                FundCluster.Create("01", "Regular Agency Fund"),
+                FundCluster.Create("02", "Foreign Assisted Projects Fund"),
+                FundCluster.Create("03", "Special Account - Locally Funded/Domestic Grants Fund"),
+                FundCluster.Create("04", "Special Account - Foreign Assisted/Foreign Grants Fund"),
+                FundCluster.Create("05", "Internally Generated Funds"),
+                FundCluster.Create("06", "Business Related Funds"),
+                FundCluster.Create("07", "Trust Receipts")
+            };
+
+            await context.FundClusters.AddRangeAsync(fundClusters, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Funding Source Codes — full UACS funding-source taxonomy, loaded from embedded CSV
+        if (!await context.FundingSourceCodes.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var fundingSourceCodes = LoadFundingSourceCodesFromCsv();
+            if (fundingSourceCodes.Count > 0)
+            {
+                await context.FundingSourceCodes.AddRangeAsync(fundingSourceCodes, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         // EmployeeProfiles — spread across offices, departments, and positions
@@ -713,6 +740,117 @@ internal sealed class MasterDataDbInitializer(
         logger.LogInformation("[{Tenant}] seeded master data.", context.TenantInfo?.Identifier);
     }
 
+    // -- Funding source code CSV seed ------------------------------------------------------------
+    // Embedded resource: Data/Seed/funding-source-codes.csv
+    // Header: Code,FundClusterCode,FinancingSource,Authorization,FundCategory,FundSubCategory,Description,DepartmentName,AgencyName
+    private const string FundingSourceCodesResource =
+        "AMIS.Modules.MasterData.Data.Seed.funding-source-codes.csv";
+
+    private static List<FundingSourceCode> LoadFundingSourceCodesFromCsv()
+    {
+        var result = new List<FundingSourceCode>();
+        var assembly = typeof(MasterDataDbInitializer).Assembly;
+
+        using var stream = assembly.GetManifestResourceStream(FundingSourceCodesResource);
+        if (stream is null)
+        {
+            return result;
+        }
+
+        using var reader = new StreamReader(stream);
+        var isHeader = true;
+        var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        while (reader.ReadLine() is { } line)
+        {
+            if (isHeader)
+            {
+                isHeader = false;
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            var fields = ParseCsvLine(line);
+            if (fields.Count < 2)
+            {
+                continue;
+            }
+
+            var code = fields[0].Trim();
+            var clusterCode = fields[1].Trim();
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(clusterCode) || !seenCodes.Add(code))
+            {
+                continue;
+            }
+
+            string? Field(int i) => fields.Count > i && !string.IsNullOrWhiteSpace(fields[i]) ? fields[i].Trim() : null;
+
+            result.Add(FundingSourceCode.Create(
+                code,
+                clusterCode,
+                financingSource: Field(2),
+                authorization: Field(3),
+                fundCategory: Field(4),
+                fundSubCategory: Field(5),
+                description: Field(6),
+                departmentName: Field(7),
+                agencyName: Field(8)));
+        }
+
+        return result;
+    }
+
+    // Minimal RFC-4180-ish parser: handles double-quoted fields and embedded commas / escaped quotes.
+    private static List<string> ParseCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var sb = new System.Text.StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var c = line[i];
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        sb.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            else if (c == '"')
+            {
+                inQuotes = true;
+            }
+            else if (c == ',')
+            {
+                fields.Add(sb.ToString());
+                sb.Clear();
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        fields.Add(sb.ToString());
+        return fields;
+    }
 }
 
 

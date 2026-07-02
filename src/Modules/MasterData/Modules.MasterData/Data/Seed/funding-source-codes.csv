@@ -1,0 +1,413 @@
+Code,FundClusterCode,FinancingSource,Authorization,FundCategory,FundSubCategory,Description,DepartmentName,AgencyName
+01101101,01,General Fund,New General Appropriations,Specific Budgets of National Government Agencies,Specific Budgets of National Government Agencies,,,
+01101111,01,General Fund,New General Appropriations,Specific Budgets of National Government Agencies,ARMM-DepEd's GSIS Contribution,,,
+01101252,01,General Fund,New General Appropriations,Allocations to Local Government Units,Special Shares of LGUs in the Proceeds of National Taxes,,,
+01101253,01,General Fund,New General Appropriations,Allocations to Local Government Units,Barangay Officials Death Benefits Fund,,,
+01101254,01,General Fund,New General Appropriations,Allocations to Local Government Units,Local Government Support Fund (formerly Financial Subsidy to LGUs),,,
+01101255,01,General Fund,New General Appropriations,Allocations to Local Government Units,Special Shares of LGUs in the Proceeds of Fire Code Fees,,,
+01101256,01,General Fund,New General Appropriations,Allocations to Local Government Units,Barangay Officials Death Benefits,,,
+01101257,01,General Fund,New General Appropriations,Allocations to Local Government Units,Bangsamoro Autonomous Region in Muslim Mindanao (BARMM),,,
+01101276,01,General Fund,New General Appropriations,Budgetary Support to Government Corporations,Equity Contribution,,Budgetary Support to Government Corporations (BSGC),
+01101277,01,General Fund,New General Appropriations,Budgetary Support to Government Corporations,Subsidies,,,
+01101278,01,General Fund,New General Appropriations,Budgetary Support to Government Corporations,Loans,,,
+01101279,01,General Fund,New General Appropriations,Budgetary Support to Government Corporations,Advances,,,
+01101301,01,General Fund,New General Appropriations,Financial Assistance to Metropolitan Manila Development Authority,Subsidies,,,
+01101401,01,General Fund,New General Appropriations,Special Purpose Funds,National Disaster Risk Reduction and Management Fund ( Calamity Fund ),,,
+01101402,01,General Fund,New General Appropriations,Special Purpose Funds,Contingent Fund,,,
+01101403,01,General Fund,New General Appropriations,Special Purpose Funds,DepEd - School Building Program/Educational Facilities Fund,,Department of Education (DepEd),Office of the Secretary
+01101404,01,General Fund,New General Appropriations,Special Purpose Funds,E-Government Fund,,,
+01101405,01,General Fund,New General Appropriations,Special Purpose Funds,International Commitments Fund,,,
+01101406,01,General Fund,New General Appropriations,Special Purpose Funds,Miscellaneous Personnel Benefits Fund,,,
+01101407,01,General Fund,New General Appropriations,Special Purpose Funds,Pension and Gratuity Fund,,,
+01101408,01,General Fund,New General Appropriations,Special Purpose Funds,Priority Development Assistance Fund,,,
+01101409,01,General Fund,New General Appropriations,Special Purpose Funds,Allocation for Capital Outlays of State Universities and Colleges (SUCs),,Other Executive Offices (OEOs),Commission on Higher Education
+01101410,01,General Fund,New General Appropriations,Special Purpose Funds,Feasibility Studies Fund,,,
+01101411,01,General Fund,New General Appropriations,Special Purpose Funds,Rehabilitation and Reconstruction Program,,,
+01101412,01,General Fund,New General Appropriations,Special Purpose Funds,BSGC - Others,,,
+01101413,01,General Fund,New General Appropriations,Special Purpose Funds,"Section 4(v), Republic Act No. 11469",,,
+01101414,01,General Fund,New General Appropriations,Special Purpose Funds,"Section 11(b), Republic Act No. 11494",,,
+01101999,01,General Fund,New General Appropriations,Special Purpose Funds,Overall Savings,,,
+01102101,01,General Fund,Continuing Appropriations,Specific Budgets of National Government Agencies,Specific Budgets of National Government Agencies,,,
+01102111,01,General Fund,Continuing Appropriations,Specific Budgets of National Government Agencies,ARMM-DepEd's GSIS Contribution,,,
+01102252,01,General Fund,Continuing Appropriations,Allocations to Local Government Units,Special Shares of LGUs in the Proceeds of National Taxes,,,
+01102253,01,General Fund,Continuing Appropriations,Allocations to Local Government Units,Barangay Officials Death Benefits Fund,,,
+01102254,01,General Fund,Continuing Appropriations,Allocations to Local Government Units,Local Government Support Fund (formerly Financial Subsidy to LGUs),,,
+01102255,01,General Fund,Continuing Appropriations,Allocations to Local Government Units,Special Shares of LGUs in the Proceeds of Fire Code Fees,,,
+01102256,01,General Fund,Continuing Appropriations,Allocations to Local Government Units,Barangay Officials Death Benefits,,,
+01102257,01,General Fund,Continuing Appropriations,Allocations to Local Government Units,Bangsamoro Autonomous Region in Muslim Mindanao (BARMM),,,
+01102276,01,General Fund,Continuing Appropriations,Budgetary Support to Government Corporations,Equity Contribution,,,
+01102277,01,General Fund,Continuing Appropriations,Budgetary Support to Government Corporations,Subsidies,,,
+01102278,01,General Fund,Continuing Appropriations,Budgetary Support to Government Corporations,Loans,,,
+01102279,01,General Fund,Continuing Appropriations,Budgetary Support to Government Corporations,Advances,,,
+01102401,01,General Fund,Continuing Appropriations,Special Purpose Funds,National Disaster Risk Reduction and Management Fund ( Calamity Fund ),,,
+01102402,01,General Fund,Continuing Appropriations,Special Purpose Funds,Contingent Fund,,,
+01102403,01,General Fund,Continuing Appropriations,Special Purpose Funds,DepEd - School Building Program/Educational Facilities Fund,,,
+01102404,01,General Fund,Continuing Appropriations,Special Purpose Funds,E-Government Fund,,,
+01102405,01,General Fund,Continuing Appropriations,Special Purpose Funds,International Commitments Fund,,,
+01102406,01,General Fund,Continuing Appropriations,Special Purpose Funds,Miscellaneous Personnel Benefits Fund,,,
+01102407,01,General Fund,Continuing Appropriations,Special Purpose Funds,Pension and Gratuity Fund,,,
+01102408,01,General Fund,Continuing Appropriations,Special Purpose Funds,Priority Development Assistance Fund,,,
+01102409,01,General Fund,Continuing Appropriations,Special Purpose Funds,Allocations for Capital Outlays of State Universities and Colleges,Allocations for Capital Outlays of State Universities and Colleges,,
+01102410,01,General Fund,Continuing Appropriations,Special Purpose Funds,Feasibility Studies Fund,,,
+01102411,01,General Fund,Continuing Appropriations,Special Purpose Funds,Rehabilitation and Reconstruction Program,Rehabilitation and Reconstruction Program,,
+01102412,01,General Fund,Continuing Appropriations,Special Purpose Funds,BSGC - Others,,,
+01102413,01,General Fund,Continuing Appropriations,Special Purpose Funds,"Section 4(v), Republic Act No. 11469",,,
+01102414,01,General Fund,Continuing Appropriations,Special Purpose Funds,"Section 11(b), Republic Act No. 11494",,,
+01102415,01,General Fund,Continuing Appropriations,Special Purpose Funds,"Bayanihan to Recover as One Act, Republic Act No. 11494",,,
+01102999,01,General Fund,Continuing Appropriations,Special Purpose Funds,Overall Savings,,,
+01103101,01,General Fund,Supplemental Appropriations,Specific Budgets of National Government Agencies,Specific Budgets of National Government Agencies,,,
+01103276,01,General Fund,Supplemental Appropriations,Budgetary Support to Government Corporations,Equity Contribution,,,
+01103277,01,General Fund,Supplemental Appropriations,Budgetary Support to Government Corporations,Subsidies,,,
+01103401,01,General Fund,Supplemental Appropriations,Special Purpose Funds,National Disaster Risk Reduction and Management Fund ( Calamity Fund ),,,
+01103415,01,General Fund,Supplemental Appropriations,Special Purpose Funds,"Bayanihan to Recover as One Act, Republic Act No. 11494",,,
+01104102,01,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,Retirement and Life Insurance Premiums,,,
+01104103,01,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,"Pension under R.A. No. 2087, as amended by P.D. 1625 and R.A. No. 5059 as amended by Section 1 of EO No. 145, s. 1987",,,
+01104105,01,General Fund,Automatic Appropriations,Budgetary Support to Government Corporations,"Customs duties and taxes, including tax expenditures",,Budgetary Support to Government Corporations (BSGC),
+01104106,01,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,"Proceeds from sales of non-serviceable, obsolete and unnecessary equipment",,,
+01104108,01,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,Tax Refunds,,,
+01104109,01,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,Debt Principal Amortization,,,
+01104110,01,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,Debt Interest Payments,,,
+01104251,01,General Fund,Automatic Appropriations,Allocations to Local Government Units,Internal Revenue Allotment,,,
+01104257,01,General Fund,Automatic Appropriations,Allocations to Local Government Units,Bangsamoro Autonomous Region in Muslim Mindanao (BARMM),,,
+01104258,01,General Fund,Automatic Appropriations,Allocations to Local Government Units,National Tax Allotment,,,
+01104280,01,General Fund,Automatic Appropriations,Budgetary Support to Government Corporations,Net Lending,,,
+01105101,01,General Fund,Unprogrammed Appropriations,Specific Budgets of National Government Agencies,Specific Budgets of National Government Agencies,,,
+01105276,01,General Fund,Unprogrammed Appropriations,Budgetary Support to Government Corporations,Equity Contribution,,,
+01105277,01,General Fund,Unprogrammed Appropriations,Budgetary Support to Government Corporations,Subsidies,,,
+01105278,01,General Fund,Unprogrammed Appropriations,Budgetary Support to Government Corporations,Loans,,,
+01105279,01,General Fund,Unprogrammed Appropriations,Budgetary Support to Government Corporations,Advances,,,
+01105421,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,General Fund Adjustments,,,
+01105422,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Support for Infrastructure Projects and Social Programs,,,
+01105423,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,AFP Modernization Program,,,
+01105424,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Debt Management Program,,,
+01105425,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Total Administrative Disability Pension,,,
+01105426,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,People's Survival Fund,,,
+01105427,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Budgetary Support to Government-Owned and/or - Controlled Corporations,,,
+01105428,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Support to Foreign-Assisted Projects,,,
+01105429,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Risk Management Program,,,
+01105430,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Disaster Relief Mitigation Fund,,,
+01105431,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Reconstruction and Rehabilitation Program,,,
+01105432,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,General Fund Adjustments for Use of Excess Income by Agencies,,,
+01105433,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,General Fund Adjustments for the Share of the ARMM pursuant to R.A. No.9054,,,
+01105434,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Equity Value Buy-out of the Metro Rail Transit Corporation,,,
+01105435,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Payment of Taxes under BOT Contract of MRT 3,,,
+01105436,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Rehabilitation and Reconstruction Fund,,,
+01105437,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,MRT 3 Rehabilitation and Capacity Expansion,,,
+01105438,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Trade Remedies Fund,,,
+01105439,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Share of the DOH from the Incremental Revenue from Excise Tax,,,
+01105440,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,For Payment of Total Administrative Disability of Living Post WW II Veterans,,,
+01105441,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Land Bank of the Philippines - Loan Portfolio (Priority and Other Priority Areas),,,
+01105442,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Support to Capability Enhancement Program of the Philippine National Police (PNP),,,
+01105443,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Provision of Scholarships to Faculty Members and HEI Administrators,,,
+01105444,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Payment of Arrears of LTO-IT Service,,,
+01105446,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,"Refund of the Service Development Fee for the Right to Develop the Nampeidai Property in Tokyo, Japan",,,
+01105447,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Prior Years' LGU Shares,,,
+01105448,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,General Fund Adjustments for FOREX Fluctuation,,,
+01105449,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Bangon Marawi Fund,,,
+01105450,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Conversion of National Government Advances into Subsidy for GOCCs,,,
+01105451,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,For Payment of Pension Arrearages,,,
+01105452,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Implementation of the Proposed National Government Rightsizing Program (NGRP),,,
+01105453,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Northrail-Southrail Linkage Project Phase I - Payment of Outstanding Obligations,,,
+01105454,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Rice Competitiveness Enhancement Fund,,,
+01105455,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Coconut Farmers and Industry Development Fund,,,
+01105456,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,For the Implementation of the Organic Law for the Bangsamoro Region in Muslim Mindanao,,,
+01105457,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,For the Implementation of the Universal Health Care,,,
+01105458,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Bangko Sentral ng Pilipinas (BSP) Equity Infusion pursuant to RA 11211,,,
+01105459,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,National Identification System,,,
+01105460,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Normalization Program in the Bangsamoro,,,
+01105461,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Health Facilities Enhancement Program,,,
+01105462,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,For payment of Personnel Benefits,,,
+01105463,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Pension and Gratuity,,,
+01105464,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,National Bureau of Investigation (NBI) Modernization Program,,,
+01105465,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Payment of Right-of-Way,,,
+01105466,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Prior Year's BARMM Shares,,,
+01105467,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Social Protection Programs due to COVID-19 Pandemic,,,
+01105468,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Basic Education Facilities,,,
+01105469,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Government Assistance and Subsidies - Voucher Program for Private Senior High School (per RA No. 10533),,,
+01105470,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Last Mile Schools Program,,,
+01105471,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Flexible Learning Options,,,
+01105472,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Shares of LGUs in Excise Taxes from Locally Manufactured Virginia-Type Cigarettes,,,
+01105473,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Shares of LGUs in Excise Taxes from Burley and Native Tobacco Products,,,
+01105474,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,"For the Purchase of COVID-19 Vaccines, Storage, Transportation and Distribution",,,
+01105475,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,OPAPP - MILF Normalization Program for the Decomissioned Combatants,,,
+01105476,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,For the repair / rehabilitation / reconstruction of NBI Main Research Center and Facilities,,,
+01105477,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,DepEd Computerization Program,,,
+01105478,01,General Fund,Unprogrammed Appropriations,Unprogrammed Appropriations,Procurement of COVID-19 Vaccine Booster Shots,,,
+02101151,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,GoP Counterpart Funds,,,
+02101152,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Asian Development Bank,,,
+02101153,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Australia,,,
+02101154,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Austria,,,
+02101155,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Belgium,,,
+02101156,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Canada,,,
+02101157,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,China,,,
+02101158,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Denmark,,,
+02101159,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,European Commission,,,
+02101160,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,France,,,
+02101161,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Germany,,,
+02101162,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Global Environment Facility,,,
+02101163,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,International Bank for Reconstruction and Development (IBRD),,,
+02101164,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,International Development Fund (IDF),,,
+02101165,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,International Fund for Agricultural Development (IFAD),,,
+02101166,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Italy,,,
+02101167,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Japan,,,
+02101168,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Korea,,,
+02101169,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Millennium Challenge Corporation,,,
+02101170,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Netherlands,,,
+02101171,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,New Zealand,,,
+02101172,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Norway,,,
+02101173,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Saudi Arabia,,,
+02101174,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Spain,,,
+02101175,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Switzerland,,,
+02101176,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,United Kingdom,,,
+02101177,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,United States,,,
+02101178,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Development Fund for Women (UNIFEM),,,
+02101179,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Population Fund (UNFPA),,,
+02101180,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,OPEC Fund for International Development (OFID),,Department of Agriculture (DA),Office of the Secretary
+02101181,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Asian Infrastructure Investment Bank (AIIB),,,
+02101182,02,General Fund,New General Appropriations,Multilateral and Bilateral Loans/Grants,Clean Technology Fund,,,
+02102151,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,GoP Counterpart Funds,,,
+02102152,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Asian Development Bank,,,
+02102153,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Australia,,,
+02102154,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Austria,,,
+02102155,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Belgium,,,
+02102156,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Canada,,,
+02102157,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,China,,,
+02102158,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Denmark,,,
+02102159,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,European Commission,,,
+02102160,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,France,,,
+02102161,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Germany,,,
+02102162,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Global Environment Facility,,,
+02102163,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,International Bank for Reconstruction and Development (IBRD),,,
+02102164,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,International Development Fund (IDF),,,
+02102165,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,International Fund for Agricultural Development (IFAD),,,
+02102166,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Italy,,,
+02102167,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Japan,,,
+02102168,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Korea,,,
+02102169,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Millennium Challenge Corporation,,,
+02102170,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Netherlands,,,
+02102171,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,New Zealand,,,
+02102172,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Norway,,,
+02102173,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Saudi Arabia,,,
+02102174,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Spain,,,
+02102175,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Switzerland,,,
+02102176,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,United Kingdom,,,
+02102177,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,United States,,,
+02102178,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Development Fund for Women (UNIFEM),,,
+02102179,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Population Fund (UNFPA),,,
+02102180,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Asian Infrastructure Investment Bank (AIIB),,,
+02102182,02,General Fund,Continuing Appropriations,Multilateral and Bilateral Loans/Grants,Clean Technology Fund,,,
+02105152,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Asian Development Bank,,,
+02105153,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Australia,,,
+02105154,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Austria,,,
+02105155,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Belgium,,,
+02105156,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Canada,,,
+02105157,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,China,,,
+02105158,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Denmark,,,
+02105159,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,European Commission,,,
+02105160,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,France,,,
+02105161,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Germany,,,
+02105162,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Global Environment Facility,,,
+02105163,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,International Bank for Reconstruction and Development (IBRD),,,
+02105164,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,International Development Fund (IDF),,,
+02105165,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,International Fund for Agricultural Development (IFAD),,,
+02105166,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Italy,,,
+02105167,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Japan,,,
+02105168,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Korea,,,
+02105169,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Millennium Challenge Corporation,,,
+02105170,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Netherlands,,,
+02105171,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,New Zealand,,,
+02105172,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Norway,,,
+02105173,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Saudi Arabia,,,
+02105174,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Spain,,,
+02105175,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Switzerland,,,
+02105176,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,United Kingdom,,,
+02105177,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,United States,,,
+02105178,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Development Fund for Women (UNIFEM),,,
+02105179,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Population Fund (UNFPA),,,
+02105180,02,General Fund,Unprogrammed Appropriations,Multilateral and Bilateral Loans/Grants,Asian Infrastructure Investment Bank (AIIB),,,
+03101321,03,General Fund,New General Appropriations,Special Accounts in the General Fund,Fiduciary Fund for Agrarian Reform Education,Interest Income from investments in treasury notes - RP-US Agreement P.L. 480,Department of Agrarian Reform (DAR),Office of the Secretary
+03101322,03,General Fund,New General Appropriations,Special Accounts in the General Fund,Agrarian Reform Fund,Income and collections from Agrarian Reform operations and proceeds from assets recovered and sales of ill-gotten wealth - R.A. 9700,Department of Agrarian Reform (DAR),Office of the Secretary
+03104104,03,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,Domestic Grant Proceeds,,,
+03104107,03,General Fund,Automatic Appropriations,Specific Budgets of National Government Agencies,Military Camps Sales Proceeds,,,
+03104321,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Fiduciary Fund for Agrarian Reform Education,Interest income from investments in treasury notes - RP-US Agreement P.L. 480,Department of Agrarian Reform (DAR),Office of the Secretary
+03104322,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Agrarian Reform Fund,Income and collections from Agrarian Reform operations and proceeds from assets recovered and sales of ill-gotten wealth - R.A. 9700,Department of Agrarian Reform (DAR),Office of the Secretary
+03104323,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Agricultural Competitiveness Enhancement Fund,All duties collected from the importation of agricultural products under the minimum access volume mechanism - R.A. Nos. 8178 /9496,Department of Agriculture (DA),Office of the Secretary
+03104324,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Agro-Industry Modernization Credit and Financing Program(AMCFP),,Department of Agriculture (DA),Agricultural Credit Policy Council
+03104325,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Wildlife Management Fund,"Donations, permits, fines, charges from wildlife related activities - R.A. 9147",Department of Agriculture (DA),Bureau of Fisheries and Aquatic Resources
+03104326,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Support to the Fertilizer and Pesticide Program,,Department of Agriculture (DA),Fertilizer and Pesticide Authority
+03104327,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Livestock Development Fund,Registration Fees of large cattle - P.D. 914,Department of Agriculture (DA),Livestock Development Council
+03104328,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Meat Inspection Service Development Trust Fund,"Fees, fines and other charges by the NMIS - Section 46, R.A. 9296",Department of Agriculture (DA),National Meat Inspection Service
+03104329,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Early Childhood Care and Development Council,Share from PAGCOR,Department of Education (DepEd),Early Childhood Care and Development Council
+03104330,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Instructional Materials Development Center Fund,R.A. 8047,Department of Education (DepEd),National Book Development Board
+03104331,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Malampaya Gas Fund,Production shares from Malampaya Gas-to-Power Project per Service Contract No. 38 P.D. 910,Budgetary Support to Government Corporations (BSGC),Power Sector Assets and Liabilities Management Corporation
+03104332,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Collections from other production shares and miscellaneous income,"Fees, revenues and receipts from the exploration, development and exploitation of energy resources - P.D Nos. 87/972/1234/1442/9513",Department of Energy (DOE),Office of the Secretary
+03104333,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Technology Transfer for Energy Management Fund,Interest Income in USAID-assisted Technology Transfer for Energy Management (TTEM) - R.A. 7638,Department of Energy (DOE),Office of the Secretary
+03104334,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Integrated Protected Areas Fund,All income generated from the operation of NIPAS or management of wild flora and fauna - R.A. 7586,Department of Environment and Natural Resources (DENR),Office of the Secretary
+03104335,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Wildlife Management Fund,"Fines, awards, fees, charges, donations, endowments, administrative fees or grants in the form of contribution - R.A. 9147",Department of Environment and Natural Resources (DENR),Office of the Secretary
+03104336,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Sale of Confiscated Logs,E.O. 277; LOI 1020; BP 879,Department of Environment and Natural Resources (DENR),Office of the Secretary
+03104337,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Air Quality Management Fund,"Fines, awards, fees, donations, endowments, and grants in the form of contribution - R.A. 8749",Department of Environment and Natural Resources (DENR),Environmental Management Bureau
+03104338,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Mines and Geosciences Bureau,10% of all royalties and revenues from development and utilization of the mineral resources (Mineral Reservations - R.A. 7942),Department of Environment and Natural Resources (DENR),Mines and Geosciences Bureau
+03104339,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Non-Intrusive Container Inspection System Project Fund,Income from Container Security Fee - E.O. Nos. 592/635,Department of Finance (DOF),Bureau of Customs
+03104340,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Super Green Lane Trust Fund,Service fees for usage of Super Green lane facility - E.O. Nos. 230/563,Department of Finance (DOF),Bureau of Customs
+03104341,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Tax Refund,Refund of Input VAT - R.A. 8424,Department of Finance (DOF),Bureau of Customs
+03104342,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Education Fund,1% share of taxes on local Virginia-type cigarettes - R.A. 5447,Department of Finance (DOF),Bureau of Internal Revenue
+03104343,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Bank Penalties Fund,Penalties imposed to banks on delayed remittances - E.O. 937,Department of Finance (DOF),Bureau of Internal Revenue
+03104344,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Fidelity Bond Fund,"Public Bonding Law - Sections 313-335 Chapter 15, Revised Administrative Code of 1917",Department of Finance (DOF),Bureau of the Treasury
+03104345,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Insurance Commission Fund,25% share in premium tax collections of the BIR - P.D. 612 /R.A. 8424,Department of Finance (DOF),Insurance Commission
+03104346,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Pre-Need Fund,"Retention and Utilization of Fees, Charges and Other Income from the Regulation of Pre-need Companies - R.A. 9829",Department of Finance (DOF),Insurance Commission
+03104347,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Department of Health (OSEC),Shares from Franchise tax/VAT- R.A. Nos. 6631/6632/7953/8407,Department of Health (DOH),Office of the Secretary
+03104348,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,DOH OSEC FDA-SAGF,"Income from fees fines, royalties and other charges authorized under R.A. 9502",Department of Health (DOH),Office of the Secretary
+03104349,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,OSEC-BQIHS SAGF,50% of Income from Quarantine Services - R.A. 9271,Department of Health (DOH),Office of the Secretary
+03104350,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Bureau of Fire Protection,Fees and Fines under the Fire Code of the Philippines - R.A. 9154,Department of the Interior and Local Government (DILG),Bureau of Fire Protection
+03104351,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Department of Justice (OSEC),Legal Fees - R.A. 9279,Department of Justice (DOJ),Office of the Secretary
+03104352,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Land Registration Authority,20% of Land Registration Fees of the Register of Deeds of LGUs and LRA - P.D. 1529,Department of Justice (DOJ),Land Registration Authority
+03104353,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Office of the Solicitor General,50% of fees and charges on naturalized aliens under the old Naturalization Law - L.O.I. 278 /R.A. 9417,Department of Justice (DOJ),Office of the Solicitor General
+03104354,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Verification Fee Fund,Verification Fees of Foreign Post - E.O. 1022,Department of Labor and Employment (DOLE),Office of the Secretary
+03104355,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Voluntary Arbitration Fund,CBA Registration Fees - R.A. 6721,Department of Labor and Employment (DOLE),National Conciliation and Mediation Board
+03104356,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Asia Pacific Disaster Response Fund,Tropical Storm Ketsana (Ondoy) Project,Department of National Defense (DND),Office of the Secretary - Proper
+03104357,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,AFP Modernization Trust Fund,"Share from the proceeds of sale, lease or joint development, public-private partnership, sale of the products of Government Arsenal, disposal of repairable equipment, budgetary surplus, donations and interest income - R.A. 7227, R.A. 7898, R.A. 10349",Department of National Defense (DND),"General Headquarters, AFP and AFP-Wide Service Support Units (AFPWSSUs)"
+03104358,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Road Support Fund,80% of Motor Vehicle Users Charge Tax collections (MVUC) - R.A. 8794,Department of Public Works and Highways (DPWH),Office of the Secretary
+03104359,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Local Road Fund,5% of Motor Vehicle Users Charge Tax collections (MVUC) - R.A. 8794,Department of Public Works and Highways (DPWH),Office of the Secretary
+03104360,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Road Safety Fund,7. 5% of Motor Vehicle Users Charge Tax collections (MVUC) - R.A. 8794,Department of Public Works and Highways (DPWH),Office of the Secretary
+03104361,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Tourism Development Fund,"Accreditation, training fees, miscellaneous income - R.A. 9593",Department of Tourism (DOT),Office of the Secretary
+03104362,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,"Micro, Small and Medium Enterprise Development Council Fund",90% of the penalties collected by BSP from lending institutions for non-compliance with the provisions of the amended Magna Carta for SMEs - R.A. 9501,Department of Trade and Industry (DTI),Office of the Secretary
+03104363,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Vehicle Pollution Control Fund,7.5% of Motor Vehicle Users Charge Tax collections (MVUC) - R.A. 8794,Department of Transportation (DOTr),Office of the Secretary
+03104364,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Seat Belt Use Fund (LTO),Fines imposed on the implementation of Seat Belt Use - R.A. 8750,Department of Transportation (DOTr),Office of the Secretary
+03104365,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,MARINA Tonnage Fees,Tonnage Fees - R.A. 9295,Department of Transportation (DOTr),Maritime Industry Authority (MARINA)
+03104366,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,National Civil Aviation Security Committee (NCASC),Aviation security fees collected from passengers at the airports - E.O. Nos. 277/311,Department of Transportation (DOTr),Office for Transportation Security
+03104367,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Interest Earnings of the Endowment Fund,Interest Income - E.O. 211,National Economic and Development Authority (NEDA),Philippine Statistical Research and Training Institute (formerly Statistical Research and Training Center)
+03104368,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,CFO SAGF,"Donations from Overseas Filipinos, grants from multinational agencies, financial support from the CFOs corporate and government partners, and other income from projects and activities",Other Executive Offices (OEOs),Commission on Filipinos Overseas
+03104369,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Higher Education Development Fund,"40% share from travel tax, 30% from registration fees of PRC and 1% of gross sales of lotto operations of PCSO - RA 7722",Other Executive Offices (OEOs),Commission on Higher Education
+03104370,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,DDB SAGF,"25% of gross receipts from breakages of Phil. Racing Club, Inc. and Manila Jockey Club, Inc., 10% of unclaimed/forfeited sweepstakes/lotto prizes from PCSO and P5M per month from PAGCOR - R.A. Nos. 7953, 8407, 1965",Other Executive Offices (OEOs),Dangerous Drugs Board
+03104371,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,FDCP SAGF,Registration fees/charges and amusement taxes - R.A. 9167,Other Executive Offices (OEOs),Film Development Council of the Philippines
+03104372,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,GAB SAGF,"3% of the grass gate receipts from the conduct of professional basketball and other professional games and income from television, radio and motion picture rights - E.O. 120, P.D. 871",Other Executive Offices (OEOs),Games and Amusements Board
+03104373,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,HLURB SAGF,"Service/Processing Fees, Fines, Penalties - E.O. Nos. 648/90",Other Executive Offices (OEOs),Housing and Land Use Regulatory Board
+03104374,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Share on the annual revenue collection of MTRCB - Sec. 20 of P.D. 1986,,Other Executive Offices (OEOs),Movie and Television Review and Classification Board
+03104375,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,National Endowment Fund for Culture and Arts,10% of PTA travel tax collections and Interest income - R.A. 7356; Contributions from PAGCOR - R.A. No. 7356 and R.A. No. 10066,Other Executive Offices (OEOs),National Commission for Culture and the Arts-Proper
+03104376,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,The Asian Foundation,Donation,Other Executive Offices (OEOs),Office of the Presidential Adviser on the Peace Process
+03104377,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,National Sports Development Fund,Share from taxes on horse races from Manila Jockey Club and PRC Inc. during special holidays - R.A. 6847; 3% share of all taxes collected on imported athletic equipment; Proceeds form the sale of stamps depicting sports events,Other Executive Offices (OEOs),Philippine Sports Commission
+03104378,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,PCUP SAGF,Donations from Local Sources,Other Executive Offices (OEOs),Presidential Commission for the Urban Poor
+03104379,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,CCP SAGF,50% tobacco inspection fee collections of BIR - P.D. 1158/R.A. 8424,Budgetary Support to Government Corporations (BSGC),Cultural Center of the Philippines
+03104380,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Tobacco Fund,Proceeds of fifty per centrum of the tariff or taxes of imported leaf tobacco - R.A. 4155,Budgetary Support to Government Corporations (BSGC),National Tobacco Administration
+03104381,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,PCA SAGF,"Fees from copra exporters, oil millers, desiccators and other end-users of coconut products - P.D. 1234/P.D. 1854",Budgetary Support to Government Corporations (BSGC),Philippine Coconut Authority
+03104382,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Tourism Promotions Board Fund,"Proceeds from the investment earnings of the Tourism Promotions Trust, Dividend shares from PAGCOR, Duty Free Philippines Corporation and others - R.A. 9593",Budgetary Support to Government Corporations (BSGC),Tourism Promotions Board
+03104384,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Remedies Fund,,Department of Agriculture (DA),Office of the Secretary
+03104385,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,National Water Quality Management Fund,"Fines, awards, fees, donations, endowments and grants in the form of contribution - RA 9275",Department of Environment and Natural Resources (DENR),Environmental Management Bureau
+03104386,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Area Water Quality Management Fund,"Fees collected under the waste water charge system, donations, endowments and grants - RA 9275",Department of Environment and Natural Resources (DENR),Environmental Management Bureau
+03104387,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Seed Fund,"Proceeds of sales, fines and donations - R.A. 7308",Department of Agriculture (DA),Office of the Secretary
+03104388,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Competitiveness Enhancement Measures Fund,"50% of revenues collected from fees, charges and safeguard duties (RA 8800)",Department of Agriculture (DA),Office of the Secretary
+03104389,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,National Building Code Development Fund,National building permit collections and remittances pursuant to PD 1096,Department of Public Works and Highways (DPWH),Office of the Secretary
+03104390,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Livestock Promotion Fund,"Sourced from the sale of agricultural propagation, breeding or meat purposes or the renting or loaning for breeding purposes, or the slaughter and sale in the form of meat of the animals",Department of Agriculture (DA),Office of the Secretary
+03104391,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Fisheries Management Fund,"to be used for the conservation, protection and regulation of fishery and aquatic resources sourced from endowments, grants, donations, administrative fines and penalties imposed under Section 19 of R.A. No. 10654",Department of Agriculture (DA),Bureau of Fisheries and Aquatic Resources
+03104392,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Free Public Internet Access Fund (FPIAF),Deposits made by the NTC out of the Spectrum Users Fee - R.A. 10929,Department of Information and Communications Technology (DICT),Office of the Secretary
+03104393,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Rice Competitiveness Enhancement Fund (RCEF),"To be funded out of the General Fund annually appropriated in the GAA automatically credited to an SAGF - Sec. 13, R.A. 11203",Budgetary Support to Government Corporations (BSGC),Development Bank of the Philippines
+03104394,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Special Road Fund,Motor Vehicle User's Charge (MVUC) Tax Collections - R.A. 11239,Department of Public Works and Highways (DPWH),Office of the Secretary
+03104395,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Coconut Levy Fund,For transfer to the Coconut Farmers and Industry Fund - Sec. 8 of RA 11524,Department of Finance (DOF),Bureau of the Treasury
+03104396,03,General Fund,Automatic Appropriations,Special Accounts in the General Fund,Bangko Sentral ng Pilipinas Equity Infusion,Increase in capitalization - RA Nos. 7653 and 11211,Budgetary Support to Government Corporations (BSGC),Bangko Sentral ng Pilipinas
+04104152,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Asian Development Bank,,,
+04104153,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Australia,,,
+04104154,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Austria,,,
+04104155,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Belgium,,,
+04104156,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Canada,,,
+04104157,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,China,,,
+04104158,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Denmark,,,
+04104159,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,European Commission,,,
+04104160,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,France,,,
+04104161,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Germany,,,
+04104162,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Global Environment Facility,,,
+04104163,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,International Bank for Reconstruction and Development (IBRD),,,
+04104164,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,International Development Fund (IDF),,,
+04104165,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,International Fund for Agricultural Development (IFAD),,,
+04104166,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Italy,,,
+04104167,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Japan,,,
+04104168,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Korea,,,
+04104169,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Millennium Challenge Corporation,,,
+04104170,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Netherlands,,,
+04104171,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,New Zealand,,,
+04104172,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Norway,,,
+04104173,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Saudi Arabia,,,
+04104174,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Spain,,,
+04104175,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Switzerland,,,
+04104176,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,United Kingdom,,,
+04104177,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,United States,,,
+04104178,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Development Fund for Women (UNIFEM),,,
+04104179,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,United Nations Population Fund (UNFPA),,,
+04104181,04,General Fund,Automatic Appropriations,Multilateral and Bilateral Loans/Grants,Climate Change Fund,,,
+05206441,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Internally Generated Income,Tuition and matriculation fees/other receipts - R.A. 8292,State Universities and Colleges (SUCs),
+05206442,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Securities and Exchange Commission Retained Income,"P100M from license fees from securities brokers/dealers, registration of corporations, Special Purpose Vehicle Act - R.A. Nos. 8799 and 9182",Department of Finance (DOF),Securities and Exchange Commission
+05206443,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Hospital Retained Income applicable to all DOH - retained hospitals,"Hospital fees, medical/dental/laboratory fees, rent income from use of hospital equipment/facilities, proceeds from sale of hospital products, devices, donations and other income - DOH-DOF-DBM J.C. 2003-1",Department of Health (DOH),Office of the Secretary
+05206444,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Intellectual Property Office Retained Income,"Registration fees, grants of patents, registration of trademarks, subscription fees and other income - R.A. 8043",Department of Trade and Industry (DTI),
+05206445,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Overseas Workers Welfare Administration(OWWA) Fund,,Department of Labor and Employment (DOLE),Office of the Secretary
+05206446,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Government Arsenal Retained Income,All income generated from hospital operations,Department of National Defense (DND),Government Arsenal
+05206447,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Veterans Memorial Medical Center Retained Income,"Hospital fees, medical, dental and laboratory fees / Retained Income",Department of National Defense (DND),Veterans Memorial Medical Center
+05206448,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,General Headquarters-Proper Retained Income,All income generated from hospital operations,Department of National Defense (DND),"General Headquarters, AFP and AFP-Wide Service Support Units (AFPWSSUs)"
+05206449,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,AFP Medical Center Retained Income,"Hospital income, medical, dental and laboratory fees and all other income generated from hospital operations",Department of National Defense (DND),"General Headquarters, AFP and AFP-Wide Service Support Units (AFPWSSUs)"
+05206450,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,AFP-PA Retained Income,All income generated from hospital operations,Department of National Defense (DND),Philippine Army ( Land Forces )
+05206451,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,AFP-Philippine Air Force Retained Income,All income generated from hospital operations,Department of National Defense (DND),Philippine Air Force ( Air Forces )
+05206452,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,AFP-PN Retained Income,All income generated from hospital operations,Department of National Defense (DND),Philippine Navy ( Naval Forces )
+05206453,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,National Sports Development Fund,5% share of the gross income of the PAGCOR and 30% share on charity fund of proceeds of six (6) sweepstakes or lottery draws per annum - R.A. 6847,Other Executive Offices (OEOs),Philippine Sports Commission
+05206454,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Judicial Development Fund,"Legal fees, court fees, other income - P.D. 1949",The Judiciary (JUD),Supreme Court of the Philippines and the Lower Courts
+05206455,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,"Judicial Training Center, Philippine Judiciary Academy and Mandatory Continuing Legal Education",Seminar fees and other services income,The Judiciary (JUD),Supreme Court of the Philippines and the Lower Courts
+05206456,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Special Allowance for the Judiciary,"Legal fees, new fees - R.A. 9227",The Judiciary (JUD),Supreme Court of the Philippines and the Lower Courts
+05206457,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,Protected Area Retention Income Account (PA RIA),Retention by the Protected Area Management Board (PAMB) 75% of the Income from operations accruing to the Integrated Protected Areas Fund (IPAF) - RA No. 10629,,
+05206458,05,Off - Budgetary Funds,Retained Income/Funds,Retained Income/Funds,National Museum Income Fund,All income from all sources of museum operations nationwide and overseas - RA 11333,Department of Education (DepEd),National Museum of the Philippines
+06207501,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Agricultural Training Institute Revolving Fund,"Charges from dormitory operations, printing, publication, rental facilities, other business and grants/donations",Department of Agriculture (DA),Office of the Secretary
+06207502,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Bureau of Animal Industry Revolving Fund,"Proceeds from sale of animals, meat and other animal byproducts R.A. 7308",Department of Agriculture (DA),Office of the Secretary
+06207503,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Bureau of Animal Industry Revolving Fund-GAA General Provisions,Dormitory operations,Department of Agriculture (DA),Office of the Secretary
+06207504,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Plant Quarantine Revolving Fund,Permit/inspection fees and charges on the importation and export of plants for improvement and strengthening of plant quarantine services P.D. 1433,Department of Agriculture (DA),Office of the Secretary
+06207505,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,National Seed Industry Fund,"Fees and charges from clearance certification fees, inspection fees, miscellaneous income for the promotion and development of the seed industry R.A. 9168",Department of Agriculture (DA),Office of the Secretary
+06207506,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Plant Variety Protection Fund,Collection of fees for plant variety protection - R.A. 9168,Department of Agriculture (DA),Office of the Secretary
+06207507,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Bureau of Soils and Water Management Revolving Fund,Rentals from use of buildings/facilities and board and lodging for maintenance of buildings,Department of Agriculture (DA),Office of the Secretary
+06207508,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Fertilizer and Pesticide Authority Fund,Rentals for use of Training Centers/Rooms,Department of Agriculture (DA),Fertilizer and Pesticide Authority
+06207509,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Philippine Carabao Center Revolving Fund,"Sale of carabao's meat, milk and other key carabao products and byproducts, and other miscellaneous receipts R.A.7307",Department of Agriculture (DA),Philippine Carabao Center
+06207510,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Philippine Center for Post Harvest Development and Mechanization Revolving Fund,Rental of Facilities R.A. 10156,Department of Agriculture (DA),Philippine Center for Post-Harvest Development and Mechanization
+06207511,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Procurement Service Revolving Fund,Section 4 of E.O. 359 and Special Provision No. 1 of R.A. 7663,Department of Budget and Management (DBM),Government Procurement Policy Board-Technical Support Office
+06207512,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,School Revolving Fund,"Income earned from manufacturing and production programs, including auxiliary services of national schools",Department of Education (DepEd),Office of the Secretary
+06207513,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,RELC Revolving Fund,Registration Fees of Regional Education Learning Centers B.P. 6831,Department of Education (DepEd),Office of the Secretary
+06207514,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Eco-Tech Center Revolving Fund,"Income from seminars, conferences",Department of Education (DepEd),Office of the Secretary
+06207515,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Applied Nutrition Center Revolving Fund,"Income from Dormitory Operations, Miscellaneous Income",Department of Education (DepEd),Office of the Secretary
+06207516,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Boracay National High School Hostel Revolving Fund,"Income from Dormitory Operations, Miscellaneous Income",Department of Education (DepEd),Office of the Secretary
+06207517,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Baguio Teachers Camp Revolving Fund,"Lodging Fees, Rental of Facilities, Interest Income GAA",Department of Education (DepEd),Office of the Secretary
+06207518,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,National Educators Academy of the Philippines Revolving Fund,"Registration Fees, Use of Buildings, Interest Income (F 161)",Department of Education (DepEd),Office of the Secretary
+06207519,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,National Science Teaching Instrumentation Center Revolving Fund,Rental of Staff Houses,Department of Education (DepEd),Office of the Secretary
+06207521,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Environmental Management Bureau Revolving Fund,Fines and penalties related to environmental compliance and other pollution violations P.D. Nos. 984/1226,Department of Environment and Natural Resources (DENR),Environmental Management Bureau
+06207522,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Municipal Development Fund Revolving Fund,- P.D. 1914,Department of Finance (DOF),Office of the Secretary
+06207523,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Local Loans Fund,- Policy Governing Board (PGB) Resolution,Department of Finance (DOF),Office of the Secretary
+06207524,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Program Support Fund,- Policy Governing Board (PGB) Resolution,Department of Finance (DOF),Office of the Secretary
+06207525,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Assessment Revolving Fund,"National government contribution of P50M, assessment fees and other income P.D. 1002",Department of Finance (DOF),Bureau of Local Government Finance
+06207526,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Cooperative Development Loan Fund,- P.D. 175/R.A. 6939,Department of Finance (DOF),Cooperative Development Authority
+06207527,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Cooperative Marketing Project Fund,- E.O. 113,Department of Finance (DOF),Cooperative Development Authority
+06207528,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Cooperative Support Fund,- E.O. 116/R.A. 6939,Department of Finance (DOF),Cooperative Development Authority
+06207529,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Cooperative Rehabilitation Development Fund,- E.O. 634/R.A. 6939,Department of Finance (DOF),Cooperative Development Authority
+06207530,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Privatization and Management Office Revolving Fund,Income for conservation and disposition of transferred assets E.O. 323,Department of Finance (DOF),Privatization and Management Office
+06207531,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Insurance Commission Revolving Fund,Security Fund for Life and Non-Life Accounts,Department of Finance (DOF),Insurance Commission
+06207532,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Passport Revolving Fund,"Fees collected in excess of the regular fee for processing and issuance of passport requiring special consideration, waiver or issuance beyond regular office hours R.A. 8239",Department of Foreign Affairs (DFA),Office of the Secretary
+06207533,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Drugs and Medicines Revolving Funds,Drugs and Medicines N.B.C. 321,Department of Health (DOH),Office of the Secretary
+06207534,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,BuCor Revolving Fund,"Sale of agro-industry products, rental income and fines/penalties - R.A. 9206",Department of Justice (DOJ),Bureau of Corrections
+06207535,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,TESDA Revolving Fund,All income derived from various training-cum production activities E.O. 939,Other Executive Offices (OEOs),Technical Education and Skills Development Authority
+06207536,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Philippine Veterans Affairs Office-Proper Revolving Fund,"Entrance and parking fees, rental of stalls and guesthouse E.O. 159/197 and DOF-DBM J.C. 2-94; entrance fees and rentals for the use of military shrine installations and facilities, and board and lodging",Department of National Defense (DND),Philippine Veterans Affairs Office (PVAO) - Proper
+06207537,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Department of Public Works and Highways-OSEC Revolving Fund,Toll Fees P.D. 1004,Department of Public Works and Highways (DPWH),Office of the Secretary
+06207538,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Information and Communications Technology Office Revolving Fund,Seminar fees from trainees and other fees,Department of Science and Technology (DOST),Information and Communications Technology Office
+06207539,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Self Employment Assistance Revolving and Settlement Fund,Income from loan repayments for micro-enterprise projects/loan R.A. 5416,Department of Social Welfare and Development (DSWD),Office of the Secretary
+06207540,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Intramuros Administration Revolving Fund,"Rental of concessionaires, i.e., Casa Manila, Fort Santiago; fees from catering, shooting and reservations P.D. 1616",Department of Tourism (DOT),Intramuros Administration
+06207541,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Public-Private Partnership Center of the Philippines Revolving Fund,Project Development Facility and Project Development and Monitoring Facility,National Economic and Development Authority (NEDA),Public-Private Partnership Center of the Philippines
+06207542,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,National Printing Office Revolving Fund,"Sale of government accountable forms, non-accountable forms, official gazette and public documents, special jobs and information materials for production costs B.P. 40, N.B.C. 332, DOF Circular 5-80, COA Circular 80-140",Presidential Communications Operations Office (PCOO),National Printing Office
+06207543,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Student Micro-Project Loan Fund,"Philippine-Australia Agritech Project and MOA between the CHED, Decs-EDPITAF and the Australian Agency for International Development (AusAID)",Other Executive Offices (OEOs),Commission on Higher Education
+06207544,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,FDCP Revolving Fund,Film Fund,Other Executive Offices (OEOs),Film Development Council of the Philippines
+06207545,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,National Commission for Culture and Arts Revolving Fund,"Proceeds from sale of books, magazines and cultural items R.A. 7356",Other Executive Offices (OEOs),National Commission for Culture and the Arts-Proper
+06207546,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,National Historical Commission of the Philippines Revolving Fund,"Proceeds from sales of publications, park entrance fees and donations, rendering of technical services, conferences, workshops and similar income R.A. 10086",Other Executive Offices (OEOs),National Historical Commission of the Philippines
+06207547,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Civil Service Commission Revolving Fund,"Fees from examinations, certifications, training courses, seminars and workshops Sections 62 and 63, Chapter 10, Title I (A), Book V of E.O. No. 292, s. 1987",Civil Service Commission (CSC),Civil Service Commission
+06207548,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Career Executive Service Board Revolving Fund,"Fees from trainings/seminars/conferences and examinations CSC Resolution Nos. 90-536 and 90-731, dated June 4 and August 7, 1990, respectively",Civil Service Commission (CSC),Career Executive Service Board
+06207549,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Commission on Audit Revolving Fund,"Fees from dormitories, trainings and seminars",Commission on Audit (COA),Commission on Audit (COA)
+06207550,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,NDCP revolving Fund,,,
+06207551,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,DENR-Central Office Hostel Revolving Fund,Income from dormitory operations,,
+06207552,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,CMDF Revolving Fund,Receipts of the Construction Manpower Development Foundation (CMDF) derived from rentals for the use of buildings and fees imposed for board and lodging,,
+06207553,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,Bureau of Agriculture Research Revolving Fund,Income from rentals for the use of buildings and facilities,Department of Agriculture (DA),Office of the Secretary
+06207554,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,DA - PCC Hostel Revolving Fund,Income from dormitory operations,,
+06207555,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,DENR - OSEC Revolving Fund,Income from rentals for the use of buildings and facilities or fees imposed for board and lodging,Department of Environment and Natural Resources (DENR),Office of the Secretary
+06207556,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,DSWD-OSEC Dormitory and SWADCAP Revolving Fund,Income from dormitory operations and use of Social Welfare and Development Center for Asia and the Pacific (SWADCAP) facilities,,
+06207557,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,ODG Revolving Fund,Proceeds collected from the board and lodging and rental of conference venue and other facilities of NEDA,,
+06207558,06,Off - Budgetary Funds,Revolving Funds,Revolving Funds,DOJ-PPA Revolving Fund,Receipts derived from fees and charges collected from the occupants of the Multi-Purpose Hall/Dormitory,,
+07308601,07,Custodial Funds,Trust Receipts,Trust Receipts,Inter-Agency Transferred Fund (IATF),,,
+07308602,07,Custodial Funds,Trust Receipts,Trust Receipts,Receipts Deposited with the National Treasury other than IATF,,,
+07308603,07,Custodial Funds,Trust Receipts,Trust Receipts,Receipts Deposited with Authorized Government Depository Banks (AGDB),,,

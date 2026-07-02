@@ -26,7 +26,7 @@ else
                               Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                               OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
                 <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                            StartIcon="@Icons.Material.Outlined.Search" OnClick="SearchAsync" Disabled="_busy">
+                            StartIcon="@Icons.Material.Outlined.Search" OnClick="OnSearchClicked" Disabled="_busy">
                     Search
                 </AMISButton>
             </MudStack>
@@ -150,9 +150,16 @@ else
         }
     }
 
+    // Any new search (button click or Enter) restarts from page 1 — only Prev/Next keep the page.
+    private async Task OnSearchClicked()
+    {
+        _page = 1;
+        await SearchAsync();
+    }
+
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") { _page = 1; await SearchAsync(); }
+        if (e.Key == "Enter") await OnSearchClicked();
     }
 
     private async Task PrevPage() { _page--; await SearchAsync(); }
