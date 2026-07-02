@@ -69,13 +69,13 @@ internal sealed class RspiPdfDocument(
                 table.ColumnsDefinition(c =>
                 {
                     c.ConstantColumn(24);   // No.
-                    c.RelativeColumn(2);     // ICS No.
+                    c.RelativeColumn(2.6f);  // ICS No.
                     c.ConstantColumn(60);    // Date
                     c.RelativeColumn(3);     // Custodian
                     c.RelativeColumn(3);     // Property No.
                     c.RelativeColumn(4);     // Description
                     c.RelativeColumn(1);     // Unit
-                    c.ConstantColumn(40);    // Qty
+                    c.ConstantColumn(28);    // Qty
                     c.ConstantColumn(70);    // Unit Cost
                     c.ConstantColumn(75);    // Amount
                 });

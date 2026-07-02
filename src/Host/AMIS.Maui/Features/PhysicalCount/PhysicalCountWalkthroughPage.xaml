@@ -3,16 +3,103 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
              xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
              x:Name="ThisPage"
              x:DataType="vm:PhysicalCountWalkthroughViewModel"
              x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountWalkthroughPage"
              Title="{Binding SessionNo}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
 
-        <!-- Row 0: Session info header -->
-        <Border Grid.Row="0"
+        <!-- Row 0: Embedded QR scanner (copied from Scan) -->
+        <Grid Grid.Row="0">
+            <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
+                                           IsVisible="{Binding IsCameraAvailable}"
+                                           IsDetecting="False"
+                                           HeightRequest="240"
+                                           BarcodesDetected="OnBarcodeDetected">
+                <zxing:CameraBarcodeReaderView.Options>
+                    <zxingcore:BarcodeReaderOptions Formats="QrCode,Code128,Code39,DataMatrix"
+                                                    AutoRotate="True"
+                                                    Multiple="False" />
+                </zxing:CameraBarcodeReaderView.Options>
+            </zxing:CameraBarcodeReaderView>
+
+            <!-- QR label badge — floated at the top of the camera area -->
+            <Border IsVisible="{Binding IsCameraAvailable}"
+                    HorizontalOptions="Start" VerticalOptions="Start"
+                    Margin="12,12,0,0"
+                    Stroke="Transparent"
+                    Background="{StaticResource CameraOverlayBg}"
+                    Padding="12,5">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+                <Label Text="QR"
+                       FontFamily="InterSemiBold" FontSize="12"
+                       TextColor="{StaticResource White}" />
+            </Border>
+
+            <!-- No camera placeholder (Windows / devices without camera) -->
+            <VerticalStackLayout IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
+                                 HorizontalOptions="Center" VerticalOptions="Center"
+                                 Spacing="6" Padding="16">
+                <Label Text="&#x1F4F7;" FontSize="34" HorizontalOptions="Center" />
+                <Label Text="Camera not available — use manual entry below."
+                       FontSize="13" TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Row 1: Counting at + manual entry -->
+        <Border Grid.Row="1"
+                Stroke="Transparent"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                Padding="12,10">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="0" />
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="8">
+                <Picker Title="Counting at — select location"
+                        ItemsSource="{Binding Locations}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedLocation}" />
+                <HorizontalStackLayout Spacing="20" RadioButtonGroup.GroupName="CountSearchMode">
+                    <RadioButton Content="Property No" IsChecked="True" />
+                    <RadioButton Content="Serial No" IsChecked="{Binding SearchBySerial, Mode=TwoWay}" />
+                </HorizontalStackLayout>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Entry Grid.Column="0"
+                           Placeholder="{Binding ManualEntryPlaceholder}"
+                           Text="{Binding ManualPropertyNo}"
+                           ReturnCommand="{Binding SearchManualCommand}"
+                           AutomationId="PropertyNoEntry" />
+                    <Button Grid.Column="1"
+                            Text="Search"
+                            Command="{Binding SearchManualCommand}" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Row 2: Filter + Search -->
+        <Grid Grid.Row="2"
+              Padding="12,8"
+              ColumnDefinitions="Auto,*"
+              ColumnSpacing="8"
+              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+            <Picker Grid.Column="0"
+                    ItemsSource="{Binding FilterOptions}"
+                    SelectedItem="{Binding SelectedFilter}"
+                    MinimumWidthRequest="120" />
+            <Entry Grid.Column="1"
+                   Placeholder="Search property / description"
+                   Text="{Binding SearchText}" />
+        </Grid>
+
+        <!-- Row 3: Session info header (moved below the filter / search) -->
+        <Border Grid.Row="3"
                 Stroke="Transparent"
                 BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
                 Padding="16,14,16,12">
@@ -33,8 +120,8 @@
             </VerticalStackLayout>
         </Border>
 
-        <!-- Row 1: Progress badges -->
-        <Grid Grid.Row="1" Padding="12,10" ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
+        <!-- Row 4: Progress badges (moved below the filter / search) -->
+        <Grid Grid.Row="4" Padding="12,10" ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
             <Border Grid.Column="0"
                     Stroke="Transparent"
                     StrokeShape="RoundRectangle 10"
@@ -93,8 +180,8 @@
             </Border>
         </Grid>
 
-        <!-- Row 2: Sync banner -->
-        <Border Grid.Row="2"
+        <!-- Row 5: Sync banner (moved below the filter / search) -->
+        <Border Grid.Row="5"
                 IsVisible="{Binding SyncBanner, Converter={StaticResource IsNotNullConverter}}"
                 Stroke="Transparent"
                 StrokeShape="RoundRectangle 10"
@@ -116,66 +203,8 @@
             </Grid>
         </Border>
 
-        <!-- Row 3: Manual entry + scan/OCR -->
-        <Border Grid.Row="3"
-                Stroke="Transparent"
-                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
-                Padding="12,10">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="0" />
-            </Border.StrokeShape>
-            <VerticalStackLayout Spacing="8">
-                <Picker Title="Counting at — select location"
-                        ItemsSource="{Binding Locations}"
-                        ItemDisplayBinding="{Binding Name}"
-                        SelectedItem="{Binding SelectedLocation}" />
-                <HorizontalStackLayout Spacing="20" RadioButtonGroup.GroupName="CountSearchMode">
-                    <RadioButton Content="Property No" IsChecked="True" />
-                    <RadioButton Content="Serial No" IsChecked="{Binding SearchBySerial, Mode=TwoWay}" />
-                </HorizontalStackLayout>
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Entry Grid.Column="0"
-                           Placeholder="{Binding ManualEntryPlaceholder}"
-                           Text="{Binding ManualPropertyNo}"
-                           ReturnCommand="{Binding SearchManualCommand}"
-                           AutomationId="PropertyNoEntry" />
-                    <Button Grid.Column="1"
-                            Text="Search"
-                            Command="{Binding SearchManualCommand}" />
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Button Grid.Column="0"
-                            Text="Scan QR / Barcode"
-                            Command="{Binding ScanQrCommand}" />
-                    <Button Grid.Column="1"
-                            Text="OCR"
-                            IsVisible="{Binding IsOcrSupported}"
-                            IsEnabled="{Binding IsOcrBusy, Converter={StaticResource InvertedBoolConverter}}"
-                            Command="{Binding ScanTextCommand}" />
-                </Grid>
-                <ActivityIndicator IsRunning="{Binding IsOcrBusy}"
-                                   IsVisible="{Binding IsOcrBusy}"
-                                   HorizontalOptions="Center" />
-            </VerticalStackLayout>
-        </Border>
-
-        <!-- Row 4: Filter + Search -->
-        <Grid Grid.Row="4"
-              Padding="12,8"
-              ColumnDefinitions="Auto,*"
-              ColumnSpacing="8"
-              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
-            <Picker Grid.Column="0"
-                    ItemsSource="{Binding FilterOptions}"
-                    SelectedItem="{Binding SelectedFilter}"
-                    MinimumWidthRequest="120" />
-            <Entry Grid.Column="1"
-                   Placeholder="Search property / description"
-                   Text="{Binding SearchText}" />
-        </Grid>
-
-        <!-- Row 5: Checklist CollectionView (fills remaining space) -->
-        <CollectionView Grid.Row="5"
+        <!-- Row 6: Checklist CollectionView (fills remaining space) -->
+        <CollectionView Grid.Row="6"
                         ItemsSource="{Binding FilteredEntries}"
                         SelectionMode="Single"
                         SelectionChanged="OnEntrySelected"

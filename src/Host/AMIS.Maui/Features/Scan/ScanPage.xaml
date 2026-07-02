@@ -104,7 +104,7 @@
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding StopTextScanCommand}" />
                     </Border.GestureRecognizers>
-                    <Label Text="Barcode"
+                    <Label Text="QR"
                            FontFamily="InterSemiBold"
                            FontSize="13"
                            TextColor="{StaticResource Gray300}">

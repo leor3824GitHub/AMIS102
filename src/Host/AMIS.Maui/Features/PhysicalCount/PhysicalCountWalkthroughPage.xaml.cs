@@ -1,4 +1,5 @@
 using AMIS.Maui.Services;
+using ZXing.Net.Maui;
 
 namespace AMIS.Maui.Features.PhysicalCount;
 
@@ -18,6 +19,8 @@ public partial class PhysicalCountWalkthroughPage : ContentPage
         base.OnAppearing();
         Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
         _vm.SubscribeMessages();
+        // Shell needs an explicit kick to (re)start ZXing detection after navigating away and back.
+        BarcodeReader.IsDetecting = _vm.IsCameraAvailable;
         _ = _vm.LoadAsync();
     }
 
@@ -25,7 +28,15 @@ public partial class PhysicalCountWalkthroughPage : ContentPage
     {
         base.OnDisappearing();
         Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+        BarcodeReader.IsDetecting = false;
         _vm.UnsubscribeMessages();
+    }
+
+    private void OnBarcodeDetected(object sender, BarcodeDetectionEventArgs e)
+    {
+        var result = e.Results?.FirstOrDefault();
+        if (result is null) return;
+        MainThread.BeginInvokeOnMainThread(async () => await _vm.OnBarcodeDetectedAsync(result.Value));
     }
 
     private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)

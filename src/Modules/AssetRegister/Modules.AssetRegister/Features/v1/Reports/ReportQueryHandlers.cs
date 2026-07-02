@@ -1,6 +1,7 @@
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
@@ -432,6 +433,11 @@ public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db, IMedi
             events.Where(e => e.OfficerEmployeeId is not null).Select(e => e.OfficerEmployeeId!.Value),
             mediator, cancellationToken).ConfigureAwait(false);
 
+        // The reporting entity's own name is printed once as "Entity Name" in each sheet header, so the
+        // Office/Officer cells suppress it — showing only the officer when the office is the entity itself.
+        var org = await mediator.Send(new GetOrganizationProfileQuery(), cancellationToken).ConfigureAwait(false);
+        var entityName = org?.Name;
+
         // Group Fund Cluster → SE classification (one Annex A.4 sheet each) and run the balance.
         var sheetNo = 0;
         var groups = events
@@ -490,7 +496,7 @@ public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db, IMedi
                                 e.EstimatedUsefulLifeYears,
                                 e.Type,
                                 e.Qty,
-                                FormatOfficeOfficer(e, officeByEmployee),
+                                FormatOfficeOfficer(e, officeByEmployee, entityName),
                                 balance,
                                 e.Amount,
                                 e.Remarks));
@@ -564,14 +570,25 @@ public sealed class GetRegSpiReportQueryHandler(AssetRegisterDbContext db, IMedi
         return map.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value.OfficeName);
     }
 
-    private static string? FormatOfficeOfficer(LedgerEvent e, IReadOnlyDictionary<Guid, string?> officeByEmployee)
+    private static string? FormatOfficeOfficer(
+        LedgerEvent e, IReadOnlyDictionary<Guid, string?> officeByEmployee, string? entityName)
     {
         if (e.OfficerName is null)
             return null;
 
         var office = e.OfficerEmployeeId is { } id ? officeByEmployee.GetValueOrDefault(id) : null;
-        return string.IsNullOrWhiteSpace(office) ? e.OfficerName : $"{office} / {e.OfficerName}";
+
+        // Drop the office when it is the reporting entity itself — it is already printed as the sheet's
+        // "Entity Name" header, so repeating it in every Office/Officer cell is redundant.
+        if (string.IsNullOrWhiteSpace(office) || IsSameAsEntity(office, entityName))
+            return e.OfficerName;
+
+        return $"{office} / {e.OfficerName}";
     }
+
+    private static bool IsSameAsEntity(string office, string? entityName) =>
+        !string.IsNullOrWhiteSpace(entityName)
+        && string.Equals(office.Trim(), entityName.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static string? DescribeCondition(AssetCondition? condition) => condition switch
     {

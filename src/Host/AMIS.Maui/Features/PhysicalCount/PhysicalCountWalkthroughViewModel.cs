@@ -11,8 +11,18 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 {
     private readonly IApiClient _apiClient;
     private readonly IPhysicalCountSyncService _syncService;
-    private readonly IOcrService _ocr;
     private List<PhysicalCountEntryDto> _allEntries = [];
+
+    // Barcode scan debounce — the embedded reader fires continuously.
+    private DateTimeOffset? _lastScanTime;
+
+    // Guards the resolve/confirm flow so the continuously-firing reader can't stack dialogs, and
+    // remembers the last item counted so it isn't re-prompted while still in the camera frame.
+    private bool _isResolving;
+    private string? _lastCountedPropertyNo;
+
+    // Default condition for a quick scan-to-count add — keeps the loop fast with the common outcome.
+    private const string DefaultCountCondition = "InGoodCondition";
 
     [ObservableProperty] private string _sessionId = "";
     [ObservableProperty] private string _sessionNo = "";
@@ -22,7 +32,9 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private string? _syncBanner;
-    [ObservableProperty] private bool _isOcrBusy;
+
+    // True on devices with a usable camera (Android/iOS) — gates the embedded barcode viewfinder.
+    [ObservableProperty] private bool _isCameraAvailable;
 
     [ObservableProperty] private string _manualPropertyNo = "";
     [ObservableProperty] private string _searchText = "";
@@ -53,29 +65,43 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 
     public string[] FilterOptions => ["All", "Pending", "Found", "Not Found", "Found@Station"];
 
-    public PhysicalCountWalkthroughViewModel(IApiClient apiClient, IPhysicalCountSyncService syncService, IOcrService ocr)
+    public PhysicalCountWalkthroughViewModel(IApiClient apiClient, IPhysicalCountSyncService syncService)
     {
         _apiClient = apiClient;
         _syncService = syncService;
-        _ocr = ocr;
+        IsCameraAvailable = DeviceInfo.Current.Platform == DevicePlatform.Android
+                         || DeviceInfo.Current.Platform == DevicePlatform.iOS;
     }
-
-    public bool IsOcrSupported => _ocr.IsSupported;
 
     public void SubscribeMessages() =>
         WeakReferenceMessenger.Default.Register<PhysicalCountBarcodeScannedMessage>(this,
-            (_, msg) => MainThread.BeginInvokeOnMainThread(() =>
-            {
-                ManualPropertyNo = msg.PropertyNo;
-                _ = ProcessPropertyNoAsync(msg.PropertyNo);
-            }));
+            (_, msg) => MainThread.BeginInvokeOnMainThread(async () => await OnBarcodeDetectedAsync(msg.PropertyNo)));
 
     public void UnsubscribeMessages() =>
         WeakReferenceMessenger.Default.Unregister<PhysicalCountBarcodeScannedMessage>(this);
 
-    [RelayCommand]
-    private static async Task ScanQrAsync() =>
-        await Shell.Current.GoToAsync(nameof(PhysicalCountScanPage));
+    // Called by the page's embedded barcode reader on each successful decode. Debounced because the
+    // camera fires continuously; resolves the property number against the registry like manual entry.
+    public async Task OnBarcodeDetectedAsync(string rawValue)
+    {
+        if (_isResolving || IsDebounced()) return;
+        var propertyNo = rawValue.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(propertyNo)) return;
+        // The reader keeps firing while an asset stays in frame — skip the one we just counted so the
+        // confirm dialog doesn't reappear; the user simply points the camera at the next asset.
+        if (string.Equals(propertyNo, _lastCountedPropertyNo, StringComparison.Ordinal)) return;
+        ManualPropertyNo = propertyNo;
+        await ProcessPropertyNoAsync(propertyNo, isScanned: true);
+    }
+
+    private bool IsDebounced()
+    {
+        if (_lastScanTime.HasValue &&
+            (DateTimeOffset.UtcNow - _lastScanTime.Value).TotalSeconds < 2)
+            return true;
+        _lastScanTime = DateTimeOffset.UtcNow;
+        return false;
+    }
 
     partial void OnSessionIdChanged(string value) => _ = LoadAsync();
     partial void OnSelectedFilterChanged(string value) => ApplyFilter();
@@ -154,11 +180,11 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
         {
             var propertyNo = await ResolveSerialToPropertyNoAsync(raw, ct);
             if (propertyNo is not null)
-                await ProcessPropertyNoAsync(propertyNo);
+                await ProcessPropertyNoAsync(propertyNo, isScanned: false);
             return;
         }
 
-        await ProcessPropertyNoAsync(raw.ToUpperInvariant());
+        await ProcessPropertyNoAsync(raw.ToUpperInvariant(), isScanned: false);
     }
 
     // Resolves a serial number to a single property number so the rest of the count flow is unchanged:
@@ -192,97 +218,102 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
         return index >= 0 ? matches[index].PropertyNo : null;
     }
 
-    [RelayCommand]
-    private async Task ScanTextAsync(CancellationToken ct = default)
+    // Resolve a scanned/typed property number against the asset registry, then either confirm-and-add
+    // a known asset inline (record-as-you-go) or capture an unknown one as found at station.
+    private async Task ProcessPropertyNoAsync(string propertyNo, bool isScanned)
     {
-        if (IsOcrBusy) return;
-        if (!_ocr.IsSupported)
-        {
-            ErrorMessage = "Text scanning isn't available on this device.";
-            return;
-        }
-
-        IsOcrBusy = true;
-        ErrorMessage = null;
-        try
-        {
-            var photo = await MediaPicker.Default.CapturePhotoAsync();
-            if (photo is null) return;
-
-            await using var stream = await photo.OpenReadAsync();
-            var raw = await _ocr.RecognizeTextAsync(stream, ct);
-            var info = PropertyNumberExtractor.Extract(raw);
-
-            if (string.IsNullOrEmpty(info.PropertyNo))
-            {
-                ManualPropertyNo = (raw ?? string.Empty).Trim();
-                ErrorMessage = "Couldn't detect a property number. Edit the text and tap Search.";
-                return;
-            }
-
-            ManualPropertyNo = info.PropertyNo;
-            await ProcessPropertyNoAsync(info.PropertyNo, info.Item, info.Value);
-        }
-        catch (FeatureNotSupportedException)
-        {
-            ErrorMessage = "Camera capture isn't supported on this device.";
-        }
-        catch (PermissionException)
-        {
-            ErrorMessage = "Camera permission was denied.";
-        }
-        catch (Exception)
-        {
-            ErrorMessage = "Could not scan text. Please try again.";
-        }
-        finally
-        {
-            IsOcrBusy = false;
-        }
-    }
-
-    // Resolve a scanned/typed property number against the asset registry, then either record the
-    // found asset (known to the registry) or capture it as a found-at-station item (unknown).
-    private async Task ProcessPropertyNoAsync(string propertyNo, string? description = null, decimal? unitCost = null)
-    {
+        if (_isResolving) return;
         if (SelectedLocation is null)
         {
             ErrorMessage = "Select where you are counting (location) before recording.";
             return;
         }
 
-        var locationId = SelectedLocation.Id;
+        _isResolving = true;
+        ErrorMessage = null;
+        var location = SelectedLocation;
         try
         {
-            var asset = await _apiClient.GetItemByPropertyNoAsync(propertyNo);
-            // Known asset — record it (condition picked on the next screen).
-            await Shell.Current.GoToAsync(
-                $"{nameof(PhysicalCountMarkEntryPage)}" +
-                $"?SessionId={SessionId}" +
-                $"&AssetRegistryId={asset.Id}" +
-                $"&PropertyNo={Uri.EscapeDataString(asset.PropertyNo)}" +
-                $"&Desc={Uri.EscapeDataString(asset.ItemName)}" +
-                $"&Unit={Uri.EscapeDataString(asset.Unit)}" +
-                $"&UnitCost={asset.UnitCost.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
-                $"&LocationId={locationId}" +
-                $"&IsScanned=true");
-        }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            // Definitively not in the registry → capture as found at station.
-            var route = $"{nameof(PhysicalCountFoundAtStationPage)}" +
-                        $"?SessionId={SessionId}" +
-                        $"&PropertyNo={Uri.EscapeDataString(propertyNo)}" +
-                        $"&LocationId={locationId}";
-            if (!string.IsNullOrWhiteSpace(description))
-                route += $"&Desc={Uri.EscapeDataString(description)}";
-            if (unitCost.HasValue)
-                route += $"&UnitCost={unitCost.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-            await Shell.Current.GoToAsync(route);
+            TangibleInventoryItemDetailDto asset;
+            try
+            {
+                asset = await _apiClient.GetItemByPropertyNoAsync(propertyNo);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // Definitively not in the registry → capture as found at station (full classify screen).
+                // Remember it so the reader doesn't re-launch that screen while it's still in frame.
+                _lastCountedPropertyNo = propertyNo;
+                await Shell.Current.GoToAsync(
+                    $"{nameof(PhysicalCountFoundAtStationPage)}" +
+                    $"?SessionId={SessionId}" +
+                    $"&PropertyNo={Uri.EscapeDataString(propertyNo)}" +
+                    $"&LocationId={location.Id}");
+                return;
+            }
+
+            await ConfirmAndRecordAsync(asset, location, isScanned);
         }
         catch (HttpRequestException)
         {
             ErrorMessage = "Could not check the registry. Verify your connection and try again.";
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            _isResolving = false;
+        }
+    }
+
+    // Show the found asset's details and, on confirm, add it to the count at the selected location.
+    private async Task ConfirmAndRecordAsync(TangibleInventoryItemDetailDto asset, LocationDto location, bool isScanned)
+    {
+        var details =
+            $"{asset.ItemName}\n\n" +
+            $"Property No:  {asset.PropertyNo}\n" +
+            $"Unit cost:  ₱{asset.UnitCost:N2}\n" +
+            $"Counting at:  {location.Name}";
+
+        var confirmed = await Shell.Current.DisplayAlert("Add to count?", details, "Add", "Cancel");
+        if (!confirmed) return;
+
+        ErrorMessage = null;
+        try
+        {
+            var request = new RecordCountEntryRequest(
+                asset.Id,
+                string.IsNullOrWhiteSpace(asset.ItemName) ? asset.PropertyNo : asset.ItemName,
+                string.IsNullOrWhiteSpace(asset.Unit) ? "unit" : asset.Unit,
+                asset.UnitCost,
+                DefaultCountCondition,
+                location.Id,
+                null,
+                isScanned);
+
+            var synced = await _syncService.RecordEntryAsync(Guid.Parse(SessionId), request);
+            _lastCountedPropertyNo = asset.PropertyNo.Trim().ToUpperInvariant();
+            ManualPropertyNo = "";
+
+            if (synced)
+            {
+                // Reload authoritative session state (progress badges + checklist).
+                await LoadAsync();
+            }
+            else
+            {
+                // Offline: the entry is queued locally. A session reload would fail on the network call,
+                // so reflect the pending queue directly instead of leaving the banner stale.
+                PendingSyncCount = await _syncService.GetPendingCountAsync();
+                SyncBanner = $"{PendingSyncCount} entry(s) queued — will sync when connected.";
+                ErrorMessage = "Added offline — it will sync when you're back online.";
+            }
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "Could not add the item to the count. Please try again.";
         }
     }
 

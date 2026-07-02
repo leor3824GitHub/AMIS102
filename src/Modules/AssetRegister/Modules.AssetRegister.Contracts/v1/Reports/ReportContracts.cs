@@ -331,3 +331,71 @@ public sealed record GetRpiReportQuery(
     DateOnly? DateTo = null,
     int PageNumber = 1,
     int PageSize = 20) : IQuery<RpiReportDto>;
+
+// ── RegPPEI (Registry of Property, Plant and Equipment Issued) ───────────────────────────────────
+//
+// PPE counterpart of the RegSPI (COA Annex A.4 registry). Same transaction-ledger model — every
+// issue, return, re-issue and disposal up to the as-of date is its own registry row with a running
+// balance — but sourced from PPE_PAR accountabilities, RRP return receipts, and PPE disposals
+// (vs. SE_ICS / RRSP / SE for the RegSPI). Reuses <see cref="RegSpiTransactionType"/> since the
+// movement kinds (Issued / Returned / Re-issued / Disposed) are source-neutral.
+
+/// <summary>One dated movement on the RegPPEI registry — PPE analogue of <see cref="RegSpiLedgerRowDto"/>.</summary>
+public sealed record RegPpeiLedgerRowDto(
+    DateOnly Date,
+    string ReferenceNo,
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string Description,
+    int EstimatedUsefulLifeYears,
+    RegSpiTransactionType TransactionType,
+    int Qty,
+    string? OfficeOfficer,
+    int Balance,
+    decimal Amount,
+    string? Remarks);
+
+/// <summary>One RegPPEI sheet — the transaction ledger for one PPE classification within a fund
+/// cluster, with movement totals and the closing balance (quantity + value still with end-users).</summary>
+public sealed record RegPpeiClassificationGroupDto(
+    string? PropertyClass,
+    string ClassificationName,
+    int SheetNo,
+    IReadOnlyCollection<RegPpeiLedgerRowDto> Rows,
+    int IssuedQty,
+    int ReturnedQty,
+    int ReissuedQty,
+    int DisposedQty,
+    int BalanceQty,
+    decimal BalanceAmount);
+
+/// <summary>One fund cluster's sheets, scoped Fund Cluster × PPE classification.</summary>
+public sealed record RegPpeiFundClusterGroupDto(
+    string FundCluster,
+    IReadOnlyCollection<RegPpeiClassificationGroupDto> Classifications,
+    int BalanceQty,
+    decimal BalanceAmount);
+
+public sealed record RegPpeiReportDto(
+    DateOnly AsOfDate,
+    Guid? CustodianId,
+    string? FundCluster,
+    string? PropertyClass,
+    IReadOnlyCollection<RegPpeiFundClusterGroupDto> Groups,
+    int TotalTransactions,
+    int BalanceQty,
+    decimal BalanceAmount);
+
+/// <summary>
+/// Registry of Property, Plant and Equipment Issued (RegPPEI). Transaction ledger of PPE issued via
+/// PAR — every issue, return, re-issue and disposal up to <paramref name="AsOfDate"/>, one sheet per
+/// Fund Cluster × PPE classification with a running balance.
+/// </summary>
+public sealed record GetRegPpeiReportQuery(
+    DateOnly? AsOfDate = null,
+    Guid? CustodianId = null,
+    string? FundCluster = null,
+    string? PropertyClass = null) : IQuery<RegPpeiReportDto>;
+
+/// <summary>Distinct fund clusters present on PPE-PAR accountabilities — populates the RegPPEI filter dropdown.</summary>
+public sealed record GetRegPpeiFundClustersQuery() : IQuery<IReadOnlyList<string>>;

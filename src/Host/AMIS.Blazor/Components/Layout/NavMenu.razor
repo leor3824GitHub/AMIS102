@@ -181,6 +181,10 @@
                                 Icon="@Icons.Material.Outlined.MenuBook">
                         RegSPI (SE Registry)
                     </MudNavLink>
+                    <MudNavLink Href="/asset-register/reports/regppei" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.MenuBook">
+                        RegPPEI (PPE Registry)
+                    </MudNavLink>
                 }
                 @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Issuance.View))
                 {
