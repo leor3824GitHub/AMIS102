@@ -115,7 +115,6 @@ public static class MauiProgram
         builder.Services.AddTransient<AssetDetailViewModel>();
         builder.Services.AddTransient<PhysicalCountSessionListViewModel>();
         builder.Services.AddTransient<PhysicalCountWalkthroughViewModel>();
-        builder.Services.AddTransient<PhysicalCountScanViewModel>();
         builder.Services.AddTransient<PhysicalCountMarkEntryViewModel>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationViewModel>();
         builder.Services.AddTransient<ChatChannelListViewModel>();
@@ -132,7 +131,6 @@ public static class MauiProgram
         builder.Services.AddTransient<AssetDetailPage>();
         builder.Services.AddTransient<PhysicalCountSessionListPage>();
         builder.Services.AddTransient<PhysicalCountWalkthroughPage>();
-        builder.Services.AddTransient<PhysicalCountScanPage>();
         builder.Services.AddTransient<PhysicalCountMarkEntryPage>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationPage>();
         builder.Services.AddTransient<ChatChannelListPage>();

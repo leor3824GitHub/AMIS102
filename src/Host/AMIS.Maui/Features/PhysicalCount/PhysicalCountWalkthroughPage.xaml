@@ -13,10 +13,10 @@
 
     <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
 
-        <!-- Row 0: Embedded QR scanner (copied from Scan) -->
+        <!-- Row 0: Embedded scanner — barcode (default) + live-text OCR, shared with Scan -->
         <Grid Grid.Row="0">
             <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
-                                           IsVisible="{Binding IsCameraAvailable}"
+                                           IsVisible="{Binding IsBarcodeMode}"
                                            IsDetecting="False"
                                            HeightRequest="240"
                                            BarcodesDetected="OnBarcodeDetected">
@@ -27,20 +27,25 @@
                 </zxing:CameraBarcodeReaderView.Options>
             </zxing:CameraBarcodeReaderView>
 
-            <!-- QR label badge — floated at the top of the camera area -->
-            <Border IsVisible="{Binding IsCameraAvailable}"
-                    HorizontalOptions="Start" VerticalOptions="Start"
-                    Margin="12,12,0,0"
-                    Stroke="Transparent"
-                    Background="{StaticResource CameraOverlayBg}"
-                    Padding="12,5">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-                <Label Text="QR"
-                       FontFamily="InterSemiBold" FontSize="12"
-                       TextColor="{StaticResource White}" />
-            </Border>
+            <!-- Live text viewfinder host (text mode). The CameraView is created in code-behind on
+                 demand so its platform handler is never realized on devices without a camera. -->
+            <Grid x:Name="TextCameraHost"
+                  HeightRequest="240"
+                  IsVisible="{Binding IsTextMode}" />
+
+            <!-- Text-mode hint overlay -->
+            <VerticalStackLayout IsVisible="{Binding IsTextMode}"
+                                 VerticalOptions="Center" HorizontalOptions="Center"
+                                 Spacing="6" Padding="16"
+                                 InputTransparent="True">
+                <ActivityIndicator IsRunning="{Binding IsTextMode}"
+                                   Color="{StaticResource White}"
+                                   HorizontalOptions="Center" />
+                <Label Text="Point at the printed property number"
+                       FontFamily="InterSemiBold" FontSize="13"
+                       TextColor="{StaticResource White}"
+                       HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
 
             <!-- No camera placeholder (Windows / devices without camera) -->
             <VerticalStackLayout IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
@@ -51,6 +56,67 @@
                        FontSize="13" TextColor="{StaticResource Gray400}"
                        HorizontalOptions="Center" HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
+
+            <!-- QR / Text mode toggle pill — floated at the top of the camera area -->
+            <Border IsVisible="{Binding IsCameraAvailable}"
+                    HorizontalOptions="Start" VerticalOptions="Start"
+                    Margin="12,12,0,0"
+                    Stroke="Transparent"
+                    Background="{StaticResource CameraOverlayBg}"
+                    Padding="3">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="18" />
+                </Border.StrokeShape>
+                <HorizontalStackLayout Spacing="2">
+
+                    <!-- Barcode tab -->
+                    <Border Stroke="Transparent" Background="Transparent" Padding="14,5">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15" />
+                        </Border.StrokeShape>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsBarcodeMode}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource White}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding StopTextScanCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="QR" FontFamily="InterSemiBold" FontSize="12"
+                               TextColor="{StaticResource Gray300}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsBarcodeMode}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <!-- Text tab -->
+                    <Border Stroke="Transparent" Background="Transparent" Padding="14,5">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="15" />
+                        </Border.StrokeShape>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsTextMode}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource White}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding StartTextScanCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="Text" FontFamily="InterSemiBold" FontSize="12"
+                               TextColor="{StaticResource Gray300}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsTextMode}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Primary}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                </HorizontalStackLayout>
+            </Border>
         </Grid>
 
         <!-- Row 1: Counting at + manual entry -->
@@ -72,7 +138,7 @@
                 </HorizontalStackLayout>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <Entry Grid.Column="0"
-                           Placeholder="{Binding ManualEntryPlaceholder}"
+                           Placeholder="{Binding SearchPlaceholder}"
                            Text="{Binding ManualPropertyNo}"
                            ReturnCommand="{Binding SearchManualCommand}"
                            AutomationId="PropertyNoEntry" />

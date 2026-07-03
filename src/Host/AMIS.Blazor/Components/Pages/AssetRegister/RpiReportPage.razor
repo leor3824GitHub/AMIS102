@@ -17,29 +17,23 @@ else
 {
     <MudCard Elevation="1" Class="mb-4">
         <MudCardContent>
-            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                <MudItem xs="12" sm="6" md="4">
-                    <MudDatePicker @bind-Date="_from" Label="Date From" Variant="Variant.Outlined"
-                                   Margin="Margin.Dense" DateFormat="yyyy-MM-dd" Clearable="true" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="4">
-                    <MudDatePicker @bind-Date="_to" Label="Date To" Variant="Variant.Outlined"
-                                   Margin="Margin.Dense" DateFormat="yyyy-MM-dd" Clearable="true" />
-                </MudItem>
-                <MudItem xs="12" md="4">
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                    StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_busy">
-                            Generate Report
-                        </AMISButton>
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
-                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync"
-                                    Disabled="_busy || _report is null || _report.Items.Count == 0">
-                            Download PDF
-                        </AMISButton>
-                    </MudStack>
-                </MudItem>
-            </MudGrid>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudDatePicker @bind-Date="_from" Label="Date From" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" DateFormat="yyyy-MM-dd" Clearable="true"
+                               Style="width: 200px;" />
+                <MudDatePicker @bind-Date="_to" Label="Date To" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" DateFormat="yyyy-MM-dd" Clearable="true"
+                               Style="width: 200px;" />
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                            StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_busy">
+                    Generate Report
+                </AMISButton>
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                            StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync"
+                            Disabled="_busy || _report is null || _report.Items.Count == 0">
+                    Download PDF
+                </AMISButton>
+            </MudStack>
         </MudCardContent>
     </MudCard>
 

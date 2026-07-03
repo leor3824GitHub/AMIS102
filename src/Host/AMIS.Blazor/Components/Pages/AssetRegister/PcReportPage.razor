@@ -22,8 +22,9 @@ else
         <MudCardContent>
             <MudGrid Spacing="2" AlignItems="AlignItems.Center">
                 <MudItem xs="12" sm="6" md="4">
-                    <AMISTextField Label="Property No." @bind-Value="_propertyNo" Placeholder="e.g. 2026-01-0001"
-                                   OnKeyDown="OnKeyDownAsync" />
+                    <MudTextField @bind-Value="_propertyNo" Label="Property No." Placeholder="e.g. 2026-01-0001"
+                                  Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                                  Immediate="true" OnKeyDown="OnKeyDownAsync" />
                 </MudItem>
                 <MudItem xs="12" sm="6" md="2">
                     <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"

@@ -1,20 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
+using AMIS.Maui.Features.Shared;
 using AMIS.Maui.Services;
 using System.Collections.ObjectModel;
 
 namespace AMIS.Maui.Features.PhysicalCount;
 
+// Record-as-you-go physical count. Inherits the shared capture layer (barcode / OCR / manual / serial)
+// and supplies the terminal action: resolve the property number against the registry, then confirm and
+// record an entry at the selected location. Unlike Scan, it stays in text mode after a hit so the user
+// can keep scanning stickers — ShouldSkip + debounce prevent re-recording the one still in frame.
 [QueryProperty(nameof(SessionId), "SessionId")]
-public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
+public sealed partial class PhysicalCountWalkthroughViewModel : PropertyCaptureViewModel
 {
     private readonly IApiClient _apiClient;
     private readonly IPhysicalCountSyncService _syncService;
     private List<PhysicalCountEntryDto> _allEntries = [];
-
-    // Barcode scan debounce — the embedded reader fires continuously.
-    private DateTimeOffset? _lastScanTime;
 
     // Guards the resolve/confirm flow so the continuously-firing reader can't stack dialogs, and
     // remembers the last item counted so it isn't re-prompted while still in the camera frame.
@@ -30,24 +31,10 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
     [ObservableProperty] private string _scope = "";
     [ObservableProperty] private string _status = "";
     [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private string? _syncBanner;
 
-    // True on devices with a usable camera (Android/iOS) — gates the embedded barcode viewfinder.
-    [ObservableProperty] private bool _isCameraAvailable;
-
-    [ObservableProperty] private string _manualPropertyNo = "";
     [ObservableProperty] private string _searchText = "";
     [ObservableProperty] private string _selectedFilter = "All";
-
-    // Manual-entry mode: false = look up by property number (default), true = search by serial number.
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ManualEntryPlaceholder))]
-    private bool _searchBySerial;
-
-    public string ManualEntryPlaceholder => SearchBySerial
-        ? "Serial number"
-        : "Property No. (type or scan)";
 
     // "Counting at" location — required to record (AssetRegister stores where each item was counted).
     [ObservableProperty] private ObservableCollection<LocationDto> _locations = [];
@@ -65,43 +52,30 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
 
     public string[] FilterOptions => ["All", "Pending", "Found", "Not Found", "Found@Station"];
 
-    public PhysicalCountWalkthroughViewModel(IApiClient apiClient, IPhysicalCountSyncService syncService)
+    public PhysicalCountWalkthroughViewModel(
+        IApiClient apiClient, IPhysicalCountSyncService syncService, IOcrService ocr)
+        : base(apiClient, ocr)
     {
         _apiClient = apiClient;
         _syncService = syncService;
-        IsCameraAvailable = DeviceInfo.Current.Platform == DevicePlatform.Android
-                         || DeviceInfo.Current.Platform == DevicePlatform.iOS;
     }
 
-    public void SubscribeMessages() =>
-        WeakReferenceMessenger.Default.Register<PhysicalCountBarcodeScannedMessage>(this,
-            (_, msg) => MainThread.BeginInvokeOnMainThread(async () => await OnBarcodeDetectedAsync(msg.PropertyNo)));
+    // ----- Capture policy (overrides of the shared base) -----
 
-    public void UnsubscribeMessages() =>
-        WeakReferenceMessenger.Default.Unregister<PhysicalCountBarcodeScannedMessage>(this);
+    public override string SearchPlaceholder => SearchBySerial
+        ? "Serial number"
+        : "Property No. (type or scan)";
 
-    // Called by the page's embedded barcode reader on each successful decode. Debounced because the
-    // camera fires continuously; resolves the property number against the registry like manual entry.
-    public async Task OnBarcodeDetectedAsync(string rawValue)
-    {
-        if (_isResolving || IsDebounced()) return;
-        var propertyNo = rawValue.Trim().ToUpperInvariant();
-        if (string.IsNullOrEmpty(propertyNo)) return;
-        // The reader keeps firing while an asset stays in frame — skip the one we just counted so the
-        // confirm dialog doesn't reappear; the user simply points the camera at the next asset.
-        if (string.Equals(propertyNo, _lastCountedPropertyNo, StringComparison.Ordinal)) return;
-        ManualPropertyNo = propertyNo;
-        await ProcessPropertyNoAsync(propertyNo, isScanned: true);
-    }
+    // Keep scanning after each record so the user can sweep sticker to sticker.
+    protected override bool StopTextModeOnHit => false;
 
-    private bool IsDebounced()
-    {
-        if (_lastScanTime.HasValue &&
-            (DateTimeOffset.UtcNow - _lastScanTime.Value).TotalSeconds < 2)
-            return true;
-        _lastScanTime = DateTimeOffset.UtcNow;
-        return false;
-    }
+    // Don't re-prompt for the asset still sitting in the camera frame.
+    protected override bool ShouldSkip(string propertyNo) =>
+        string.Equals(propertyNo, _lastCountedPropertyNo, StringComparison.Ordinal);
+
+    // Terminal action: record. Barcode/OCR count as scanned; manual/serial as typed.
+    protected override Task HandleResolvedPropertyNoAsync(string propertyNo, PropertyInputSource source) =>
+        ProcessPropertyNoAsync(propertyNo, isScanned: source is PropertyInputSource.Barcode or PropertyInputSource.Ocr);
 
     partial void OnSessionIdChanged(string value) => _ = LoadAsync();
     partial void OnSelectedFilterChanged(string value) => ApplyFilter();
@@ -168,54 +142,6 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
             : null;
         if (PendingSyncCount == 0)
             await LoadAsync(ct);
-    }
-
-    [RelayCommand]
-    private async Task SearchManualAsync(CancellationToken ct = default)
-    {
-        var raw = ManualPropertyNo.Trim();
-        if (string.IsNullOrEmpty(raw)) return;
-
-        if (SearchBySerial)
-        {
-            var propertyNo = await ResolveSerialToPropertyNoAsync(raw, ct);
-            if (propertyNo is not null)
-                await ProcessPropertyNoAsync(propertyNo, isScanned: false);
-            return;
-        }
-
-        await ProcessPropertyNoAsync(raw.ToUpperInvariant(), isScanned: false);
-    }
-
-    // Resolves a serial number to a single property number so the rest of the count flow is unchanged:
-    // none → inline error, one → that asset, many → a tappable action sheet to pick from.
-    private async Task<string?> ResolveSerialToPropertyNoAsync(string serial, CancellationToken ct)
-    {
-        ErrorMessage = null;
-        IReadOnlyList<AssetSummaryDto> matches;
-        try
-        {
-            matches = await _apiClient.SearchAssetsBySerialAsync(serial, ct);
-        }
-        catch (HttpRequestException)
-        {
-            ErrorMessage = "Couldn't search by serial number. Check your connection.";
-            return null;
-        }
-
-        if (matches.Count == 0)
-        {
-            ErrorMessage = $"No asset found with serial number \"{serial}\".";
-            return null;
-        }
-        if (matches.Count == 1)
-            return matches[0].PropertyNo;
-
-        var labels = matches.Select(m => $"{m.PropertyNo} - {m.Description}").ToArray();
-        var choice = await Shell.Current.DisplayActionSheetAsync(
-            $"{matches.Count} assets match this serial", "Cancel", null, labels);
-        var index = string.IsNullOrEmpty(choice) ? -1 : Array.IndexOf(labels, choice);
-        return index >= 0 ? matches[index].PropertyNo : null;
     }
 
     // Resolve a scanned/typed property number against the asset registry, then either confirm-and-add
@@ -349,5 +275,4 @@ public sealed partial class PhysicalCountWalkthroughViewModel : ObservableObject
         FoundAtStationCount = _allEntries.Count(e => e.Result == "FoundAtStation");
         PendingCount = _allEntries.Count(e => e.Result is null);
     }
-
 }
