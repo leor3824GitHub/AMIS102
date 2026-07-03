@@ -40,7 +40,6 @@ public sealed partial class HomeViewModel(
     [ObservableProperty] private PhysicalCountSessionSummaryDto? _activeSession;
     [ObservableProperty] private string _activeSessionNo = "";
     [ObservableProperty] private string _activeSessionProgressLabel = "";
-    [ObservableProperty] private double _sessionProgress;
     [ObservableProperty] private int _pendingSyncCount;
     [ObservableProperty] private bool _hasPendingSync;
 
@@ -118,8 +117,9 @@ public sealed partial class HomeViewModel(
 
     private void ApplyActiveSession(List<PhysicalCountSessionSummaryDto> sessions)
     {
+        // An Ongoing session is one you can still record into — that's what "resume" means.
         var active = sessions
-            .Where(s => s.Pending > 0)
+            .Where(s => s.IsOngoing)
             .OrderByDescending(s => s.CountDate)
             .ToList();
 
@@ -128,10 +128,10 @@ public sealed partial class HomeViewModel(
 
         if (ActiveSession is { } s)
         {
-            var done = s.Found + s.NotFound + s.FoundAtStation;
             ActiveSessionNo = s.SessionNo;
-            ActiveSessionProgressLabel = $"{done}/{s.TotalEntries} counted";
-            SessionProgress = s.TotalEntries > 0 ? (double)done / s.TotalEntries : 0;
+            ActiveSessionProgressLabel = s.TotalEntries == 1
+                ? "1 entry recorded"
+                : $"{s.TotalEntries} entries recorded";
         }
     }
 
@@ -166,7 +166,7 @@ public sealed partial class HomeViewModel(
     private async Task ResumeSessionAsync()
     {
         if (ActiveSession is { } s)
-            await Shell.Current.GoToAsync($"{nameof(PhysicalCountWalkthroughPage)}?SessionId={s.Id}");
+            await Shell.Current.GoToAsync($"{nameof(PhysicalCountScanPage)}?SessionId={s.Id}");
     }
 
     [RelayCommand]

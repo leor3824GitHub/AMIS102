@@ -4,12 +4,12 @@ using ZXing.Net.Maui;
 
 namespace AMIS.Maui.Features.PhysicalCount;
 
-public partial class PhysicalCountWalkthroughPage : ContentPage
+public partial class PhysicalCountScanPage : ContentPage
 {
-    private readonly PhysicalCountWalkthroughViewModel _vm;
+    private readonly PhysicalCountScanViewModel _vm;
     private readonly LiveTextScanController _textScan;
 
-    public PhysicalCountWalkthroughPage(PhysicalCountWalkthroughViewModel vm)
+    public PhysicalCountScanPage(PhysicalCountScanViewModel vm)
     {
         InitializeComponent();
         _vm = vm;
@@ -24,7 +24,7 @@ public partial class PhysicalCountWalkthroughPage : ContentPage
         base.OnAppearing();
         Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
         // Shell needs an explicit kick to (re)start ZXing detection after navigating away and back.
-        BarcodeReader.IsDetecting = _vm.IsBarcodeMode;
+        BarcodeReader.IsDetecting = _vm.IsBarcodeMode && !_vm.IsConfirmSheetOpen;
         _ = _vm.LoadAsync();
     }
 
@@ -38,19 +38,26 @@ public partial class PhysicalCountWalkthroughPage : ContentPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(PhysicalCountWalkthroughViewModel.IsTextMode)) return;
+        switch (e.PropertyName)
+        {
+            case nameof(PhysicalCountScanViewModel.IsTextMode):
+                if (_vm.IsTextMode)
+                {
+                    // Release the camera before the CameraView takes it — one camera at a time.
+                    BarcodeReader.IsDetecting = false;
+                    _ = _textScan.StartAsync();
+                }
+                else
+                {
+                    _textScan.Stop();
+                    BarcodeReader.IsDetecting = _vm.IsBarcodeMode && !_vm.IsConfirmSheetOpen;
+                }
+                break;
 
-        if (_vm.IsTextMode)
-        {
-            // Release the camera before the CameraView takes it — one camera at a time.
-            BarcodeReader.IsDetecting = false;
-            _ = _textScan.StartAsync();
-        }
-        else
-        {
-            _textScan.Stop();
-            // Reclaim the camera once the CameraView is torn down.
-            BarcodeReader.IsDetecting = _vm.IsBarcodeMode;
+            case nameof(PhysicalCountScanViewModel.IsConfirmSheetOpen):
+                // Pause the reader while the confirm sheet is up so it can't stack another scan behind it.
+                BarcodeReader.IsDetecting = _vm.IsBarcodeMode && !_vm.IsConfirmSheetOpen && !_vm.IsTextMode;
+                break;
         }
     }
 
@@ -66,8 +73,4 @@ public partial class PhysicalCountWalkthroughPage : ContentPage
         if (e.NetworkAccess == NetworkAccess.Internet)
             MainThread.BeginInvokeOnMainThread(() => _ = _vm.FlushPendingAsync());
     }
-
-    // Recorded entries are read-only here; counting is record-as-you-go via scan / manual entry.
-    private static void OnEntrySelected(object sender, SelectionChangedEventArgs e) =>
-        ((CollectionView)sender).SelectedItem = null;
 }

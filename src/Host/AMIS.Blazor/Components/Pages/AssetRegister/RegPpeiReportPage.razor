@@ -21,56 +21,17 @@
 }
 else
 {
-    <MudCard Elevation="1" Class="mb-4">
-        <MudCardContent>
-            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                <MudItem xs="12" sm="6" md="3">
-                    <MudDatePicker @bind-Date="_asOf" Label="As of Date" Variant="Variant.Outlined"
-                                   Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
-                    <AMISSelect T="string" @bind-Value="_fundCluster"
-                                Label="Fund Cluster (optional — all when empty)" Clearable="@true">
-                        @foreach (var fc in _fundClusters)
-                        {
-                            <MudSelectItem T="string" Value="@fc">@fc</MudSelectItem>
-                        }
-                    </AMISSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
-                    <AMISSelect T="string" @bind-Value="_propertyClass"
-                                Label="Classification (optional — all when empty)" Clearable="@true">
-                        @foreach (var c in _classes)
-                        {
-                            <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
-                        }
-                    </AMISSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
-                    <MudAutocomplete T="EmployeeReferenceDto"
-                                     @bind-Value="_custodian"
-                                     SearchFunc="SearchEmployees"
-                                     ToStringFunc="FormatEmployee"
-                                     Label="Custodian (optional — all when empty)" Variant="Variant.Outlined"
-                                     Clearable="true" ResetValueOnEmptyText="true"
-                                     Dense="true" Margin="Margin.Dense" />
-                </MudItem>
-                <MudItem xs="12">
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                    StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_busy">
-                            Generate Report
-                        </AMISButton>
-                        <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
-                                    StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync"
-                                    Disabled="_busy || _report is null || _report.TotalTransactions == 0">
-                            Download PDF
-                        </AMISButton>
-                    </MudStack>
-                </MudItem>
-            </MudGrid>
-        </MudCardContent>
-    </MudCard>
+    <RegisterReportFilterBar @bind-AsOf="_asOf"
+                             @bind-FundCluster="_fundCluster"
+                             @bind-PropertyClass="_propertyClass"
+                             @bind-Custodian="_custodian"
+                             FundClusters="_fundClusters"
+                             Classes="_classes"
+                             Busy="_busy"
+                             CanDownload="@(_report is not null && _report.TotalTransactions > 0)"
+                             OnGenerate="LoadAsync"
+                             OnDownload="DownloadPdfAsync"
+                             SearchEmployees="SearchEmployees" />
 
     @if (_busy)
     {
@@ -272,7 +233,4 @@ else
         }
         catch { return []; }
     }
-
-    private static string FormatEmployee(EmployeeReferenceDto? e) =>
-        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
 }

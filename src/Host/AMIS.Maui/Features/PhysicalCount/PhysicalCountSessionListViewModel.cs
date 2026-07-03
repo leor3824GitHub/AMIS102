@@ -12,10 +12,26 @@ public sealed partial class PhysicalCountSessionListViewModel(
     [ObservableProperty] private ObservableCollection<PhysicalCountSessionSummaryDto> _sessions = [];
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
-    [ObservableProperty] private int _pendingSyncCount;
-    [ObservableProperty] private bool _hasPendingSync;
 
-    partial void OnPendingSyncCountChanged(int value) => HasPendingSync = value > 0;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasQueuedWork))]
+    [NotifyPropertyChangedFor(nameof(SyncBannerText))]
+    private int _pendingSyncCount;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasQueuedWork))]
+    [NotifyPropertyChangedFor(nameof(HasFailedSync))]
+    [NotifyPropertyChangedFor(nameof(SyncBannerText))]
+    private int _failedSyncCount;
+
+    [ObservableProperty] private string? _syncStatusMessage;
+
+    public bool HasQueuedWork => PendingSyncCount > 0 || FailedSyncCount > 0;
+    public bool HasFailedSync => FailedSyncCount > 0;
+
+    public string SyncBannerText => FailedSyncCount > 0
+        ? $"{PendingSyncCount} pending · {FailedSyncCount} failed to sync"
+        : $"{PendingSyncCount} entry(s) pending sync — tap Sync to upload.";
 
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)
@@ -28,10 +44,13 @@ public sealed partial class PhysicalCountSessionListViewModel(
             Sessions = new ObservableCollection<PhysicalCountSessionSummaryDto>(
                 list.OrderByDescending(s => s.CountDate));
 
-            PendingSyncCount = await syncService.GetPendingCountAsync();
+            await RefreshSyncCountsAsync();
 
             if (PendingSyncCount > 0 && Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+            {
                 await syncService.FlushPendingAsync(ct);
+                await RefreshSyncCountsAsync();
+            }
         }
         catch (HttpRequestException) when (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
         {
@@ -48,6 +67,41 @@ public sealed partial class PhysicalCountSessionListViewModel(
     }
 
     [RelayCommand]
-    public async Task OpenSessionAsync(PhysicalCountSessionSummaryDto session, CancellationToken ct = default) =>
-        await Shell.Current.GoToAsync($"{nameof(PhysicalCountWalkthroughPage)}?SessionId={session.Id}");
+    private async Task FlushPendingAsync(CancellationToken ct = default)
+    {
+        SyncStatusMessage = null;
+        var result = await syncService.FlushPendingAsync(ct);
+        await RefreshSyncCountsAsync();
+        if (result.Failed > 0)
+            SyncStatusMessage = $"{result.Sent} synced, {result.Failed} failed: {result.LastError}";
+        else if (result.Sent > 0)
+            SyncStatusMessage = $"Synced {result.Sent} entry(s).";
+        else
+            SyncStatusMessage = "Nothing to sync.";
+        // Reload so the freshly-synced entries show up in the session progress numbers.
+        await LoadAsync(ct);
+    }
+
+    [RelayCommand]
+    private async Task DiscardFailedAsync()
+    {
+        await syncService.DiscardFailedAsync();
+        await RefreshSyncCountsAsync();
+        SyncStatusMessage = "Discarded failed entries.";
+    }
+
+    [RelayCommand]
+    public async Task OpenSessionAsync(PhysicalCountSessionSummaryDto session, CancellationToken ct = default)
+    {
+        // Finished (Closed) sessions open the read-only Entries review; everything else opens the Scan
+        // screen so the scan-to-add UI is always reachable (Draft shows a "recording disabled" notice).
+        var route = session.IsReviewOnly ? nameof(PhysicalCountEntriesPage) : nameof(PhysicalCountScanPage);
+        await Shell.Current.GoToAsync($"{route}?SessionId={session.Id}");
+    }
+
+    private async Task RefreshSyncCountsAsync()
+    {
+        PendingSyncCount = await syncService.GetPendingCountAsync();
+        FailedSyncCount = await syncService.GetFailedCountAsync();
+    }
 }

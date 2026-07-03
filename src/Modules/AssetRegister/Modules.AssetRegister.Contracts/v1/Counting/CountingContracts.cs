@@ -55,7 +55,12 @@ public sealed record PhysicalCountSessionSummaryDto(
     int EntryCount,
     string? OfficeOrderNo,
     DateTimeOffset? FrozenOnUtc,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    string? FundCluster = null,
+    // Per-session breakdown so list clients (e.g. mobile) can show real progress without loading entries.
+    int FoundCount = 0,
+    int MissingCount = 0,
+    int FoundAtStationCount = 0);
 
 // ── Reconciliation read model ──────────────────────────────────────────────
 

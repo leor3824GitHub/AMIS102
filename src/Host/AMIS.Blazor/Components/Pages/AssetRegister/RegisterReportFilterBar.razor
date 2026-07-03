@@ -1,0 +1,81 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+
+@* Shared filter bar for the RegSPI and RegPPEI registers — As of Date … Download PDF. *@
+<MudCard Elevation="1" Class="mb-4">
+    <MudCardContent>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudDatePicker @bind-Date="AsOfProxy" Label="As of Date" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" DateFormat="yyyy-MM-dd" Style="width: 180px;" />
+                <AMISSelect T="string" @bind-Value="FundClusterProxy"
+                            Label="Fund Cluster (optional — all when empty)" Clearable="@true"
+                            Style="width: 230px;">
+                    @foreach (var fc in FundClusters)
+                    {
+                        <MudSelectItem T="string" Value="@fc">@fc</MudSelectItem>
+                    }
+                </AMISSelect>
+            </MudStack>
+            <AMISSelect T="string" @bind-Value="PropertyClassProxy"
+                        Label="Classification (optional — all when empty)" Clearable="@true"
+                        Style="width: 260px;">
+                @foreach (var c in Classes)
+                {
+                    <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
+                }
+            </AMISSelect>
+            <MudAutocomplete T="EmployeeReferenceDto"
+                             @bind-Value="CustodianProxy"
+                             SearchFunc="SearchEmployees"
+                             ToStringFunc="FormatEmployee"
+                             Label="Custodian (optional — all when empty)" Variant="Variant.Outlined"
+                             Clearable="true" ResetValueOnEmptyText="true"
+                             Dense="true" Margin="Margin.Dense" Style="width: 260px;" />
+            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                        StartIcon="@Icons.Material.Filled.Refresh" OnClick="OnGenerate" Disabled="Busy">
+                Generate Report
+            </AMISButton>
+            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                        StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="OnDownload"
+                        Disabled="Busy || !CanDownload">
+                View PDF
+            </AMISButton>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public DateTime? AsOf { get; set; }
+    [Parameter] public EventCallback<DateTime?> AsOfChanged { get; set; }
+
+    [Parameter] public string? FundCluster { get; set; }
+    [Parameter] public EventCallback<string?> FundClusterChanged { get; set; }
+
+    [Parameter] public string? PropertyClass { get; set; }
+    [Parameter] public EventCallback<string?> PropertyClassChanged { get; set; }
+
+    [Parameter] public EmployeeReferenceDto? Custodian { get; set; }
+    [Parameter] public EventCallback<EmployeeReferenceDto?> CustodianChanged { get; set; }
+
+    [Parameter] public IReadOnlyList<string> FundClusters { get; set; } = [];
+    [Parameter] public IReadOnlyList<PropertyClassDto> Classes { get; set; } = [];
+
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool CanDownload { get; set; }
+
+    [Parameter] public EventCallback OnGenerate { get; set; }
+    [Parameter] public EventCallback OnDownload { get; set; }
+
+    [Parameter, EditorRequired]
+    public Func<string, CancellationToken, Task<IEnumerable<EmployeeReferenceDto>>> SearchEmployees { get; set; } = default!;
+
+    // Proxy properties forward each bound value to the parent's two-way binding.
+    private DateTime? AsOfProxy { get => AsOf; set => _ = AsOfChanged.InvokeAsync(value); }
+    private string? FundClusterProxy { get => FundCluster; set => _ = FundClusterChanged.InvokeAsync(value); }
+    private string? PropertyClassProxy { get => PropertyClass; set => _ = PropertyClassChanged.InvokeAsync(value); }
+    private EmployeeReferenceDto? CustodianProxy { get => Custodian; set => _ = CustodianChanged.InvokeAsync(value); }
+
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName} ({e.EmployeeNumber})";
+}

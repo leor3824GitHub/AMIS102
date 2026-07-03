@@ -10,23 +10,46 @@
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="0,16,0,0">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="0,16,0,0">
 
-            <!-- Sync banner -->
+            <!-- Sync banner: pending / failed + actions -->
             <Border Grid.Row="0"
-                    IsVisible="{Binding HasPendingSync}"
+                    IsVisible="{Binding HasQueuedWork}"
                     Stroke="Transparent"
                     StrokeShape="RoundRectangle 10"
-                    BackgroundColor="{StaticResource Warning}"
+                    BackgroundColor="{StaticResource WarningLight}"
                     Padding="14,10"
-                    Margin="16,0,16,12">
-                <Label Text="{Binding PendingSyncCount, StringFormat='{0} entry(s) pending sync — connect to upload.'}"
-                       FontSize="12"
-                       TextColor="White" />
+                    Margin="16,0,16,10">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <Label Grid.Column="0"
+                           Text="{Binding SyncBannerText}"
+                           FontSize="12"
+                           TextColor="{StaticResource Warning}"
+                           VerticalOptions="Center" />
+                    <Button Grid.Column="1"
+                            Text="Sync Now"
+                            Command="{Binding FlushPendingCommand}"
+                            FontSize="11" Padding="10,6" />
+                    <Button Grid.Column="2"
+                            Text="Discard"
+                            IsVisible="{Binding HasFailedSync}"
+                            Command="{Binding DiscardFailedCommand}"
+                            FontSize="11" Padding="10,6"
+                            BackgroundColor="{StaticResource Danger}"
+                            TextColor="White" />
+                </Grid>
             </Border>
 
-            <!-- Error -->
+            <!-- Sync status message -->
             <Label Grid.Row="1"
+                   Text="{Binding SyncStatusMessage}"
+                   IsVisible="{Binding SyncStatusMessage, Converter={StaticResource IsNotNullConverter}}"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}"
+                   Margin="20,0,20,8" />
+
+            <!-- Error -->
+            <Label Grid.Row="2"
                    Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Danger}"
@@ -34,12 +57,12 @@
                    Margin="20,0,20,12" />
 
             <!-- Section header -->
-            <Label Grid.Row="2"
+            <Label Grid.Row="3"
                    Text="SESSIONS"
                    Style="{StaticResource SectionHeaderStyle}" />
 
             <!-- Sessions list -->
-            <CollectionView Grid.Row="3"
+            <CollectionView Grid.Row="4"
                             ItemsSource="{Binding Sessions}"
                             SelectionMode="Single"
                             SelectionChanged="OnSessionSelected"
@@ -59,13 +82,16 @@
                                 <Border Grid.Row="0" Grid.Column="1"
                                         Stroke="Transparent"
                                         StrokeShape="RoundRectangle 10"
-                                        BackgroundColor="{StaticResource Gray300}"
+                                        BackgroundColor="{StaticResource Gray400}"
                                         Padding="8,3">
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Open">
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Ongoing">
                                             <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
                                         </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Submitted">
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Reconciled">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Closed">
                                             <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
                                         </DataTrigger>
                                     </Border.Triggers>
@@ -83,7 +109,7 @@
                                        Text="{Binding Scope}"
                                        Style="{StaticResource CaptionStyle}" />
 
-                                <!-- Date + Progress -->
+                                <!-- Date + Progress breakdown -->
                                 <Label Grid.Row="2" Grid.Column="0"
                                        Text="{Binding CountDate}"
                                        Style="{StaticResource CaptionStyle}" />
@@ -91,9 +117,10 @@
                                        FontSize="11"
                                        TextColor="{StaticResource Gray400}">
                                     <Label.Text>
-                                        <MultiBinding StringFormat="{}{0}/{1} verified">
+                                        <MultiBinding StringFormat="{}{0} found · {1} missing · {2} new">
                                             <Binding Path="Found" />
-                                            <Binding Path="TotalEntries" />
+                                            <Binding Path="Missing" />
+                                            <Binding Path="FoundAtStation" />
                                         </MultiBinding>
                                     </Label.Text>
                                 </Label>

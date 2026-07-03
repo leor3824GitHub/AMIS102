@@ -2,45 +2,39 @@
 @using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1
 @inject IAssetRegistryClient AssetClient
 
-@* Server-paged picker of Available assets eligible for issuance. Returns List<AssetRegistrySummaryDto>. *@
+@* Single-select lookup of a registered asset across every lifecycle state. Returns the chosen AssetRegistrySummaryDto. *@
 <EntityPickerDialog T="AssetRegistrySummaryDto"
                     KeySelector="a => a.Id"
                     DataProvider="LoadAsync"
-                    ExcludeIds="ExcludeIds"
-                    ConfirmText="Add">
+                    SelectionMode="EntityPickerSelection.Single"
+                    ConfirmText="Select">
     <Caption>
-        Showing <strong>Available</strong> @(AssetType == ArContracts.AssetType.SE ? "Semi-Expendable" : "PPE") assets eligible for issuance. Tick the items to add, then choose <strong>Add</strong>.
+        Search by <strong>Property No.</strong> or description, tick one asset, then choose <strong>Select</strong>.
     </Caption>
     <HeaderTemplate>
         <MudTh>Property No.</MudTh>
         <MudTh>Description</MudTh>
-        <MudTh>Condition</MudTh>
+        <MudTh>State</MudTh>
         <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
     </HeaderTemplate>
     <RowTemplate Context="row">
-        <MudTd>
-            <strong>@row.Item.PropertyNo</strong>
-            @if (row.IsExcluded)
-            {
-                <MudText Typo="Typo.caption" Color="Color.Secondary">(already added)</MudText>
-            }
-        </MudTd>
+        <MudTd><strong>@row.Item.PropertyNo</strong></MudTd>
         <MudTd>@row.Item.Description</MudTd>
-        <MudTd>@row.Item.CurrentCondition</MudTd>
+        <MudTd>@row.Item.LifecycleState</MudTd>
         <MudTd Style="text-align:right">@row.Item.UnitCost.ToString("N2")</MudTd>
     </RowTemplate>
 </EntityPickerDialog>
 
 @code {
-    [Parameter] public ArContracts.AssetType AssetType { get; set; }
-    [Parameter] public IReadOnlyCollection<Guid> ExcludeIds { get; set; } = [];
+    /// <summary>Restrict the lookup to a single asset type (e.g. PPE). Null searches all types.</summary>
+    [Parameter] public ArContracts.AssetType? AssetType { get; set; }
 
     private async Task<EntityPickerResult<AssetRegistrySummaryDto>> LoadAsync(EntityPickerRequest request)
     {
         var result = await AssetClient.SearchAsync(
             keyword: request.Keyword,
             assetType: AssetType,
-            lifecycleState: ArContracts.LifecycleState.Available,
+            lifecycleState: null,
             page: request.Page,
             pageSize: request.PageSize);
 

@@ -200,7 +200,9 @@ public abstract partial class PropertyCaptureViewModel : ObservableObject
 
         var isCameraSource = source is PropertyInputSource.Barcode or PropertyInputSource.Ocr;
         if (isCameraSource && IsDebounced()) return;
-        if (ShouldSkip(propertyNo)) return;
+        // The skip rule exists to avoid re-firing on the sticker still sitting in the camera frame.
+        // A deliberate manual/serial re-entry of the same number must always go through.
+        if (isCameraSource && ShouldSkip(propertyNo)) return;
 
         ManualPropertyNo = propertyNo;
         if (StopTextModeOnHit)

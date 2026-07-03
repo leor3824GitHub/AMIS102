@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
+             xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             x:DataType="vm:PhysicalCountEntriesViewModel"
+             x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountEntriesPage"
+             Title="Entries"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+            <!-- Session header -->
+            <Border Grid.Row="0"
+                    Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                    Padding="16,14,16,12">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding SessionNo}" FontFamily="InterSemiBold" FontSize="16" />
+                    <Label Text="{Binding FundCluster}" FontSize="13" TextColor="{StaticResource Gray500}" />
+                    <Label FontSize="12" TextColor="{StaticResource Gray400}">
+                        <Label.Text>
+                            <MultiBinding StringFormat="{}{0}  ·  {1}">
+                                <Binding Path="Scope" />
+                                <Binding Path="Status" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Count summary line -->
+            <Label Grid.Row="1" Margin="16,10,16,4" FontSize="12" TextColor="{StaticResource Gray500}">
+                <Label.Text>
+                    <MultiBinding StringFormat="{}{0} found · {1} missing · {2} new · {3} queued">
+                        <Binding Path="FoundCount" />
+                        <Binding Path="MissingCount" />
+                        <Binding Path="FoundAtStationCount" />
+                        <Binding Path="QueuedCount" />
+                    </MultiBinding>
+                </Label.Text>
+            </Label>
+
+            <!-- Error -->
+            <Label Grid.Row="2"
+                   Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                   TextColor="{StaticResource Danger}" FontSize="13"
+                   Margin="16,0,16,8" />
+
+            <!-- Filter + search -->
+            <Grid Grid.Row="3" Padding="12,4,12,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                <Picker Grid.Column="0"
+                        ItemsSource="{Binding FilterOptions}"
+                        SelectedItem="{Binding SelectedFilter}"
+                        MinimumWidthRequest="120" />
+                <Entry Grid.Column="1"
+                       Placeholder="Search property / description"
+                       Text="{Binding SearchText}" />
+            </Grid>
+
+            <!-- Entries list -->
+            <CollectionView Grid.Row="4"
+                            ItemsSource="{Binding FilteredEntries}"
+                            EmptyView="No entries match the current filter.">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="svc:PhysicalCountEntryDto">
+                        <Border Stroke="Transparent"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                                Margin="12,4" Padding="14,12">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
+                                <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding PropertyNumber}"
+                                       FontAttributes="Bold" FontSize="14" />
+                                <Border Grid.Row="0" Grid.Column="1"
+                                        Stroke="Transparent"
+                                        StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{StaticResource Gray400}"
+                                        Padding="8,3">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="Found">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="NotFound">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="FoundAtStation">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label FontSize="10" FontAttributes="Bold" TextColor="White"
+                                           Text="{Binding Result, TargetNullValue='Pending'}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Result}" Value="NotFound">
+                                                <Setter Property="Text" Value="Missing" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Result}" Value="FoundAtStation">
+                                                <Setter Property="Text" Value="@Station" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding Description}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray400}"
+                                       LineBreakMode="TailTruncation" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </Grid>
+    </RefreshView>
+</ContentPage>

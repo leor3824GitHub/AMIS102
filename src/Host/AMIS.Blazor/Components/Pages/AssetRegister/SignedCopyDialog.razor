@@ -40,7 +40,7 @@
 
                 <MudStack Row="true" Spacing="2">
                     <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary"
-                               OnClick="DownloadAsync" Disabled="_busy">Download</MudButton>
+                               OnClick="DownloadAsync" Disabled="_busy">View</MudButton>
                     @if (_canUpload && IsTerminalState)
                     {
                         <MudFileUpload T="IBrowserFile" FilesChanged="OnFilePicked" Accept="application/pdf" MaximumFileCount="1">

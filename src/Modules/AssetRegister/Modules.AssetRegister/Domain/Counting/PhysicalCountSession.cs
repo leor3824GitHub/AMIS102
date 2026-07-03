@@ -137,7 +137,10 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         _entries.Add(PhysicalCountEntry.CreateForKnownAsset(
             TenantId, Id, asset.Id, asset.Snapshot(), article, unit, unitCost,
             condition, locationId, scannedOnUtc, scannedByEmployeeId, photoPath, remarks));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // Appending an entry must NOT bump the session's own row: physical count is concurrent by
+        // design (multiple counters scan into one session), and updating the xmin-guarded parent here
+        // makes it a serialization point — overlapping appends collide with DbUpdateConcurrencyException.
+        // The new entry carries its own audit timestamps; the session's state is unchanged.
     }
 
     public void AddFoundAtStationEntry(
@@ -159,7 +162,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
             TenantId, Id, article, unit, unitCost, locationId,
             proposedPropertyClass, proposedCategoryCode, proposedAcquisitionDate, proposedUnitCost,
             proposedPropertyNo, proposedCatalogItemId, scannedByEmployeeId, remarks));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // See RecordEntry: appending must not bump the xmin-guarded session row (concurrent-scan safety).
     }
 
     public void MarkMissing(AssetRegistry asset, Guid locationId, string? remarks)
@@ -170,7 +173,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         _entries.Add(PhysicalCountEntry.CreateForKnownAsset(
             TenantId, Id, asset.Id, asset.Snapshot(), asset.Description, asset.Unit, asset.UnitCost,
             PhysicalCountCondition.Missing, locationId, null, null, null, remarks));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // See RecordEntry: appending must not bump the xmin-guarded session row (concurrent-scan safety).
     }
 
     public void Reconcile()

@@ -103,9 +103,17 @@ public sealed record PhysicalCountSessionSummaryDto(
     string Status,
     int TotalEntries,
     int Found,
-    int NotFound,
-    int FoundAtStation,
-    int Pending);
+    int Missing,
+    int FoundAtStation)
+{
+    // Recording is only permitted while the session is Ongoing (server enforces the same).
+    public bool IsOngoing => string.Equals(Status, "Ongoing", StringComparison.OrdinalIgnoreCase);
+
+    // A Closed session is signed off — nothing left to count, so it opens the read-only review.
+    // Everything else (Ongoing, Draft, Reconciled, or an unexpected value) opens the Scan screen so
+    // the scan-to-add UI is always reachable.
+    public bool IsReviewOnly => string.Equals(Status, "Closed", StringComparison.OrdinalIgnoreCase);
+}
 
 public sealed record PhysicalCountSessionDetailDto(
     Guid Id,
