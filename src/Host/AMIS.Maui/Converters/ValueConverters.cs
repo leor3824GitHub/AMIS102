@@ -72,7 +72,7 @@ public sealed class SegmentColorConverter : IValueConverter
         var selected = string.Equals((value as string)?.Trim(), segment?.Trim(), StringComparison.OrdinalIgnoreCase);
 
         if (role.Equals("text", StringComparison.OrdinalIgnoreCase))
-            return Resource(selected ? "White" : "Gray900");
+            return Resource(selected ? "White" : "Gray500");
 
         return selected ? Resource("Primary") : Colors.Transparent;
     }

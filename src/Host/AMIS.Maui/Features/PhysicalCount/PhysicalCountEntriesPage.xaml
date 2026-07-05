@@ -23,7 +23,7 @@
                 <VerticalStackLayout Spacing="2">
                     <Label Text="{Binding SessionNo}" FontFamily="InterSemiBold" FontSize="16" />
                     <Label Text="{Binding FundCluster}" FontSize="13" TextColor="{StaticResource Gray500}" />
-                    <Label FontSize="12" TextColor="{StaticResource Gray400}">
+                    <Label FontSize="12" TextColor="{StaticResource Gray500}">
                         <Label.Text>
                             <MultiBinding StringFormat="{}{0}  ·  {1}">
                                 <Binding Path="Scope" />
@@ -122,11 +122,11 @@
                                         </Label.Triggers>
                                     </Label>
                                 </Border>
-                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                       Text="{Binding Description}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource Gray400}"
-                                       LineBreakMode="TailTruncation" />
+                                    <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                        Text="{Binding Description}"
+                                        FontSize="12"
+                                        TextColor="{StaticResource Gray500}"
+                                        LineBreakMode="TailTruncation" />
                             </Grid>
                         </Border>
                     </DataTemplate>

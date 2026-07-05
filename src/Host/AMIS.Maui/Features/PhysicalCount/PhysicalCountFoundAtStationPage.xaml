@@ -85,10 +85,10 @@
                                                FontFamily="InterBold" FontSize="12"
                                                TextColor="{StaticResource Primary}" />
                                     </Border>
-                                    <Label Grid.Row="0" Grid.Column="1"
-                                           Text="{Binding DefaultUnit}"
-                                           FontSize="12" VerticalOptions="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}" />
+                                     <Label Grid.Row="0" Grid.Column="1"
+                                         Text="{Binding DefaultUnit}"
+                                         FontSize="12" VerticalOptions="Center"
+                                         TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
                                     <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
                                            Text="{Binding Description}"
                                            FontSize="14"
@@ -117,8 +117,8 @@
                     <!-- Property number — always editable (scanned value pre-fills; damaged sticker → type it) -->
                     <Border Style="{StaticResource CardBorderStyle}" Padding="20">
                         <VerticalStackLayout Spacing="6">
-                            <Label FontSize="11" FontAttributes="Bold" CharacterSpacing="0.8"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}">
+                                <Label FontSize="11" FontAttributes="Bold" CharacterSpacing="0.8"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
                                 <Label.FormattedText>
                                     <FormattedString>
                                         <Span Text="PROPERTY NO." />
@@ -176,8 +176,8 @@
                     <Border Style="{StaticResource CardBorderStyle}" Padding="20">
                         <VerticalStackLayout Spacing="0">
                             <VerticalStackLayout Spacing="4" Padding="0,0,0,14">
-                                <Label FontSize="11" FontAttributes="Bold" CharacterSpacing="0.8"
-                                       TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}">
+                                    <Label FontSize="11" FontAttributes="Bold" CharacterSpacing="0.8"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
                                     <Label.FormattedText>
                                         <FormattedString>
                                             <Span Text="DESCRIPTION" />

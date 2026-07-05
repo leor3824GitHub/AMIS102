@@ -60,14 +60,14 @@
             <Label Text="&#x1F4F7;"
                    FontSize="52"
                    HorizontalOptions="Center" />
-            <Label Text="Camera not available on this device."
-                   FontSize="14"
-                   TextColor="{StaticResource Gray400}"
+                 <Label Text="Camera not available on this device."
+                     FontSize="14"
+                     TextColor="{StaticResource Gray500}"
                    HorizontalOptions="Center"
                    HorizontalTextAlignment="Center" />
-            <Label Text="Use the search box below to look up a property number."
-                   FontSize="13"
-                   TextColor="{StaticResource Gray400}"
+                 <Label Text="Use the search box below to look up a property number."
+                     FontSize="13"
+                     TextColor="{StaticResource Gray500}"
                    HorizontalOptions="Center"
                    HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
