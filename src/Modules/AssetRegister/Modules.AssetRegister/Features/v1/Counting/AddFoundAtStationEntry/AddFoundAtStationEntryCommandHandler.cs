@@ -11,11 +11,14 @@ public sealed class AddFoundAtStationEntryCommandHandler(AssetRegisterDbContext 
     public async ValueTask<PhysicalCountSessionDto> Handle(AddFoundAtStationEntryCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
+
         var session = await db.PhysicalCountSessions
             .Include(s => s.Entries)
             .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Physical count session '{cmd.SessionId}' not found.");
 
+        // See RecordPhysicalCountEntryCommandHandler: appends do not touch the session row, so
+        // concurrent counters issue independent INSERTs without contending on optimistic concurrency.
         session.AddFoundAtStationEntry(cmd.Article, cmd.Unit, cmd.UnitCost, cmd.LocationId,
             cmd.ProposedPropertyClass, cmd.ProposedCategoryCode, cmd.ProposedAcquisitionDate,
             cmd.ProposedUnitCost, cmd.ProposedPropertyNo, cmd.ProposedCatalogItemId,
@@ -25,4 +28,3 @@ public sealed class AddFoundAtStationEntryCommandHandler(AssetRegisterDbContext 
         return CountingMapper.ToDto(session);
     }
 }
-

@@ -11,16 +11,19 @@
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Checklist" Command="{Binding OpenChecklistCommand}" />
         <ToolbarItem Text="Entries" Command="{Binding OpenEntriesCommand}" />
     </ContentPage.ToolbarItems>
 
     <!-- Root holds the scan content plus the confirm-sheet overlay -->
     <Grid>
 
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+        <!-- Row 0 is pinned to 240 units (not Auto): on wide tablets the camera preview aspect-fills
+             and would otherwise push the progress tiles below the fold. Clipping keeps it boxed. -->
+        <Grid RowDefinitions="240,Auto,Auto,Auto,Auto,*">
 
             <!-- Row 0: Embedded scanner — barcode (default) + live-text OCR -->
-            <Grid Grid.Row="0">
+            <Grid Grid.Row="0" IsClippedToBounds="True">
                 <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
                                                IsVisible="{Binding IsBarcodeMode}"
                                                IsDetecting="False"
@@ -198,36 +201,50 @@
                 </Label>
             </Border>
 
-            <!-- Row 4: Progress chips + pending-sync chip -->
-            <Grid Grid.Row="4" Padding="12,10" ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                <Border Grid.Column="0"
-                        Stroke="Transparent" StrokeShape="RoundRectangle 10"
-                        BackgroundColor="{StaticResource Success}" Padding="8,8">
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                        <Label Text="{Binding FoundCount}" TextColor="White" FontAttributes="Bold"
-                               HorizontalOptions="Center" FontSize="18" />
-                        <Label Text="Found" TextColor="White" FontSize="10" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Border>
-                <Border Grid.Column="1"
-                        Stroke="Transparent" StrokeShape="RoundRectangle 10"
-                        BackgroundColor="{StaticResource Danger}" Padding="8,8">
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                        <Label Text="{Binding MissingCount}" TextColor="White" FontAttributes="Bold"
-                               HorizontalOptions="Center" FontSize="18" />
-                        <Label Text="Missing" TextColor="White" FontSize="10" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Border>
-                <Border Grid.Column="2"
-                        Stroke="Transparent" StrokeShape="RoundRectangle 10"
-                        BackgroundColor="{StaticResource Primary}" Padding="8,8">
-                    <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                        <Label Text="{Binding FoundAtStationCount}" TextColor="White" FontAttributes="Bold"
-                               HorizontalOptions="Center" FontSize="18" />
-                        <Label Text="@Station" TextColor="White" FontSize="10" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Border>
-            </Grid>
+            <!-- Row 4: Progress tiles (tap → SE/PPE breakdown) + hint -->
+            <VerticalStackLayout Grid.Row="4" Padding="12,10" Spacing="6">
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                    <Border Grid.Column="0"
+                            Stroke="Transparent" StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{StaticResource Success}" Padding="8,8">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowBreakdownCommand}" CommandParameter="Found" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding FoundCount}" TextColor="White" FontAttributes="Bold"
+                                   HorizontalOptions="Center" FontSize="18" />
+                            <Label Text="Found" TextColor="White" FontSize="10" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1"
+                            Stroke="Transparent" StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{StaticResource Danger}" Padding="8,8">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowBreakdownCommand}" CommandParameter="Missing" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding MissingCount}" TextColor="White" FontAttributes="Bold"
+                                   HorizontalOptions="Center" FontSize="18" />
+                            <Label Text="Missing" TextColor="White" FontSize="10" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2"
+                            Stroke="Transparent" StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{StaticResource Primary}" Padding="8,8">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ShowBreakdownCommand}" CommandParameter="@Station" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                            <Label Text="{Binding FoundAtStationCount}" TextColor="White" FontAttributes="Bold"
+                                   HorizontalOptions="Center" FontSize="18" />
+                            <Label Text="@Station" TextColor="White" FontSize="10" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+                <Label Text="Tap a tile for the SE / PPE breakdown"
+                       FontSize="11" TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
 
             <!-- Row 5: slim pending-sync chip -->
             <Border Grid.Row="5"

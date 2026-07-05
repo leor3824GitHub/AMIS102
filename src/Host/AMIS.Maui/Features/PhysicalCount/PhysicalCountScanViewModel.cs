@@ -134,11 +134,11 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
                     if (Locations.Count == 1)
                         SelectedLocation = Locations[0];
                 }
-                catch (OperationCanceledException) { throw; }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
                 catch
                 {
-                    // Non-fatal: locations didn't load. Picker will be empty and the first scan
-                    // will surface "select a location" in the feedback banner.
+                    // Non-fatal: locations didn't load (including a timeout). Picker will be empty and
+                    // the first scan will surface "select a location" in the feedback banner.
                 }
             }
 
@@ -154,6 +154,16 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
         }
         catch (HttpRequestException)
         {
+            SetStatus("Error", "Couldn't load the session. Pull to refresh.");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // Genuine cancellation (page closed / superseded) — nothing to surface.
+        }
+        catch (Exception)
+        {
+            // Request timeout (TaskCanceledException with no cancellation) or a malformed payload:
+            // surface a message instead of letting the load rethrow on the UI thread and crash.
             SetStatus("Error", "Couldn't load the session. Pull to refresh.");
         }
         finally
@@ -178,6 +188,18 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
     [RelayCommand]
     private Task OpenEntriesAsync() =>
         Shell.Current.GoToAsync($"{nameof(PhysicalCountEntriesPage)}?SessionId={SessionId}");
+
+    // Tap-through from a progress tile: open the entries list scoped to that result and grouped SE / PPE.
+    // result is one of the Entries filter values ("Found" | "Missing" | "@Station").
+    [RelayCommand]
+    private Task ShowBreakdownAsync(string result) =>
+        Shell.Current.GoToAsync(
+            $"{nameof(PhysicalCountEntriesPage)}?SessionId={SessionId}&Filter={Uri.EscapeDataString(result)}");
+
+    // Coverage worklist: the read-only "what's still to count" checklist for this session.
+    [RelayCommand]
+    private Task OpenChecklistAsync() =>
+        Shell.Current.GoToAsync($"{nameof(PhysicalCountChecklistPage)}?SessionId={SessionId}");
 
     // Resolve a scanned/typed property number against the asset registry, then either open the confirm
     // sheet for a known asset (record-as-you-go) or route an unknown one to the found-at-station screen.

@@ -9,6 +9,7 @@
     <converters:InvertedBoolConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="InvertedBoolConverter" />
     <converters:KindToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="KindToColorConverter" />
     <converters:StringEqualsConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="StringEqualsConverter" />
+    <converters:SegmentColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="SegmentColorConverter" />
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />

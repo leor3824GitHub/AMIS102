@@ -1,9 +1,12 @@
 @using AMIS.Modules.AssetRegister.Contracts.v1
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Components.Pages.Procurement
 @inject IArAccountabilityClient Client
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
+@inject IDialogService DialogService
+@inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 
 <MudDialog>
@@ -37,6 +40,10 @@
                         @if (_printing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-1" /> }
                         Print @(_selected.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
                     </AMISButton>
+                    <MudTooltip Text="Page setup — paper size, 1 or 2 per page">
+                        <AMISIconButton Icon="@Icons.Material.Filled.Tune" Size="Size.Small"
+                                        Color="Color.Secondary" OnClick="OpenPrintSetupAsync" Disabled="_printing" />
+                    </MudTooltip>
                 </MudStack>
 
                 <MudGrid>
@@ -208,15 +215,62 @@
         }
     }
 
+    // Both ICS and PAR use a single landscape "2-up" Fast Report template (two copies
+    // side by side, cut down the middle). Landscape = 2 per page; portrait = 1 per page.
+    private const string FastReportKey = "accountability";
+
     private async Task PrintAsync()
     {
         if (_selected is null) return;
         _printing = true;
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(_selected.Id, _selected.AccountabilityType, pageWidth: "longbond");
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetFastReportPdfAsync(_selected.Id, _selected.AccountabilityType,
+                pageWidth: saved?.PaperSize ?? "longbond",
+                orientation: saved?.Orientation ?? "landscape",
+                minRows: saved?.MinRows ?? 15);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printing = false;
+        }
+    }
+
+    private async Task OpenPrintSetupAsync()
+    {
+        if (_selected is null) return;
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "landscape",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 2,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 15,
+            [nameof(FastReportPageSetupDialog.ShowOrientation)] = false
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
+
+        _printing = true;
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(_selected.Id, _selected.AccountabilityType,
+                pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
         {

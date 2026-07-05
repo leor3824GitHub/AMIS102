@@ -18,12 +18,15 @@
                 }
             </MudSelect>
 
-            <MudField Label="Orientation" Variant="Variant.Outlined" DisableUnderLine="true" InnerPadding="false">
-                <MudRadioGroup T="string" @bind-Value="Orientation">
-                    <MudRadio Value="@("landscape")" Color="Color.Primary" Size="Size.Small">Landscape</MudRadio>
-                    <MudRadio Value="@("portrait")" Color="Color.Primary" Size="Size.Small">Portrait</MudRadio>
-                </MudRadioGroup>
-            </MudField>
+            @if (ShowOrientation)
+            {
+                <MudField Label="Orientation" Variant="Variant.Outlined" DisableUnderLine="true" InnerPadding="false">
+                    <MudRadioGroup T="string" @bind-Value="Orientation">
+                        <MudRadio Value="@("landscape")" Color="Color.Primary" Size="Size.Small">Landscape</MudRadio>
+                        <MudRadio Value="@("portrait")" Color="Color.Primary" Size="Size.Small">Portrait</MudRadio>
+                    </MudRadioGroup>
+                </MudField>
+            }
 
             <MudField Label="Copies per page" Variant="Variant.Outlined" DisableUnderLine="true" InnerPadding="false">
                 <MudRadioGroup T="int" @bind-Value="Copies">
@@ -96,6 +99,11 @@
     [Parameter] public int Copies { get; set; } = 2;
     [Parameter] public int MinRows { get; set; } = 10;
 
+    // Opt-out: reports backed by a single "2-up" template (e.g. ICS / PAR accountability)
+    // have no independent orientation — the copy count dictates it (2 = landscape side-by-side,
+    // 1 = portrait). Hide the Orientation radio and derive it from Copies in Submit.
+    [Parameter] public bool ShowOrientation { get; set; } = true;
+
     // Opt-in: when the calling report has a portrait .frx that lays out 2 side-by-side
     // copies (e.g. PurchaseRequestPortraitFast.frx), allow the user to keep 2 copies in
     // portrait. Default false preserves landscape-only-2-copy behavior for reports
@@ -124,12 +132,15 @@
 
     private void Submit()
     {
-        var copies = (Orientation == "portrait" && !SupportsPortraitTwoCopies) ? 1 : Copies;
+        // When the orientation radio is hidden, the single 2-up template derives its
+        // orientation from the copy count: 2 copies = landscape (cut in half), 1 = portrait.
+        var orientation = ShowOrientation ? Orientation : (Copies == 1 ? "portrait" : "landscape");
+        var copies = (orientation == "portrait" && !SupportsPortraitTwoCopies) ? 1 : Copies;
         var rows = Math.Clamp(MinRows, 1, 20);
         var dataOnly = SupportsDataOnlyOverlay && DataOnly;
         var offsetX = dataOnly ? Math.Clamp(OffsetX, -30, 30) : 0;
         var offsetY = dataOnly ? Math.Clamp(OffsetY, -30, 30) : 0;
-        MudDialog.Close(DialogResult.Ok(new Result(PaperSize, Orientation, copies, rows, dataOnly, offsetX, offsetY)));
+        MudDialog.Close(DialogResult.Ok(new Result(PaperSize, orientation, copies, rows, dataOnly, offsetX, offsetY)));
     }
 
     private void Cancel() => MudDialog.Cancel();

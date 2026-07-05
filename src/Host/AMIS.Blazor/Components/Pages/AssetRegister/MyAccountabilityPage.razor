@@ -3,10 +3,12 @@
 @using AMIS.Modules.AssetRegister.Contracts.v1
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Components.Pages.Procurement
 @inject IArAccountabilityClient Client
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
+@inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
 
 <AMISPageHeader Title="My Accountability (ICS / PAR)"
@@ -105,11 +107,23 @@ else
                                             <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
                                                             Color="Color.Default" OnClick="@(() => OpenDetailDialogAsync(context.Id))" />
                                         </MudTooltip>
-                                        <MudTooltip Text="@($"Print {(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")}")">
-                                            <AMISIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small"
-                                                            Color="Color.Secondary" OnClick="@(() => PrintRowAsync(context))"
-                                                            Disabled="@(_printingId == context.Id)" />
-                                        </MudTooltip>
+                                        <MudMenu Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                 Color="Color.Secondary"
+                                                 Size="Size.Small"
+                                                 Dense="true"
+                                                 AnchorOrigin="Origin.BottomLeft"
+                                                 TransformOrigin="Origin.TopLeft"
+                                                 ToolTip="@($"Print {(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")}")"
+                                                 Disabled="@(_printingId == context.Id)">
+                                            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                         OnClick="@(() => PrintRowAsync(context))">
+                                                Print @(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
+                                            </MudMenuItem>
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Tune"
+                                                         OnClick="@(() => OpenPrintSetupAsync(context))">
+                                                Page Setup…
+                                            </MudMenuItem>
+                                        </MudMenu>
                                         @if (context.Status == AccountabilityStatus.PendingAcceptance && _canAcknowledge)
                                         {
                                             <MudTooltip Text="@($"Accept {(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")}")">
@@ -387,14 +401,60 @@ else
             await LoadAsync();
     }
 
+    // Both ICS and PAR use a single landscape "2-up" Fast Report template (two copies
+    // side by side, cut down the middle). Landscape = 2 per page; portrait = 1 per page.
+    private const string FastReportKey = "accountability";
+
     private async Task PrintRowAsync(ArAccountabilitySummaryDto item)
     {
         _printingId = item.Id;
         try
         {
-            var bytes = await Client.GetFastReportPdfAsync(item.Id, item.AccountabilityType, pageWidth: "longbond");
+            var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+            var bytes = await Client.GetFastReportPdfAsync(item.Id, item.AccountabilityType,
+                pageWidth: saved?.PaperSize ?? "longbond",
+                orientation: saved?.Orientation ?? "landscape",
+                minRows: saved?.MinRows ?? 15);
             var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
             await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _printingId = null;
+        }
+    }
+
+    private async Task OpenPrintSetupAsync(ArAccountabilitySummaryDto item)
+    {
+        var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
+        var parameters = new DialogParameters
+        {
+            [nameof(FastReportPageSetupDialog.PaperSize)] = saved?.PaperSize ?? "longbond",
+            [nameof(FastReportPageSetupDialog.Orientation)] = saved?.Orientation ?? "landscape",
+            [nameof(FastReportPageSetupDialog.Copies)] = saved?.Copies ?? 2,
+            [nameof(FastReportPageSetupDialog.MinRows)] = saved?.MinRows ?? 15,
+            [nameof(FastReportPageSetupDialog.ShowOrientation)] = false
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<FastReportPageSetupDialog>("Page Setup", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+        if (result.Data is not FastReportPageSetupDialog.Result r) return;
+
+        await FastReportSetupPrefs.SaveAsync(FastReportKey, new FastReportSetup(r.PaperSize, r.Orientation, r.Copies, r.MinRows));
+
+        _printingId = item.Id;
+        try
+        {
+            var bytes = await Client.GetFastReportPdfAsync(item.Id, item.AccountabilityType,
+                pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
         {

@@ -5,8 +5,12 @@
              xmlns:svc="clr-namespace:AMIS.Maui.Services"
              x:DataType="vm:PhysicalCountEntriesViewModel"
              x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountEntriesPage"
-             Title="Entries"
+             Title="{Binding HeaderTitle}"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Checklist" Command="{Binding OpenChecklistCommand}" />
+    </ContentPage.ToolbarItems>
 
     <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
@@ -55,15 +59,31 @@
                         ItemsSource="{Binding FilterOptions}"
                         SelectedItem="{Binding SelectedFilter}"
                         MinimumWidthRequest="120" />
-                <Entry Grid.Column="1"
-                       Placeholder="Search property / description"
-                       Text="{Binding SearchText}" />
+                <SearchBar Grid.Column="1"
+                           Placeholder="Search property no. or description"
+                           Text="{Binding SearchText}" />
             </Grid>
 
-            <!-- Entries list -->
+            <!-- Entries list — grouped per SE / PPE -->
             <CollectionView Grid.Row="4"
                             ItemsSource="{Binding FilteredEntries}"
+                            IsGrouped="True"
                             EmptyView="No entries match the current filter.">
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="vm:EntryGroup">
+                        <Grid Padding="16,12,16,6" ColumnDefinitions="*,Auto"
+                              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+                            <Label Grid.Column="0"
+                                   Text="{Binding Title}"
+                                   FontFamily="InterSemiBold" FontSize="13"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding CountLabel}"
+                                   FontSize="12" TextColor="{StaticResource Gray500}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="svc:PhysicalCountEntryDto">
                         <Border Stroke="Transparent"

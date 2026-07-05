@@ -165,8 +165,13 @@ public sealed partial class HomeViewModel(
     [RelayCommand]
     private async Task ResumeSessionAsync()
     {
-        if (ActiveSession is { } s)
-            await Shell.Current.GoToAsync($"{nameof(PhysicalCountScanPage)}?SessionId={s.Id}");
+        if (ActiveSession is not { } s) return;
+
+        // Switch to the Count tab first (absolute route resets to the session-list root), then push
+        // Scan onto that tab's stack. A single relative route would push the whole count flow onto the
+        // Home stack, leaving the tab bar highlighting Home while the user is deep in Scan/Checklist.
+        await Shell.Current.GoToAsync($"//{nameof(PhysicalCountSessionListPage)}");
+        await Shell.Current.GoToAsync($"{nameof(PhysicalCountScanPage)}?SessionId={s.Id}");
     }
 
     [RelayCommand]

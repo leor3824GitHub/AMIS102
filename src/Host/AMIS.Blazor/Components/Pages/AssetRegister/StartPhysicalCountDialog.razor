@@ -1,6 +1,8 @@
 @using AMIS.Blazor.ApiClient
+@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
 @inject IArPhysicalCountClient Client
+@inject IFundClusterClient FundClusterClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 
@@ -16,8 +18,14 @@
                 <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.PPEOnly">PPE (RPCPPE)</MudSelectItem>
                 <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.Both">All Assets</MudSelectItem>
             </MudSelect>
-            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
-                          MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudSelect @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" T="string"
+                       Required="true" Dense="true" Margin="Margin.Dense" Disabled="_loadingClusters"
+                       HelperText="@(_loadingClusters ? "Loading fund clusters..." : null)">
+                @foreach (var fc in _fundClusters)
+                {
+                    <MudSelectItem T="string" Value="@fc.Code">@($"{fc.Code} - {fc.Name}")</MudSelectItem>
+                }
+            </MudSelect>
             <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At Date" Variant="Variant.Outlined"
                            DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
             <MudDatePicker @bind-Date="_form.StartedOnNullable" Label="Started On" Variant="Variant.Outlined"
@@ -45,7 +53,29 @@
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
 
     private bool _busy;
+    private bool _loadingClusters = true;
+    private List<FundClusterDto> _fundClusters = [];
     private readonly StartFormModel _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await FundClusterClient.SearchAsync(pageSize: 200);
+            _fundClusters = response?.Items?
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code)
+                .ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load fund clusters: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingClusters = false;
+        }
+    }
 
     private sealed class StartFormModel
     {
@@ -62,9 +92,10 @@
 
     private async Task StartSessionAsync()
     {
-        if (string.IsNullOrWhiteSpace(_form.Code) || !_form.AsAtNullable.HasValue || !_form.StartedOnNullable.HasValue)
+        if (string.IsNullOrWhiteSpace(_form.Code) || string.IsNullOrWhiteSpace(_form.FundCluster)
+            || !_form.AsAtNullable.HasValue || !_form.StartedOnNullable.HasValue)
         {
-            Snackbar.Add("Code, As At date, and Started On are required.", Severity.Warning);
+            Snackbar.Add("Code, Fund Cluster, As At date, and Started On are required.", Severity.Warning);
             return;
         }
 

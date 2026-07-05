@@ -158,7 +158,18 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             (s.Entries ?? []).Select(e => new PhysicalCountEntryDto(
                 e.Id, e.AssetRegistryId, e.Snapshot?.PropertyNo ?? "", e.SnapshotArticle,
                 e.SnapshotUnitCost, MapCondition(e.Condition), e.Condition, 1, e.Remarks,
-                IsScanned: e.ScannedOnUtc is not null)).ToList());
+                IsScanned: e.ScannedOnUtc is not null,
+                // Known assets (found/missing) carry a snapshot tagged SE or PPE; FoundAtStation has none.
+                AssetType: e.Snapshot?.AssetType)).ToList());
+    }
+
+    public async Task<PhysicalCountChecklistDto> GetPhysicalCountChecklistAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        // The server DTO matches PhysicalCountChecklistDto field-for-field (enums as strings), so
+        // deserialize straight into it.
+        var result = await httpClient.GetFromJsonAsync<PhysicalCountChecklistDto>(
+            $"api/v1/asset-register/count/{sessionId}/checklist", ct);
+        return result ?? new PhysicalCountChecklistDto(sessionId, "", "", "", "", 0, 0, 0, 0, []);
     }
 
     public async Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default)

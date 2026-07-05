@@ -53,6 +53,38 @@ public sealed class StringEqualsConverter : IValueConverter
 }
 
 /// <summary>
+/// Drives a segmented-control chip's background/text color from the currently selected segment,
+/// so the selected state is reliable. A selected-state <c>DataTrigger</c> can't dependably override
+/// a base <c>BackgroundColor</c>/<c>TextColor</c> in MAUI — the classic symptom is a blank chip
+/// (white text on a light pill). Binding the color through this converter avoids triggers entirely.
+///
+/// <para>ConverterParameter form: <c>"{segmentValue}|{role}"</c> where role is <c>bg</c> or <c>text</c>.
+/// The bound value is the currently selected segment. Selected → Primary background / White text;
+/// unselected → transparent background (shows the track) / Gray900 text (legible on both themes).</para>
+/// </summary>
+public sealed class SegmentColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var parts = (parameter as string)?.Split('|');
+        var segment = parts is { Length: > 0 } ? parts[0] : null;
+        var role = parts is { Length: > 1 } ? parts[1] : "bg";
+        var selected = string.Equals((value as string)?.Trim(), segment?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        if (role.Equals("text", StringComparison.OrdinalIgnoreCase))
+            return Resource(selected ? "White" : "Gray900");
+
+        return selected ? Resource("Primary") : Colors.Transparent;
+    }
+
+    private static object Resource(string key) =>
+        Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Transparent;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
 /// Maps a document kind ("ICS" / "PAR") to a chip color drawn from app resources.
 /// Pass ConverterParameter="bg" for the chip background, "text" for the label color.
 /// </summary>

@@ -103,7 +103,8 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         var entry = _entries.FirstOrDefault(e => e.Id == entryId)
             ?? throw new InvalidOperationException($"Entry '{entryId}' not found on session.");
         entry.MarkForRecount(reason);
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // See RecordEntry: recount operations must not bump the xmin-guarded session row — the entry
+        // carries the change, and touching the session serializes all Reconciled-mode writers on one row.
         AddDomainEvent(new PhysicalCountRecountRequestedEvent(Id, entryId, TenantId));
     }
 
@@ -129,7 +130,9 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
                 ?? throw new InvalidOperationException(
                     "Re-recording in Reconciled status is only allowed for entries flagged for recount.");
             recountEntry.ApplyRecount(condition, locationId, scannedOnUtc, scannedByEmployeeId, photoPath, remarks);
-            LastModifiedOnUtc = DateTimeOffset.UtcNow;
+            // Like appends, a recount re-record must not bump the xmin-guarded session row: the entry
+            // carries the change, and a session update makes every Reconciled-mode writer collide with
+            // DbUpdateConcurrencyException on this one row.
             return;
         }
 
