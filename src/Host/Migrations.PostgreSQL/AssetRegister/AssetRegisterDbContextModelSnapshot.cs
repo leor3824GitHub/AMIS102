@@ -225,6 +225,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(10000000)
+                        .HasColumnType("character varying(10000000)");
+
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 

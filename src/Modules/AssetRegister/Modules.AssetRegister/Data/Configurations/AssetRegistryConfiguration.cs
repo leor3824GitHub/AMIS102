@@ -36,6 +36,7 @@ internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<Asse
         builder.Property(x => x.Brand).HasMaxLength(200);
         builder.Property(x => x.Model).HasMaxLength(200);
         builder.Property(x => x.Unit).IsRequired().HasMaxLength(64);
+        builder.Property(x => x.ImageUrl).HasMaxLength(10_000_000); // base64-encoded image (~7.6 MB max)
         builder.Property(x => x.FundCluster).IsRequired().HasMaxLength(64);
         builder.Property(x => x.UacsObjectCode).IsRequired().HasMaxLength(32);
 

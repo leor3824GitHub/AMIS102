@@ -101,7 +101,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             AcquisitionDate: a.AcquisitionDate,
             LocationName: a.LocationName,
             AccountableOfficer: a.AccountableOfficerName,
-            AccountableOfficerDesignation: a.AccountableOfficerDesignation);
+            AccountableOfficerDesignation: a.AccountableOfficerDesignation,
+            ImageUrl: a.ImageUrl);
     }
 
     // Server returns the accountability enum (SE_ICS / PPE_PAR); map to the COA form name shown on the sticker.
@@ -343,5 +344,6 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         DateOnly AcquisitionDate, decimal UnitCost, string LifecycleState, string CurrentCondition,
         Guid? CurrentLocationId, string? LocationName,
         Guid? CurrentAccountabilityId, string? DocumentType, string? DocumentNo,
-        Guid? AccountableOfficerId, string? AccountableOfficerName, string? AccountableOfficerDesignation);
+        Guid? AccountableOfficerId, string? AccountableOfficerName, string? AccountableOfficerDesignation,
+        string? ImageUrl = null);
 }

@@ -22,6 +22,9 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public string? Model { get; private set; }
     public string Unit { get; private set; } = default!;
 
+    /// <summary>Optional photo of the physical unit (base64-encoded image or storage reference). Null when none uploaded.</summary>
+    public string? ImageUrl { get; private set; }
+
     // accounting
     public string FundCluster { get; private set; } = default!;
     public string UacsObjectCode { get; private set; } = default!;
@@ -378,6 +381,14 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
     {
         EnsureNotDisposed();
         CurrentCondition = condition;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Sets or replaces the asset's photo. Pass null or blank to clear it.</summary>
+    public void SetImage(string? imageUrl)
+    {
+        EnsureNotDisposed();
+        ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

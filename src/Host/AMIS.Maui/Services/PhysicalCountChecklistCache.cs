@@ -34,7 +34,7 @@ public sealed class PhysicalCountChecklistCache(LocalDb localDb) : IPhysicalCoun
             r.PropertyNo, r.AssetType, r.Description, r.Unit, r.UnitCost,
             Guid.TryParse(r.LocationId, out var locId) ? locId : null, r.LocationName,
             Guid.TryParse(r.CustodianId, out var custId) ? custId : null, r.AccountableOfficer,
-            r.Status, r.Condition)).ToList();
+            r.Status, r.Condition, r.ImageUrl)).ToList();
 
         return (items, rows.Min(r => r.CachedAt));
     }
@@ -64,6 +64,7 @@ public sealed class PhysicalCountChecklistCache(LocalDb localDb) : IPhysicalCoun
             AccountableOfficer = i.AccountableOfficer,
             Status = i.Status,
             Condition = i.Condition,
+            ImageUrl = i.ImageUrl,
             CachedAt = now,
         }).ToList();
 

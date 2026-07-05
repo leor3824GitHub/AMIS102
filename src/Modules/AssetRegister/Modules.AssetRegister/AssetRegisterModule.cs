@@ -176,6 +176,7 @@ public class AssetRegisterModule : IModule
         var assets = moduleGroup.MapGroup("/assets");
         Features.v1.Assets.RegisterAsset.RegisterAssetEndpoint.Map(assets);
         Features.v1.Assets.UpdateAssetCondition.UpdateAssetConditionEndpoint.Map(assets);
+        Features.v1.Assets.UpdateAssetImage.UpdateAssetImageEndpoint.Map(assets);
         Features.v1.Assets.UpdateAssetDepreciation.UpdateAssetDepreciationEndpoint.Map(assets);
         Features.v1.Assets.GetAssetRegistry.GetAssetRegistryEndpoint.Map(assets);
         Features.v1.Assets.GetAssetByPropertyNo.GetAssetByPropertyNoEndpoint.Map(assets);

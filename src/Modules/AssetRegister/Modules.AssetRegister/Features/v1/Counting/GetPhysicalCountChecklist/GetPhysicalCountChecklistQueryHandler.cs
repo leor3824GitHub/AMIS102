@@ -53,6 +53,7 @@ public sealed class GetPhysicalCountChecklistQueryHandler(AssetRegisterDbContext
                 a.CurrentLocationId,
                 a.CurrentCustodianId,
                 a.CurrentAccountabilityId,
+                a.ImageUrl,
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
@@ -95,7 +96,8 @@ public sealed class GetPhysicalCountChecklistQueryHandler(AssetRegisterDbContext
 
             items.Add(new PhysicalCountChecklistItemDto(
                 a.Id, a.PropertyNo.Value, a.AssetType, a.Description, a.Unit, a.UnitCost,
-                a.CurrentLocationId, locationName, a.CurrentCustodianId, officerName, status, condition));
+                a.CurrentLocationId, locationName, a.CurrentCustodianId, officerName, status, condition,
+                a.ImageUrl));
         }
 
         return new PhysicalCountChecklistDto(

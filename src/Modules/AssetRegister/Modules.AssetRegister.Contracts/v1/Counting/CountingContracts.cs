@@ -125,7 +125,10 @@ public sealed record PhysicalCountChecklistItemDto(
     Guid? CustodianId,
     string? AccountableOfficer,
     string Status,
-    PhysicalCountCondition? Condition);
+    PhysicalCountCondition? Condition,
+    // Asset photo (base64 data URL or absolute URL); null when no photo has been set. Lets the mobile
+    // worklist show a thumbnail so field staff can eyeball-match the item they're looking for.
+    string? ImageUrl = null);
 
 /// <summary>
 /// The full in-scope asset universe for a session (same fund cluster + scope the reconciliation

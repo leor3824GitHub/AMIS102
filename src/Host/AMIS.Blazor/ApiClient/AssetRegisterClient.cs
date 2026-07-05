@@ -88,7 +88,8 @@ public sealed record AssetRegistrySummaryDto(
     DateOnly AcquisitionDate,
     LifecycleState LifecycleState,
     ArContracts.AssetCondition CurrentCondition,
-    Guid? CurrentCustodianId);
+    Guid? CurrentCustodianId,
+    string? ImageUrl = null);
 
 internal sealed record AssetRegistryDto(
     Guid Id,
@@ -119,7 +120,8 @@ internal sealed record AssetRegistryDto(
     Guid? SourceIARId,
     Guid? SourcePurchaseOrderId,
     decimal ResidualValue = 0m,
-    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine,
+    string? ImageUrl = null);
 
 internal sealed record RegisterAssetRequest(
     Guid CatalogItemId,
@@ -140,6 +142,8 @@ internal sealed record RegisterAssetRequest(
 
 internal sealed record UpdateAssetConditionRequest(ArContracts.AssetCondition Condition);
 
+internal sealed record UpdateAssetImageRequest(Guid AssetRegistryId, string? ImageUrl);
+
 internal interface IAssetRegistryClient
 {
     Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
@@ -147,6 +151,8 @@ internal interface IAssetRegistryClient
     Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
     Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default);
     Task<AssetRegistryDto> UpdateConditionAsync(Guid id, ArContracts.AssetCondition condition, CancellationToken ct = default);
+    /// <summary>Sets (base64 data URL / absolute URL) or clears (null) the asset's photo.</summary>
+    Task<AssetRegistryDto> UpdateImageAsync(Guid id, string? imageUrl, CancellationToken ct = default);
     Task<AssetRegistryDto> UpdateDepreciationAsync(Guid id, decimal residualValue, int estimatedUsefulLifeYears, DepreciationMethod method, CancellationToken ct = default);
     Task<int> GetNextPropertyNoSequenceAsync(int year, string officeCode, string classCode, CancellationToken ct = default);
 }
@@ -195,6 +201,14 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
     {
         var resp = await http.PutAsJsonAsync($"{Base}/{id}/condition", new UpdateAssetConditionRequest(condition), ArJsonOptions.Default, ct);
         resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<AssetRegistryDto> UpdateImageAsync(Guid id, string? imageUrl, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsJsonAsync($"{Base}/{id}/image", new UpdateAssetImageRequest(id, imageUrl), ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<AssetRegistryDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 

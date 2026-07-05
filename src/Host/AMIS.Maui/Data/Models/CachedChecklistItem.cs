@@ -23,5 +23,7 @@ public sealed class CachedChecklistItem
     public string? AccountableOfficer { get; set; }
     public string Status { get; set; } = "";
     public string? Condition { get; set; }
+    // Asset photo (base64 data URL or absolute URL); null when none.
+    public string? ImageUrl { get; set; }
     public DateTimeOffset CachedAt { get; set; }
 }

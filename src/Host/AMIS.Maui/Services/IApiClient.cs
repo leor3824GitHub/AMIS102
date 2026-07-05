@@ -90,7 +90,9 @@ public sealed record TangibleInventoryItemDetailDto(
     DateOnly? AcquisitionDate = null,
     string? LocationName = null,
     string? AccountableOfficer = null,
-    string? AccountableOfficerDesignation = null);
+    string? AccountableOfficerDesignation = null,
+    // Asset photo (base64 data URL or absolute URL); null when none. Rendered via ImageUrlToSourceConverter.
+    string? ImageUrl = null);
 
 // ── Physical Count ────────────────────────────────────────────────────────────
 
@@ -186,7 +188,10 @@ public sealed record PhysicalCountChecklistItemDto(
     Guid? CustodianId,
     string? AccountableOfficer,
     string Status,              // "Counted" | "Missing" | "Uncounted"
-    string? Condition)
+    string? Condition,
+    // Asset photo (base64 data URL or absolute URL); null when none. Rendered as a leading thumbnail
+    // via ImageUrlToSourceConverter so field staff can eyeball-match the item.
+    string? ImageUrl = null)
 {
     public bool IsCounted => Status == "Counted";
     public bool IsMissing => Status == "Missing";

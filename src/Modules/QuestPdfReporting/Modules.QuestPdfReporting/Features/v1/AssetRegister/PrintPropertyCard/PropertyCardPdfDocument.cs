@@ -22,6 +22,19 @@ internal sealed class PropertyCardPdfDocument(
 {
     private string FormTitle => card.AssetType == AssetType.SE ? "Semi-Expendable Property Card" : "Property Card";
 
+    // Decoded once per document. Only base64 data URLs are embeddable here — a remote http URL can't
+    // be fetched synchronously during compose, so it's skipped (the card just prints without a photo).
+    private readonly byte[]? _photo = DecodePhoto(card.ImageUrl);
+
+    private static byte[]? DecodePhoto(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl)) return null;
+        var marker = imageUrl.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
+        if (marker < 0) return null;
+        try { return Convert.FromBase64String(imageUrl[(marker + "base64,".Length)..]); }
+        catch (FormatException) { return null; }
+    }
+
     public DocumentMetadata GetMetadata() => new()
     {
         Title  = $"{FormTitle} — {card.PropertyNo}",
@@ -54,28 +67,37 @@ internal sealed class PropertyCardPdfDocument(
             }
             col.Item().PaddingTop(6).AlignCenter().Text(FormTitle.ToUpperInvariant()).Bold().FontSize(12);
 
-            col.Item().PaddingTop(6).Row(row =>
+            col.Item().PaddingTop(6).Row(headerRow =>
             {
-                row.RelativeItem().Text(t =>
+                headerRow.RelativeItem().Column(details =>
                 {
-                    t.Span("Property No.: ").SemiBold().FontSize(8);
-                    t.Span(card.PropertyNo).FontSize(8);
+                    details.Item().Row(row =>
+                    {
+                        row.RelativeItem().Text(t =>
+                        {
+                            t.Span("Property No.: ").SemiBold().FontSize(8);
+                            t.Span(card.PropertyNo).FontSize(8);
+                        });
+                        row.RelativeItem().AlignCenter().Text(t =>
+                        {
+                            t.Span("Acquired: ").SemiBold().FontSize(8);
+                            t.Span($"{card.AcquisitionDate:yyyy-MM-dd} @ ₱{card.AcquisitionCost:N2}").FontSize(8);
+                        });
+                        row.RelativeItem().AlignRight().Text(t =>
+                        {
+                            t.Span("State: ").SemiBold().FontSize(8);
+                            t.Span(card.CurrentState.ToString()).FontSize(8);
+                        });
+                    });
+                    details.Item().Text(t =>
+                    {
+                        t.Span("Description: ").SemiBold().FontSize(8);
+                        t.Span($"{card.Description} ({card.Unit})").FontSize(8);
+                    });
                 });
-                row.RelativeItem().AlignCenter().Text(t =>
-                {
-                    t.Span("Acquired: ").SemiBold().FontSize(8);
-                    t.Span($"{card.AcquisitionDate:yyyy-MM-dd} @ ₱{card.AcquisitionCost:N2}").FontSize(8);
-                });
-                row.RelativeItem().AlignRight().Text(t =>
-                {
-                    t.Span("State: ").SemiBold().FontSize(8);
-                    t.Span(card.CurrentState.ToString()).FontSize(8);
-                });
-            });
-            col.Item().Text(t =>
-            {
-                t.Span("Description: ").SemiBold().FontSize(8);
-                t.Span($"{card.Description} ({card.Unit})").FontSize(8);
+
+                if (_photo is not null)
+                    headerRow.ConstantItem(80).PaddingLeft(8).AlignRight().Height(60).Image(_photo).FitArea();
             });
             col.Item().PaddingTop(4).LineHorizontal(1);
         });

@@ -87,66 +87,36 @@
             </Border.StrokeShape>
             <HorizontalStackLayout Spacing="2">
 
-                <!-- Barcode tab -->
+                <!-- Barcode tab (colors are converter-driven — no DataTriggers) -->
                 <Border Stroke="Transparent"
-                        Background="Transparent"
-                        Padding="20,8">
+                        Padding="20,8"
+                        BackgroundColor="{Binding IsBarcodeMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter='White|Transparent'}">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="18" />
                     </Border.StrokeShape>
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border"
-                                     Binding="{Binding IsBarcodeMode}"
-                                     Value="True">
-                            <Setter Property="Background" Value="{StaticResource White}" />
-                        </DataTrigger>
-                    </Border.Triggers>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding StopTextScanCommand}" />
                     </Border.GestureRecognizers>
                     <Label Text="QR"
                            FontFamily="InterSemiBold"
                            FontSize="13"
-                           TextColor="{StaticResource Gray300}">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label"
-                                         Binding="{Binding IsBarcodeMode}"
-                                         Value="True">
-                                <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
+                           TextColor="{Binding IsBarcodeMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Primary|Gray300'}" />
                 </Border>
 
-                <!-- Text tab -->
+                <!-- Text tab (colors are converter-driven — no DataTriggers) -->
                 <Border Stroke="Transparent"
-                        Background="Transparent"
-                        Padding="20,8">
+                        Padding="20,8"
+                        BackgroundColor="{Binding IsTextMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter='White|Transparent'}">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="18" />
                     </Border.StrokeShape>
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border"
-                                     Binding="{Binding IsTextMode}"
-                                     Value="True">
-                            <Setter Property="Background" Value="{StaticResource White}" />
-                        </DataTrigger>
-                    </Border.Triggers>
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding StartTextScanCommand}" />
                     </Border.GestureRecognizers>
                     <Label Text="Text"
                            FontFamily="InterSemiBold"
                            FontSize="13"
-                           TextColor="{StaticResource Gray300}">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label"
-                                         Binding="{Binding IsTextMode}"
-                                         Value="True">
-                                <Setter Property="TextColor" Value="{StaticResource Primary}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
+                           TextColor="{Binding IsTextMode, Converter={StaticResource BoolToColorConverter}, ConverterParameter='Primary|Gray300'}" />
                 </Border>
 
             </HorizontalStackLayout>
