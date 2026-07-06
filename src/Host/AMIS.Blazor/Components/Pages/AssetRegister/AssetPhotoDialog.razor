@@ -7,9 +7,12 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="3" Style="min-width: 420px;">
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                Photo of the physical unit — JPG / PNG / GIF / WebP, max 5 MB.
-            </MudText>
+            @if (CanEdit)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Photo of the physical unit — JPG / PNG / GIF / WebP, max 5 MB.
+                </MudText>
+            }
 
             <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Justify="Justify.Center" Wrap="Wrap.Wrap">
                 @if (!string.IsNullOrEmpty(_imageUrl))
@@ -19,9 +22,13 @@
                 }
                 else
                 {
-                    <MudPaper Elevation="0" Class="d-flex align-center justify-center rounded"
+                    <MudPaper Elevation="0" Class="d-flex flex-column align-center justify-center rounded gap-2"
                               Style="width:200px; height:200px; border:1px dashed var(--mud-palette-lines-default);">
                         <MudIcon Icon="@Icons.Material.Outlined.Image" Color="Color.Default" Size="Size.Large" />
+                        @if (!CanEdit)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">No photo uploaded.</MudText>
+                        }
                     </MudPaper>
                 }
             </MudStack>
@@ -31,23 +38,26 @@
                 <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
             }
 
-            <MudStack Row="true" Spacing="2" Justify="Justify.Center">
-                <MudFileUpload T="IBrowserFile" OnFilesChanged="HandleImageUpload"
-                               Accept=".jpg,.jpeg,.png,.gif,.webp" MaxFileSize="MaxUploadBytes">
-                    <ActivatorContent>
-                        <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.CloudUpload" Disabled="_busy">
-                            @(string.IsNullOrEmpty(_imageUrl) ? "Upload Photo" : "Replace Photo")
-                        </MudButton>
-                    </ActivatorContent>
-                </MudFileUpload>
-                @if (!string.IsNullOrEmpty(_imageUrl))
-                {
-                    <MudButton Variant="Variant.Outlined" Color="Color.Error"
-                               StartIcon="@Icons.Material.Outlined.Delete"
-                               OnClick="RemoveImageAsync" Disabled="_busy">Remove</MudButton>
-                }
-            </MudStack>
+            @if (CanEdit)
+            {
+                <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                    <MudFileUpload T="IBrowserFile" OnFilesChanged="HandleImageUpload"
+                                   Accept=".jpg,.jpeg,.png,.gif,.webp" MaxFileSize="MaxUploadBytes">
+                        <ActivatorContent>
+                            <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload" Disabled="_busy">
+                                @(string.IsNullOrEmpty(_imageUrl) ? "Upload Photo" : "Replace Photo")
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    @if (!string.IsNullOrEmpty(_imageUrl))
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                                   StartIcon="@Icons.Material.Outlined.Delete"
+                                   OnClick="RemoveImageAsync" Disabled="_busy">Remove</MudButton>
+                    }
+                </MudStack>
+            }
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -59,6 +69,8 @@
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
     [Parameter] public Guid AssetId { get; set; }
     [Parameter] public string? CurrentImageUrl { get; set; }
+    /// <summary>When false, the dialog is view-only: upload/replace/remove controls are hidden.</summary>
+    [Parameter] public bool CanEdit { get; set; } = true;
 
     private const long MaxUploadBytes = 5L * 1024 * 1024;
 

@@ -29,8 +29,9 @@
     <Color x:Key="Success">#43A047</Color>
     <Color x:Key="Warning">#9A3412</Color>
 
-    <!-- Slightly deeper neutral canvas for app background -->
-    <Color x:Key="Surface">#F3F4F6</Color>
+    <!-- Slightly deeper neutral canvas for app background — cool slate so white cards + the
+         gradient hero panels read as raised instead of blending into a near-white background. -->
+    <Color x:Key="Surface">#E9ECF2</Color>
     <Color x:Key="PrimaryLight">#EDE9FB</Color>
     <Color x:Key="DangerLight">#FFEBEE</Color>
 
@@ -49,8 +50,15 @@
     <Color x:Key="Teal">#00897B</Color>
     <Color x:Key="TealLight">#E0F2F1</Color>
 
-    <!-- Translucent white overlay for chips/avatars sitting on a gradient -->
-    <Color x:Key="OnGradientOverlay">#33FFFFFF</Color>
+    <!-- Translucent DARK overlay for chips/avatars/progress-tracks sitting on the gradient.
+         Must be dark, not white: on-gradient foreground text is white, and a translucent-white
+         overlay renders near-opaque white on WinUI → white-on-white (invisible chip contents +
+         an invisible progress fill). A deep-indigo tint keeps white text high-contrast whether
+         the platform honors the alpha (subtle glass) or drops it (solid deep indigo). -->
+    <Color x:Key="OnGradientOverlay">#59201060</Color>
+
+    <!-- Muted (78% opacity) white for secondary text on a gradient panel -->
+    <Color x:Key="OnGradientMuted">#C8FFFFFF</Color>
 
     <!-- Semi-transparent dark pill for controls overlaid on the camera viewfinder -->
     <Color x:Key="CameraOverlayBg">#99212121</Color>

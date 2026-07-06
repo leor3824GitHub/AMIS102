@@ -149,8 +149,10 @@ public sealed class ImageUrlToSourceConverter : IValueConverter
 }
 
 /// <summary>
-/// Maps a document kind ("ICS" / "PAR") to a chip color drawn from app resources.
-/// Pass ConverterParameter="bg" for the chip background, "text" for the label color.
+/// Maps a document kind or asset type to a chip color drawn from app resources.
+/// Document kinds: "ICS" (primary) / "PAR" (teal). Asset types: "PPE" (info/blue) / "SE" (teal) —
+/// used to tint the checklist thumbnail so PPE and SE items read apart at a glance.
+/// Pass ConverterParameter="bg" for the chip/tile background, "text" for the glyph/label color.
 /// </summary>
 public sealed class KindToColorConverter : IValueConverter
 {
@@ -162,6 +164,8 @@ public sealed class KindToColorConverter : IValueConverter
         var key = kind switch
         {
             "PAR" => wantBackground ? "TealLight" : "Teal",
+            "PPE" => wantBackground ? "InfoLight" : "Info",
+            "SE" => wantBackground ? "TealLight" : "Teal",
             _ => wantBackground ? "PrimaryLight" : "Primary",
         };
 

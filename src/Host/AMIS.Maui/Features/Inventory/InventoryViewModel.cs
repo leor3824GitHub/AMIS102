@@ -13,10 +13,22 @@ public sealed partial class InventoryViewModel(
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
 
+    // Header hero — custodian identity + accountability totals shown on the gradient panel.
+    [ObservableProperty] private string _employeeName = "";
+    [ObservableProperty] private string? _employeeDetail;
+    [ObservableProperty] private int _icsCount;
+    [ObservableProperty] private int _parCount;
+
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)
     {
         if (authState.Employee is null) return;
+
+        EmployeeName = authState.Employee.FullName;
+        EmployeeDetail = string.Join("  ·  ",
+            new[] { authState.Employee.Position, authState.Employee.Department }
+                .Where(s => !string.IsNullOrWhiteSpace(s)))
+            is { Length: > 0 } detail ? detail : null;
 
         IsLoading = true;
         ErrorMessage = null;
@@ -25,6 +37,9 @@ public sealed partial class InventoryViewModel(
             var employeeId = authState.Employee.EmployeeId;
             var icsList = await apiClient.GetMyICSListAsync(employeeId, ct);
             var parList = await apiClient.GetMyPARListAsync(employeeId, ct);
+
+            IcsCount = icsList.Count;
+            ParCount = parList.Count;
 
             Groups =
             [

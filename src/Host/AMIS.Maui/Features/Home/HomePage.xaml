@@ -72,7 +72,8 @@
                 <!-- ── Zone B: KPI tiles ── -->
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="16,20,16,0">
 
-                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="12,16">
+                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="12,16"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Gray950}}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding GoToInventoryCommand}" />
                         </Border.GestureRecognizers>
@@ -85,7 +86,8 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="12,16">
+                    <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Padding="12,16"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Gray950}}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding GoToInventoryCommand}" />
                         </Border.GestureRecognizers>
