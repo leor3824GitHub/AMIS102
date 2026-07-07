@@ -2,12 +2,13 @@ using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Assets;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Data.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Assets.GetAssetScanDetailByPropertyNo;
 
-public sealed class GetAssetScanDetailByPropertyNoQueryHandler(AssetRegisterDbContext db)
+public sealed class GetAssetScanDetailByPropertyNoQueryHandler(AssetRegisterDbContext db, AssetImageStorage imageStorage)
     : IQueryHandler<GetAssetScanDetailByPropertyNoQuery, AssetScanDetailDto?>
 {
     public async ValueTask<AssetScanDetailDto?> Handle(GetAssetScanDetailByPropertyNoQuery query, CancellationToken cancellationToken)
@@ -71,6 +72,10 @@ public sealed class GetAssetScanDetailByPropertyNoQueryHandler(AssetRegisterDbCo
             }
         }
 
+        // Single-image detail screen (MAUI, online-only): resolve the stored file to a base64 data URL so
+        // the client renders it directly — the perf-sensitive list payloads never carry image bytes.
+        var imageDataUrl = await imageStorage.ToDataUrlAsync(asset.ImageUrl, cancellationToken).ConfigureAwait(false);
+
         return new AssetScanDetailDto(
             asset.Id,
             asset.PropertyNo.Value,
@@ -92,6 +97,6 @@ public sealed class GetAssetScanDetailByPropertyNoQueryHandler(AssetRegisterDbCo
             officerId,
             officerName,
             officerDesignation,
-            asset.ImageUrl);
+            imageDataUrl);
     }
 }

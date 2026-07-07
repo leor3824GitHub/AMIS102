@@ -1,4 +1,6 @@
 using System.Globalization;
+using AMIS.Maui.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AMIS.Maui.Converters;
 
@@ -142,6 +144,46 @@ public sealed class ImageUrlToSourceConverter : IValueConverter
         }
 
         return Uri.TryCreate(s, UriKind.Absolute, out var uri) ? ImageSource.FromUri(uri) : null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Lazily loads a checklist row's asset photo through the authenticated API, so the multi-MB base64
+/// blob no longer rides inside the checklist payload. Bound to the whole
+/// <see cref="PhysicalCountChecklistItemDto"/>: returns null (→ placeholder tile) when the asset has
+/// no photo, otherwise an <see cref="ImageSource"/> that streams the bytes from
+/// <c>GET /assets/{id}/image</c> via the DI <see cref="IApiClient"/> (bearer token attached by the
+/// authenticated handler — a plain <c>Uri</c> source could not carry it). A failed fetch degrades to
+/// the placeholder rather than crashing the list.
+/// </summary>
+public sealed class AssetImageSourceConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not PhysicalCountChecklistItemDto item || !item.HasImage)
+            return null;
+
+        var api = IPlatformApplication.Current?.Services?.GetService<IApiClient>();
+        if (api is null)
+            return null;
+
+        var id = item.AssetRegistryId;
+        return ImageSource.FromStream(async ct =>
+        {
+            try
+            {
+                // List rows only need the small thumbnail, not the full image.
+                return await api.GetAssetImageStreamAsync(id, "thumb", ct) ?? Stream.Null;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException or OperationCanceledException)
+            {
+                // Thumbnail is non-critical — fall back to the placeholder tile instead of crashing.
+                return Stream.Null;
+            }
+        });
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>

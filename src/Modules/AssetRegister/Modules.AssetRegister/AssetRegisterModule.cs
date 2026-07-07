@@ -103,6 +103,9 @@ public class AssetRegisterModule : IModule
         services.AddScoped<IDbInitializer, AssetRegisterDbInitializer>();
         services.AddHostedService<AssetRegisterDbInitializerHostedService>();
 
+        // Asset-photo file storage (full image + thumbnail under the protected uploads prefix).
+        services.AddScoped<Data.Services.AssetImageStorage>();
+
         // Document-number generator + counter allocator wiring.
         // (PropertyNo is operator-assigned per NFA policy — no system generator.)
         services.AddScoped<CounterAllocator>();
@@ -177,6 +180,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Assets.RegisterAsset.RegisterAssetEndpoint.Map(assets);
         Features.v1.Assets.UpdateAssetCondition.UpdateAssetConditionEndpoint.Map(assets);
         Features.v1.Assets.UpdateAssetImage.UpdateAssetImageEndpoint.Map(assets);
+        Features.v1.Assets.GetAssetImage.GetAssetImageEndpoint.Map(assets);
         Features.v1.Assets.UpdateAssetDepreciation.UpdateAssetDepreciationEndpoint.Map(assets);
         Features.v1.Assets.GetAssetRegistry.GetAssetRegistryEndpoint.Map(assets);
         Features.v1.Assets.GetAssetByPropertyNo.GetAssetByPropertyNoEndpoint.Map(assets);

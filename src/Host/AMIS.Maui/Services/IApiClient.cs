@@ -189,9 +189,10 @@ public sealed record PhysicalCountChecklistItemDto(
     string? AccountableOfficer,
     string Status,              // "Counted" | "Missing" | "Uncounted"
     string? Condition,
-    // Asset photo (base64 data URL or absolute URL); null when none. Rendered as a leading thumbnail
-    // via ImageUrlToSourceConverter so field staff can eyeball-match the item.
-    string? ImageUrl = null)
+    // Whether the asset has a photo — the bytes are NOT in this payload (it loads over field data
+    // connections). The row lazily fetches the thumbnail from GET /assets/{id}/image via
+    // AssetImageSourceConverter so field staff can eyeball-match the item.
+    bool HasImage = false)
 {
     public bool IsCounted => Status == "Counted";
     public bool IsMissing => Status == "Missing";
@@ -241,6 +242,11 @@ public interface IApiClient
     Task<List<PhysicalCountSessionSummaryDto>> GetPhysicalCountSessionsAsync(CancellationToken ct = default);
     Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default);
     Task<PhysicalCountChecklistDto> GetPhysicalCountChecklistAsync(Guid sessionId, CancellationToken ct = default);
+
+    /// <summary>Streams an asset's photo bytes (authenticated), or null if the asset has no photo.
+    /// Used to lazily load checklist/list thumbnails instead of inlining base64 in list payloads.
+    /// <paramref name="variant"/> "thumb" fetches the small thumbnail; null/other fetches the full image.</summary>
+    Task<Stream?> GetAssetImageStreamAsync(Guid assetRegistryId, string? variant = null, CancellationToken ct = default);
     Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default);
     Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default);
 

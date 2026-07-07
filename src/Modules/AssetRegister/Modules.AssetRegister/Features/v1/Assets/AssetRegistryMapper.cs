@@ -34,6 +34,6 @@ internal static class AssetRegistryMapper
             x.SourcePurchaseOrderId,
             x.ResidualValue,
             x.DepreciationMethod,
-            x.ImageUrl);
+            x.ImageUrl != null);
 }
 

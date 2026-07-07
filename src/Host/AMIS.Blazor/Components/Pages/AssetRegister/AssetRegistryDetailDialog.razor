@@ -111,15 +111,16 @@
                         <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
                                     StartIcon="@Icons.Material.Outlined.CloudUpload"
                                     OnClick="OpenPhotoDialogAsync" Disabled="_busy">
-                            @(string.IsNullOrEmpty(_selected.ImageUrl) ? "Upload Photo" : "Manage Photo")
+                            @(_selected.HasImage ? "Manage Photo" : "Upload Photo")
                         </AMISButton>
                     }
                 </MudStack>
                 <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-2">
-                    @if (!string.IsNullOrEmpty(_selected.ImageUrl))
+                    @if (_selected.HasImage)
                     {
-                        <MudImage Src="@_selected.ImageUrl" Alt="Asset photo" ObjectFit="ObjectFit.Cover"
-                                  Width="160" Height="160" Class="rounded" />
+                        @* Loaded from the same-origin, cookie-authenticated image proxy (full variant). *@
+                        <img src="@($"/bff/asset-image/{_selected.Id}")" alt="Asset photo" loading="lazy"
+                             width="160" height="160" style="object-fit:cover;border-radius:6px;" />
                     }
                     else
                     {
@@ -253,7 +254,7 @@
         var parameters = new DialogParameters<AssetPhotoDialog>
         {
             { x => x.AssetId, _selected.Id },
-            { x => x.CurrentImageUrl, _selected.ImageUrl },
+            { x => x.HasImage, _selected.HasImage },
             { x => x.CanEdit, _canUpdate }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };

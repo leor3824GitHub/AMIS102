@@ -12,6 +12,7 @@
     <converters:SegmentColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="SegmentColorConverter" />
     <converters:BoolToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="BoolToColorConverter" />
     <converters:ImageUrlToSourceConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="ImageUrlToSourceConverter" />
+    <converters:AssetImageSourceConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="AssetImageSourceConverter" />
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />

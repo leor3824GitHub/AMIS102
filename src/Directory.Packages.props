@@ -147,6 +147,11 @@
   <ItemGroup Label="Messaging">
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.1" />
   </ItemGroup>
+  <ItemGroup Label="Imaging">
+    <!-- Apache-2.0 licensed (ImageSharp 2.x; v3+ is the Six Labors Split License) — used server-side
+         to generate asset-photo thumbnails. Pure-managed, cross-platform (Linux/ECS-safe). -->
+    <PackageVersion Include="SixLabors.ImageSharp" Version="2.1.11" />
+  </ItemGroup>
   <ItemGroup Label="Reporting">
     <PackageVersion Include="PdfSharp" Version="6.2.0" />
     <PackageVersion Include="QuestPDF" Version="2026.2.4" />

@@ -125,10 +125,12 @@
                                 </MudTd>
                             }
                             <MudTd>
-                                @if (!string.IsNullOrEmpty(context.ImageUrl))
+                                @if (context.HasImage)
                                 {
-                                    <MudImage Src="@context.ImageUrl" Alt="Asset thumbnail" ObjectFit="ObjectFit.Cover"
-                                              Width="40" Height="40" Class="rounded" />
+                                    @* Lazily fetched per visible row from the same-origin proxy — the browser
+                                       caches by URL and only loads on-screen thumbnails. No base64 in the payload. *@
+                                    <img src="@($"/bff/asset-image/{context.Id}?variant=thumb")" alt="Asset thumbnail" loading="lazy"
+                                         width="40" height="40" style="object-fit:cover;border-radius:4px;" />
                                 }
                                 else
                                 {
@@ -315,7 +317,7 @@
 
     // Tooltip for the row photo action. Users who can update see upload/manage; view-only users see view.
     private string PhotoActionLabel(AssetRegistrySummaryDto item) => _canUpdate
-        ? (string.IsNullOrEmpty(item.ImageUrl) ? "Upload photo" : "Manage photo")
+        ? (item.HasImage ? "Manage photo" : "Upload photo")
         : "View photo";
 
     // Open the asset photo straight from its row, without opening the detail dialog. Editable for users
@@ -326,7 +328,7 @@
         var parameters = new DialogParameters<AssetPhotoDialog>
         {
             { x => x.AssetId, item.Id },
-            { x => x.CurrentImageUrl, item.ImageUrl },
+            { x => x.HasImage, item.HasImage },
             { x => x.CanEdit, _canUpdate }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };

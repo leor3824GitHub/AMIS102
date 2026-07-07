@@ -22,8 +22,11 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public string? Model { get; private set; }
     public string Unit { get; private set; } = default!;
 
-    /// <summary>Optional photo of the physical unit (base64-encoded image or storage reference). Null when none uploaded.</summary>
+    /// <summary>Storage key of the full asset photo (or a legacy base64 data URL for pre-migration rows). Null when none.</summary>
     public string? ImageUrl { get; private set; }
+
+    /// <summary>Storage key of the small list/checklist thumbnail. Null when there's no photo (or a legacy row).</summary>
+    public string? ThumbnailUrl { get; private set; }
 
     // accounting
     public string FundCluster { get; private set; } = default!;
@@ -384,11 +387,26 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 
-    /// <summary>Sets or replaces the asset's photo. Pass null or blank to clear it.</summary>
-    public void SetImage(string? imageUrl)
+    /// <summary>
+    /// Sets or replaces the asset's photo with the storage keys of the full image and its thumbnail
+    /// (both required together). The caller writes the files first, then records the keys here.
+    /// </summary>
+    public void SetImage(string imageKey, string thumbnailKey)
     {
         EnsureNotDisposed();
-        ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl;
+        if (string.IsNullOrWhiteSpace(imageKey)) throw new ArgumentException("Image key is required.", nameof(imageKey));
+        if (string.IsNullOrWhiteSpace(thumbnailKey)) throw new ArgumentException("Thumbnail key is required.", nameof(thumbnailKey));
+        ImageUrl = imageKey;
+        ThumbnailUrl = thumbnailKey;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Clears the asset's photo (both the full image and thumbnail keys).</summary>
+    public void ClearImage()
+    {
+        EnsureNotDisposed();
+        ImageUrl = null;
+        ThumbnailUrl = null;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

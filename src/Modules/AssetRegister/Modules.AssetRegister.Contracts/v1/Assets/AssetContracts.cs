@@ -39,7 +39,9 @@ public sealed record AssetRegistryDto(
     Guid? SourcePurchaseOrderId,
     decimal ResidualValue = 0m,
     DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine,
-    string? ImageUrl = null);
+    // Whether the asset has a photo. The image is served by GET /assets/{id}/image (files, not inlined
+    // base64); UI detail views load it from there rather than from this DTO.
+    bool HasImage = false);
 
 public sealed record AssetRegistrySummaryDto(
     Guid Id,
@@ -51,7 +53,10 @@ public sealed record AssetRegistrySummaryDto(
     LifecycleState LifecycleState,
     AssetCondition CurrentCondition,
     Guid? CurrentCustodianId,
-    string? ImageUrl = null);
+    // Whether the asset has a photo — the image bytes are NOT shipped in the list payload. Clients
+    // lazily fetch the picture per visible row from GET /assets/{id}/image (browser/URL-cacheable),
+    // instead of inlining a multi-MB base64 string per row into this summary.
+    bool HasImage = false);
 
 /// <summary>
 /// Flat, display-ready projection for the mobile "scan an asset" view. Resolves the asset's current
@@ -109,8 +114,9 @@ public sealed record UpdateAssetConditionCommand(
     AssetCondition Condition) : ICommand<AssetRegistryDto>;
 
 /// <summary>
-/// Sets or clears the asset's photo. <paramref name="ImageUrl"/> is a base64 data URL
-/// (e.g. <c>data:image/jpeg;base64,…</c>) or an absolute URL; pass null/blank to remove it.
+/// Sets or clears the asset's photo. <paramref name="ImageUrl"/> is an image data URL
+/// (e.g. <c>data:image/jpeg;base64,…</c>) — the server writes the full image + a thumbnail to file
+/// storage and keeps only their keys. Pass null/blank to remove the photo.
 /// </summary>
 public sealed record UpdateAssetImageCommand(
     Guid AssetRegistryId,

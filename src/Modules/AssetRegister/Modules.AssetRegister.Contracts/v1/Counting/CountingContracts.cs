@@ -126,9 +126,10 @@ public sealed record PhysicalCountChecklistItemDto(
     string? AccountableOfficer,
     string Status,
     PhysicalCountCondition? Condition,
-    // Asset photo (base64 data URL or absolute URL); null when no photo has been set. Lets the mobile
-    // worklist show a thumbnail so field staff can eyeball-match the item they're looking for.
-    string? ImageUrl = null);
+    // Whether the asset has a photo — the image bytes are NOT shipped in this checklist payload (it
+    // loads on the MAUI client over field data connections). The mobile worklist lazily fetches each
+    // thumbnail from GET /assets/{id}/image so field staff can eyeball-match the item.
+    bool HasImage = false);
 
 /// <summary>
 /// The full in-scope asset universe for a session (same fund cluster + scope the reconciliation

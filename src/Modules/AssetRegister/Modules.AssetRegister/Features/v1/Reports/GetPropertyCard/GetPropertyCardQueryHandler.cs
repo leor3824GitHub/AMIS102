@@ -2,6 +2,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Data.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ namespace AMIS.Modules.AssetRegister.Features.v1.Reports.GetPropertyCard;
 /// (receiving, accountability, issuance, unserviceable, incident). No stored ledger — the documents
 /// are the source of truth, so the card never drifts and there is no write-side projection to maintain.
 /// </summary>
-public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
+public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db, AssetImageStorage imageStorage)
     : IQueryHandler<GetPropertyCardQuery, PropertyCardDto?>
 {
     public async ValueTask<PropertyCardDto?> Handle(GetPropertyCardQuery query, CancellationToken cancellationToken)
@@ -123,8 +124,12 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
             .ThenBy(m => m.MovementType)
             .ToList();
 
+        // The Property Card PDF embeds the photo, so resolve the stored file to a base64 data URL the
+        // QuestPDF document can decode (legacy base64 rows pass through unchanged).
+        var imageDataUrl = await imageStorage.ToDataUrlAsync(asset.ImageUrl, cancellationToken).ConfigureAwait(false);
+
         return new PropertyCardDto(
             asset.Id, propertyNo, asset.Description, asset.AssetType, asset.Unit,
-            asset.AcquisitionDate, asset.UnitCost, asset.LifecycleState, ordered, asset.ImageUrl);
+            asset.AcquisitionDate, asset.UnitCost, asset.LifecycleState, ordered, imageDataUrl);
     }
 }

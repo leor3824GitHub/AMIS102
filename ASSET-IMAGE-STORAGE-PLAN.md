@@ -31,69 +31,87 @@ small **thumbnail** for lists, and never select the image bytes into a list proj
 
 ---
 
-## Phase 1 — Quick win: keep the image out of list projections (low risk, do first)
+## Phase 1 — Quick win: keep the image out of list projections (low risk, do first) — ✅ DONE (2026-07-07)
 
 Restores the column-narrowing optimization and stops the multi-MB-per-row payload **without** changing
 how images are stored. Contained to two projections + one new endpoint + UI `<img>` bindings.
 
-- [ ] Remove `ImageUrl` from `SearchAssetsQueryHandler`'s DB `.Select(...)` projection and drop it from
-      the `AssetRegistrySummaryDto` mapping (leave the DTO field default `null`, or remove the field if no
-      other consumer needs it — check first).
-- [ ] Remove `a.ImageUrl` from `GetPhysicalCountChecklistQueryHandler`'s projection (line 56) and the
-      checklist DTO.
-- [ ] Add a lazy image endpoint: `GET /api/v1/asset-register/assets/{id}/image` that returns the image
-      inline (`Results.File(bytes, contentType)`), decoding the stored base64 for now. Gate with
-      `AssetRegisterPermissions.Assets.View`. Natural home: a new `GetAssetImage` feature slice next to
-      `UpdateAssetImage` (`.../Features/v1/Assets/`); register in `AssetRegisterModule.MapEndpoints`.
-- [ ] Blazor asset-search page: bind the row `<img src>` to `.../assets/{id}/image` with
-      `loading="lazy"` so only on-screen rows fetch (and the browser caches by URL). Only render `<img>`
-      when the asset actually has an image (add a cheap `bool HasImage` to the summary DTO instead of the
-      blob, so the UI knows whether to show the tag).
-- [ ] MAUI physical-count checklist: same — bind the thumbnail to the image endpoint, respect the
-      client's image caching rules in `.claude/rules/maui.md` (resize to display size, `CachingStrategy`).
-- [ ] Build + verify: `dotnet build src/AMIS.Framework.slnx`; run `AssetRegister.Tests`; confirm via EF
-      logging that `SearchAssets` no longer selects the `ImageUrl` column; confirm the search page issues
-      one image request per visible row (browser network tab), cached on re-render.
+- [x] Remove `ImageUrl` from `SearchAssetsQueryHandler`'s DB `.Select(...)` projection and drop it from
+      the `AssetRegistrySummaryDto` mapping. → Replaced the field with `bool HasImage`, projected as
+      `HasImage = a.ImageUrl != null` (`IS NOT NULL` — never transfers the blob). Same for the Blazor
+      client's copy of `AssetRegistrySummaryDto`. `GetMyAccountableAssets` reuses `SearchAssets`, so it's
+      covered too.
+- [x] Remove `a.ImageUrl` from `GetPhysicalCountChecklistQueryHandler`'s projection and the checklist DTO.
+      → `PhysicalCountChecklistItemDto.ImageUrl` → `bool HasImage`; MAUI DTO + SQLite `CachedChecklistItem`
+      updated to match.
+- [x] Add a lazy image endpoint: `GET /api/v1/asset-register/assets/{id}/image` returning the image inline
+      (`Results.File`), decoding the stored base64 for now, gated with `AssetRegisterPermissions.Assets.View`.
+      → New `GetAssetImage` slice (Query/Handler/Endpoint) next to `UpdateAssetImage`; registered in
+      `AssetRegisterModule.MapEndpoints`. Only the `ImageUrl` column is projected in the handler.
+- [x] Blazor asset-search page: bind the row `<img src>` lazily; only render when `HasImage`. → Because the
+      API is a **separate origin** and the endpoint is permission-gated, a browser `<img>` can't auth
+      cross-origin. Added a same-origin, cookie-authenticated proxy `GET /bff/asset-image/{id}`
+      (`AssetImageEndpoints`, mirrors `/bff/download`) that streams from the API with the circuit's bearer
+      token; the `<img loading="lazy" src="/bff/asset-image/{id}">` is browser/URL-cacheable. `AssetPhotoDialog`
+      now takes `HasImage`/`AssetId` and lazy-loads via the same proxy (still shows just-uploaded base64 directly).
+- [x] MAUI physical-count checklist: bind the thumbnail to the image endpoint. → MAUI's HttpClient carries
+      the bearer token but `ImageSource.FromUri` doesn't, so added `IApiClient.GetAssetImageStreamAsync` +
+      `AssetImageSourceConverter` (resolves `IApiClient` from the MAUI DI container, streams bytes gated on
+      `HasImage`, degrades to the placeholder tile on failure).
+- [x] Build + verify: module, Blazor, MAUI (Windows TFM), and API host all build 0-errors;
+      `AssetRegister.Tests` = 81 passed. (Note: resolved committed git-merge-conflict markers left in
+      `AMIS.Blazor/build-number.txt` and `AMIS.Maui/build-number.txt` from merge `d6cef2d8`, which were
+      breaking `[MSBuild]::Add` in `BuildVersioning.targets` — took the higher counter.)
 
-**Acceptance:** asset search and the count checklist no longer transfer image bytes in the list payload;
-images load per visible row and are browser-cached.
-
----
-
-## Phase 2 — Proper fix: file storage + thumbnail (medium effort)
-
-- [ ] Add `ThumbnailUrl` (nullable) to `AssetRegistry` + config; keep `ImageUrl` as the **key/URL** of the
-      full image (drop `HasMaxLength(10_000_000)` back to a normal URL length, e.g. 500).
-- [ ] Change the upload flow (`UpdateAssetImageCommand` / `UpdateAssetImageCommandHandler` /
-      `AssetRegistry.SetImage`): accept the raw image bytes (or a data URL), **write the full image via
-      `IStorageService.UploadAsync`** under `uploads/asset-images/{tenant}/…`, generate a ~100×100
-      thumbnail (server-side resize), store both, and set `ImageUrl`/`ThumbnailUrl` to the returned keys.
-      Reuse the avatar pattern in `UserProfileService`.
-- [ ] Update `UpdateAssetImageCommandValidator`: replace the 10 MB base64 cap with a real image-size limit
-      + allowed content types (jpeg/png/webp).
-- [ ] Lists/checklist use `ThumbnailUrl`; detail / property card use `ImageUrl` (full). The Phase-1 image
-      endpoint now redirects to / serves the stored file instead of decoding base64.
-- [ ] Confirm asset images are served from the protected/appropriate `uploads` prefix and that static
-      serving isn't blanket-blocked (see `project_signed_doc_storage` note — Storage↔Web prefix sync).
-
-**Acceptance:** `AssetRegistry.ImageUrl` column holds a short key, not base64; images and thumbnails are
-static files; the DB table and every query touching it are lightweight.
+**Acceptance:** ✅ asset search and the count checklist no longer transfer image bytes in the list payload;
+images load per visible row (Blazor: browser-cached by URL via the proxy; MAUI: per-row authenticated fetch).
 
 ---
 
-## Phase 3 — Migrate existing data + guardrails
+## Phase 2 — Proper fix: file storage + thumbnail (medium effort) — ✅ DONE (2026-07-07)
 
-- [ ] One-time background job (Hangfire): for every asset whose `ImageUrl` is a `data:*;base64,` value,
-      decode → `UploadAsync` full + thumbnail → replace `ImageUrl`/`ThumbnailUrl` with the keys. Idempotent,
-      batched, resumable.
-- [ ] EF migration in `src/Host/Migrations.PostgreSQL/AssetRegister/` for the `ThumbnailUrl` column and the
-      `ImageUrl` length change. (Data backfill runs via the job above, not in the migration.)
-- [ ] Guardrail: resize client-side to ≤ ~200 KB before upload (Blazor + MAUI capture paths); the current
-      10 MB cap is far larger than a property photo needs.
-- [ ] Remove the temporary base64-decoding branch from the image endpoint once migration completes.
+- [x] Add `ThumbnailUrl` (nullable) to `AssetRegistry` + config; keep `ImageUrl` as the **key** of the full
+      image. → `ImageUrl`/`ThumbnailUrl` both `HasMaxLength(1024)` (were 10 MB).
+- [x] Change the upload flow. → New `AssetImageStorage` service (`Data/Services`) normalizes the incoming
+      data URL to JPEG, downscales the full image (≤1600px) + generates a ~200px thumbnail with
+      **SixLabors.ImageSharp 2.1.11 (Apache-2.0, pure-managed/Linux-safe)**, writes both via
+      `IStorageService.UploadAsync` under `uploads/protected/{tenant}/asset-images`, and stores the keys.
+      `UpdateAssetImageCommandHandler` decodes → `SaveAsync` → `AssetRegistry.SetImage(imageKey, thumbnailKey)`
+      (or `ClearImage()`), with orphan-blob cleanup on failure/replace. `AssetRegistry.SetImage` now takes the
+      two keys; `ClearImage()` added.
+- [x] Update `UpdateAssetImageCommandValidator`: replaced the 10 MB base64 cap with content-type
+      (jpeg/png/webp/gif) + decoded-size (≤8 MB) checks.
+- [x] Lists/checklist use `ThumbnailUrl`; detail / property card use the full image. → The image endpoint
+      takes `?variant=thumb|full` and serves the stored file via `AssetImageStorage.LoadAsync` (thumb falls
+      back to full for legacy rows). `AssetRegistryDto.ImageUrl` → `HasImage` (Blazor detail dialog now loads
+      from the proxy); the two single-image consumers that embed bytes — the **Property Card PDF** and the
+      **MAUI scan-detail** — have their `ImageUrl` resolved to a base64 data URL in their one query handler,
+      so QuestPDF and MAUI are untouched. **Legacy base64 rows still render** (transparent decode path kept).
+- [x] Asset images live under the **protected** prefix → reachable only via the permission-gated endpoint,
+      never anonymous static content.
 
-**Acceptance:** no base64 remains in `AssetRegistry.ImageUrl`; uploads are size-limited; the image endpoint
-serves files only.
+**Acceptance:** ✅ `AssetRegistry.ImageUrl` holds a short key (col shrunk to 1024); full image + thumbnail are
+files under `uploads/protected/{tenant}/asset-images`; list/detail queries are lightweight.
+
+---
+
+## Phase 3 — Migrate existing data + guardrails — ✅ DONE (trimmed; 2026-07-07)
+
+- [x] ~~One-time Hangfire backfill job~~ **Skipped by decision** — dev data is disposable
+      (`development-phase-priorities` memory), so instead of a resumable base64→file job, the read paths keep a
+      transparent base64-decode fallback (`AssetImageStorage.LoadAsync`/`ToDataUrlAsync`) so any pre-migration
+      row still renders; re-uploading a photo migrates it to files. Revisit only if a prod dataset needs it.
+- [x] EF migration `20260707122931_AssetImageFileStorage` (`Migrations.PostgreSQL/AssetRegister/`): `AlterColumn`
+      `ImageUrl` 10 MB→1024 + `AddColumn ThumbnailUrl` (hand-corrected from EF's `AddColumn`, since `ImageUrl`
+      predates this migration).
+- [x] Guardrail: Blazor capture path resizes client-side via `IBrowserFile.RequestImageFileAsync("image/jpeg",
+      1280, 1280)` before upload (multi-MB phone photo → display-quality JPEG). **MAUI has no asset-photo upload
+      path** (it only displays), so nothing to guard there.
+- [~] Because the backfill was skipped, the base64-decode fallback is intentionally **kept** (removing it would
+      break any legacy row). It's a cheap, self-limiting branch.
+
+**Acceptance:** ✅ new uploads are files + size-limited; the column is a short key; legacy base64 rows still
+render (fallback retained by design since backfill was skipped).
 
 ---
 

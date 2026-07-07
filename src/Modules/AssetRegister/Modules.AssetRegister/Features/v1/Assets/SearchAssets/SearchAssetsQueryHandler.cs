@@ -63,13 +63,15 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
                 a.LifecycleState,
                 a.CurrentCondition,
                 a.CurrentCustodianId,
-                a.ImageUrl
+                // Project only the presence of a photo (IS NOT NULL) — never the multi-MB base64 blob.
+                // Clients fetch the picture lazily per row from GET /assets/{id}/image.
+                HasImage = a.ImageUrl != null
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var items = page.ConvertAll(a => new AssetRegistrySummaryDto(
             a.Id, a.PropertyNo.Value, a.AssetType, a.Description, a.UnitCost,
-            a.AcquisitionDate, a.LifecycleState, a.CurrentCondition, a.CurrentCustodianId, a.ImageUrl));
+            a.AcquisitionDate, a.LifecycleState, a.CurrentCondition, a.CurrentCustodianId, a.HasImage));
 
         return new PagedResponse<AssetRegistrySummaryDto>
         {

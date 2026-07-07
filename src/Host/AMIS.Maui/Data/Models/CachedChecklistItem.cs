@@ -23,7 +23,8 @@ public sealed class CachedChecklistItem
     public string? AccountableOfficer { get; set; }
     public string Status { get; set; } = "";
     public string? Condition { get; set; }
-    // Asset photo (base64 data URL or absolute URL); null when none.
-    public string? ImageUrl { get; set; }
+    // Whether the asset has a photo. The bytes are fetched on demand from the image endpoint, never
+    // cached inline here (a photo per row would bloat the offline DB).
+    public bool HasImage { get; set; }
     public DateTimeOffset CachedAt { get; set; }
 }

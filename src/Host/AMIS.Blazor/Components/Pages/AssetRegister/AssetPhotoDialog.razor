@@ -15,9 +15,9 @@
             }
 
             <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Justify="Justify.Center" Wrap="Wrap.Wrap">
-                @if (!string.IsNullOrEmpty(_imageUrl))
+                @if (!string.IsNullOrEmpty(_displaySrc))
                 {
-                    <MudImage Src="@_imageUrl" Alt="Asset photo" ObjectFit="ObjectFit.Cover"
+                    <MudImage Src="@_displaySrc" Alt="Asset photo" ObjectFit="ObjectFit.Cover"
                               Width="200" Height="200" Class="rounded" />
                 }
                 else
@@ -46,11 +46,11 @@
                         <ActivatorContent>
                             <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary"
                                        StartIcon="@Icons.Material.Filled.CloudUpload" Disabled="_busy">
-                                @(string.IsNullOrEmpty(_imageUrl) ? "Upload Photo" : "Replace Photo")
+                                @(_hasPhoto ? "Replace Photo" : "Upload Photo")
                             </MudButton>
                         </ActivatorContent>
                     </MudFileUpload>
-                    @if (!string.IsNullOrEmpty(_imageUrl))
+                    @if (_hasPhoto)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Error"
                                    StartIcon="@Icons.Material.Outlined.Delete"
@@ -68,31 +68,50 @@
 @code {
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
     [Parameter] public Guid AssetId { get; set; }
+    /// <summary>Base64/data-URL photo already in hand (the detail dialog passes this). When set it is
+    /// shown directly; otherwise <see cref="HasImage"/> drives lazy loading from the image proxy.</summary>
     [Parameter] public string? CurrentImageUrl { get; set; }
+    /// <summary>Whether the asset has a photo when no <see cref="CurrentImageUrl"/> is supplied (the
+    /// search list passes this instead of the bytes). Drives loading from /bff/asset-image/{id}.</summary>
+    [Parameter] public bool HasImage { get; set; }
     /// <summary>When false, the dialog is view-only: upload/replace/remove controls are hidden.</summary>
     [Parameter] public bool CanEdit { get; set; } = true;
 
     private const long MaxUploadBytes = 5L * 1024 * 1024;
+    // Longest edge after in-browser downscale — display-quality for an asset photo, tiny payload.
+    private const int MaxImageEdge = 1280;
 
-    private string? _imageUrl;
+    /// <summary>What the &lt;img&gt; shows: a base64 data URL (freshly uploaded or passed in) or the
+    /// same-origin proxy URL. Null renders the empty placeholder.</summary>
+    private string? _displaySrc;
+    /// <summary>Whether a photo currently exists (drives Upload vs Replace + the Remove button).</summary>
+    private bool _hasPhoto;
     private bool _busy;
     /// <summary>Set true once the photo is uploaded/replaced/removed, so the caller knows to refresh the asset.</summary>
     private bool _changed;
 
-    protected override void OnInitialized() => _imageUrl = CurrentImageUrl;
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(CurrentImageUrl))
+        {
+            _displaySrc = CurrentImageUrl;
+            _hasPhoto = true;
+        }
+        else if (HasImage)
+        {
+            // Lazy-load the existing photo through the cookie-authenticated proxy.
+            _displaySrc = $"/bff/asset-image/{AssetId}";
+            _hasPhoto = true;
+        }
+    }
 
-    // Convert the chosen image to a base64 data URL and persist it on the asset. Mirrors the
-    // ProductFormDialog upload pattern (client-side base64 → ImageUrl column).
+    // Resize in-browser, then persist as a JPEG data URL. The server writes a file + thumbnail and keeps
+    // only the keys — so a property photo never needs full camera resolution client-side either.
     private async Task HandleImageUpload(InputFileChangeEventArgs e)
     {
         var file = e.File;
         if (file is null) return;
 
-        if (file.Size > MaxUploadBytes)
-        {
-            Snackbar.Add("Image must be smaller than 5 MB.", Severity.Warning);
-            return;
-        }
         var validTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
         if (!validTypes.Contains(file.ContentType))
         {
@@ -103,12 +122,17 @@
         _busy = true;
         try
         {
-            using var stream = file.OpenReadStream(MaxUploadBytes);
+            // Downscale to a sane max edge and re-encode to JPEG in the browser: a full phone photo is
+            // multiple MB, but the stored/uploaded image only needs to be display-quality (~<200 KB).
+            var resized = await file.RequestImageFileAsync("image/jpeg", MaxImageEdge, MaxImageEdge);
+            using var stream = resized.OpenReadStream(MaxUploadBytes);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-            var dataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            var dataUrl = $"data:image/jpeg;base64,{Convert.ToBase64String(ms.ToArray())}";
             var updated = await Client.UpdateImageAsync(AssetId, dataUrl);
-            _imageUrl = updated.ImageUrl;
+            // Server stored a file + thumbnail; preview the just-uploaded bytes directly (no proxy round-trip).
+            _hasPhoto = updated.HasImage;
+            _displaySrc = updated.HasImage ? dataUrl : null;
             _changed = true;
             Snackbar.Add("Photo updated.", Severity.Success);
         }
@@ -128,7 +152,8 @@
         try
         {
             var updated = await Client.UpdateImageAsync(AssetId, null);
-            _imageUrl = updated.ImageUrl;
+            _hasPhoto = updated.HasImage;
+            _displaySrc = updated.HasImage ? _displaySrc : null;
             _changed = true;
             Snackbar.Add("Photo removed.", Severity.Success);
         }

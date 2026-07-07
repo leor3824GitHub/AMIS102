@@ -173,6 +173,18 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         return result ?? new PhysicalCountChecklistDto(sessionId, "", "", "", "", 0, 0, 0, 0, []);
     }
 
+    public async Task<Stream?> GetAssetImageStreamAsync(Guid assetRegistryId, string? variant = null, CancellationToken ct = default)
+    {
+        // Authenticated per-asset thumbnail fetch (bearer token added by AuthenticatedHttpHandler).
+        // 404 means the asset has no photo → return null so the row falls back to its placeholder.
+        var query = string.Equals(variant, "thumb", StringComparison.OrdinalIgnoreCase) ? "?variant=thumb" : "";
+        var response = await httpClient.GetAsync(
+            $"api/v1/asset-register/assets/{assetRegistryId}/image{query}", ct);
+        if (!response.IsSuccessStatusCode)
+            return null;
+        return await response.Content.ReadAsStreamAsync(ct);
+    }
+
     public async Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default)
     {
         var body = new

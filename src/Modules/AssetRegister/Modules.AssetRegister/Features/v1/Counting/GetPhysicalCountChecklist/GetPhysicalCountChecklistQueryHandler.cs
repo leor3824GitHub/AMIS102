@@ -53,7 +53,8 @@ public sealed class GetPhysicalCountChecklistQueryHandler(AssetRegisterDbContext
                 a.CurrentLocationId,
                 a.CurrentCustodianId,
                 a.CurrentAccountabilityId,
-                a.ImageUrl,
+                // Presence flag only (IS NOT NULL) — the photo bytes never enter this mobile payload.
+                HasImage = a.ImageUrl != null,
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
@@ -97,7 +98,7 @@ public sealed class GetPhysicalCountChecklistQueryHandler(AssetRegisterDbContext
             items.Add(new PhysicalCountChecklistItemDto(
                 a.Id, a.PropertyNo.Value, a.AssetType, a.Description, a.Unit, a.UnitCost,
                 a.CurrentLocationId, locationName, a.CurrentCustodianId, officerName, status, condition,
-                a.ImageUrl));
+                a.HasImage));
         }
 
         return new PhysicalCountChecklistDto(

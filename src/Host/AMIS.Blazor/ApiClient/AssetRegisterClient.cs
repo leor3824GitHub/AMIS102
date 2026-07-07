@@ -89,7 +89,9 @@ public sealed record AssetRegistrySummaryDto(
     LifecycleState LifecycleState,
     ArContracts.AssetCondition CurrentCondition,
     Guid? CurrentCustodianId,
-    string? ImageUrl = null);
+    // The photo bytes are no longer inlined per row; the UI lazily loads each thumbnail from the
+    // /bff/asset-image/{id} proxy. This flag just says whether that image exists.
+    bool HasImage = false);
 
 internal sealed record AssetRegistryDto(
     Guid Id,
@@ -121,7 +123,9 @@ internal sealed record AssetRegistryDto(
     Guid? SourcePurchaseOrderId,
     decimal ResidualValue = 0m,
     DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine,
-    string? ImageUrl = null);
+    // Photo is served by the image endpoint (files, not inlined base64); the detail dialog loads it
+    // from the /bff/asset-image/{id} proxy when HasImage is true.
+    bool HasImage = false);
 
 internal sealed record RegisterAssetRequest(
     Guid CatalogItemId,

@@ -224,10 +224,12 @@
                                         <Label Text="&#x1F4E6;" FontSize="22"
                                                HorizontalOptions="Center" VerticalOptions="Center"
                                                TextColor="{Binding AssetType, Converter={StaticResource KindToColorConverter}, ConverterParameter=text}"
-                                               IsVisible="{Binding ImageUrl, Converter={StaticResource IsNullConverter}}" />
+                                               IsVisible="{Binding HasImage, Converter={StaticResource InvertedBoolConverter}}" />
+                                        <!-- Photo bytes are lazily fetched per row via the authenticated API; the
+                                             converter reads HasImage + AssetRegistryId off the bound item. -->
                                         <Image Aspect="AspectFill"
-                                               Source="{Binding ImageUrl, Converter={StaticResource ImageUrlToSourceConverter}}"
-                                               IsVisible="{Binding ImageUrl, Converter={StaticResource IsNotNullConverter}}" />
+                                               Source="{Binding ., Converter={StaticResource AssetImageSourceConverter}}"
+                                               IsVisible="{Binding HasImage}" />
                                     </Grid>
                                 </Border>
 
