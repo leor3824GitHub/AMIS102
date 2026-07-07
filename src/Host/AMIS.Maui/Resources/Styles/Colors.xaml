@@ -17,19 +17,20 @@
     <Color x:Key="OffBlack">#1f1f1f</Color>
 
     <Color x:Key="Gray100">#E1E1E1</Color>
-    <Color x:Key="Gray200">#C8C8C8</Color>
-    <Color x:Key="Gray300">#ACACAC</Color>
+    <Color x:Key="Gray200">#BCBCBC</Color>
+    <Color x:Key="Gray300">#A1A1A1</Color>
     <Color x:Key="Gray400">#919191</Color>
-    <Color x:Key="Gray500">#6E6E6E</Color>
+    <Color x:Key="Gray500">#4B5563</Color>
     <Color x:Key="Gray600">#404040</Color>
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
     <Color x:Key="Danger">#E53935</Color>
     <Color x:Key="Success">#43A047</Color>
-    <Color x:Key="Warning">#FB8C00</Color>
+    <Color x:Key="Warning">#9A3412</Color>
 
-    <Color x:Key="Surface">#F5F5F7</Color>
+    <!-- Slightly deeper neutral canvas for app background -->
+    <Color x:Key="Surface">#F3F4F6</Color>
     <Color x:Key="PrimaryLight">#EDE9FB</Color>
     <Color x:Key="DangerLight">#FFEBEE</Color>
 
@@ -37,7 +38,14 @@
     <Color x:Key="Info">#1E88E5</Color>
     <Color x:Key="InfoLight">#E3F2FD</Color>
     <Color x:Key="SuccessLight">#E8F5E9</Color>
-    <Color x:Key="WarningLight">#FFF3E0</Color>
+    <Color x:Key="WarningLight">#FFEDD5</Color>
+
+    <!-- Darker nav unselected color for better legibility -->
+    <Color x:Key="NavUnselected">#595959</Color>
+
+    <!-- Card / group border stroke to anchor white cards on a light canvas -->
+    <Color x:Key="CardBorderStroke">#E5E7EB</Color>
+    <Color x:Key="PrimaryText">#111827</Color>
     <Color x:Key="Teal">#00897B</Color>
     <Color x:Key="TealLight">#E0F2F1</Color>
 

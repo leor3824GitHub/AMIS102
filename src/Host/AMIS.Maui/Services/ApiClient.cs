@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace AMIS.Maui.Services;
 
@@ -100,7 +101,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             AcquisitionDate: a.AcquisitionDate,
             LocationName: a.LocationName,
             AccountableOfficer: a.AccountableOfficerName,
-            AccountableOfficerDesignation: a.AccountableOfficerDesignation);
+            AccountableOfficerDesignation: a.AccountableOfficerDesignation,
+            ImageUrl: a.ImageUrl);
     }
 
     // Server returns the accountability enum (SE_ICS / PPE_PAR); map to the COA form name shown on the sticker.
@@ -145,7 +147,7 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             "api/v1/asset-register/count?pageNumber=1&pageSize=100", ct);
         return result?.Items?.Select(s => new PhysicalCountSessionSummaryDto(
             s.Id, s.Code, s.AsAt, s.FundCluster ?? "", s.Scope, s.Status,
-            TotalEntries: s.EntryCount, Found: s.EntryCount, NotFound: 0, FoundAtStation: 0, Pending: 0)).ToList() ?? [];
+            TotalEntries: s.EntryCount, Found: s.FoundCount, Missing: s.MissingCount, FoundAtStation: s.FoundAtStationCount)).ToList() ?? [];
     }
 
     public async Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default)
@@ -157,7 +159,18 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
             (s.Entries ?? []).Select(e => new PhysicalCountEntryDto(
                 e.Id, e.AssetRegistryId, e.Snapshot?.PropertyNo ?? "", e.SnapshotArticle,
                 e.SnapshotUnitCost, MapCondition(e.Condition), e.Condition, 1, e.Remarks,
-                IsScanned: e.ScannedOnUtc is not null)).ToList());
+                IsScanned: e.ScannedOnUtc is not null,
+                // Known assets (found/missing) carry a snapshot tagged SE or PPE; FoundAtStation has none.
+                AssetType: e.Snapshot?.AssetType)).ToList());
+    }
+
+    public async Task<PhysicalCountChecklistDto> GetPhysicalCountChecklistAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        // The server DTO matches PhysicalCountChecklistDto field-for-field (enums as strings), so
+        // deserialize straight into it.
+        var result = await httpClient.GetFromJsonAsync<PhysicalCountChecklistDto>(
+            $"api/v1/asset-register/count/{sessionId}/checklist", ct);
+        return result ?? new PhysicalCountChecklistDto(sessionId, "", "", "", "", 0, 0, 0, 0, []);
     }
 
     public async Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default)
@@ -176,7 +189,7 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         };
         var response = await httpClient.PostAsJsonAsync(
             $"api/v1/asset-register/count/{sessionId}/entries", body, ct);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowAsync(response, ct);
     }
 
     public async Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default)
@@ -194,8 +207,56 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         };
         var response = await httpClient.PostAsJsonAsync(
             $"api/v1/asset-register/count/{sessionId}/found-at-station", body, ct);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowAsync(response, ct);
         return new AddFoundAtStationResult(Guid.Empty, request.PropertyNumber);
+    }
+
+    // Turns a non-success response into an HttpRequestException carrying the StatusCode (so callers can
+    // tell a server rejection from a transport failure) and the server's message where available.
+    private static async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode) return;
+
+        string? message = null;
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            message = ExtractProblemDetail(body);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch { /* fall back to the status code */ }
+
+        throw new HttpRequestException(
+            string.IsNullOrWhiteSpace(message) ? $"The server rejected the request ({(int)response.StatusCode})." : message,
+            null,
+            response.StatusCode);
+    }
+
+    // Pulls a human-readable message out of an ASP.NET ProblemDetails / validation-problem body.
+    private static string? ExtractProblemDetail(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
+
+            if (doc.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in errors.EnumerateObject())
+                    if (prop.Value.ValueKind == JsonValueKind.Array && prop.Value.GetArrayLength() > 0)
+                        return prop.Value[0].GetString();
+            }
+            if (doc.RootElement.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
+                return detail.GetString();
+            if (doc.RootElement.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                return title.GetString();
+            return null;
+        }
+        catch (JsonException)
+        {
+            return body.Length > 300 ? body[..300] : body;
+        }
     }
 
     // ── Chat ──
@@ -237,7 +298,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
 
     private sealed record ArCountSummary(
         Guid Id, string Code, string Scope, string Status, DateOnly AsAt,
-        DateOnly StartedOn, DateOnly? ClosedOn, int EntryCount, string? FundCluster);
+        DateOnly StartedOn, DateOnly? ClosedOn, int EntryCount, string? FundCluster,
+        int FoundCount, int MissingCount, int FoundAtStationCount);
 
     private sealed record ArCountDetail(
         Guid Id, string Code, string Scope, string Status, string FundCluster,
@@ -282,5 +344,6 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         DateOnly AcquisitionDate, decimal UnitCost, string LifecycleState, string CurrentCondition,
         Guid? CurrentLocationId, string? LocationName,
         Guid? CurrentAccountabilityId, string? DocumentType, string? DocumentNo,
-        Guid? AccountableOfficerId, string? AccountableOfficerName, string? AccountableOfficerDesignation);
+        Guid? AccountableOfficerId, string? AccountableOfficerName, string? AccountableOfficerDesignation,
+        string? ImageUrl = null);
 }

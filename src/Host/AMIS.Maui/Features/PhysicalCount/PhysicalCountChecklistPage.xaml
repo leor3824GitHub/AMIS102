@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
+             xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             x:DataType="vm:PhysicalCountChecklistViewModel"
+             x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountChecklistPage"
+             Title="Checklist"
+             BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
+
+    <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+
+            <!-- Row 0: Session header -->
+            <Border Grid.Row="0"
+                    Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                    Padding="16,12,16,12">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding SessionCode}" FontFamily="InterSemiBold" FontSize="16" />
+                    <Label FontSize="12" TextColor="{StaticResource Gray500}">
+                        <Label.Text>
+                            <MultiBinding StringFormat="{}{0}  ·  {1}  ·  {2}">
+                                <Binding Path="FundCluster" />
+                                <Binding Path="Scope" />
+                                <Binding Path="SessionStatus" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Row 1: Progress card -->
+            <Border Grid.Row="1"
+                    Style="{StaticResource CardBorderStyle}"
+                    Margin="12,10,12,4" Padding="14,12">
+                <VerticalStackLayout Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="{Binding ProgressSummary}"
+                               FontFamily="InterSemiBold" FontSize="15" VerticalOptions="Center" />
+                           <Label Grid.Column="1" Text="{Binding RemainingSummary}"
+                               FontSize="12" TextColor="{StaticResource Gray500}" VerticalOptions="Center" />
+                    </Grid>
+                    <ProgressBar Progress="{Binding CountedFraction}"
+                                 ProgressColor="{StaticResource Primary}"
+                                 HeightRequest="6" />
+                    <Label Text="&#x2713; All in-scope assets accounted for."
+                           IsVisible="{Binding IsComplete}"
+                           FontSize="12" FontFamily="InterSemiBold"
+                           TextColor="{StaticResource Success}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Row 2: Cached / error banners -->
+            <VerticalStackLayout Grid.Row="2" Spacing="0">
+                <Border IsVisible="{Binding CachedBannerText, Converter={StaticResource IsNotNullConverter}}"
+                        Stroke="Transparent" StrokeShape="RoundRectangle 10"
+                        BackgroundColor="{StaticResource WarningLight}"
+                        Margin="12,4,12,0" Padding="12,8">
+                    <Label Text="{Binding CachedBannerText}" FontSize="12" TextColor="{StaticResource Warning}" />
+                </Border>
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
+                       TextColor="{StaticResource Danger}" FontSize="13"
+                       Margin="16,6,16,0" />
+            </VerticalStackLayout>
+
+            <!-- Row 3: Type segmented control (scroll if tight) + pinned uncounted-only toggle.
+                 Segment colors are converter-driven (not DataTriggers): a selected-state trigger can't
+                 reliably override a base color in MAUI, which leaves chips rendering blank. The control
+                 lives in a horizontal ScrollView so it never squeezes the toggle off a narrow screen;
+                 the Switch sits in the Auto column and is always fully visible. -->
+            <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="12,10,12,4">
+
+                <ScrollView Grid.Column="0" Orientation="Horizontal"
+                            HorizontalScrollBarVisibility="Never" VerticalOptions="Center">
+                    <!-- Connected segmented control: three tap targets on one rounded track -->
+                    <Border Stroke="Transparent" StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{StaticResource Gray100}" Padding="3"
+                            HorizontalOptions="Start">
+                        <HorizontalStackLayout Spacing="2">
+
+                            <!-- All -->
+                            <Border Stroke="Transparent" StrokeShape="RoundRectangle 13" Padding="16,7"
+                                    BackgroundColor="{Binding SelectedType, Converter={StaticResource SegmentColorConverter}, ConverterParameter='All|bg'}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectTypeCommand}" CommandParameter="All" />
+                                </Border.GestureRecognizers>
+                                <Label Text="All" FontSize="12" FontFamily="InterSemiBold"
+                                       TextColor="{Binding SelectedType, Converter={StaticResource SegmentColorConverter}, ConverterParameter='All|text'}" />
+                            </Border>
+
+                            <!-- PPE -->
+                            <Border Stroke="Transparent" StrokeShape="RoundRectangle 13" Padding="16,7"
+                                    BackgroundColor="{Binding SelectedType, Converter={StaticResource SegmentColorConverter}, ConverterParameter='PPE|bg'}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectTypeCommand}" CommandParameter="PPE" />
+                                </Border.GestureRecognizers>
+                                <Label Text="PPE" FontSize="12" FontFamily="InterSemiBold"
+                                       TextColor="{Binding SelectedType, Converter={StaticResource SegmentColorConverter}, ConverterParameter='PPE|text'}" />
+                            </Border>
+
+                            <!-- SE -->
+                            <Border Stroke="Transparent" StrokeShape="RoundRectangle 13" Padding="16,7"
+                                    BackgroundColor="{Binding SelectedType, Converter={StaticResource SegmentColorConverter}, ConverterParameter='SE|bg'}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectTypeCommand}" CommandParameter="SE" />
+                                </Border.GestureRecognizers>
+                                <Label Text="SE" FontSize="12" FontFamily="InterSemiBold"
+                                       TextColor="{Binding SelectedType, Converter={StaticResource SegmentColorConverter}, ConverterParameter='SE|text'}" />
+                            </Border>
+
+                        </HorizontalStackLayout>
+                    </Border>
+                </ScrollView>
+
+                <!-- Uncounted-only toggle (pinned right, never clipped) -->
+                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                    <Label Text="Uncounted only" FontSize="12" FontFamily="InterSemiBold"
+                           TextColor="{StaticResource Gray500}" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding UncountedOnly}"
+                            OnColor="{StaticResource Primary}"
+                            VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Row 4: Location + officer pickers + search -->
+            <Grid Grid.Row="4" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
+                  ColumnSpacing="8" RowSpacing="4" Padding="12,4,12,8">
+                <Picker Grid.Row="0" Grid.Column="0"
+                        Title="Location"
+                        ItemsSource="{Binding Locations}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedLocation}"
+                        FontSize="13" />
+                <Picker Grid.Row="0" Grid.Column="1"
+                        Title="Accountable officer"
+                        ItemsSource="{Binding Officers}"
+                        ItemDisplayBinding="{Binding Name}"
+                        SelectedItem="{Binding SelectedOfficer}"
+                        FontSize="13" />
+                <SearchBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                           Placeholder="Search property no. or description"
+                           Text="{Binding SearchText}" />
+            </Grid>
+
+            <!-- Row 5: Grouped checklist -->
+            <CollectionView Grid.Row="5"
+                            ItemsSource="{Binding Groups}"
+                            IsGrouped="True"
+                            SelectionMode="None"
+                            EmptyView="No assets match the current filters.">
+
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="vm:ChecklistGroup">
+                        <Grid ColumnDefinitions="*,Auto"
+                              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}"
+                              Padding="16,12,16,6">
+                            <Label Grid.Column="1" Text="{Binding Title}"
+                                       FontFamily="InterSemiBold" FontSize="12"
+                                       TextColor="{StaticResource Gray500}" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding Coverage}"
+                                   FontSize="12" FontFamily="InterSemiBold"
+                                   TextColor="{StaticResource Gray400}" VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="svc:PhysicalCountChecklistItemDto">
+                        <Border Stroke="Transparent" StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                                Margin="12,4" Padding="14,12">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PhysicalCountChecklistViewModel}}, Path=OpenAssetCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto"
+                                  ColumnSpacing="12" RowSpacing="3">
+
+                                <!-- Leading thumbnail: the asset photo, or a neutral placeholder tile.
+                                     Border clips the image to rounded corners; the glyph shows only when
+                                     there's no photo. -->
+                                <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0"
+                                        WidthRequest="52" HeightRequest="52"
+                                        Stroke="Transparent" StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{StaticResource Gray100}"
+                                        VerticalOptions="Center">
+                                    <Grid>
+                                        <Label Text="&#x1F4E6;" FontSize="22"
+                                               HorizontalOptions="Center" VerticalOptions="Center"
+                                               TextColor="{StaticResource Gray400}"
+                                               IsVisible="{Binding ImageUrl, Converter={StaticResource IsNullConverter}}" />
+                                        <Image Aspect="AspectFill"
+                                               Source="{Binding ImageUrl, Converter={StaticResource ImageUrlToSourceConverter}}"
+                                               IsVisible="{Binding ImageUrl, Converter={StaticResource IsNotNullConverter}}" />
+                                    </Grid>
+                                </Border>
+
+                                <Label Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding PropertyNo}"
+                                       FontAttributes="Bold" FontSize="14" />
+
+                                <!-- Status pill -->
+                                <Border Grid.Row="0" Grid.Column="2"
+                                        Stroke="Transparent" StrokeShape="RoundRectangle 10"
+                                        BackgroundColor="{StaticResource Gray400}"
+                                        Padding="8,3">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Counted">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Missing">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label FontSize="10" FontAttributes="Bold" TextColor="White"
+                                           Text="{Binding Status}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="Uncounted">
+                                                <Setter Property="Text" Value="To count" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+
+                                <Label Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                           Text="{Binding Description}"
+                                           FontSize="12" TextColor="{StaticResource Gray500}"
+                                           LineBreakMode="TailTruncation" />
+
+                                    <Label Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                        Text="{Binding LocationOfficerLine}"
+                                        IsVisible="{Binding LocationOfficerLine, Converter={StaticResource IsNotNullConverter}}"
+                                        FontSize="11" TextColor="{StaticResource Gray500}"
+                                        LineBreakMode="TailTruncation" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </Grid>
+    </RefreshView>
+</ContentPage>

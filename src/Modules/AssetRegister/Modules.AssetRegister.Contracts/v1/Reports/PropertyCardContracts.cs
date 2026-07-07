@@ -26,6 +26,7 @@ public sealed record PropertyCardDto(
     DateOnly AcquisitionDate,
     decimal AcquisitionCost,
     LifecycleState CurrentState,
-    IReadOnlyCollection<PropertyCardRowDto> Movements);
+    IReadOnlyCollection<PropertyCardRowDto> Movements,
+    string? ImageUrl = null);
 
 public sealed record GetPropertyCardQuery(string PropertyNo) : IQuery<PropertyCardDto?>;

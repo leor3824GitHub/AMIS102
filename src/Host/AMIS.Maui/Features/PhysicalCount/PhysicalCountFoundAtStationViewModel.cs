@@ -172,13 +172,22 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
                 string.IsNullOrWhiteSpace(Remarks) ? null : Remarks.Trim(),
                 SelectedCatalogItem.Id);
 
-            var synced = await _syncService.AddFoundAtStationAsync(sessionId, request, ct);
-            var message = synced
-                ? "Asset added as Found at Station."
-                : "Saved offline — will sync when connected.";
-
-            await Shell.Current.DisplayAlert("Success", message, "OK");
-            await Shell.Current.GoToAsync("..");
+            var result = await _syncService.AddFoundAtStationAsync(sessionId, request, ct);
+            switch (result.Status)
+            {
+                case RecordSaveStatus.SavedToServer:
+                    await Shell.Current.DisplayAlert("Success", "Asset added as Found at Station.", "OK");
+                    await Shell.Current.GoToAsync("..");
+                    break;
+                case RecordSaveStatus.QueuedOffline:
+                    await Shell.Current.DisplayAlert("Saved offline", "Saved offline — will sync when connected.", "OK");
+                    await Shell.Current.GoToAsync("..");
+                    break;
+                case RecordSaveStatus.Rejected:
+                    // The server refused it — keep the operator on the form to fix and retry.
+                    ErrorMessage = result.Error ?? "The server rejected this entry.";
+                    break;
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)

@@ -58,6 +58,18 @@ public static class ReportEndpoints
             .Produces<RpiReportDto>()
             .RequirePermission(AssetRegisterPermissions.Accountability.View);
 
+        endpoints.MapGet("/regppei", HandleRegPpeiReport)
+            .WithModuleName<GetRegPpeiReportQuery>()
+            .WithSummary("Generate RegPPEI (Registry of Property, Plant and Equipment Issued) document view")
+            .Produces<RegPpeiReportDto>()
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
+
+        endpoints.MapGet("/regppei/fund-clusters", HandleRegPpeiFundClusters)
+            .WithModuleName<GetRegPpeiFundClustersQuery>()
+            .WithSummary("List distinct fund clusters available for the RegPPEI filter")
+            .Produces<IReadOnlyList<string>>()
+            .RequirePermission(AssetRegisterPermissions.Accountability.View);
+
         endpoints.MapGet("/incidents/{id:guid}", HandleIncidentReport)
             .WithModuleName<GetIncidentReportDocumentQuery>()
             .WithSummary("Generate incident document view (RLSDDSP)")
@@ -113,6 +125,24 @@ public static class ReportEndpoints
     private static async Task<IResult> HandleRegSpiFundClusters(IMediator mediator, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetRegSpiFundClustersQuery(), cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> HandleRegPpeiReport(
+        IMediator mediator,
+        DateOnly? asOfDate,
+        Guid? custodianId,
+        string? fundCluster,
+        string? propertyClass,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetRegPpeiReportQuery(asOfDate, custodianId, fundCluster, propertyClass), cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> HandleRegPpeiFundClusters(IMediator mediator, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetRegPpeiFundClustersQuery(), cancellationToken);
         return TypedResults.Ok(result);
     }
 

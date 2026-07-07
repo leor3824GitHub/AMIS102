@@ -1,0 +1,132 @@
+@using System.IO
+@using AMIS.Blazor.ApiClient
+@using Microsoft.AspNetCore.Components.Forms
+@inject IAssetRegistryClient Client
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3" Style="min-width: 420px;">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Photo of the physical unit — JPG / PNG / GIF / WebP, max 5 MB.
+            </MudText>
+
+            <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Justify="Justify.Center" Wrap="Wrap.Wrap">
+                @if (!string.IsNullOrEmpty(_imageUrl))
+                {
+                    <MudImage Src="@_imageUrl" Alt="Asset photo" ObjectFit="ObjectFit.Cover"
+                              Width="200" Height="200" Class="rounded" />
+                }
+                else
+                {
+                    <MudPaper Elevation="0" Class="d-flex align-center justify-center rounded"
+                              Style="width:200px; height:200px; border:1px dashed var(--mud-palette-lines-default);">
+                        <MudIcon Icon="@Icons.Material.Outlined.Image" Color="Color.Default" Size="Size.Large" />
+                    </MudPaper>
+                }
+            </MudStack>
+
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+
+            <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                <MudFileUpload T="IBrowserFile" OnFilesChanged="HandleImageUpload"
+                               Accept=".jpg,.jpeg,.png,.gif,.webp" MaxFileSize="MaxUploadBytes">
+                    <ActivatorContent>
+                        <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload" Disabled="_busy">
+                            @(string.IsNullOrEmpty(_imageUrl) ? "Upload Photo" : "Replace Photo")
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                @if (!string.IsNullOrEmpty(_imageUrl))
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                               StartIcon="@Icons.Material.Outlined.Delete"
+                               OnClick="RemoveImageAsync" Disabled="_busy">Remove</MudButton>
+                }
+            </MudStack>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => Dialog.Close(DialogResult.Ok(_changed)))">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public Guid AssetId { get; set; }
+    [Parameter] public string? CurrentImageUrl { get; set; }
+
+    private const long MaxUploadBytes = 5L * 1024 * 1024;
+
+    private string? _imageUrl;
+    private bool _busy;
+    /// <summary>Set true once the photo is uploaded/replaced/removed, so the caller knows to refresh the asset.</summary>
+    private bool _changed;
+
+    protected override void OnInitialized() => _imageUrl = CurrentImageUrl;
+
+    // Convert the chosen image to a base64 data URL and persist it on the asset. Mirrors the
+    // ProductFormDialog upload pattern (client-side base64 → ImageUrl column).
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+
+        if (file.Size > MaxUploadBytes)
+        {
+            Snackbar.Add("Image must be smaller than 5 MB.", Severity.Warning);
+            return;
+        }
+        var validTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        if (!validTypes.Contains(file.ContentType))
+        {
+            Snackbar.Add("Please choose a JPG, PNG, GIF or WebP image.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            using var stream = file.OpenReadStream(MaxUploadBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var dataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            var updated = await Client.UpdateImageAsync(AssetId, dataUrl);
+            _imageUrl = updated.ImageUrl;
+            _changed = true;
+            Snackbar.Add("Photo updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RemoveImageAsync()
+    {
+        _busy = true;
+        try
+        {
+            var updated = await Client.UpdateImageAsync(AssetId, null);
+            _imageUrl = updated.ImageUrl;
+            _changed = true;
+            Snackbar.Add("Photo removed.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

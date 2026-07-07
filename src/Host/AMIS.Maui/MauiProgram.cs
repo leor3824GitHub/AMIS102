@@ -103,6 +103,7 @@ public static class MauiProgram
 #endif
 
         builder.Services.AddTransient<IPhysicalCountSyncService, PhysicalCountSyncService>();
+        builder.Services.AddSingleton<IPhysicalCountChecklistCache, PhysicalCountChecklistCache>();
 
         // ViewModels
         builder.Services.AddTransient<HomeViewModel>();
@@ -114,9 +115,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ScanViewModel>();
         builder.Services.AddTransient<AssetDetailViewModel>();
         builder.Services.AddTransient<PhysicalCountSessionListViewModel>();
-        builder.Services.AddTransient<PhysicalCountWalkthroughViewModel>();
         builder.Services.AddTransient<PhysicalCountScanViewModel>();
-        builder.Services.AddTransient<PhysicalCountMarkEntryViewModel>();
+        builder.Services.AddTransient<PhysicalCountEntriesViewModel>();
+        builder.Services.AddTransient<PhysicalCountChecklistViewModel>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationViewModel>();
         builder.Services.AddTransient<ChatChannelListViewModel>();
         builder.Services.AddTransient<ChatConversationViewModel>();
@@ -131,9 +132,9 @@ public static class MauiProgram
         builder.Services.AddTransient<ScanPage>();
         builder.Services.AddTransient<AssetDetailPage>();
         builder.Services.AddTransient<PhysicalCountSessionListPage>();
-        builder.Services.AddTransient<PhysicalCountWalkthroughPage>();
         builder.Services.AddTransient<PhysicalCountScanPage>();
-        builder.Services.AddTransient<PhysicalCountMarkEntryPage>();
+        builder.Services.AddTransient<PhysicalCountEntriesPage>();
+        builder.Services.AddTransient<PhysicalCountChecklistPage>();
         builder.Services.AddTransient<PhysicalCountFoundAtStationPage>();
         builder.Services.AddTransient<ChatChannelListPage>();
         builder.Services.AddTransient<ChatConversationPage>();

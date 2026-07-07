@@ -55,7 +55,12 @@ public sealed record PhysicalCountSessionSummaryDto(
     int EntryCount,
     string? OfficeOrderNo,
     DateTimeOffset? FrozenOnUtc,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    string? FundCluster = null,
+    // Per-session breakdown so list clients (e.g. mobile) can show real progress without loading entries.
+    int FoundCount = 0,
+    int MissingCount = 0,
+    int FoundAtStationCount = 0);
 
 // ── Reconciliation read model ──────────────────────────────────────────────
 
@@ -99,6 +104,48 @@ public sealed record ReconciliationReportDto(
     int UncountedCount,
     decimal ShortageValue,
     decimal OverageValue);
+
+// ── Count checklist (coverage worklist) read model ──────────────────────────
+
+/// <summary>
+/// One in-scope asset on a session's coverage checklist, tagged with whether it has been counted.
+/// Status: "Counted" (a good/repair/unserviceable entry exists), "Missing" (marked missing), or
+/// "Uncounted" (no entry yet — the field worklist target). LocationName / AccountableOfficer are
+/// resolved so mobile can filter and display without extra lookups.
+/// </summary>
+public sealed record PhysicalCountChecklistItemDto(
+    Guid AssetRegistryId,
+    string PropertyNo,
+    AssetType AssetType,
+    string Description,
+    string Unit,
+    decimal UnitCost,
+    Guid? LocationId,
+    string? LocationName,
+    Guid? CustodianId,
+    string? AccountableOfficer,
+    string Status,
+    PhysicalCountCondition? Condition,
+    // Asset photo (base64 data URL or absolute URL); null when no photo has been set. Lets the mobile
+    // worklist show a thumbnail so field staff can eyeball-match the item they're looking for.
+    string? ImageUrl = null);
+
+/// <summary>
+/// The full in-scope asset universe for a session (same fund cluster + scope the reconciliation
+/// report uses), each row tagged counted/missing/uncounted. Returned whole so clients can filter
+/// (location, officer, PPE/SE), group and cache offline without further round-trips.
+/// </summary>
+public sealed record PhysicalCountChecklistDto(
+    Guid SessionId,
+    string Code,
+    PhysicalCountScope Scope,
+    PhysicalCountStatus Status,
+    string FundCluster,
+    int TotalCount,
+    int CountedCount,
+    int MissingCount,
+    int UncountedCount,
+    IReadOnlyList<PhysicalCountChecklistItemDto> Items);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
@@ -168,6 +215,9 @@ public sealed record ClosePhysicalCountCommand(
 // ── Queries ────────────────────────────────────────────────────────────────
 
 public sealed record GetPhysicalCountSessionQuery(Guid Id) : IQuery<PhysicalCountSessionDto?>;
+
+/// <summary>The in-scope coverage checklist for a session (all assets + counted status).</summary>
+public sealed record GetPhysicalCountChecklistQuery(Guid SessionId) : IQuery<PhysicalCountChecklistDto?>;
 
 public sealed record GetReconciliationReportQuery(Guid SessionId) : IQuery<ReconciliationReportDto?>;
 

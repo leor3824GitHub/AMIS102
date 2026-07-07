@@ -38,7 +38,8 @@ public sealed record AssetRegistryDto(
     Guid? SourceIARId,
     Guid? SourcePurchaseOrderId,
     decimal ResidualValue = 0m,
-    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine);
+    DepreciationMethod DepreciationMethod = DepreciationMethod.StraightLine,
+    string? ImageUrl = null);
 
 public sealed record AssetRegistrySummaryDto(
     Guid Id,
@@ -49,7 +50,8 @@ public sealed record AssetRegistrySummaryDto(
     DateOnly AcquisitionDate,
     LifecycleState LifecycleState,
     AssetCondition CurrentCondition,
-    Guid? CurrentCustodianId);
+    Guid? CurrentCustodianId,
+    string? ImageUrl = null);
 
 /// <summary>
 /// Flat, display-ready projection for the mobile "scan an asset" view. Resolves the asset's current
@@ -78,7 +80,8 @@ public sealed record AssetScanDetailDto(
     string? DocumentNo,
     Guid? AccountableOfficerId,
     string? AccountableOfficerName,
-    string? AccountableOfficerDesignation);
+    string? AccountableOfficerDesignation,
+    string? ImageUrl = null);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
@@ -104,6 +107,14 @@ public sealed record RegisterAssetCommand(
 public sealed record UpdateAssetConditionCommand(
     Guid AssetRegistryId,
     AssetCondition Condition) : ICommand<AssetRegistryDto>;
+
+/// <summary>
+/// Sets or clears the asset's photo. <paramref name="ImageUrl"/> is a base64 data URL
+/// (e.g. <c>data:image/jpeg;base64,…</c>) or an absolute URL; pass null/blank to remove it.
+/// </summary>
+public sealed record UpdateAssetImageCommand(
+    Guid AssetRegistryId,
+    string? ImageUrl) : ICommand<AssetRegistryDto>;
 
 /// <summary>
 /// Per-asset override of the catalog depreciation policy (the enterprise "very flexible" path).

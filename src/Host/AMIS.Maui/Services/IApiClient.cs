@@ -90,7 +90,9 @@ public sealed record TangibleInventoryItemDetailDto(
     DateOnly? AcquisitionDate = null,
     string? LocationName = null,
     string? AccountableOfficer = null,
-    string? AccountableOfficerDesignation = null);
+    string? AccountableOfficerDesignation = null,
+    // Asset photo (base64 data URL or absolute URL); null when none. Rendered via ImageUrlToSourceConverter.
+    string? ImageUrl = null);
 
 // ── Physical Count ────────────────────────────────────────────────────────────
 
@@ -103,9 +105,17 @@ public sealed record PhysicalCountSessionSummaryDto(
     string Status,
     int TotalEntries,
     int Found,
-    int NotFound,
-    int FoundAtStation,
-    int Pending);
+    int Missing,
+    int FoundAtStation)
+{
+    // Recording is only permitted while the session is Ongoing (server enforces the same).
+    public bool IsOngoing => string.Equals(Status, "Ongoing", StringComparison.OrdinalIgnoreCase);
+
+    // A Closed session is signed off — nothing left to count, so it opens the read-only review.
+    // Everything else (Ongoing, Draft, Reconciled, or an unexpected value) opens the Scan screen so
+    // the scan-to-add UI is always reachable.
+    public bool IsReviewOnly => string.Equals(Status, "Closed", StringComparison.OrdinalIgnoreCase);
+}
 
 public sealed record PhysicalCountSessionDetailDto(
     Guid Id,
@@ -126,7 +136,8 @@ public sealed record PhysicalCountEntryDto(
     string? Condition,   // "Good" | "NeedsRepair" | etc. | null
     int QuantityOnHand,
     string? Remarks,
-    bool IsScanned);
+    bool IsScanned,
+    string? AssetType = null); // "SE" | "PPE" | null (null = FoundAtStation / not yet classified)
 
 // Enums are serialized as strings (JsonStringEnumConverter is configured globally).
 // AssetRegister records a found asset by AssetRegistryId + condition at a location
@@ -163,6 +174,48 @@ public sealed record AddFoundAtStationResult(
 // Location reference for the "counting at" picker (shared master data).
 public sealed record LocationDto(Guid Id, string Code, string Name);
 
+// ── Count checklist (coverage worklist) ────────────────────────────────────────
+// Enums (AssetType, Status, Condition) arrive as strings via the global JsonStringEnumConverter.
+public sealed record PhysicalCountChecklistItemDto(
+    Guid AssetRegistryId,
+    string PropertyNo,
+    string AssetType,           // "SE" | "PPE"
+    string Description,
+    string Unit,
+    decimal UnitCost,
+    Guid? LocationId,
+    string? LocationName,
+    Guid? CustodianId,
+    string? AccountableOfficer,
+    string Status,              // "Counted" | "Missing" | "Uncounted"
+    string? Condition,
+    // Asset photo (base64 data URL or absolute URL); null when none. Rendered as a leading thumbnail
+    // via ImageUrlToSourceConverter so field staff can eyeball-match the item.
+    string? ImageUrl = null)
+{
+    public bool IsCounted => Status == "Counted";
+    public bool IsMissing => Status == "Missing";
+    public bool IsUncounted => Status == "Uncounted";
+
+    // "Rm 201 · Dela Cruz, J." — location and officer on one caption line; null when both are absent
+    // so the row's caption label can hide via IsNotNullConverter.
+    public string? LocationOfficerLine =>
+        string.Join("  ·  ", new[] { LocationName, AccountableOfficer }.Where(s => !string.IsNullOrWhiteSpace(s)))
+            is { Length: > 0 } line ? line : null;
+}
+
+public sealed record PhysicalCountChecklistDto(
+    Guid SessionId,
+    string Code,
+    string Scope,
+    string Status,
+    string FundCluster,
+    int TotalCount,
+    int CountedCount,
+    int MissingCount,
+    int UncountedCount,
+    List<PhysicalCountChecklistItemDto> Items);
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 public interface IApiClient
@@ -187,6 +240,7 @@ public interface IApiClient
     Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default);
     Task<List<PhysicalCountSessionSummaryDto>> GetPhysicalCountSessionsAsync(CancellationToken ct = default);
     Task<PhysicalCountSessionDetailDto> GetPhysicalCountSessionByIdAsync(Guid sessionId, CancellationToken ct = default);
+    Task<PhysicalCountChecklistDto> GetPhysicalCountChecklistAsync(Guid sessionId, CancellationToken ct = default);
     Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default);
     Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default);
 

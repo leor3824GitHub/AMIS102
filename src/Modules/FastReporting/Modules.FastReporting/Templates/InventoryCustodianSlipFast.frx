@@ -318,11 +318,11 @@
       <TextObject Name="RecFromDateLblL" Left="0" Top="148" Width="287" Height="14"
         Text="Date" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
-        Border.Lines="14" Border.Width="0.5" />
+        Border.Lines="15" Border.Width="0.5" />
       <TextObject Name="RecByDateLblL" Left="287" Top="148" Width="287" Height="14"
         Text="Date" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
-        Border.Lines="14" Border.Width="0.5" />
+        Border.Lines="15" Border.Width="0.5" />
 
       <!-- ───────────────────────── RIGHT COPY (x + 598) ───────────────────────── -->
       <TextObject Name="RecFromLblR" Left="598" Top="0" Width="287" Height="22"
@@ -387,11 +387,11 @@
       <TextObject Name="RecFromDateLblR" Left="598" Top="148" Width="287" Height="14"
         Text="Date" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
-        Border.Lines="14" Border.Width="0.5" />
+        Border.Lines="15" Border.Width="0.5" />
       <TextObject Name="RecByDateLblR" Left="885" Top="148" Width="287" Height="14"
         Text="Date" HorzAlign="Center" VertAlign="Center"
         Font="Times New Roman, 7pt, style=Italic"
-        Border.Lines="14" Border.Width="0.5" />
+        Border.Lines="15" Border.Width="0.5" />
 
     </ReportSummaryBand>
 

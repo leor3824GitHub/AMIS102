@@ -69,13 +69,13 @@ internal sealed class RpiPdfDocument(
                 table.ColumnsDefinition(c =>
                 {
                     c.ConstantColumn(24);   // No.
-                    c.RelativeColumn(2);     // PAR No.
+                    c.RelativeColumn(2.6f);  // PAR No.
                     c.ConstantColumn(58);    // Date
                     c.RelativeColumn(3);     // Custodian
                     c.RelativeColumn(3);     // Property No.
                     c.RelativeColumn(4);     // Description
                     c.RelativeColumn(1);     // Unit
-                    c.ConstantColumn(34);    // Qty
+                    c.ConstantColumn(26);    // Qty
                     c.ConstantColumn(66);    // Unit Cost
                     c.ConstantColumn(66);    // Amount
                     c.ConstantColumn(34);    // EUL (yrs)

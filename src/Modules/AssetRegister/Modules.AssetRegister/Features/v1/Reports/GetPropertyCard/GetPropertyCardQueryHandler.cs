@@ -125,6 +125,6 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         return new PropertyCardDto(
             asset.Id, propertyNo, asset.Description, asset.AssetType, asset.Unit,
-            asset.AcquisitionDate, asset.UnitCost, asset.LifecycleState, ordered);
+            asset.AcquisitionDate, asset.UnitCost, asset.LifecycleState, ordered, asset.ImageUrl);
     }
 }

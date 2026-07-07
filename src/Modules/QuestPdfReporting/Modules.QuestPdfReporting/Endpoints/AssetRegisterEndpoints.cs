@@ -8,6 +8,7 @@ using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPhysicalCoun
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertyCard;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPropertySticker;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintPtr;
+using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRegPpei;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRegSpi;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRepair;
 using AMIS.Modules.QuestPdfReporting.Features.v1.AssetRegister.PrintRpi;
@@ -29,6 +30,7 @@ internal static class AssetRegisterEndpoints
         PrintInventoryCountFormEndpoint.Map(assetRegister);
         PrintPhysicalCountReportEndpoint.Map(assetRegister);
         PrintRegSpiEndpoint.Map(assetRegister);
+        PrintRegPpeiEndpoint.Map(assetRegister);
         PrintRspiEndpoint.Map(assetRegister);
         PrintRpiEndpoint.Map(assetRegister);
         PrintPtrEndpoint.Map(assetRegister);

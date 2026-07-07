@@ -91,6 +91,7 @@ public sealed class GetAssetScanDetailByPropertyNoQueryHandler(AssetRegisterDbCo
             documentNo,
             officerId,
             officerName,
-            officerDesignation);
+            officerDesignation,
+            asset.ImageUrl);
     }
 }

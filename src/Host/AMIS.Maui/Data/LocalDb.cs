@@ -22,6 +22,7 @@ public sealed class LocalDb
             var dbPath = Path.Combine(FileSystem.AppDataDirectory, "amis-cache.db");
             _connection = new SQLiteAsyncConnection(dbPath, SQLiteOpenFlags.Create | SQLiteOpenFlags.ReadWrite);
             await _connection.CreateTableAsync<PendingCountEntry>();
+            await _connection.CreateTableAsync<CachedChecklistItem>();
             return _connection;
         }
         finally
@@ -39,5 +40,6 @@ public sealed class LocalDb
     {
         var db = await GetConnectionAsync();
         await db.DeleteAllAsync<PendingCountEntry>();
+        await db.DeleteAllAsync<CachedChecklistItem>();
     }
 }

@@ -1,0 +1,236 @@
+@page "/asset-register/reports/regppei"
+@using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services.AssetRegister
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1
+@using AMIS.Modules.AssetRegister.Contracts.v1.Reports
+@using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
+@inject IAssetRegisterReportsClient ReportsClient
+@inject ILookupClient LookupClient
+@inject IPropertyClassClient PropertyClassClient
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Registry of Property, Plant and Equipment Issued (RegPPEI)"
+               Description="Transaction registry of property, plant and equipment — every issue, return, re-issue and disposal up to the as-of date, one sheet per Fund Cluster and PPE classification with a running balance (PPE counterpart of the RegSPI / COA Annex A.4)." />
+
+@if (!_canView)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true">You don't have permission to view this report.</MudAlert>
+}
+else
+{
+    <RegisterReportFilterBar @bind-AsOf="_asOf"
+                             @bind-FundCluster="_fundCluster"
+                             @bind-PropertyClass="_propertyClass"
+                             @bind-Custodian="_custodian"
+                             FundClusters="_fundClusters"
+                             Classes="_classes"
+                             Busy="_busy"
+                             CanDownload="@(_report is not null && _report.TotalTransactions > 0)"
+                             OnGenerate="LoadAsync"
+                             OnDownload="DownloadPdfAsync"
+                             SearchEmployees="SearchEmployees" />
+
+    @if (_busy)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+    }
+    else if (_report is not null)
+    {
+        <MudCard Elevation="1">
+            <MudCardContent>
+                @if (_report.TotalTransactions == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">No property, plant and equipment transactions for the selected filters.</MudAlert>
+                }
+                else
+                {
+                    @foreach (var fc in _report.Groups)
+                    {
+                        <MudText Typo="Typo.h6" Class="mt-2">Fund Cluster: @(string.IsNullOrWhiteSpace(fc.FundCluster) ? "(Unspecified)" : fc.FundCluster)</MudText>
+
+                        @foreach (var cls in fc.Classifications)
+                        {
+                            <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">
+                                Property, Plant and Equipment: @cls.ClassificationName
+                                <MudText Typo="Typo.caption" Inline="true" Class="ml-2">Sheet No. @cls.SheetNo</MudText>
+                            </MudText>
+                            <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>PAR/RRP No.</th>
+                                        <th>Property No.</th>
+                                        <th>Description</th>
+                                        <th class="text-right">Est. Useful Life</th>
+                                        <th>Transaction</th>
+                                        <th class="text-right">Qty</th>
+                                        <th>Office/Officer</th>
+                                        <th class="text-right">Balance</th>
+                                        <th class="text-right">Amount (@Money.Symbol)</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in cls.Rows)
+                                    {
+                                        <tr>
+                                            <td>@r.Date.ToString("yyyy-MM-dd")</td>
+                                            <td>@r.ReferenceNo</td>
+                                            <td>@r.PropertyNo</td>
+                                            <td>@r.Description</td>
+                                            <td class="text-right">@r.EstimatedUsefulLifeYears yr(s)</td>
+                                            <td>
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text"
+                                                         Color="@TransactionColor(r.TransactionType)">
+                                                    @TransactionLabel(r.TransactionType)
+                                                </MudChip>
+                                            </td>
+                                            <td class="text-right">@r.Qty</td>
+                                            <td>@r.OfficeOfficer</td>
+                                            <td class="text-right">@r.Balance</td>
+                                            <td class="text-right">@r.Amount.ToString("N2")</td>
+                                            <td>@r.Remarks</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-1 mb-2">
+                                <MudText Typo="Typo.body2">
+                                    Issued: @cls.IssuedQty &nbsp;·&nbsp; Returned: @cls.ReturnedQty &nbsp;·&nbsp;
+                                    Re-issued: @cls.ReissuedQty &nbsp;·&nbsp; Disposed: @cls.DisposedQty &nbsp;·&nbsp;
+                                    <b>Balance: @cls.BalanceQty item(s) &nbsp;·&nbsp; @Money.Symbol@cls.BalanceAmount.ToString("N2")</b>
+                                </MudText>
+                            </MudStack>
+                        }
+
+                        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-3">
+                            <MudText Typo="Typo.subtitle2">
+                                Fund Cluster balance: @fc.BalanceQty item(s) &nbsp;·&nbsp; @Money.Symbol@fc.BalanceAmount.ToString("N2")
+                            </MudText>
+                        </MudStack>
+                    }
+
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" Justify="Justify.FlexEnd">
+                        <MudText Typo="Typo.subtitle1">
+                            <b>Grand total balance:</b> @_report.BalanceQty item(s) &nbsp;·&nbsp; @Money.Symbol@_report.BalanceAmount.ToString("N2")
+                        </MudText>
+                    </MudStack>
+                }
+            </MudCardContent>
+        </MudCard>
+    }
+}
+
+@code {
+    private bool _busy;
+    private string? _error;
+    private DateTime? _asOf;
+    private string? _fundCluster;
+    private string? _propertyClass;
+    private IReadOnlyList<string> _fundClusters = [];
+    private IReadOnlyList<PropertyClassDto> _classes = [];
+    private EmployeeReferenceDto? _custodian;
+    private RegPpeiReportDto? _report;
+
+    private bool _canView => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _asOf = DateTime.Today;
+        if (!_canView) return;
+        try
+        {
+            _fundClusters = await ReportsClient.GetRegPpeiFundClustersAsync();
+        }
+        catch
+        {
+            _fundClusters = [];
+        }
+        try
+        {
+            _classes = await PropertyClassClient.GetTreeAsync() ?? [];
+        }
+        catch
+        {
+            _classes = [];
+        }
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? value) => value is { } v ? DateOnly.FromDateTime(v) : null;
+
+    private async Task LoadAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var asOf = ToDateOnly(_asOf) ?? DateOnly.FromDateTime(DateTime.Today);
+            _report = await ReportsClient.GetRegPpeiReportAsync(asOf, _custodian?.Id, _fundCluster, _propertyClass);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static Color TransactionColor(RegSpiTransactionType type) => type switch
+    {
+        RegSpiTransactionType.Issued => Color.Primary,
+        RegSpiTransactionType.Returned => Color.Warning,
+        RegSpiTransactionType.Reissued => Color.Success,
+        RegSpiTransactionType.Disposed => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string TransactionLabel(RegSpiTransactionType type) => type switch
+    {
+        RegSpiTransactionType.Issued => "Issued",
+        RegSpiTransactionType.Returned => "Returned",
+        RegSpiTransactionType.Reissued => "Re-issued",
+        RegSpiTransactionType.Disposed => "Disposed",
+        _ => type.ToString()
+    };
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_report is null || _report.TotalTransactions == 0) return;
+        try
+        {
+            var bytes = await ReportsClient.GetRegPpeiPdfAsync(ToDateOnly(_asOf), _custodian?.Id, _fundCluster, _propertyClass);
+            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployees(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+}

@@ -1,10 +1,12 @@
 @page "/asset-register/reports/pc"
+@using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Services.AssetRegister
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using AMIS.Modules.AssetRegister.Contracts.v1
 @using AMIS.Modules.AssetRegister.Contracts.v1.Reports
 @inject IArDepreciationClient DepreciationClient
 @inject IAssetRegisterReportsClient ReportsClient
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
@@ -21,29 +23,26 @@ else
 {
     <MudCard Elevation="1" Class="mb-4">
         <MudCardContent>
-            <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                <MudItem xs="12" sm="6" md="4">
-                    <AMISTextField Label="Property No." @bind-Value="_propertyNo" Placeholder="e.g. 2026-01-0001"
-                                   OnKeyDown="OnKeyDownAsync" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="2">
-                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                StartIcon="@Icons.Material.Filled.Search" OnClick="LoadAsync" Disabled="_busy">
-                        Load
-                    </AMISButton>
-                </MudItem>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudTextField @bind-Value="_propertyNo" Label="Property No." Placeholder="e.g. 2026-01-0001"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Class="flex-grow-0"
+                              Immediate="true" OnKeyDown="OnKeyDownAsync" Style="width: 320px;" />
+                <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                            StartIcon="@Icons.Material.Filled.ManageSearch" OnClick="BrowseAsync" Disabled="_busy">
+                    Browse
+                </AMISButton>
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                            StartIcon="@Icons.Material.Filled.Search" OnClick="LoadAsync" Disabled="_busy">
+                    Load
+                </AMISButton>
                 @if (_card is not null && _card.AssetType == AssetType.PPE)
                 {
-                    <MudItem xs="12" sm="12" md="6">
-                        <MudStack Row="true" Justify="Justify.FlexEnd">
-                            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
-                                        StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync" Disabled="_busy">
-                                Download PDF
-                            </AMISButton>
-                        </MudStack>
-                    </MudItem>
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error"
+                                StartIcon="@Icons.Material.Filled.PictureAsPdf" OnClick="DownloadPdfAsync" Disabled="_busy">
+                        View PDF
+                    </AMISButton>
                 }
-            </MudGrid>
+            </MudStack>
         </MudCardContent>
     </MudCard>
 
@@ -154,6 +153,22 @@ else
     private async Task OnKeyDownAsync(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await LoadAsync();
+    }
+
+    private async Task BrowseAsync()
+    {
+        var parameters = new DialogParameters<AssetLookupPickerDialog>
+        {
+            { x => x.AssetType, AssetType.PPE }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AssetLookupPickerDialog>("Find PPE Asset", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not AssetRegistrySummaryDto picked)
+            return;
+
+        _propertyNo = picked.PropertyNo;
+        await LoadAsync();
     }
 
     private async Task LoadAsync()

@@ -63,6 +63,12 @@ internal sealed class PhysicalCountEntryConfiguration : IEntityTypeConfiguration
             .IsMultiTenant();
 
         builder.HasKey(x => x.Id);
+        // Key is assigned in the domain factory (Id = Guid.NewGuid()). Entries are appended to an
+        // already-tracked session via the Entries navigation, so EF's graph attacher decides
+        // Added-vs-Modified from IsKeySet. With the convention default (ValueGeneratedOnAdd) a
+        // pre-set key makes EF treat a brand-new entry as *existing* → it emits an UPDATE that
+        // matches 0 rows → DbUpdateConcurrencyException. ValueGeneratedNever makes new appends INSERT.
+        builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);
         builder.Property(x => x.SnapshotArticle).IsRequired().HasMaxLength(500);
         builder.Property(x => x.SnapshotUnit).IsRequired().HasMaxLength(64);

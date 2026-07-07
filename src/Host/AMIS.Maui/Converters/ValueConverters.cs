@@ -53,6 +53,102 @@ public sealed class StringEqualsConverter : IValueConverter
 }
 
 /// <summary>
+/// Drives a segmented-control chip's background/text color from the currently selected segment,
+/// so the selected state is reliable. A selected-state <c>DataTrigger</c> can't dependably override
+/// a base <c>BackgroundColor</c>/<c>TextColor</c> in MAUI — the classic symptom is a blank chip
+/// (white text on a light pill). Binding the color through this converter avoids triggers entirely.
+///
+/// <para>ConverterParameter form: <c>"{segmentValue}|{role}"</c> where role is <c>bg</c> or <c>text</c>.
+/// The bound value is the currently selected segment. Selected → Primary background / White text;
+/// unselected → transparent background (shows the track) / Gray900 text (legible on both themes).</para>
+/// </summary>
+public sealed class SegmentColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var parts = (parameter as string)?.Split('|');
+        var segment = parts is { Length: > 0 } ? parts[0] : null;
+        var role = parts is { Length: > 1 } ? parts[1] : "bg";
+        var selected = string.Equals((value as string)?.Trim(), segment?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        if (role.Equals("text", StringComparison.OrdinalIgnoreCase))
+            return Resource(selected ? "White" : "Gray500");
+
+        return selected ? Resource("Primary") : Colors.Transparent;
+    }
+
+    private static object Resource(string key) =>
+        Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Transparent;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Resolves one of two app-resource colors from a bool, so a two-state toggle's colors are
+/// binding-driven rather than <c>DataTrigger</c>-driven (a trigger can't reliably override a base
+/// color in MAUI, which can leave a chip rendering blank). ConverterParameter form:
+/// <c>"{trueKey}|{falseKey}"</c> naming resource colors; the literal token <c>Transparent</c> (either
+/// side) maps to a transparent color.
+/// </summary>
+public sealed class BoolToColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var parts = (parameter as string)?.Split('|');
+        var trueKey = parts is { Length: > 0 } ? parts[0] : null;
+        var falseKey = parts is { Length: > 1 } ? parts[1] : null;
+        var key = value is true ? trueKey : falseKey;
+
+        if (string.IsNullOrEmpty(key) || key.Equals("Transparent", StringComparison.OrdinalIgnoreCase))
+            return Colors.Transparent;
+
+        return Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Transparent;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Turns an asset photo string into an <see cref="ImageSource"/> for an <c>Image.Source</c> binding.
+/// The API returns either a base64 data URL (<c>data:image/jpeg;base64,…</c>) or an absolute http URL;
+/// MAUI's <c>Image</c> can load the latter but not the former, so data URLs are decoded to a stream
+/// source here. Returns <c>null</c> for null/blank/unparseable input so the row falls back to its
+/// placeholder tile instead of throwing.
+/// </summary>
+public sealed class ImageUrlToSourceConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string s || string.IsNullOrWhiteSpace(s))
+            return null;
+
+        if (s.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var marker = s.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
+            if (marker < 0)
+                return null;
+
+            try
+            {
+                var bytes = System.Convert.FromBase64String(s[(marker + "base64,".Length)..]);
+                return ImageSource.FromStream(() => new MemoryStream(bytes));
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+        }
+
+        return Uri.TryCreate(s, UriKind.Absolute, out var uri) ? ImageSource.FromUri(uri) : null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
 /// Maps a document kind ("ICS" / "PAR") to a chip color drawn from app resources.
 /// Pass ConverterParameter="bg" for the chip background, "text" for the label color.
 /// </summary>

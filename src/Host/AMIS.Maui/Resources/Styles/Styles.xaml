@@ -9,6 +9,9 @@
     <converters:InvertedBoolConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="InvertedBoolConverter" />
     <converters:KindToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="KindToColorConverter" />
     <converters:StringEqualsConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="StringEqualsConverter" />
+    <converters:SegmentColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="SegmentColorConverter" />
+    <converters:BoolToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="BoolToColorConverter" />
+    <converters:ImageUrlToSourceConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="ImageUrlToSourceConverter" />
 
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}" />
@@ -48,8 +51,20 @@
         <Setter Property="MinimumWidthRequest" Value="44"/>
     </Style>
 
-    <Style TargetType="Label">
+    <Style TargetType="SearchBar">
+        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
         <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="InterRegular" />
+    </Style>
+
+    <Style TargetType="Picker">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource White}}" />
+    </Style>
+
+    <Style TargetType="Label">
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryText}, Dark={StaticResource White}}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontFamily" Value="InterRegular" />
@@ -66,7 +81,7 @@
         <Setter Property="Shell.TitleColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
         <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
         <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-        <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray200}}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource NavUnselected}, Dark={StaticResource Gray200}}" />
         <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
     </Style>
 
@@ -88,7 +103,8 @@
     <!-- ── Shared named styles ── -->
 
     <Style x:Key="CardBorderStyle" TargetType="Border">
-        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource CardBorderStroke}, Dark={StaticResource Gray600}}" />
+        <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="16" />
@@ -106,7 +122,7 @@
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontFamily" Value="InterBold" />
         <Setter Property="CharacterSpacing" Value="1.5" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
         <Setter Property="Margin" Value="20,0,20,10" />
     </Style>
 
@@ -114,7 +130,7 @@
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontFamily" Value="InterBold" />
         <Setter Property="CharacterSpacing" Value="0.8" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
     </Style>
 
     <!-- ── Typography scale ── -->
@@ -123,13 +139,13 @@
         <Setter Property="FontSize" Value="28" />
         <Setter Property="FontFamily" Value="InterBold" />
         <Setter Property="CharacterSpacing" Value="-0.5" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryText}, Dark={StaticResource White}}" />
     </Style>
 
     <Style x:Key="TitleStyle" TargetType="Label">
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontFamily" Value="InterBold" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryText}, Dark={StaticResource White}}" />
     </Style>
 
     <Style x:Key="SubtitleStyle" TargetType="Label">
@@ -141,14 +157,14 @@
     <Style x:Key="BodyStyle" TargetType="Label">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontFamily" Value="InterRegular" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryText}, Dark={StaticResource White}}" />
     </Style>
 
     <Style x:Key="CaptionStyle" TargetType="Label">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontFamily" Value="InterRegular" />
         <Setter Property="CharacterSpacing" Value="0.3" />
-        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray300}}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
     </Style>
 
     <!-- ── Found-at-Station capture (tablet master-detail) ── -->
@@ -164,7 +180,7 @@
 
     <!-- Tappable catalog result row — generous touch target for tablet -->
     <Style x:Key="ResultCardStyle" TargetType="Border">
-        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource CardBorderStroke}, Dark={StaticResource Gray600}}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}" />
         <Setter Property="Padding" Value="14,12" />

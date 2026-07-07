@@ -11,6 +11,7 @@ public sealed class RecordPhysicalCountEntryCommandHandler(AssetRegisterDbContex
     public async ValueTask<PhysicalCountSessionDto> Handle(RecordPhysicalCountEntryCommand cmd, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(cmd);
+
         var session = await db.PhysicalCountSessions
             .Include(s => s.Entries)
             .FirstOrDefaultAsync(s => s.Id == cmd.SessionId, cancellationToken).ConfigureAwait(false)
@@ -19,6 +20,8 @@ public sealed class RecordPhysicalCountEntryCommandHandler(AssetRegisterDbContex
         var asset = await db.AssetRegistries.FirstOrDefaultAsync(a => a.Id == cmd.AssetRegistryId, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Asset '{cmd.AssetRegistryId}' not found.");
 
+        // Appending an entry does not touch the session row (see PhysicalCountSession.RecordEntry), so
+        // concurrent counters scanning into one session issue independent INSERTs that never contend.
         session.RecordEntry(asset, cmd.Article, cmd.Unit, cmd.UnitCost, cmd.Condition,
             cmd.LocationId, cmd.ScannedOnUtc, cmd.ScannedByEmployeeId, cmd.PhotoPath, cmd.Remarks);
 
@@ -26,4 +29,3 @@ public sealed class RecordPhysicalCountEntryCommandHandler(AssetRegisterDbContex
         return CountingMapper.ToDto(session);
     }
 }
-

@@ -95,6 +95,7 @@
                             {
                                 <MudTh Style="width:48px"></MudTh>
                             }
+                            <MudTh Style="width:56px"></MudTh>
                             <MudTh>Property No.</MudTh>
                             <MudTh>Type</MudTh>
                             <MudTh>Description</MudTh>
@@ -120,6 +121,17 @@
                                     </div>
                                 </MudTd>
                             }
+                            <MudTd>
+                                @if (!string.IsNullOrEmpty(context.ImageUrl))
+                                {
+                                    <MudImage Src="@context.ImageUrl" Alt="Asset thumbnail" ObjectFit="ObjectFit.Cover"
+                                              Width="40" Height="40" Class="rounded" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Outlined.Image" Color="Color.Default" />
+                                }
+                            </MudTd>
                             <MudTd>
                                 <MudText Typo="Typo.body2"><strong>@context.PropertyNo</strong></MudText>
                             </MudTd>
@@ -256,6 +268,35 @@
                             </MudItem>
                         }
                     </MudGrid>
+
+                    <!-- Asset Photo -->
+                    <MudDivider Class="my-3" />
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.subtitle2">Asset Photo</MudText>
+                        <MudSpacer />
+                        @if (_canUpdate)
+                        {
+                            <AMISButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Outlined.CloudUpload"
+                                        OnClick="OpenPhotoDialogAsync" Disabled="_busy">
+                                @(string.IsNullOrEmpty(_selected.ImageUrl) ? "Upload Photo" : "Manage Photo")
+                            </AMISButton>
+                        }
+                    </MudStack>
+                    <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mt-2">
+                        @if (!string.IsNullOrEmpty(_selected.ImageUrl))
+                        {
+                            <MudImage Src="@_selected.ImageUrl" Alt="Asset photo" ObjectFit="ObjectFit.Cover"
+                                      Width="160" Height="160" Class="rounded" />
+                        }
+                        else
+                        {
+                            <MudPaper Elevation="0" Class="d-flex align-center justify-center rounded"
+                                      Style="width:160px; height:160px; border:1px dashed var(--mud-palette-lines-default);">
+                                <MudIcon Icon="@Icons.Material.Outlined.Image" Color="Color.Default" Size="Size.Large" />
+                            </MudPaper>
+                        }
+                    </MudStack>
 
                     <!-- Depreciation: policy display, cards, per-asset override -->
                     <MudDivider Class="my-3" />
@@ -459,6 +500,25 @@
         {
             _busy = false;
         }
+    }
+
+    // Upload / replace / remove the asset photo in a dialog. The dialog persists changes itself and
+    // returns true when the photo changed, so we re-fetch the detail and refresh the ledger thumbnail.
+    private async Task OpenPhotoDialogAsync()
+    {
+        if (_selected is null) return;
+        var parameters = new DialogParameters<AssetPhotoDialog>
+        {
+            { x => x.AssetId, _selected.Id },
+            { x => x.CurrentImageUrl, _selected.ImageUrl }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AssetPhotoDialog>($"Asset Photo — {_selected.PropertyNo}", parameters, options);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not true) return;
+
+        _selected = await Client.GetAsync(_selected.Id);
+        await LoadAsync();
     }
 
     private async Task RunDepreciationAsync()

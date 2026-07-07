@@ -103,7 +103,8 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         var entry = _entries.FirstOrDefault(e => e.Id == entryId)
             ?? throw new InvalidOperationException($"Entry '{entryId}' not found on session.");
         entry.MarkForRecount(reason);
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // See RecordEntry: recount operations must not bump the xmin-guarded session row — the entry
+        // carries the change, and touching the session serializes all Reconciled-mode writers on one row.
         AddDomainEvent(new PhysicalCountRecountRequestedEvent(Id, entryId, TenantId));
     }
 
@@ -129,7 +130,9 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
                 ?? throw new InvalidOperationException(
                     "Re-recording in Reconciled status is only allowed for entries flagged for recount.");
             recountEntry.ApplyRecount(condition, locationId, scannedOnUtc, scannedByEmployeeId, photoPath, remarks);
-            LastModifiedOnUtc = DateTimeOffset.UtcNow;
+            // Like appends, a recount re-record must not bump the xmin-guarded session row: the entry
+            // carries the change, and a session update makes every Reconciled-mode writer collide with
+            // DbUpdateConcurrencyException on this one row.
             return;
         }
 
@@ -137,7 +140,10 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         _entries.Add(PhysicalCountEntry.CreateForKnownAsset(
             TenantId, Id, asset.Id, asset.Snapshot(), article, unit, unitCost,
             condition, locationId, scannedOnUtc, scannedByEmployeeId, photoPath, remarks));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // Appending an entry must NOT bump the session's own row: physical count is concurrent by
+        // design (multiple counters scan into one session), and updating the xmin-guarded parent here
+        // makes it a serialization point — overlapping appends collide with DbUpdateConcurrencyException.
+        // The new entry carries its own audit timestamps; the session's state is unchanged.
     }
 
     public void AddFoundAtStationEntry(
@@ -159,7 +165,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
             TenantId, Id, article, unit, unitCost, locationId,
             proposedPropertyClass, proposedCategoryCode, proposedAcquisitionDate, proposedUnitCost,
             proposedPropertyNo, proposedCatalogItemId, scannedByEmployeeId, remarks));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // See RecordEntry: appending must not bump the xmin-guarded session row (concurrent-scan safety).
     }
 
     public void MarkMissing(AssetRegistry asset, Guid locationId, string? remarks)
@@ -170,7 +176,7 @@ public sealed class PhysicalCountSession : AggregateRoot<Guid>, IHasTenant, IAud
         _entries.Add(PhysicalCountEntry.CreateForKnownAsset(
             TenantId, Id, asset.Id, asset.Snapshot(), asset.Description, asset.Unit, asset.UnitCost,
             PhysicalCountCondition.Missing, locationId, null, null, null, remarks));
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+        // See RecordEntry: appending must not bump the xmin-guarded session row (concurrent-scan safety).
     }
 
     public void Reconcile()

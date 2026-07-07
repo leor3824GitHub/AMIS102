@@ -68,7 +68,7 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
 
         var items = page.ConvertAll(a => new AssetRegistrySummaryDto(
             a.Id, a.PropertyNo.Value, a.AssetType, a.Description, a.UnitCost,
-            a.AcquisitionDate, a.LifecycleState, a.CurrentCondition, a.CurrentCustodianId));
+            a.AcquisitionDate, a.LifecycleState, a.CurrentCondition, a.CurrentCustodianId, a.ImageUrl));
 
         return new PagedResponse<AssetRegistrySummaryDto>
         {
