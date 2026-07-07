@@ -50,12 +50,13 @@
     <Color x:Key="Teal">#00897B</Color>
     <Color x:Key="TealLight">#E0F2F1</Color>
 
-    <!-- Translucent DARK overlay for chips/avatars/progress-tracks sitting on the gradient.
-         Must be dark, not white: on-gradient foreground text is white, and a translucent-white
-         overlay renders near-opaque white on WinUI → white-on-white (invisible chip contents +
-         an invisible progress fill). A deep-indigo tint keeps white text high-contrast whether
-         the platform honors the alpha (subtle glass) or drops it (solid deep indigo). -->
-    <Color x:Key="OnGradientOverlay">#59201060</Color>
+    <!-- OPAQUE deep-indigo overlay for chips/avatars/progress-tracks sitting on the gradient.
+         Must be dark AND fully opaque: on-gradient foreground text is white. A translucent overlay
+         (even a dark-tinted one) composites toward white on WinUI → white-on-white, making chip
+         contents and progress fills invisible (observed on the Inventory ICS/PAR count pills).
+         A solid deep indigo keeps white text high-contrast on every platform; we trade the subtle
+         "glass" look on Android/iOS for guaranteed legibility on Windows. -->
+    <Color x:Key="OnGradientOverlay">#FF201060</Color>
 
     <!-- Muted (78% opacity) white for secondary text on a gradient panel -->
     <Color x:Key="OnGradientMuted">#C8FFFFFF</Color>
