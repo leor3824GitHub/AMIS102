@@ -11,6 +11,7 @@
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Supplies and Materials Receiving Reports (SMRR)"
@@ -247,8 +248,7 @@
                 pageWidth: saved?.PaperSize ?? "longbond",
                 orientation: saved?.Orientation ?? "portrait",
                 minRows: saved?.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -278,8 +278,7 @@
         try
         {
             var bytes = await Client.GetSmrrFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

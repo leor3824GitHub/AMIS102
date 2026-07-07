@@ -7,6 +7,7 @@
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
@@ -453,8 +454,7 @@ else
                 pageWidth: saved?.PaperSize ?? "a4",
                 orientation: saved?.Orientation ?? "landscape",
                 minRows: saved?.MinRows ?? 12);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -490,8 +490,7 @@ else
         try
         {
             var bytes = await IarClient.GetFastReportPdfAsync(_iar.Id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

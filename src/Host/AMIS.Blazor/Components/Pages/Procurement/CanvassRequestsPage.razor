@@ -16,6 +16,7 @@
 @inject IUserProfileState UserProfileState
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award" />
 
@@ -553,8 +554,7 @@
                 pageWidth: saved?.PaperSize ?? "a4",
                 orientation: saved?.Orientation ?? "portrait",
                 minRows: saved?.MinRows ?? 8);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -572,8 +572,7 @@
                 pageWidth: saved?.PaperSize ?? "a4",
                 orientation: saved?.Orientation ?? "portrait",
                 minRows: saved?.MinRows ?? 8);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("RFQ PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -607,8 +606,7 @@
         try
         {
             var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -639,8 +637,7 @@
         try
         {
             var bytes = await Client.GetRfqFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("RFQ PDF ready.", Severity.Success);
         }
         catch (Exception ex)

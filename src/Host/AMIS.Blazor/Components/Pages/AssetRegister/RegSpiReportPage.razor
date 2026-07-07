@@ -9,6 +9,7 @@
 @inject IPropertyClassClient PropertyClassClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Registry of Semi-Expendable Property Issued (RegSPI)"
@@ -208,8 +209,7 @@ else
         try
         {
             var bytes = await ReportsClient.GetRegSpiPdfAsync(ToDateOnly(_asOf), _custodian?.Id, _fundCluster, _propertyClass);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

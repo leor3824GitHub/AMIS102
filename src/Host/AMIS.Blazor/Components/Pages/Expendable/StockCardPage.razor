@@ -9,6 +9,7 @@
 @inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
 @inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 
@@ -257,8 +258,7 @@
         try
         {
             var bytes = await ReportsClient.GenerateStockCardPdfAsync(_selectedProduct.Id, r.PaperSize, r.Orientation, r.MarginMm);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

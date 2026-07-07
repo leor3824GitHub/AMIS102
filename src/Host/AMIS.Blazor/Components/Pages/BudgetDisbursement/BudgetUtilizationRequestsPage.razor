@@ -8,6 +8,7 @@
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Budget Utilization Request and Status" Description="Create and manage budget utilization request and status (BUR)" />
 
@@ -336,8 +337,7 @@
         try
         {
             var bytes = await Client.GetPdfAsync(id);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
         finally { _busy = false; }

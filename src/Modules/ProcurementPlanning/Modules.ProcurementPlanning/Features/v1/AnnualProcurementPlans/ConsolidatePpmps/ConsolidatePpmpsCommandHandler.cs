@@ -23,6 +23,11 @@ public sealed class ConsolidatePpmpsCommandHandler(
         var selectedIds = command.PpmpIds.Distinct().ToList();
         var userId = currentUser.GetUserId();
 
+        // Wrapped in an execution strategy so the explicit transaction is compatible with the
+        // retrying execution strategy (EnableRetryOnFailure) — the delegate re-runs atomically on transient failure.
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -108,5 +113,6 @@ public sealed class ConsolidatePpmpsCommandHandler(
             await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             throw;
         }
+        }).ConfigureAwait(false);
     }
 }

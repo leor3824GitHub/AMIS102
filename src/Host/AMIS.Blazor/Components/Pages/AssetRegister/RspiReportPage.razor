@@ -5,6 +5,7 @@
 @inject IAssetRegisterReportsClient ReportsClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Report of Semi-Expendable Property Issued (RSPI)"
@@ -159,8 +160,7 @@ else
         {
             var bytes = await ReportsClient.GetRspiPdfAsync(
                 ToDateOnly(_from), ToDateOnly(_to), assetType: null, _activeOnly);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

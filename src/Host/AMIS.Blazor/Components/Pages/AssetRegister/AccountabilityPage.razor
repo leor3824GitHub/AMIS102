@@ -13,6 +13,7 @@
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Property Accountability (ICS / PAR)"
                Description="Unified accountability tracking for Semi-Expendable (ICS) and PPE (PAR) per COA 2022-004." />
@@ -313,8 +314,7 @@
                 pageWidth: saved?.PaperSize ?? "longbond",
                 orientation: saved?.Orientation ?? "landscape",
                 minRows: saved?.MinRows ?? 15);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {
@@ -372,8 +372,7 @@
             var bytes = item.AccountabilityType == AccountabilityType.SE_ICS
                 ? await ReportsClient.GetIcsStickersPdfAsync(item.Id, paperSize)
                 : await ReportsClient.GetParStickersPdfAsync(item.Id, paperSize);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {

@@ -11,6 +11,7 @@
 @inject IInventoryClient InventoryClient
 @inject ILookupClient LookupClient
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IUserProfileState UserProfileState
@@ -594,8 +595,7 @@
         {
             var bytes = await SupplyRequestsClient.GetRISFastReportPdfAsync(id,
                 pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("RIS PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -613,8 +613,7 @@
             // For now, we'll use the Expendable client to get the RIS content
             // In the future, we may have a dedicated Quest RIS endpoint
             var bytes = await SupplyRequestsClient.GetRISFastReportPdfAsync(id, "longbond", "portrait");
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("RIS PDF ready.", Severity.Success);
         }
         catch (Exception ex)

@@ -35,7 +35,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         // Acquisition — receiving report (PPERR/SMRR).
         var receiving = await db.ReceivingReports
-            .AsNoTracking().Include(r => r.Items)
+            .AsNoTracking().Include(r => r.Items.Where(i => i.PropertyNo == propertyNo))
             .Where(r => r.Items.Any(i => i.PropertyNo == propertyNo))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in receiving)
@@ -49,7 +49,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         // Issue / return — accountability (PAR/ICS).
         var accountabilities = await db.PropertyAccountabilities
-            .AsNoTracking().Include(a => a.Lines)
+            .AsNoTracking().Include(a => a.Lines.Where(l => l.AssetRegistryId == assetId))
             .Where(a => a.Lines.Any(l => l.AssetRegistryId == assetId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var a in accountabilities)
@@ -69,7 +69,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         // Transfer out — issuance report (PPEIR/SMIR).
         var issuances = await db.PropertyIssuanceReports
-            .AsNoTracking().Include(r => r.Lines)
+            .AsNoTracking().Include(r => r.Lines.Where(l => l.AssetRegistryId == assetId))
             .Where(r => r.Lines.Any(l => l.AssetRegistryId == assetId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in issuances)
@@ -83,7 +83,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         // Unserviceable / disposal — IIRUP.
         var unserviceables = await db.UnserviceablePropertyReports
-            .AsNoTracking().Include(r => r.Items)
+            .AsNoTracking().Include(r => r.Items.Where(i => i.AssetRegistryId == assetId))
             .Where(r => r.Items.Any(i => i.AssetRegistryId == assetId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in unserviceables)
@@ -102,7 +102,7 @@ public sealed class GetPropertyCardQueryHandler(AssetRegisterDbContext db)
 
         // Loss / recovery — incident report (RLSDDSP).
         var incidents = await db.PropertyIncidentReports
-            .AsNoTracking().Include(r => r.Items)
+            .AsNoTracking().Include(r => r.Items.Where(i => i.AssetRegistryId == assetId))
             .Where(r => r.Items.Any(i => i.AssetRegistryId == assetId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (var r in incidents)

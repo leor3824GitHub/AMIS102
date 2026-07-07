@@ -46,9 +46,25 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
         var pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
         var total = await q.LongCountAsync(cancellationToken).ConfigureAwait(false);
+        // Project only the summary's columns in the DB instead of materializing the full ~25-column entity.
+        // PropertyNo (a value-converted VO) is projected as the VO and mapped via .Value in memory — the same
+        // proven pattern used by GetReconciliationReportQueryHandler.
         var page = await q
             .OrderByDescending(a => a.AcquisitionDate)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+            .Select(a => new
+            {
+                a.Id,
+                a.PropertyNo,
+                a.AssetType,
+                a.Description,
+                a.UnitCost,
+                a.AcquisitionDate,
+                a.LifecycleState,
+                a.CurrentCondition,
+                a.CurrentCustodianId,
+                a.ImageUrl
+            })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var items = page.ConvertAll(a => new AssetRegistrySummaryDto(

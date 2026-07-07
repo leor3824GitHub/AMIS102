@@ -8,6 +8,7 @@ using AMIS.Blazor.Components;
 using AMIS.Blazor.Services;
 using AMIS.Blazor.Services.AssetRegister;
 using AMIS.Blazor.Services.Api;
+using AMIS.Blazor.Services.Downloads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.Circuits;
@@ -91,6 +92,10 @@ builder.Services.AddScoped<AuthenticationStateProvider, CookieAuthenticationStat
 // Tenant theme services
 builder.Services.AddScoped<ITenantThemeState, TenantThemeState>(); // For Interactive mode
 builder.Services.AddScoped<IThemeStateFactory, CachedThemeStateFactory>(); // For SSR mode
+
+// PDF download hand-off — keeps generated PDF bytes off the SignalR circuit (see PdfDownloadCache)
+builder.Services.AddSingleton<AMIS.Blazor.Services.Downloads.IPdfDownloadCache, AMIS.Blazor.Services.Downloads.PdfDownloadCache>();
+builder.Services.AddScoped<AMIS.Blazor.Services.Downloads.IPdfDownloadService, AMIS.Blazor.Services.Downloads.PdfDownloadService>();
 
 // User profile state for syncing across components
 builder.Services.AddScoped<IUserProfileState, UserProfileState>();
@@ -254,6 +259,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapSimpleBffAuthEndpoints();
+app.MapPdfDownloadEndpoints();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

@@ -39,6 +39,7 @@ public static class OptionsBuilderExtensions
                 builder.UseNpgsql(connectionString, e =>
                 {
                     e.MigrationsAssembly(migrationsAssembly);
+                    e.EnableRetryOnFailure();
                 });
                 break;
 

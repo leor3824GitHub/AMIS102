@@ -51,6 +51,8 @@ internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<Asse
         builder.HasIndex(x => new { x.TenantId, PropertyNo = x.PropertyNo }).IsUnique();
         builder.HasIndex(x => new { x.TenantId, x.LifecycleState });
         builder.HasIndex(x => new { x.TenantId, x.CurrentCustodianId });
+        builder.HasIndex(x => new { x.TenantId, x.AssetType });
+        builder.HasIndex(x => new { x.TenantId, x.PropertyClass });
     }
 }
 

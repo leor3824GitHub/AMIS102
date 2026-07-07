@@ -13,14 +13,12 @@ public sealed class SearchMaintenanceSchedulesHandler(
         SearchMaintenanceSchedulesQuery query,
         CancellationToken cancellationToken)
     {
-        var schedules = await db.MaintenanceSchedules
+        return await db.MaintenanceSchedules
+            .AsNoTracking()
             .Where(x => (string.IsNullOrEmpty(query.MaintenanceType) || x.MaintenanceType.Contains(query.MaintenanceType)) &&
                      (!query.VehicleId.HasValue || x.VehicleId == query.VehicleId) &&
                      (!query.IsActive.HasValue || x.IsActive == query.IsActive) &&
                      !x.IsDeleted)
-            .ToListAsync(cancellationToken);
-
-        return schedules
             .Select(x => new MaintenanceScheduleDto(
                 x.Id,
                 x.VehicleId,
@@ -33,7 +31,7 @@ public sealed class SearchMaintenanceSchedulesHandler(
                 x.LastDoneDate,
                 x.LastDoneMileage,
                 x.IsActive))
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 }
 

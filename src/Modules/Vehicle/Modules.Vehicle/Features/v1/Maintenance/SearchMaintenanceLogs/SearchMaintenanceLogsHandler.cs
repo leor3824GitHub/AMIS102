@@ -13,16 +13,14 @@ public sealed class SearchMaintenanceLogsHandler(
         SearchMaintenanceLogsQuery query,
         CancellationToken cancellationToken)
     {
-        var logs = await db.MaintenanceLogs
+        return await db.MaintenanceLogs
+            .AsNoTracking()
             .Where(x => (string.IsNullOrEmpty(query.MaintenanceType) || x.MaintenanceType.Contains(query.MaintenanceType)) &&
                      (!query.VehicleId.HasValue || x.VehicleId == query.VehicleId) &&
                      (!query.ScheduleId.HasValue || x.ScheduleId == query.ScheduleId) &&
                      (!query.PerformedDateFrom.HasValue || x.PerformedDate >= query.PerformedDateFrom) &&
                      (!query.PerformedDateTo.HasValue || x.PerformedDate <= query.PerformedDateTo) &&
                      !x.IsDeleted)
-            .ToListAsync(cancellationToken);
-
-        return logs
             .Select(x => new MaintenanceLogDto(
                 x.Id,
                 x.VehicleId,
@@ -34,7 +32,7 @@ public sealed class SearchMaintenanceLogsHandler(
                 x.Cost,
                 x.PerformedBy,
                 x.Notes))
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 }
 

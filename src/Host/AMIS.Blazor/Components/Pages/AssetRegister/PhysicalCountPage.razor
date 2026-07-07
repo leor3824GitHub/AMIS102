@@ -14,6 +14,7 @@
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
 
 <AMISPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
@@ -863,8 +864,7 @@
         try
         {
             var bytes = await Client.GetInventoryCountFormPdfAsync(_selected.Id);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("Inventory Count Form (Annex A) ready.", Severity.Success);
         }
         catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
@@ -878,8 +878,7 @@
         try
         {
             var bytes = await Client.GetCountAnnexPdfAsync(_selected.Id, annexKind);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add($"Annex {annexKind.ToUpperInvariant()} ready.", Severity.Success);
         }
         catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }

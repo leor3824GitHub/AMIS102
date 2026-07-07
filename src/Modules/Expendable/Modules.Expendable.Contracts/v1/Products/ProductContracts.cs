@@ -79,6 +79,8 @@ public record DeleteProductCommand(Guid Id) : ICommand<Unit>;
 
 public record GetProductQuery(Guid Id) : IQuery<ProductDto?>;
 
+public record GetProductsByIdsQuery(IReadOnlyCollection<Guid> Ids) : IQuery<IReadOnlyList<ProductDto>>;
+
 public sealed class SearchProductsQuery : IPagedQuery, IQuery<PagedResponse<ProductDto>>
 {
     public string? Keyword { get; set; }

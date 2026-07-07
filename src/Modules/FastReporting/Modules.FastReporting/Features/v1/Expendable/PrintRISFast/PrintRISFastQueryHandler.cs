@@ -90,9 +90,14 @@ public sealed class PrintRISFastQueryHandler(IMediator mediator)
         table.Columns.Add("IssueQty",       typeof(string));
         table.Columns.Add("Remarks",        typeof(string));
 
+        // Batch-load every referenced product in a single query — avoids an N+1 round trip per line item.
+        var productIds = ris.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = (await mediator.Send(new GetProductsByIdsQuery(productIds), cancellationToken).ConfigureAwait(false))
+            .ToDictionary(p => p.Id);
+
         foreach (var item in ris.Items)
         {
-            var product = await mediator.Send(new GetProductQuery(item.ProductId), cancellationToken).ConfigureAwait(false);
+            var product = products.GetValueOrDefault(item.ProductId);
 
             var issuedQty = item.FulfilledQuantity > 0 ? item.FulfilledQuantity : item.ApprovedQuantity;
             var available = item.RequestedQuantity > 0 && issuedQty >= item.RequestedQuantity;

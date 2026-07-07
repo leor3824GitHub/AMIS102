@@ -11,6 +11,7 @@
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
                Description="End-users request the return of property assigned to them; an inspector records each item's condition, then the property custodian receives and accepts it. Accepting marks each asset back to Available at its inspected condition." />
@@ -403,8 +404,7 @@
         try
         {
             var bytes = await Client.GetReceiptPdfAsync(_detail.Id, pageWidth: "longbond");
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {

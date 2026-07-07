@@ -8,6 +8,7 @@
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <MudDialog>
     <DialogContent>
@@ -230,8 +231,7 @@
                 pageWidth: saved?.PaperSize ?? "longbond",
                 orientation: saved?.Orientation ?? "landscape",
                 minRows: saved?.MinRows ?? 15);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {

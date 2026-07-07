@@ -27,6 +27,8 @@ public sealed class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
         builder.HasIndex(x => x.Name);
         builder.HasIndex(x => x.OfficeCode);
 
+        // NOTE (tenancy): shared reference data across all tenants by design — deliberately NOT
+        // .IsMultiTenant(). Do not add it. See EmployeeProfileConfiguration for the rationale.
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

@@ -6,6 +6,7 @@
 @inject IReportsClient ReportsClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
 @inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 @inject IAssumedAccountabilityDatePreference AssumedDatePref
@@ -170,8 +171,7 @@ else
         try
         {
             var bytes = await ReportsClient.GeneratePhysicalCountPdfAsync(null, _asOfDate, _assumedDate, r.PaperSize, r.Orientation, r.MarginMm);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

@@ -6,6 +6,7 @@
 @inject IVehicleClient VehicleClient
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
 @inject IQuestPdfSetupPreferences QuestPdfSetupPrefs
 
@@ -232,8 +233,7 @@
         try
         {
             var bytes = await VehicleClient.GenerateVehicleInventoryPdfAsync(_statusFilter, _asOfDate, r.PaperSize, r.Orientation, r.MarginMm);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -252,8 +252,7 @@
         try
         {
             var bytes = await VehicleClient.GenerateVehicleInventoryFastPdfAsync(_statusFilter, _asOfDate, pageWidth);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("FastReport PDF ready.", Severity.Success);
         }
         catch (Exception ex)
