@@ -226,18 +226,12 @@
         _printing = true;
         try
         {
-<<<<<<< HEAD
-            var bytes = await Client.GetFastReportPdfAsync(_selected.Id, _selected.AccountabilityType, pageWidth: "longbond");
-            await PdfDownload.OpenInNewTabAsync(bytes);
-=======
             var saved = await FastReportSetupPrefs.GetAsync(FastReportKey);
             var bytes = await Client.GetFastReportPdfAsync(_selected.Id, _selected.AccountabilityType,
                 pageWidth: saved?.PaperSize ?? "longbond",
                 orientation: saved?.Orientation ?? "landscape",
                 minRows: saved?.MinRows ?? 15);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
->>>>>>> 8c4685e3c87b5086c772173b62171a4a38a17508
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {
