@@ -62,7 +62,8 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
                 a.AcquisitionDate,
                 a.LifecycleState,
                 a.CurrentCondition,
-                a.CurrentCustodianId
+                a.CurrentCustodianId,
+                a.ImageUrl
             })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
