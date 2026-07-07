@@ -15,7 +15,17 @@ public sealed class GetAccountabilityQueryHandler(AssetRegisterDbContext db)
             .AsNoTracking()
             .Include(a => a.Lines)
             .FirstOrDefaultAsync(a => a.Id == query.Id, cancellationToken).ConfigureAwait(false);
-        return entity is null ? null : AccountabilityMapper.ToDto(entity);
+        if (entity is null) return null;
+
+        // Presence-flag-only lookup (mirrors the physical-count checklist): tells the mobile client
+        // which lines' assets have a photo, without ever loading the image bytes into this payload.
+        var assetIds = entity.Lines.Select(l => l.AssetRegistryId).Distinct().ToList();
+        var withImage = (await db.AssetRegistries.AsNoTracking()
+            .Where(a => assetIds.Contains(a.Id) && a.ImageUrl != null)
+            .Select(a => a.Id)
+            .ToListAsync(cancellationToken).ConfigureAwait(false)).ToHashSet();
+
+        return AccountabilityMapper.ToDto(entity, withImage);
     }
 }
 

@@ -40,7 +40,11 @@ public sealed record PropertyAccountabilityLineDto(
     DateOnly? ReturnedOn,
     AssetCondition? ReturnedConditionAtReturn,
     Guid? LostOnIncidentId,
-    VehicleAccountabilityProfileDto? VehicleProfile);
+    VehicleAccountabilityProfileDto? VehicleProfile,
+    // Whether the underlying asset has a photo. The bytes are NOT in this payload — the mobile
+    // client lazily streams the thumbnail from GET /assets/{id}/image using AssetRegistryId.
+    // Defaults false so write-op command handlers (Issue/Accept/Cancel/…) need no change.
+    bool HasImage = false);
 
 public sealed record PropertyAccountabilityDto(
     Guid Id,

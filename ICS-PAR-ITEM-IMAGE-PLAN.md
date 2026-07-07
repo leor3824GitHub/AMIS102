@@ -1,6 +1,6 @@
 # Plan: Add Asset Photo Thumbnails to ICS/PAR Detail Item Cards (MAUI)
 
-> Status: **planned, not started**
+> Status: **done** — implemented 2026-07-08 (all 8 files). Backend module builds 0 errors / no new warnings; MAUI Windows target compiles (C# + compiled XAML). Android/iOS TFMs not built locally.
 > Scope: AssetRegister backend (HasImage flag on accountability lines) + AMIS.Maui (ICS/PAR detail item cards)
 
 ## Context

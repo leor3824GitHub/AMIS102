@@ -51,7 +51,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
                 l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
                 l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
                 l.Snapshot.EstimatedUsefulLifeYears,
-                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"))).ToList());
+                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"),
+                l.AssetRegistryId, l.HasImage)).ToList());
     }
 
     public async Task<List<PARSummaryDto>> GetMyPARListAsync(Guid employeeId, CancellationToken ct = default)
@@ -72,7 +73,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
                 l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
                 l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
                 l.IssuedQty, l.Snapshot.EstimatedUsefulLifeYears,
-                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"))).ToList());
+                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"),
+                l.AssetRegistryId, l.HasImage)).ToList());
     }
 
     public async Task AcceptAccountabilityAsync(Guid id, CancellationToken ct = default)
@@ -342,7 +344,10 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         DateOnly IssuedOn, DateOnly? ExpiresOn, string Status, List<ArAccountabilityLine> Lines);
 
     private sealed record ArAccountabilityLine(
-        Guid Id, Guid AssetRegistryId, ArAssetSnapshot Snapshot, int IssuedQty);
+        Guid Id, Guid AssetRegistryId, ArAssetSnapshot Snapshot, int IssuedQty,
+        // Server-supplied presence flag; older servers omit it → defaults false (case-insensitive
+        // Web JSON defaults tolerate the missing property).
+        bool HasImage = false);
 
     private sealed record ArAssetSnapshot(
         string PropertyNo, string Description, string AssetType, decimal UnitCost,

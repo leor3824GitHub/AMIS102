@@ -92,7 +92,29 @@
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="svc:ICSItemDto">
                         <Border Style="{StaticResource CardBorderStyle}" Margin="0,4" Padding="16,12">
-                            <VerticalStackLayout Spacing="6">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+
+                                <!-- Leading thumbnail: the asset photo, or a type-tinted placeholder tile
+                                     (PPE→blue, SE→teal). Border clips the image to rounded corners; the
+                                     glyph shows only when there's no photo. Bytes are lazily fetched per
+                                     row via the authenticated API. -->
+                                <Border Grid.Column="0"
+                                        WidthRequest="52" HeightRequest="52"
+                                        Stroke="Transparent" StrokeShape="RoundRectangle 12"
+                                        BackgroundColor="{Binding AssetType, Converter={StaticResource KindToColorConverter}, ConverterParameter=bg}"
+                                        VerticalOptions="Center">
+                                    <Grid>
+                                        <Label Text="&#x1F4E6;" FontSize="22"
+                                               HorizontalOptions="Center" VerticalOptions="Center"
+                                               TextColor="{Binding AssetType, Converter={StaticResource KindToColorConverter}, ConverterParameter=text}"
+                                               IsVisible="{Binding HasImage, Converter={StaticResource InvertedBoolConverter}}" />
+                                        <Image Aspect="AspectFill"
+                                               Source="{Binding ., Converter={StaticResource AssetImageSourceConverter}}"
+                                               IsVisible="{Binding HasImage}" />
+                                    </Grid>
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="1" Spacing="6">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <Label Grid.Column="0"
                                            Text="{Binding PropertyNo}"
@@ -118,7 +140,8 @@
                                     <Label Text="{Binding DateAcquired, StringFormat='Acq. {0}'}"
                                            Style="{StaticResource CaptionStyle}" VerticalOptions="Center" />
                                 </HorizontalStackLayout>
-                            </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>

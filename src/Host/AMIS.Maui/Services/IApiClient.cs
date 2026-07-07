@@ -8,6 +8,18 @@ public sealed record TokenResponse(string AccessToken, string RefreshToken);
 public sealed record UserProfileDto(string Id, string Email, string? FirstName, string? LastName, string? ImageUrl);
 public sealed record MyEmployeeDto(Guid EmployeeId, string FullName, string? Department, string? Position);
 
+/// <summary>
+/// A list row that can lazily display an asset photo. <see cref="AssetImageSourceConverter"/> binds to
+/// the whole row and reads these two members, so one converter serves ICS/PAR detail lines and the
+/// physical-count checklist alike. <c>HasImage</c> false → the row shows its placeholder tile and never
+/// fires an image request.
+/// </summary>
+public interface IAssetImageRow
+{
+    Guid AssetRegistryId { get; }
+    bool HasImage { get; }
+}
+
 public sealed record ICSSummaryDto(
     Guid Id,
     string ICSNo,
@@ -40,7 +52,9 @@ public sealed record ICSItemDto(
     string Unit,
     decimal UnitCost,
     int EstimatedUsefulLifeYears,
-    string DateAcquired);
+    string DateAcquired,
+    Guid AssetRegistryId = default,
+    bool HasImage = false) : IAssetImageRow;
 
 public sealed record PARDetailDto(
     Guid Id,
@@ -60,7 +74,9 @@ public sealed record PARItemDto(
     decimal UnitCost,
     int Quantity,
     int EstimatedUsefulLifeYears,
-    string DateAcquired)
+    string DateAcquired,
+    Guid AssetRegistryId = default,
+    bool HasImage = false) : IAssetImageRow
 {
     // Extended-line value (unit cost × quantity issued) — computed for display only.
     public decimal TotalCost => UnitCost * Quantity;
@@ -192,7 +208,7 @@ public sealed record PhysicalCountChecklistItemDto(
     // Whether the asset has a photo — the bytes are NOT in this payload (it loads over field data
     // connections). The row lazily fetches the thumbnail from GET /assets/{id}/image via
     // AssetImageSourceConverter so field staff can eyeball-match the item.
-    bool HasImage = false)
+    bool HasImage = false) : IAssetImageRow
 {
     public bool IsCounted => Status == "Counted";
     public bool IsMissing => Status == "Missing";

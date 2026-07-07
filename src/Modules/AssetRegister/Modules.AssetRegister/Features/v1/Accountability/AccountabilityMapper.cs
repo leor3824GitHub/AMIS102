@@ -19,16 +19,17 @@ internal static class AccountabilityMapper
             : new VehicleAccountabilityProfileDto(
                 v.OdometerAtIssue, v.OdometerAtReturn, v.PlateNumber, v.EngineNumber, v.ChassisNumber);
 
-    public static PropertyAccountabilityLineDto ToDto(PropertyAccountabilityLine l) =>
+    public static PropertyAccountabilityLineDto ToDto(PropertyAccountabilityLine l, bool hasImage = false) =>
         new(l.Id, l.AccountabilityId, l.AssetRegistryId, ToDto(l.Snapshot),
             l.SnapshotItemNo, l.SnapshotResponsibilityCenterCode, l.IssuedQty, l.ReturnedQty,
             l.LineStatus, l.ReturnedOn, l.ReturnedConditionAtReturn, l.LostOnIncidentId,
-            ToDto(l.VehicleProfile));
+            ToDto(l.VehicleProfile), hasImage);
 
-    public static PropertyAccountabilityDto ToDto(PropertyAccountability a) =>
+    public static PropertyAccountabilityDto ToDto(PropertyAccountability a, IReadOnlySet<Guid>? assetsWithImage = null) =>
         new(a.Id, a.DocumentNo, a.AccountabilityType, a.FundCluster, a.IssuedOn, a.ExpiresOn,
             a.Status, a.CancellationReason, a.SupersededByAccountabilityId, a.SupersedesAccountabilityId,
             ToDto(a.IssuedBy), ToDto(a.ReceivedBy),
-            a.Lines.Select(ToDto).ToList(), a.AcceptedOn);
+            a.Lines.Select(l => ToDto(l, assetsWithImage?.Contains(l.AssetRegistryId) == true)).ToList(),
+            a.AcceptedOn);
 }
 

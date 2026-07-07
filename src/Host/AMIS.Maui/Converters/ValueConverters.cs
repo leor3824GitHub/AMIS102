@@ -151,10 +151,10 @@ public sealed class ImageUrlToSourceConverter : IValueConverter
 }
 
 /// <summary>
-/// Lazily loads a checklist row's asset photo through the authenticated API, so the multi-MB base64
-/// blob no longer rides inside the checklist payload. Bound to the whole
-/// <see cref="PhysicalCountChecklistItemDto"/>: returns null (→ placeholder tile) when the asset has
-/// no photo, otherwise an <see cref="ImageSource"/> that streams the bytes from
+/// Lazily loads a list row's asset photo through the authenticated API, so the multi-MB base64
+/// blob no longer rides inside the list payload. Bound to the whole row via <see cref="IAssetImageRow"/>
+/// (ICS/PAR detail lines and the physical-count checklist alike): returns null (→ placeholder tile)
+/// when the asset has no photo, otherwise an <see cref="ImageSource"/> that streams the bytes from
 /// <c>GET /assets/{id}/image</c> via the DI <see cref="IApiClient"/> (bearer token attached by the
 /// authenticated handler — a plain <c>Uri</c> source could not carry it). A failed fetch degrades to
 /// the placeholder rather than crashing the list.
@@ -163,7 +163,7 @@ public sealed class AssetImageSourceConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not PhysicalCountChecklistItemDto item || !item.HasImage)
+        if (value is not IAssetImageRow item || !item.HasImage)
             return null;
 
         var api = IPlatformApplication.Current?.Services?.GetService<IApiClient>();
