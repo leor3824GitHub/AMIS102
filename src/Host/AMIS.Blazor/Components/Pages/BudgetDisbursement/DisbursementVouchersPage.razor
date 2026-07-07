@@ -8,6 +8,7 @@
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Disbursement Vouchers" Description="Create and manage disbursement vouchers (DV)" />
 
@@ -376,8 +377,7 @@
         try
         {
             var bytes = await Client.GetPdfAsync(id, "a4");
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex) { Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error); }
     }

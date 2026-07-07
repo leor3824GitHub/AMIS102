@@ -28,14 +28,31 @@ public sealed class ListMyNotificationsQueryHandler : IQueryHandler<ListMyNotifi
         var userId = _currentUser.GetUserId().ToString();
         var take = Math.Clamp(query.Take, 1, MaxTake);
 
-        var rows = await _dbContext.Notifications
+        var baseQuery = _dbContext.Notifications
             .AsNoTracking()
-            .Where(n => n.RecipientUserId == userId && (!query.UnreadOnly || !n.IsRead))
+            .Where(n => n.RecipientUserId == userId && (!query.UnreadOnly || !n.IsRead));
+
+        // Order + take. On providers that can translate DateTimeOffset ordering (Postgres in production)
+        // push it to the DB so a user's entire inbox is never materialized. The SQLite provider used in
+        // tests cannot ORDER BY a DateTimeOffset, so fall back to in-memory ordering there.
+        var providerSortsDateTimeOffset =
+            _dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+
+        if (providerSortsDateTimeOffset)
+        {
+            var ordered = await baseQuery
+                .OrderByDescending(n => n.CreatedOnUtc)
+                .Take(take)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return ordered.Select(n => n.ToDto()).ToList();
+        }
+
+        var rows = await baseQuery
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        // Order + page client-side: SQLite (used in tests) cannot ORDER BY a DateTimeOffset, and a per-user
-        // inbox is small. Mirrors ListMyChannelsQueryHandler. Postgres would sort this in-DB equally well.
         return rows
             .OrderByDescending(n => n.CreatedOnUtc)
             .Take(take)

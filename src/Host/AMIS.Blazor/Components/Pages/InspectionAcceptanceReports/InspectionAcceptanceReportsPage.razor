@@ -12,6 +12,7 @@
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Inspection &amp; Acceptance Reports"
                 Description="Track IARs from Draft to Inspection and Acceptance." />
@@ -541,8 +542,7 @@
                 pageWidth: saved?.PaperSize ?? "a4",
                 orientation: saved?.Orientation ?? "landscape",
                 minRows: saved?.MinRows ?? 12);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -575,8 +575,7 @@
         try
         {
             var bytes = await IarClient.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

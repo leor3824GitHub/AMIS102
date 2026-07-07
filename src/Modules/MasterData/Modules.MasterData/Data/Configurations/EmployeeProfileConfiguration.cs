@@ -47,6 +47,10 @@ public sealed class EmployeeProfileConfiguration : IEntityTypeConfiguration<Empl
         builder.HasIndex(x => x.PositionId);
         builder.HasIndex(x => x.OfficeCode);
 
+        // NOTE (tenancy): MasterData reference tables — employees, suppliers, offices, departments,
+        // positions, units of measure — are INTENTIONALLY shared across all tenants. They are deliberately
+        // NOT .IsMultiTenant(); do not add it here. Because this entity is not multi-tenant, the anonymous
+        // soft-delete filter form is also acceptable (the named form is only required alongside .IsMultiTenant()).
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);
     }

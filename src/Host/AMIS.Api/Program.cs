@@ -37,6 +37,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+// Compress API responses (JSON, PDF, etc.). The co-located Blazor host is largely unaffected, but the
+// MAUI client and any cross-network API consumer receive Brotli/Gzip-compressed payloads instead of raw bytes.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes
+        .Concat(["application/pdf"]);
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(options =>
+    options.Level = System.IO.Compression.CompressionLevel.Fastest);
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
+    options.Level = System.IO.Compression.CompressionLevel.Fastest);
+
 if (builder.Environment.IsProduction())
 {
     static void Require(IConfiguration config, string key)
@@ -58,6 +75,13 @@ if (builder.Environment.IsProduction())
     {
         throw new InvalidOperationException(
             "JwtOptions:SigningKey is a placeholder/dev key. Production requires a real 256-bit secret from a secret store.");
+    }
+
+    // HS256 requires a key of at least 256 bits (32 bytes). The key is ASCII-encoded, so char count == byte count.
+    if (signingKey!.Length < 32)
+    {
+        throw new InvalidOperationException(
+            "JwtOptions:SigningKey must be at least 32 characters (256 bits) for HS256 in Production.");
     }
 }
 
@@ -127,6 +151,9 @@ builder.AddModules(moduleAssemblies);
 builder.AddHeroRealtime();
 
 var app = builder.Build();
+
+// Must run before any response-producing middleware (static files, module endpoints).
+app.UseResponseCompression();
 
 app.UseHeroMultiTenantDatabases();
 app.UseHeroPlatform(p =>

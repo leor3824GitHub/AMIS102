@@ -15,15 +15,13 @@ public sealed class GetDueMaintenanceSchedulesHandler(
     {
         var dueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(query.DaysAhead));
 
-        var schedules = await db.MaintenanceSchedules
+        return await db.MaintenanceSchedules
+            .AsNoTracking()
             .Where(x => (!query.VehicleId.HasValue || x.VehicleId == query.VehicleId) &&
                      x.IsActive &&
                      !x.IsDeleted &&
                      x.DueDate.HasValue &&
                      x.DueDate <= dueDate)
-            .ToListAsync(cancellationToken);
-
-        return schedules
             .Select(x => new MaintenanceScheduleDto(
                 x.Id,
                 x.VehicleId,
@@ -36,7 +34,7 @@ public sealed class GetDueMaintenanceSchedulesHandler(
                 x.LastDoneDate,
                 x.LastDoneMileage,
                 x.IsActive))
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 }
 

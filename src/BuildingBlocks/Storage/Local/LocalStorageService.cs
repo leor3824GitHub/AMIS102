@@ -59,10 +59,7 @@ public class LocalStorageService : IStorageService
             return Task.FromResult<FileDownloadResponse?>(null);
         }
 
-        var normalizedPath = path.Replace("/", Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal);
-        var fullPath = Path.Combine(_rootPath, normalizedPath);
-
-        if (!File.Exists(fullPath))
+        if (!TryResolveWithinRoot(path, out var fullPath) || !File.Exists(fullPath))
         {
             return Task.FromResult<FileDownloadResponse?>(null);
         }
@@ -93,8 +90,10 @@ public class LocalStorageService : IStorageService
             return Task.FromResult(false);
         }
 
-        var normalizedPath = path.Replace("/", Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal);
-        var fullPath = Path.Combine(_rootPath, normalizedPath);
+        if (!TryResolveWithinRoot(path, out var fullPath))
+        {
+            return Task.FromResult(false);
+        }
 
         return Task.FromResult(File.Exists(fullPath));
     }
@@ -103,7 +102,10 @@ public class LocalStorageService : IStorageService
     {
         if (string.IsNullOrWhiteSpace(path)) return Task.CompletedTask;
 
-        var fullPath = Path.Combine(_rootPath, path);
+        if (!TryResolveWithinRoot(path, out var fullPath))
+        {
+            return Task.CompletedTask;
+        }
 
         if (File.Exists(fullPath))
         {
@@ -116,6 +118,36 @@ public class LocalStorageService : IStorageService
     private static string SanitizeFileName(string fileName)
     {
         return Regex.Replace(fileName, @"[^a-zA-Z0-9_\.-]", "_");
+    }
+
+    /// <summary>
+    /// Resolves a storage key to an absolute path and verifies it stays inside the storage root.
+    /// Defense-in-depth: today all keys are server-generated, but this blocks any future caller from
+    /// passing a user-influenced key containing "../" to read or delete files outside the root.
+    /// </summary>
+    private bool TryResolveWithinRoot(string path, out string fullPath)
+    {
+        fullPath = string.Empty;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var normalizedPath = path.Replace("/", Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal);
+        var resolved = Path.GetFullPath(Path.Combine(_rootPath, normalizedPath));
+        var rootFull = Path.GetFullPath(_rootPath);
+        var rootWithSep = rootFull.EndsWith(Path.DirectorySeparatorChar)
+            ? rootFull
+            : rootFull + Path.DirectorySeparatorChar;
+
+        if (!string.Equals(resolved, rootFull, StringComparison.OrdinalIgnoreCase) &&
+            !resolved.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        fullPath = resolved;
+        return true;
     }
 }
 

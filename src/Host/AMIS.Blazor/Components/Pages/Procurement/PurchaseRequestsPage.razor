@@ -18,6 +18,7 @@
 @inject IUserProfileState UserProfileState
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
 
@@ -596,8 +597,7 @@
                 copies: saved?.Copies ?? 2,
                 orientation: saved?.Orientation ?? "landscape",
                 minRows: saved?.MinRows ?? 10);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)
@@ -630,8 +630,7 @@
         try
         {
             var bytes = await Client.GetFastReportPdfAsync(id, pageWidth: r.PaperSize, copies: r.Copies, orientation: r.Orientation, minRows: r.MinRows);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
             Snackbar.Add("PDF ready.", Severity.Success);
         }
         catch (Exception ex)

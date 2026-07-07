@@ -6,6 +6,7 @@
 @inject IUserProfileState UserProfileState
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <MudDialog>
     <DialogContent>
@@ -140,8 +141,7 @@
         try
         {
             var bytes = await Client.DownloadAsync(DocType, DocumentId);
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {

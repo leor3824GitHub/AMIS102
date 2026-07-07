@@ -25,44 +25,50 @@ public sealed class ConvertCartToSupplyRequestCommandHandler : ICommandHandler<C
     {
         var neededByUtc = command.NeededByDate?.ToUniversalTime();
 
-        await using var transaction = await _dbContext.Database
-            .BeginTransactionAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var cart = await _dbContext.ShoppingCarts
-            .FirstOrDefaultAsync(c => c.Id == command.CartId, cancellationToken)
-            .ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Cart {command.CartId} not found.");
-
-        // Create supply request
-        var requestNumber = $"REQ-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}";
-        var request = SupplyRequest.Create(
-            _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required"),
-            requestNumber,
-            _currentUser.GetUserId().ToString(),
-            command.DepartmentId,
-            command.BusinessJustification,
-            neededByUtc);
-
-        request.CreatedBy = _currentUser.GetUserId().ToString();
-
-        // Add items from cart
-        foreach (var item in cart.Items)
+        // Wrapped in an execution strategy so it is compatible with the retrying
+        // execution strategy (EnableRetryOnFailure) — the delegate is re-run atomically on transient failure.
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            request.AddItem(item.ProductId, item.Quantity);
-        }
+            await using var transaction = await _dbContext.Database
+                .BeginTransactionAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-        // Cart checkout should create a request that is immediately visible for approval.
-        request.Submit();
-        request.LastModifiedBy = _currentUser.GetUserId().ToString();
+            var cart = await _dbContext.ShoppingCarts
+                .FirstOrDefaultAsync(c => c.Id == command.CartId, cancellationToken)
+                .ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"Cart {command.CartId} not found.");
 
-        _dbContext.SupplyRequests.Add(request);
-        cart.ConvertToRequest(request.Id);
+            // Create supply request
+            var requestNumber = $"REQ-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}";
+            var request = SupplyRequest.Create(
+                _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required"),
+                requestNumber,
+                _currentUser.GetUserId().ToString(),
+                command.DepartmentId,
+                command.BusinessJustification,
+                neededByUtc);
 
-        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            request.CreatedBy = _currentUser.GetUserId().ToString();
 
-        return request.ToSupplyRequestDto();
+            // Add items from cart
+            foreach (var item in cart.Items)
+            {
+                request.AddItem(item.ProductId, item.Quantity);
+            }
+
+            // Cart checkout should create a request that is immediately visible for approval.
+            request.Submit();
+            request.LastModifiedBy = _currentUser.GetUserId().ToString();
+
+            _dbContext.SupplyRequests.Add(request);
+            cart.ConvertToRequest(request.Id);
+
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+            return request.ToSupplyRequestDto();
+        }).ConfigureAwait(false);
     }
 }
 

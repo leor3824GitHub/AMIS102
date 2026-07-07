@@ -8,6 +8,7 @@
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Repairs (RPRI)" Description="Request for Pre/Post Repair Inspection — Exhibit 6 (PPE-wide)" />
 
@@ -133,8 +134,7 @@
         try
         {
             var bytes = await RepairClient.GetPdfAsync(id, "longbond");
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {

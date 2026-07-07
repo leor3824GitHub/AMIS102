@@ -8,6 +8,7 @@
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
 @inject IJSRuntime JS
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="My Accountability (ICS / PAR)"
                Description="Property issued to you — Inventory Custodian Slips (ICS) and Property Acknowledgement Receipts (PAR) where you are the accountable person." />
@@ -393,8 +394,7 @@ else
         try
         {
             var bytes = await Client.GetFastReportPdfAsync(item.Id, item.AccountabilityType, pageWidth: "longbond");
-            var dataUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
-            await JS.InvokeVoidAsync("open", dataUrl, "_blank");
+            await PdfDownload.OpenInNewTabAsync(bytes);
         }
         catch (Exception ex)
         {
