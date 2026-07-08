@@ -18,30 +18,30 @@ public sealed partial class PhysicalCountEntriesViewModel : ObservableObject
     private readonly IPhysicalCountSyncService _syncService;
     private List<PhysicalCountEntryDto> _allEntries = [];
 
-    [ObservableProperty] private string _sessionId = "";
-    [ObservableProperty] private string _sessionNo = "";
-    [ObservableProperty] private string _fundCluster = "";
-    [ObservableProperty] private string _scope = "";
-    [ObservableProperty] private string _status = "";
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial string SessionId { get; set; } = "";
+    [ObservableProperty] public partial string SessionNo { get; set; } = "";
+    [ObservableProperty] public partial string FundCluster { get; set; } = "";
+    [ObservableProperty] public partial string Scope { get; set; } = "";
+    [ObservableProperty] public partial string Status { get; set; } = "";
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
-    [ObservableProperty] private string _searchText = "";
+    [ObservableProperty] public partial string SearchText { get; set; } = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HeaderTitle))]
-    private string _selectedFilter = "All";
+    public partial string SelectedFilter { get; set; } = "All";
 
     // Deep-link entry point: a tapped count tile passes ?Filter=Found|Missing|@Station so this screen
     // opens straight to that breakdown. Empty (standalone review) keeps the default "All".
-    [ObservableProperty] private string _filter = "";
+    [ObservableProperty] public partial string Filter { get; set; } = "";
 
-    [ObservableProperty] private int _foundCount;
-    [ObservableProperty] private int _missingCount;
-    [ObservableProperty] private int _foundAtStationCount;
-    [ObservableProperty] private int _queuedCount;
+    [ObservableProperty] public partial int FoundCount { get; set; }
+    [ObservableProperty] public partial int MissingCount { get; set; }
+    [ObservableProperty] public partial int FoundAtStationCount { get; set; }
+    [ObservableProperty] public partial int QueuedCount { get; set; }
 
-    [ObservableProperty] private ObservableCollection<EntryGroup> _filteredEntries = [];
+    [ObservableProperty] public partial ObservableCollection<EntryGroup> FilteredEntries { get; set; } = [];
 
     public string[] FilterOptions => ["All", "Found", "Missing", "@Station", "Queued"];
 

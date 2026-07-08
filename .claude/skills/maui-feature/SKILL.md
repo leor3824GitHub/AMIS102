@@ -51,10 +51,10 @@ public sealed partial class {ScreenName}ViewModel : ObservableObject
         _authState = authState;
     }
 
-    [ObservableProperty] private ObservableCollection<{ItemDto}> _items = [];
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private bool _isRefreshing;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial ObservableCollection<{ItemDto}> Items { get; set; } = [];
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial bool IsRefreshing { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     [RelayCommand]
     private async Task LoadAsync(CancellationToken ct)
@@ -106,10 +106,10 @@ public sealed partial class {ScreenName}ViewModel : ObservableObject
 
     public {ScreenName}ViewModel(IApiClient api) => _api = api;
 
-    [ObservableProperty] private string _{paramNameCamel} = "";
-    [ObservableProperty] private {DetailDto}? _detail;
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial string {ParamName} { get; set; } = "";
+    [ObservableProperty] public partial {DetailDto}? Detail { get; set; }
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     partial void On{ParamName}Changed(string value) => _ = LoadAsync();
 

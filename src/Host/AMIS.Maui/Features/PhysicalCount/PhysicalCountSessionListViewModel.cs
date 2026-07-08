@@ -9,22 +9,36 @@ public sealed partial class PhysicalCountSessionListViewModel(
     IApiClient apiClient,
     IPhysicalCountSyncService syncService) : ObservableObject
 {
-    [ObservableProperty] private ObservableCollection<PhysicalCountSessionSummaryDto> _sessions = [];
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SessionCount))]
+    [NotifyPropertyChangedFor(nameof(OngoingCount))]
+    [NotifyPropertyChangedFor(nameof(ShowSkeleton))]
+    public partial ObservableCollection<PhysicalCountSessionSummaryDto> Sessions { get; set; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSkeleton))]
+    public partial bool IsLoading { get; set; }
+
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
+
+    public int SessionCount => Sessions.Count;
+    public int OngoingCount => Sessions.Count(s => s.Status == "Ongoing");
+
+    // First-load skeleton only: once rows exist, RefreshView's own spinner covers reloads.
+    public bool ShowSkeleton => IsLoading && Sessions.Count == 0;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasQueuedWork))]
     [NotifyPropertyChangedFor(nameof(SyncBannerText))]
-    private int _pendingSyncCount;
+    public partial int PendingSyncCount { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasQueuedWork))]
     [NotifyPropertyChangedFor(nameof(HasFailedSync))]
     [NotifyPropertyChangedFor(nameof(SyncBannerText))]
-    private int _failedSyncCount;
+    public partial int FailedSyncCount { get; set; }
 
-    [ObservableProperty] private string? _syncStatusMessage;
+    [ObservableProperty] public partial string? SyncStatusMessage { get; set; }
 
     public bool HasQueuedWork => PendingSyncCount > 0 || FailedSyncCount > 0;
     public bool HasFailedSync => FailedSyncCount > 0;

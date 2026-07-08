@@ -30,57 +30,60 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
     private static readonly string[] ConditionApiValues = ["InGoodCondition", "NeedingRepair", "Unserviceable"];
     public string[] Conditions => ["In Good Condition", "Needing Repair", "Unserviceable"];
 
-    [ObservableProperty] private string _sessionId = "";
-    [ObservableProperty] private string _sessionNo = "";
-    [ObservableProperty] private string _fundCluster = "";
-    [ObservableProperty] private string _scope = "";
+    [ObservableProperty] public partial string SessionId { get; set; } = "";
+    [ObservableProperty] public partial string SessionNo { get; set; } = "";
+    [ObservableProperty] public partial string FundCluster { get; set; } = "";
+    [ObservableProperty] public partial string Scope { get; set; } = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRecord))]
     [NotifyPropertyChangedFor(nameof(ShowStatusLockedNotice))]
-    private string _status = "";
+    public partial string Status { get; set; } = "";
 
-    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] public partial bool IsLoading { get; set; }
 
     // "Counting at" location — required to record (AssetRegister stores where each item was counted).
-    [ObservableProperty] private ObservableCollection<LocationDto> _locations = [];
-    [ObservableProperty] private LocationDto? _selectedLocation;
+    [ObservableProperty] public partial ObservableCollection<LocationDto> Locations { get; set; } = [];
+    [ObservableProperty] public partial LocationDto? SelectedLocation { get; set; }
 
     // Progress chips.
-    [ObservableProperty] private int _foundCount;
-    [ObservableProperty] private int _missingCount;
-    [ObservableProperty] private int _foundAtStationCount;
+    [ObservableProperty] public partial int FoundCount { get; set; }
+    [ObservableProperty] public partial int MissingCount { get; set; }
+    [ObservableProperty] public partial int FoundAtStationCount { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPendingSync))]
-    private int _pendingSyncCount;
+    public partial int PendingSyncCount { get; set; }
 
     public bool HasPendingSync => PendingSyncCount > 0;
 
     // Feedback banner. StatusKind drives the colour ("Success" | "Warning" | "Error").
-    [ObservableProperty] private string? _statusMessage;
-    [ObservableProperty] private string _statusKind = "Success";
+    [ObservableProperty] public partial string? StatusMessage { get; set; }
+    [ObservableProperty] public partial string StatusKind { get; set; } = "Success";
 
     // Recording is only allowed while the session is Ongoing (the server enforces the same).
     public bool CanRecord => string.Equals(Status, "Ongoing", StringComparison.OrdinalIgnoreCase);
     public bool ShowStatusLockedNotice => !string.IsNullOrEmpty(Status) && !CanRecord;
 
     // ----- Confirm sheet state -----
-    [ObservableProperty] private bool _isConfirmSheetOpen;
-    [ObservableProperty] private string _sheetAssetName = "";
-    [ObservableProperty] private string _sheetPropertyNo = "";
-    [ObservableProperty] private string _sheetUnitCostText = "";
-    [ObservableProperty] private string _sheetLocationText = "";
-    [ObservableProperty] private int _selectedConditionIndex;
-    [ObservableProperty] private string _sheetRemarks = "";
-    [ObservableProperty] private bool _isSaving;
+    [ObservableProperty] public partial bool IsConfirmSheetOpen { get; set; }
+    [ObservableProperty] public partial string SheetAssetName { get; set; } = "";
+    [ObservableProperty] public partial string SheetPropertyNo { get; set; } = "";
+    [ObservableProperty] public partial string SheetUnitCostText { get; set; } = "";
+    [ObservableProperty] public partial string SheetLocationText { get; set; } = "";
+    [ObservableProperty] public partial int SelectedConditionIndex { get; set; }
+    [ObservableProperty] public partial string SheetRemarks { get; set; } = "";
+    [ObservableProperty] public partial bool IsSaving { get; set; }
+
+    private readonly IFeedbackService _feedback;
 
     public PhysicalCountScanViewModel(
-        IApiClient apiClient, IPhysicalCountSyncService syncService, IOcrService ocr)
+        IApiClient apiClient, IPhysicalCountSyncService syncService, IOcrService ocr, IFeedbackService feedback)
         : base(apiClient, ocr)
     {
         _apiClient = apiClient;
         _syncService = syncService;
+        _feedback = feedback;
         // The shared capture base reports serial-search / camera / OCR failures via ErrorMessage;
         // surface those in the on-screen feedback banner too (the page only binds StatusMessage).
         PropertyChanged += (_, e) =>
@@ -293,12 +296,14 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
             switch (result.Status)
             {
                 case RecordSaveStatus.SavedToServer:
+                    _feedback.Success();
                     CloseSheet(asset.PropertyNo);
                     SetStatus("Success", $"✓ Added {asset.PropertyNo} · {SheetAssetName}");
                     await LoadAsync(ct);
                     break;
 
                 case RecordSaveStatus.QueuedOffline:
+                    _feedback.Success();
                     CloseSheet(asset.PropertyNo);
                     // Reflect the add immediately so the operator sees progress even offline.
                     FoundCount++;

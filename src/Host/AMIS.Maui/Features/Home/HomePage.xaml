@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.Home"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              x:DataType="vm:HomeViewModel"
              x:Class="AMIS.Maui.Features.Home.HomePage"
              Title="Home"
@@ -116,14 +117,15 @@
                             <Border Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="Transparent"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
                                     WidthRequest="{StaticResource ActionIconBox}" HeightRequest="{StaticResource ActionIconBox}">
-                                <Image Source="scan.png" WidthRequest="22" HeightRequest="22"
+                                <Label Text="{x:Static helpers:MaterialIcons.QrCodeScanner}" FontFamily="MaterialSymbols"
+                                       FontSize="22" TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
                                        HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                 <Label Text="Scan Asset" FontFamily="InterSemiBold" FontSize="15" />
                                 <Label Text="Look up by QR or property no." Style="{StaticResource CaptionStyle}" />
                             </VerticalStackLayout>
-                            <Label Grid.Column="2" Text="›" FontSize="22" TextColor="{StaticResource Gray300}" VerticalOptions="Center" />
+                            <Label Grid.Column="2" Style="{StaticResource ChevronIconStyle}" FontSize="22" VerticalOptions="Center" />
                         </Grid>
 
                         <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" Margin="16,0" />
@@ -136,14 +138,15 @@
                             <Border Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="Transparent"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource TealLight}, Dark={StaticResource Tertiary}}"
                                     WidthRequest="{StaticResource ActionIconBox}" HeightRequest="{StaticResource ActionIconBox}">
-                                <Image Source="scan.png" WidthRequest="22" HeightRequest="22"
+                                <Label Text="{x:Static helpers:MaterialIcons.Checklist}" FontFamily="MaterialSymbols"
+                                       FontSize="22" TextColor="{AppThemeBinding Light={StaticResource Teal}, Dark={StaticResource White}}"
                                        HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                 <Label Text="Physical Count" FontFamily="InterSemiBold" FontSize="15" />
                                 <Label Text="Record assets as you go" Style="{StaticResource CaptionStyle}" />
                             </VerticalStackLayout>
-                            <Label Grid.Column="2" Text="›" FontSize="22" TextColor="{StaticResource Gray300}" VerticalOptions="Center" />
+                            <Label Grid.Column="2" Style="{StaticResource ChevronIconStyle}" FontSize="22" VerticalOptions="Center" />
                         </Grid>
 
                         <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray600}}" Margin="16,0" />
@@ -156,14 +159,15 @@
                             <Border Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="Transparent"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource InfoLight}, Dark={StaticResource Tertiary}}"
                                     WidthRequest="{StaticResource ActionIconBox}" HeightRequest="{StaticResource ActionIconBox}">
-                                <Image Source="inventory.png" WidthRequest="22" HeightRequest="22"
+                                <Label Text="{x:Static helpers:MaterialIcons.Inventory}" FontFamily="MaterialSymbols"
+                                       FontSize="22" TextColor="{AppThemeBinding Light={StaticResource Info}, Dark={StaticResource White}}"
                                        HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                 <Label Text="My Inventory" FontFamily="InterSemiBold" FontSize="15" />
                                 <Label Text="ICS &amp; PAR assigned to you" Style="{StaticResource CaptionStyle}" />
                             </VerticalStackLayout>
-                            <Label Grid.Column="2" Text="›" FontSize="22" TextColor="{StaticResource Gray300}" VerticalOptions="Center" />
+                            <Label Grid.Column="2" Style="{StaticResource ChevronIconStyle}" FontSize="22" VerticalOptions="Center" />
                         </Grid>
 
                     </VerticalStackLayout>
@@ -185,7 +189,7 @@
                                 <Label Text="Count session" Style="{StaticResource CaptionStyle}" />
                                 <Label Text="{Binding ActiveSessionNo}" FontFamily="InterSemiBold" FontSize="16" />
                             </VerticalStackLayout>
-                            <Label Grid.Column="1" Text="›" FontSize="22" TextColor="{StaticResource Gray300}" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Style="{StaticResource ChevronIconStyle}" FontSize="22" VerticalOptions="Center" />
                         </Grid>
                         <Grid ColumnDefinitions="*,Auto">
                             <Label Grid.Column="0" Text="{Binding ActiveSessionProgressLabel}" Style="{StaticResource CaptionStyle}" />
@@ -226,7 +230,7 @@
                                         <Label Text="{Binding Kind}" FontFamily="InterSemiBold" FontSize="10"
                                                TextColor="{Binding Kind, Converter={StaticResource KindToColorConverter}, ConverterParameter=text}" />
                                     </Border>
-                                    <Label Grid.Row="0" Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource Gray300}" VerticalOptions="Center" />
+                                    <Label Grid.Row="0" Grid.Column="2" Style="{StaticResource ChevronIconStyle}" FontSize="20" VerticalOptions="Center" />
                                     <Label Grid.Row="1" Grid.Column="0" Text="{Binding Subtitle}" Style="{StaticResource CaptionStyle}" />
                                     <Label Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                            Text="{Binding ItemCount, StringFormat='{0} items'}"

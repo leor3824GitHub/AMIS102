@@ -24,9 +24,14 @@ All screens follow **CommunityToolkit.Mvvm** source-generated MVVM. Never use co
 ### ViewModel Rules
 
 ```csharp
-// ✅ Correct
-[ObservableProperty] private string _email = "";
-[ObservableProperty] private bool _isLoading;
+// ✅ Correct — [ObservableProperty] on a PARTIAL PROPERTY (not a field)
+[ObservableProperty] public partial string Email { get; set; } = "";
+[ObservableProperty] public partial bool IsLoading { get; set; }
+
+// ✅ Attributes like [NotifyPropertyChangedFor] move verbatim onto the property
+[ObservableProperty]
+[NotifyPropertyChangedFor(nameof(CanAccept))]
+public partial ICSDetailDto? Detail { get; set; }
 
 [RelayCommand]
 private async Task LoginAsync(CancellationToken ct)
@@ -35,6 +40,11 @@ private async Task LoginAsync(CancellationToken ct)
     try { /* call API */ }
     finally { IsLoading = false; }
 }
+
+// ❌ Wrong — [ObservableProperty] on a FIELD. Triggers analyzer MVVMTK0045:
+// the generated code isn't AOT/WinRT-marshalling-safe on the Windows (WinUI 3) target,
+// and the repo's zero-warnings gate fails.
+[ObservableProperty] private string _email = "";
 
 // ❌ Wrong — no source generation, manual INotifyPropertyChanged
 public string Email
@@ -47,7 +57,7 @@ public string Email
 | Rule                                  | Detail                                                        |
 | ------------------------------------- | ------------------------------------------------------------- |
 | ViewModels are `sealed partial class` | Required for source generator                                 |
-| Properties use `[ObservableProperty]` | Generates `Email`, `IsLoading`, etc.                          |
+| `[ObservableProperty]` on a **`public partial` property**, never a field | Field form triggers **MVVMTK0045** (WinRT AOT) → breaks the zero-warnings build. Put initializers on the property: `public partial string Email { get; set; } = "";` |
 | Commands use `[RelayCommand]`         | Generates `LoginCommand`, `LoginCommand.CanExecute`           |
 | CancellationToken on async commands   | Pass `CancellationToken ct` to async relay commands           |
 | ViewModels injected via DI            | Registered in `MauiProgram.cs`; constructor-injected in pages |
@@ -190,7 +200,7 @@ await Shell.Current.GoToAsync($"{nameof(AssetDetailPage)}?PropertyNo={Uri.Escape
 [QueryProperty(nameof(Id), "Id")]
 public sealed partial class ICSDetailViewModel : ObservableObject
 {
-    [ObservableProperty] private string _id = "";
+    [ObservableProperty] public partial string Id { get; set; } = "";
     partial void OnIdChanged(string value) => _ = LoadAsync();
 }
 
@@ -260,8 +270,8 @@ var propertyNo = rawValue.Trim().ToUpperInvariant();
 
 ```csharp
 // ✅ Correct pattern
-[ObservableProperty] private string? _errorMessage;
-[ObservableProperty] private bool _isLoading;
+[ObservableProperty] public partial string? ErrorMessage { get; set; }
+[ObservableProperty] public partial bool IsLoading { get; set; }
 
 [RelayCommand]
 private async Task LoadAsync(CancellationToken ct)

@@ -9,15 +9,15 @@ public sealed partial class InventoryViewModel(
     IApiClient apiClient,
     AuthStateService authState) : ObservableObject
 {
-    [ObservableProperty] private ObservableCollection<InventoryGroup> _groups = [];
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial ObservableCollection<InventoryGroup> Groups { get; set; } = [];
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     // Header hero — custodian identity + accountability totals shown on the gradient panel.
-    [ObservableProperty] private string _employeeName = "";
-    [ObservableProperty] private string? _employeeDetail;
-    [ObservableProperty] private int _icsCount;
-    [ObservableProperty] private int _parCount;
+    [ObservableProperty] public partial string EmployeeName { get; set; } = "";
+    [ObservableProperty] public partial string? EmployeeDetail { get; set; }
+    [ObservableProperty] public partial int IcsCount { get; set; }
+    [ObservableProperty] public partial int ParCount { get; set; }
 
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)

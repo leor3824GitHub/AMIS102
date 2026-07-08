@@ -29,6 +29,7 @@ public static class MauiProgram
                 fonts.AddFont("Inter-Regular.ttf", "InterRegular");
                 fonts.AddFont("Inter-SemiBold.ttf", "InterSemiBold");
                 fonts.AddFont("Inter-Bold.ttf", "InterBold");
+                fonts.AddFont("MaterialSymbolsOutlined.ttf", "MaterialSymbols");
             });
 
         // Configuration: embedded appsettings.json (dev defaults), appsettings.Production.json
@@ -87,6 +88,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<LocalDb>();
         builder.Services.AddSingleton<ITokenStorageService, TokenStorageService>();
         builder.Services.AddSingleton<IOcrService, OcrService>();
+        builder.Services.AddSingleton<IFeedbackService, FeedbackService>();
         builder.Services.AddSingleton<ChatHubService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 

@@ -25,29 +25,29 @@ public sealed partial class HomeViewModel(
     AuthStateService authState,
     IPhysicalCountSyncService syncService) : ObservableObject
 {
-    [ObservableProperty] private string _greeting = "Welcome";
-    [ObservableProperty] private string _firstName = "";
-    [ObservableProperty] private string? _department;
-    [ObservableProperty] private string _initials = "?";
+    [ObservableProperty] public partial string Greeting { get; set; } = "Welcome";
+    [ObservableProperty] public partial string FirstName { get; set; } = "";
+    [ObservableProperty] public partial string? Department { get; set; }
+    [ObservableProperty] public partial string Initials { get; set; } = "?";
 
-    [ObservableProperty] private int _icsCount;
-    [ObservableProperty] private int _parCount;
-    [ObservableProperty] private int _icsItemCount;
-    [ObservableProperty] private int _parItemCount;
+    [ObservableProperty] public partial int IcsCount { get; set; }
+    [ObservableProperty] public partial int ParCount { get; set; }
+    [ObservableProperty] public partial int IcsItemCount { get; set; }
+    [ObservableProperty] public partial int ParItemCount { get; set; }
 
-    [ObservableProperty] private int _activeSessionCount;
-    [ObservableProperty] private bool _hasActiveSession;
-    [ObservableProperty] private PhysicalCountSessionSummaryDto? _activeSession;
-    [ObservableProperty] private string _activeSessionNo = "";
-    [ObservableProperty] private string _activeSessionProgressLabel = "";
-    [ObservableProperty] private int _pendingSyncCount;
-    [ObservableProperty] private bool _hasPendingSync;
+    [ObservableProperty] public partial int ActiveSessionCount { get; set; }
+    [ObservableProperty] public partial bool HasActiveSession { get; set; }
+    [ObservableProperty] public partial PhysicalCountSessionSummaryDto? ActiveSession { get; set; }
+    [ObservableProperty] public partial string ActiveSessionNo { get; set; } = "";
+    [ObservableProperty] public partial string ActiveSessionProgressLabel { get; set; } = "";
+    [ObservableProperty] public partial int PendingSyncCount { get; set; }
+    [ObservableProperty] public partial bool HasPendingSync { get; set; }
 
-    [ObservableProperty] private ObservableCollection<RecentItem> _recentItems = [];
-    [ObservableProperty] private bool _hasRecent;
+    [ObservableProperty] public partial ObservableCollection<RecentItem> RecentItems { get; set; } = [];
+    [ObservableProperty] public partial bool HasRecent { get; set; }
 
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     partial void OnActiveSessionCountChanged(int value) => HasActiveSession = value > 0;
     partial void OnPendingSyncCountChanged(int value) => HasPendingSync = value > 0;

@@ -3,6 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
              xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
+             xmlns:beh="clr-namespace:AMIS.Maui.Behaviors"
              x:DataType="vm:PhysicalCountEntriesViewModel"
              x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountEntriesPage"
              Title="{Binding HeaderTitle}"
@@ -13,48 +16,59 @@
     </ContentPage.ToolbarItems>
 
     <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+        <Grid RowDefinitions="Auto,Auto,Auto,*">
 
-            <!-- Session header -->
-            <Border Grid.Row="0"
-                    Stroke="Transparent"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
-                    Padding="16,14,16,12">
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="{Binding SessionNo}" FontFamily="InterSemiBold" FontSize="16" />
-                    <Label Text="{Binding FundCluster}" FontSize="13" TextColor="{StaticResource Gray500}" />
-                    <Label FontSize="12" TextColor="{StaticResource Gray500}">
-                        <Label.Text>
-                            <MultiBinding StringFormat="{}{0}  ·  {1}">
-                                <Binding Path="Scope" />
-                                <Binding Path="Status" />
-                            </MultiBinding>
-                        </Label.Text>
-                    </Label>
+            <!-- ── Hero: session identity + count breakdown chips ── -->
+            <Border Grid.Row="0" Style="{StaticResource HeroBorderStyle}" Padding="{StaticResource HeroPaddingUnderNavBar}">
+                <Border.Behaviors>
+                    <beh:EntranceAnimationBehavior />
+                </Border.Behaviors>
+                <VerticalStackLayout Spacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{Binding SessionNo}" TextColor="{StaticResource White}"
+                               FontFamily="InterBold" FontSize="20" />
+                        <Label TextColor="{StaticResource OnGradientMuted}" FontSize="12">
+                            <Label.Text>
+                                <MultiBinding StringFormat="{}{0}  ·  {1}  ·  {2}">
+                                    <Binding Path="FundCluster" />
+                                    <Binding Path="Scope" />
+                                    <Binding Path="Status" />
+                                </MultiBinding>
+                            </Label.Text>
+                        </Label>
+                    </VerticalStackLayout>
+
+                    <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                        <Border Style="{StaticResource HeroChipStyle}" Margin="0,0,8,8">
+                            <Label Text="{Binding FoundCount, StringFormat='{0} found'}"
+                                   TextColor="{StaticResource White}" FontFamily="InterSemiBold" FontSize="12" />
+                        </Border>
+                        <Border Style="{StaticResource HeroChipStyle}" Margin="0,0,8,8">
+                            <Label Text="{Binding MissingCount, StringFormat='{0} missing'}"
+                                   TextColor="{StaticResource White}" FontFamily="InterSemiBold" FontSize="12" />
+                        </Border>
+                        <Border Style="{StaticResource HeroChipStyle}" Margin="0,0,8,8">
+                            <Label Text="{Binding FoundAtStationCount, StringFormat='{0} new'}"
+                                   TextColor="{StaticResource White}" FontFamily="InterSemiBold" FontSize="12" />
+                        </Border>
+                        <Border Style="{StaticResource HeroChipStyle}" Margin="0,0,8,8"
+                                IsVisible="{Binding QueuedCount, Converter={StaticResource IsNotZeroConverter}}">
+                            <Label Text="{Binding QueuedCount, StringFormat='{0} queued'}"
+                                   TextColor="{StaticResource White}" FontFamily="InterSemiBold" FontSize="12" />
+                        </Border>
+                    </FlexLayout>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Count summary line -->
-            <Label Grid.Row="1" Margin="16,10,16,4" FontSize="12" TextColor="{StaticResource Gray500}">
-                <Label.Text>
-                    <MultiBinding StringFormat="{}{0} found · {1} missing · {2} new · {3} queued">
-                        <Binding Path="FoundCount" />
-                        <Binding Path="MissingCount" />
-                        <Binding Path="FoundAtStationCount" />
-                        <Binding Path="QueuedCount" />
-                    </MultiBinding>
-                </Label.Text>
-            </Label>
-
             <!-- Error -->
-            <Label Grid.Row="2"
+            <Label Grid.Row="1"
                    Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Danger}" FontSize="13"
-                   Margin="16,0,16,8" />
+                   Margin="16,10,16,0" />
 
             <!-- Filter + search -->
-            <Grid Grid.Row="3" Padding="12,4,12,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+            <Grid Grid.Row="2" Padding="12,10,12,8" ColumnDefinitions="Auto,*" ColumnSpacing="8">
                 <Picker Grid.Column="0"
                         ItemsSource="{Binding FilterOptions}"
                         SelectedItem="{Binding SelectedFilter}"
@@ -65,10 +79,14 @@
             </Grid>
 
             <!-- Entries list — grouped per SE / PPE -->
-            <CollectionView Grid.Row="4"
+            <CollectionView Grid.Row="3"
                             ItemsSource="{Binding FilteredEntries}"
-                            IsGrouped="True"
-                            EmptyView="No entries match the current filter.">
+                            IsGrouped="True">
+                <CollectionView.EmptyView>
+                    <ctl:EmptyStateView Glyph="{x:Static helpers:MaterialIcons.FactCheck}"
+                                        Title="No matching entries"
+                                        Hint="Adjust the filter or search to see recorded entries." />
+                </CollectionView.EmptyView>
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate x:DataType="vm:EntryGroup">
                         <Grid Padding="16,12,16,6" ColumnDefinitions="*,Auto"
@@ -86,47 +104,22 @@
                 </CollectionView.GroupHeaderTemplate>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="svc:PhysicalCountEntryDto">
-                        <Border Stroke="Transparent"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                        <Border Style="{StaticResource CardBorderStyle}"
                                 Margin="12,4" Padding="14,12">
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="4">
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding PropertyNumber}"
-                                       FontAttributes="Bold" FontSize="14" />
-                                <Border Grid.Row="0" Grid.Column="1"
-                                        Stroke="Transparent"
-                                        StrokeShape="RoundRectangle 10"
-                                        BackgroundColor="{StaticResource Gray400}"
-                                        Padding="8,3">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="Found">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="NotFound">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Danger}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Result}" Value="FoundAtStation">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label FontSize="10" FontAttributes="Bold" TextColor="White"
-                                           Text="{Binding Result, TargetNullValue='Pending'}">
-                                        <Label.Triggers>
-                                            <DataTrigger TargetType="Label" Binding="{Binding Result}" Value="NotFound">
-                                                <Setter Property="Text" Value="Missing" />
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="Label" Binding="{Binding Result}" Value="FoundAtStation">
-                                                <Setter Property="Text" Value="@Station" />
-                                            </DataTrigger>
-                                        </Label.Triggers>
-                                    </Label>
-                                </Border>
-                                    <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                        Text="{Binding Description}"
-                                        FontSize="12"
-                                        TextColor="{StaticResource Gray500}"
-                                        LineBreakMode="TailTruncation" />
+                                       FontFamily="InterSemiBold" FontSize="14" />
+                                <ctl:StatusPill Grid.Row="0" Grid.Column="1"
+                                                Text="{Binding Result, Converter={StaticResource EntryResultLabelConverter}}"
+                                                PillBackground="{Binding Result, Converter={StaticResource EntryResultColorConverter}}"
+                                                PillTextColor="{StaticResource White}"
+                                                FontSize="10" />
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding Description}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource Gray500}"
+                                       LineBreakMode="TailTruncation" />
                             </Grid>
                         </Border>
                     </DataTemplate>

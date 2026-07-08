@@ -3,6 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.Inventory"
              xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              x:DataType="vm:InventoryViewModel"
              x:Class="AMIS.Maui.Features.Inventory.InventoryPage"
              Title="My Inventory"
@@ -140,8 +142,12 @@
         <RefreshView Grid.Row="2" IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
             <CollectionView ItemsSource="{Binding Groups}"
                             IsGrouped="True"
-                            ItemTemplate="{StaticResource InventoryItemTemplateSelector}"
-                            EmptyView="No inventory records found.">
+                            ItemTemplate="{StaticResource InventoryItemTemplateSelector}">
+                <CollectionView.EmptyView>
+                    <ctl:EmptyStateView Glyph="{x:Static helpers:MaterialIcons.Inventory}"
+                                        Title="No inventory records"
+                                        Hint="ICS and PAR assigned to you appear here. Pull down to refresh." />
+                </CollectionView.EmptyView>
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate x:DataType="vm:InventoryGroup">
                         <Label Text="{Binding Title}"

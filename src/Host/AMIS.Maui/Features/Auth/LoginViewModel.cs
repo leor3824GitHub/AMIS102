@@ -10,12 +10,12 @@ public sealed partial class LoginViewModel(
     AuthStateService authState,
     ApiClientOptions apiOptions) : ObservableObject
 {
-    [ObservableProperty] private string _tenant = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, "root");
-    [ObservableProperty] private string _email = "admin@root.com";
-    [ObservableProperty] private string _password = "123Pa$$word!";
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private bool _isPasswordVisible;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial string Tenant { get; set; } = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, "root");
+    [ObservableProperty] public partial string Email { get; set; } = "admin@root.com";
+    [ObservableProperty] public partial string Password { get; set; } = "123Pa$$word!";
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial bool IsPasswordVisible { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     [RelayCommand]
     private void TogglePasswordVisibility() => IsPasswordVisible = !IsPasswordVisible;

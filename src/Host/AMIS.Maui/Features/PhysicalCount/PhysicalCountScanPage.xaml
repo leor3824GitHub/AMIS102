@@ -4,6 +4,7 @@
              xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              x:Name="ThisPage"
              x:DataType="vm:PhysicalCountScanViewModel"
              x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountScanPage"
@@ -60,7 +61,8 @@
                 <VerticalStackLayout IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
                                      HorizontalOptions="Center" VerticalOptions="Center"
                                      Spacing="6" Padding="16">
-                    <Label Text="&#x1F4F7;" FontSize="34" HorizontalOptions="Center" />
+                    <Label Text="{x:Static helpers:MaterialIcons.PhotoCamera}" FontFamily="MaterialSymbols"
+                           FontSize="38" TextColor="{StaticResource Gray400}" HorizontalOptions="Center" />
                           <Label Text="Camera not available — use manual entry below."
                               FontSize="13" TextColor="{StaticResource Gray500}"
                            HorizontalOptions="Center" HorizontalTextAlignment="Center" />
@@ -181,43 +183,53 @@
                 </Label>
             </Border>
 
-            <!-- Row 4: Progress tiles (tap → SE/PPE breakdown) + hint -->
+            <!-- Row 4: Progress tiles (tap → SE/PPE breakdown) + hint. Soft-tinted cards with a colored
+                 accent glyph — reads as one family with the rest of the app instead of solid blocks. -->
             <VerticalStackLayout Grid.Row="4" Padding="12,10" Spacing="6">
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                     <Border Grid.Column="0"
-                            Stroke="Transparent" StrokeShape="RoundRectangle 10"
-                            BackgroundColor="{StaticResource Success}" Padding="8,8">
+                            Stroke="Transparent" StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{StaticResource SuccessLight}" Padding="8,10">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ShowBreakdownCommand}" CommandParameter="Found" />
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                            <Label Text="{Binding FoundCount}" TextColor="White" FontAttributes="Bold"
-                                   HorizontalOptions="Center" FontSize="18" />
-                            <Label Text="Found" TextColor="White" FontSize="10" HorizontalOptions="Center" />
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="1">
+                            <Label Text="{x:Static helpers:MaterialIcons.TaskAlt}" FontFamily="MaterialSymbols"
+                                   FontSize="16" TextColor="{StaticResource Success}" HorizontalOptions="Center" />
+                            <Label Text="{Binding FoundCount}" TextColor="{StaticResource Success}" FontFamily="InterBold"
+                                   HorizontalOptions="Center" FontSize="20" />
+                            <Label Text="Found" TextColor="{StaticResource Success}" FontSize="10"
+                                   FontFamily="InterSemiBold" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Column="1"
-                            Stroke="Transparent" StrokeShape="RoundRectangle 10"
-                            BackgroundColor="{StaticResource Danger}" Padding="8,8">
+                            Stroke="Transparent" StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{StaticResource DangerLight}" Padding="8,10">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ShowBreakdownCommand}" CommandParameter="Missing" />
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                            <Label Text="{Binding MissingCount}" TextColor="White" FontAttributes="Bold"
-                                   HorizontalOptions="Center" FontSize="18" />
-                            <Label Text="Missing" TextColor="White" FontSize="10" HorizontalOptions="Center" />
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="1">
+                            <Label Text="{x:Static helpers:MaterialIcons.Error}" FontFamily="MaterialSymbols"
+                                   FontSize="16" TextColor="{StaticResource Danger}" HorizontalOptions="Center" />
+                            <Label Text="{Binding MissingCount}" TextColor="{StaticResource Danger}" FontFamily="InterBold"
+                                   HorizontalOptions="Center" FontSize="20" />
+                            <Label Text="Missing" TextColor="{StaticResource Danger}" FontSize="10"
+                                   FontFamily="InterSemiBold" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
                     <Border Grid.Column="2"
-                            Stroke="Transparent" StrokeShape="RoundRectangle 10"
-                            BackgroundColor="{StaticResource Primary}" Padding="8,8">
+                            Stroke="Transparent" StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{StaticResource PrimaryLight}" Padding="8,10">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ShowBreakdownCommand}" CommandParameter="@Station" />
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
-                            <Label Text="{Binding FoundAtStationCount}" TextColor="White" FontAttributes="Bold"
-                                   HorizontalOptions="Center" FontSize="18" />
-                            <Label Text="@Station" TextColor="White" FontSize="10" HorizontalOptions="Center" />
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="1">
+                            <Label Text="{x:Static helpers:MaterialIcons.LocationOn}" FontFamily="MaterialSymbols"
+                                   FontSize="16" TextColor="{StaticResource Primary}" HorizontalOptions="Center" />
+                            <Label Text="{Binding FoundAtStationCount}" TextColor="{StaticResource Primary}" FontFamily="InterBold"
+                                   HorizontalOptions="Center" FontSize="20" />
+                            <Label Text="@Station" TextColor="{StaticResource Primary}" FontSize="10"
+                                   FontFamily="InterSemiBold" HorizontalOptions="Center" />
                         </VerticalStackLayout>
                     </Border>
                 </Grid>
@@ -256,9 +268,14 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
                     Padding="20,18,20,24">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="20,20,0,0" />
+                    <RoundRectangle CornerRadius="24,24,0,0" />
                 </Border.StrokeShape>
                 <VerticalStackLayout Spacing="12">
+                    <!-- Drag handle -->
+                    <Border WidthRequest="40" HeightRequest="4"
+                            Stroke="Transparent" StrokeShape="RoundRectangle 2"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            HorizontalOptions="Center" Margin="0,0,0,2" />
                     <Label Text="Add to count" Style="{StaticResource SectionHeaderStyle}" Margin="0" />
 
                     <VerticalStackLayout Spacing="2">

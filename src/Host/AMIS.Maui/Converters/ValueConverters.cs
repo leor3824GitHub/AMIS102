@@ -191,6 +191,175 @@ public sealed class AssetImageSourceConverter : IValueConverter
 }
 
 /// <summary>
+/// Maps a message's "is mine" flag to a horizontal alignment so sent bubbles hug the right and
+/// received bubbles hug the left. true → End, false → Start.
+/// </summary>
+public sealed class BoolToLayoutOptionsConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is true ? LayoutOptions.End : LayoutOptions.Start;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Theme-aware bubble colors for the chat conversation, keyed off the message's "is mine" flag.
+/// A DataTrigger can't override an AppThemeBinding base in MAUI, so colors are resolved here instead.
+/// ConverterParameter <c>bg</c> → bubble background (mine=Primary, theirs=card surface);
+/// <c>text</c> → body text color (mine=white, theirs=primary text). Reads the current theme so both
+/// modes look right (rebuilt on reload; live theme-toggle mid-scroll is not a target case).
+/// </summary>
+public sealed class ChatBubbleColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var mine = value is true;
+        var wantText = string.Equals(parameter as string, "text", StringComparison.OrdinalIgnoreCase);
+        var dark = Application.Current?.RequestedTheme == AppTheme.Dark;
+
+        var key = (wantText, mine, dark) switch
+        {
+            (true, true, _) => "White",
+            (true, false, true) => "White",
+            (true, false, false) => "PrimaryText",
+            (false, true, true) => "PrimaryDark",
+            (false, true, false) => "Primary",
+            (false, false, true) => "Gray950",
+            (false, false, false) => "White",
+        };
+
+        return Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Transparent;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Extracts up to two uppercase initials from a name for avatar circles. "Supply Office" → "SO",
+/// "Juan dela Cruz" → "JC", single word → its first letter. Blank input → "?".
+/// </summary>
+public sealed class InitialsConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var s = (value as string)?.Trim();
+        if (string.IsNullOrEmpty(s))
+            return "?";
+
+        var parts = s.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+            return parts[0][..1].ToUpperInvariant();
+
+        return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Maps a physical-count entry Result to a solid badge color (white text on top).
+/// Found→Success, NotFound→Danger, FoundAtStation→Primary, Queued→Info, else→Gray400.
+/// </summary>
+public sealed class EntryResultColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var key = (value as string)?.Trim() switch
+        {
+            "Found" => "Success",
+            "NotFound" => "Danger",
+            "FoundAtStation" => "Primary",
+            "Queued" => "Info",
+            _ => "Gray400",
+        };
+
+        return Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Gray;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Maps a physical-count entry Result to a short display label:
+/// NotFound→"Missing", FoundAtStation→"@Station", null/empty→"Pending", else the value as-is.
+/// </summary>
+public sealed class EntryResultLabelConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        (value as string)?.Trim() switch
+        {
+            "NotFound" => "Missing",
+            "FoundAtStation" => "@Station",
+            null or "" => "Pending",
+            var s => s,
+        };
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Maps a physical-count session status to a solid badge color (white text sits on top).
+/// Ongoing→Warning, Reconciled→Primary, Closed/Reconciled(final)→Success, anything else→Gray400.
+/// Replaces per-badge DataTriggers so the color is a single binding.
+/// </summary>
+public sealed class CountStatusColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var key = (value as string)?.Trim() switch
+        {
+            "Ongoing" => "Warning",
+            "Reconciled" => "Primary",
+            "Closed" => "Success",
+            _ => "Gray400",
+        };
+
+        return Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Gray;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// Deterministically maps a name/string to one of a fixed set of avatar-circle background colors,
+/// so a channel or person always gets the same color without storing one. Hashes the trimmed,
+/// lower-cased string and indexes into the semantic palette. Returns a mid-tone color intended to
+/// carry white initials on top.
+/// </summary>
+public sealed class NameToColorConverter : IValueConverter
+{
+    private static readonly string[] Palette =
+        ["Primary", "Teal", "Info", "Success", "Tertiary", "Magenta"];
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var s = (value as string)?.Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(s))
+            return Resource("Primary");
+
+        // Stable, framework-independent hash (string.GetHashCode is randomized per run).
+        var hash = 0;
+        foreach (var c in s)
+            hash = unchecked((hash * 31) + c);
+
+        var key = Palette[Math.Abs(hash) % Palette.Length];
+        return Resource(key);
+    }
+
+    private static object Resource(string key) =>
+        Application.Current?.Resources.TryGetValue(key, out var color) == true ? color : Colors.Gray;
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
 /// Maps a document kind or asset type to a chip color drawn from app resources.
 /// Document kinds: "ICS" (primary) / "PAR" (teal). Asset types: "PPE" (info/blue) / "SE" (teal) —
 /// used to tint the checklist thumbnail so PPE and SE items read apart at a glance.

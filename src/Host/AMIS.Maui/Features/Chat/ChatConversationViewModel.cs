@@ -31,16 +31,16 @@ public sealed partial class ChatConversationViewModel : ObservableObject
     /// <summary>Raised when the view should scroll to the newest message (initial load + new arrivals).</summary>
     public event Action? ScrollToBottomRequested;
 
-    [ObservableProperty] private string _channelId = "";
-    [ObservableProperty] private string _title = "Chat";
-    [ObservableProperty] private ObservableCollection<ChatMessageItem> _messages = [];
-    [ObservableProperty] private string _draft = "";
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private bool _isLoadingOlder;
-    [ObservableProperty] private bool _isSending;
-    [ObservableProperty] private bool _someoneTyping;
-    [ObservableProperty] private bool _hasMore;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial string ChannelId { get; set; } = "";
+    [ObservableProperty] public partial string Title { get; set; } = "Chat";
+    [ObservableProperty] public partial ObservableCollection<ChatMessageItem> Messages { get; set; } = [];
+    [ObservableProperty] public partial string Draft { get; set; } = "";
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial bool IsLoadingOlder { get; set; }
+    [ObservableProperty] public partial bool IsSending { get; set; }
+    [ObservableProperty] public partial bool SomeoneTyping { get; set; }
+    [ObservableProperty] public partial bool HasMore { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     private string? CurrentUserId => _authState.UserProfile?.UserId;
 

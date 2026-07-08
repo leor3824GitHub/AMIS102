@@ -13,22 +13,22 @@ public abstract partial class PropertyCaptureViewModel : ObservableObject
     private readonly IApiClient _api;
     private readonly IOcrService _ocr;
 
-    [ObservableProperty] private string _manualPropertyNo = "";
+    [ObservableProperty] public partial string ManualPropertyNo { get; set; } = "";
 
     // Manual-entry mode: false = look up by property number (default), true = search by serial number.
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SearchPlaceholder))]
-    private bool _searchBySerial;
+    public partial bool SearchBySerial { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBarcodeMode))]
-    private bool _isCameraAvailable;
+    public partial bool IsCameraAvailable { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBarcodeMode))]
-    private bool _isTextMode;
+    public partial bool IsTextMode { get; set; }
 
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     // Barcode/OCR readers fire continuously; these gate the flood.
     private DateTimeOffset? _lastScanTime;

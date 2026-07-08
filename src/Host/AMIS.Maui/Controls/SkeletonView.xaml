@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             x:Class="AMIS.Maui.Controls.SkeletonView"
+             x:DataType="ctl:SkeletonView">
+
+    <!-- Placeholder rows are generated in code-behind from RowCount; the whole stack pulses
+         opacity while visible (opacity-only = cheap on low-end Android, no shimmer gradient). -->
+    <VerticalStackLayout x:Name="RowsHost" Spacing="10" Padding="16,12" />
+</ContentView>

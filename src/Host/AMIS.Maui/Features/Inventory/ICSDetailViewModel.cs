@@ -5,16 +5,16 @@ using AMIS.Maui.Services;
 namespace AMIS.Maui.Features.Inventory;
 
 [QueryProperty(nameof(Id), "Id")]
-public sealed partial class ICSDetailViewModel(IApiClient apiClient) : ObservableObject
+public sealed partial class ICSDetailViewModel(IApiClient apiClient, IFeedbackService feedback) : ObservableObject
 {
-    [ObservableProperty] private string _id = "";
+    [ObservableProperty] public partial string Id { get; set; } = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanAccept))]
-    private ICSDetailDto? _detail;
+    public partial ICSDetailDto? Detail { get; set; }
 
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     // The Accept action is offered only while the document awaits the accountable person's
     // acknowledgement; once Active it's hidden.
@@ -58,7 +58,8 @@ public sealed partial class ICSDetailViewModel(IApiClient apiClient) : Observabl
         try
         {
             await apiClient.AcceptAccountabilityAsync(guid, ct);
-            await Shell.Current.DisplayAlert("Accepted", "The ICS is now active.", "OK");
+            feedback.Success();
+            await feedback.ShowToastAsync("ICS accepted — now active.");
             Detail = await apiClient.GetICSByIdAsync(guid, ct);
         }
         catch (OperationCanceledException) { }

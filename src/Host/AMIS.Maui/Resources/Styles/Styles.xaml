@@ -13,6 +13,13 @@
     <converters:BoolToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="BoolToColorConverter" />
     <converters:ImageUrlToSourceConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="ImageUrlToSourceConverter" />
     <converters:AssetImageSourceConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="AssetImageSourceConverter" />
+    <converters:NameToColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="NameToColorConverter" />
+    <converters:CountStatusColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="CountStatusColorConverter" />
+    <converters:EntryResultColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="EntryResultColorConverter" />
+    <converters:EntryResultLabelConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="EntryResultLabelConverter" />
+    <converters:InitialsConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="InitialsConverter" />
+    <converters:BoolToLayoutOptionsConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="BoolToLayoutOptionsConverter" />
+    <converters:ChatBubbleColorConverter xmlns:converters="clr-namespace:AMIS.Maui.Converters" x:Key="ChatBubbleColorConverter" />
 
     <!-- ── Design tokens ──
          Spacing doubles feed Spacing/ColumnSpacing/RowSpacing; Thickness tokens feed Padding/Margin.

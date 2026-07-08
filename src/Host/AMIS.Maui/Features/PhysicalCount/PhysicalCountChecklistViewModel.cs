@@ -27,44 +27,44 @@ public sealed partial class PhysicalCountChecklistViewModel : ObservableObject
         _cache = cache;
     }
 
-    [ObservableProperty] private string _sessionId = "";
-    [ObservableProperty] private string _sessionCode = "";
-    [ObservableProperty] private string _fundCluster = "";
-    [ObservableProperty] private string _scope = "";
-    [ObservableProperty] private string _sessionStatus = "";
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
-    [ObservableProperty] private string? _cachedBannerText;
+    [ObservableProperty] public partial string SessionId { get; set; } = "";
+    [ObservableProperty] public partial string SessionCode { get; set; } = "";
+    [ObservableProperty] public partial string FundCluster { get; set; } = "";
+    [ObservableProperty] public partial string Scope { get; set; } = "";
+    [ObservableProperty] public partial string SessionStatus { get; set; } = "";
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
+    [ObservableProperty] public partial string? CachedBannerText { get; set; }
 
     // ── Filters ──
     // Location/officer facets carry the entity Id (not just the display name) so two same-named
     // locations or officers can't collide into one filter. The "All …" sentinel has a null Id.
-    [ObservableProperty] private string _selectedType = "All";           // "All" | "PPE" | "SE"
-    [ObservableProperty] private ObservableCollection<FacetOption> _locations = [new(null, AllLocations)];
-    [ObservableProperty] private FacetOption? _selectedLocation = new(null, AllLocations);
-    [ObservableProperty] private ObservableCollection<FacetOption> _officers = [new(null, AllOfficers)];
-    [ObservableProperty] private FacetOption? _selectedOfficer = new(null, AllOfficers);
-    [ObservableProperty] private bool _uncountedOnly;
-    [ObservableProperty] private string _searchText = "";
+    [ObservableProperty] public partial string SelectedType { get; set; } = "All";           // "All" | "PPE" | "SE"
+    [ObservableProperty] public partial ObservableCollection<FacetOption> Locations { get; set; } = [new(null, AllLocations)];
+    [ObservableProperty] public partial FacetOption? SelectedLocation { get; set; } = new(null, AllLocations);
+    [ObservableProperty] public partial ObservableCollection<FacetOption> Officers { get; set; } = [new(null, AllOfficers)];
+    [ObservableProperty] public partial FacetOption? SelectedOfficer { get; set; } = new(null, AllOfficers);
+    [ObservableProperty] public partial bool UncountedOnly { get; set; }
+    [ObservableProperty] public partial string SearchText { get; set; } = "";
 
     // ── Progress (whole session, unfiltered) ──
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ResolvedCount), nameof(CountedFraction), nameof(ProgressSummary), nameof(RemainingSummary), nameof(IsComplete))]
-    private int _totalCount;
+    public partial int TotalCount { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ResolvedCount), nameof(CountedFraction), nameof(ProgressSummary), nameof(RemainingSummary), nameof(IsComplete))]
-    private int _countedCount;
+    public partial int CountedCount { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ResolvedCount), nameof(CountedFraction), nameof(ProgressSummary), nameof(RemainingSummary), nameof(IsComplete))]
-    private int _missingCount;
+    public partial int MissingCount { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ResolvedCount), nameof(CountedFraction), nameof(ProgressSummary), nameof(RemainingSummary), nameof(IsComplete))]
-    private int _uncountedCount;
+    public partial int UncountedCount { get; set; }
 
-    [ObservableProperty] private ObservableCollection<ChecklistGroup> _groups = [];
+    [ObservableProperty] public partial ObservableCollection<ChecklistGroup> Groups { get; set; } = [];
 
     // An item is "resolved" once it's Counted or marked Missing; Uncounted is what's still to find.
     public int ResolvedCount => CountedCount + MissingCount;

@@ -7,33 +7,64 @@
        xmlns:profile="clr-namespace:AMIS.Maui.Features.Profile"
        xmlns:count="clr-namespace:AMIS.Maui.Features.PhysicalCount"
        xmlns:chat="clr-namespace:AMIS.Maui.Features.Chat"
+       xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
        x:Class="AMIS.Maui.AppShell"
        Shell.FlyoutBehavior="Disabled">
 
     <TabBar>
         <ShellContent Title="Home"
-                      Icon="home.png"
                       ContentTemplate="{DataTemplate home:HomePage}"
-                      Route="HomePage" />
+                      Route="HomePage">
+            <ShellContent.Icon>
+                <FontImageSource FontFamily="MaterialSymbols"
+                                 Glyph="{x:Static helpers:MaterialIcons.Home}"
+                                 Size="22" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="My Inventory"
-                      Icon="inventory.png"
                       ContentTemplate="{DataTemplate inventory:InventoryPage}"
-                      Route="InventoryPage" />
+                      Route="InventoryPage">
+            <ShellContent.Icon>
+                <FontImageSource FontFamily="MaterialSymbols"
+                                 Glyph="{x:Static helpers:MaterialIcons.Inventory}"
+                                 Size="22" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="Scan"
-                      Icon="scan.png"
                       ContentTemplate="{DataTemplate scan:ScanPage}"
-                      Route="ScanPage" />
+                      Route="ScanPage">
+            <ShellContent.Icon>
+                <FontImageSource FontFamily="MaterialSymbols"
+                                 Glyph="{x:Static helpers:MaterialIcons.QrCodeScanner}"
+                                 Size="22" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="Count"
-                      Icon="scan.png"
                       ContentTemplate="{DataTemplate count:PhysicalCountSessionListPage}"
-                      Route="PhysicalCountSessionListPage" />
+                      Route="PhysicalCountSessionListPage">
+            <ShellContent.Icon>
+                <FontImageSource FontFamily="MaterialSymbols"
+                                 Glyph="{x:Static helpers:MaterialIcons.Checklist}"
+                                 Size="22" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="Chat"
-                      Icon="home.png"
                       ContentTemplate="{DataTemplate chat:ChatChannelListPage}"
-                      Route="ChatChannelListPage" />
+                      Route="ChatChannelListPage">
+            <ShellContent.Icon>
+                <FontImageSource FontFamily="MaterialSymbols"
+                                 Glyph="{x:Static helpers:MaterialIcons.ChatBubble}"
+                                 Size="22" />
+            </ShellContent.Icon>
+        </ShellContent>
         <ShellContent Title="Profile"
-                      Icon="profile.png"
                       ContentTemplate="{DataTemplate profile:ProfilePage}"
-                      Route="ProfilePage" />
+                      Route="ProfilePage">
+            <ShellContent.Icon>
+                <FontImageSource FontFamily="MaterialSymbols"
+                                 Glyph="{x:Static helpers:MaterialIcons.Person}"
+                                 Size="22" />
+            </ShellContent.Icon>
+        </ShellContent>
     </TabBar>
 </Shell>

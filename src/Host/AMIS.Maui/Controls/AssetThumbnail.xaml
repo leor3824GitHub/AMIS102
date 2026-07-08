@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
+             x:Class="AMIS.Maui.Controls.AssetThumbnail"
+             x:DataType="ctl:AssetThumbnail"
+             x:Name="Root">
+
+    <!-- Leading asset tile: the asset photo, or a type-tinted placeholder (PPE→blue, SE→teal).
+         The Border clips the image to rounded corners; the glyph shows only when there is no photo.
+         Photo bytes are lazily fetched per row via the authenticated API (AssetImageSourceConverter
+         reads HasImage + AssetRegistryId off the bound Item). -->
+    <Border WidthRequest="{Binding Size, Source={x:Reference Root}}"
+            HeightRequest="{Binding Size, Source={x:Reference Root}}"
+            Stroke="Transparent" StrokeShape="RoundRectangle 12"
+            BackgroundColor="{Binding AssetType, Source={x:Reference Root}, Converter={StaticResource KindToColorConverter}, ConverterParameter=bg}"
+            VerticalOptions="Center">
+        <Grid>
+            <Label Text="{x:Static helpers:MaterialIcons.Package}"
+                   FontFamily="MaterialSymbols" FontSize="22"
+                   HorizontalOptions="Center" VerticalOptions="Center"
+                   TextColor="{Binding AssetType, Source={x:Reference Root}, Converter={StaticResource KindToColorConverter}, ConverterParameter=text}"
+                   IsVisible="{Binding HasImage, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}" />
+            <Image Aspect="AspectFill"
+                   Source="{Binding Item, Source={x:Reference Root}, Converter={StaticResource AssetImageSourceConverter}}"
+                   IsVisible="{Binding HasImage, Source={x:Reference Root}}" />
+        </Grid>
+    </Border>
+</ContentView>

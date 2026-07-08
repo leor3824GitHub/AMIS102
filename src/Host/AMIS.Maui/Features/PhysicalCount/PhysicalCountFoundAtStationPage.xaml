@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
              xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              x:DataType="vm:PhysicalCountFoundAtStationViewModel"
              x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountFoundAtStationPage"
              Title="Found at Station"
@@ -31,7 +32,8 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}"
                     Padding="12,0">
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                    <Label Grid.Column="0" Text="&#x1F50D;" FontSize="18" VerticalOptions="Center" />
+                    <Label Grid.Column="0" Text="{x:Static helpers:MaterialIcons.Search}" FontFamily="MaterialSymbols"
+                           FontSize="20" TextColor="{StaticResource Gray400}" VerticalOptions="Center" />
                     <Entry Grid.Column="1"
                            Style="{StaticResource SearchEntryStyle}"
                            Text="{Binding CatalogSearchText}"
@@ -53,7 +55,8 @@
                     <Grid Padding="24">
                         <VerticalStackLayout VerticalOptions="Center" Spacing="6"
                                              IsVisible="{Binding ShowNoResults}">
-                            <Label Text="&#x1F4ED;" FontSize="34" HorizontalOptions="Center" />
+                            <Label Text="{x:Static helpers:MaterialIcons.Inbox}" FontFamily="MaterialSymbols"
+                                   FontSize="40" TextColor="{StaticResource Gray300}" HorizontalOptions="Center" />
                             <Label Text="No catalog items matched."
                                    HorizontalOptions="Center"
                                    Style="{StaticResource SubtitleStyle}" />
@@ -63,7 +66,8 @@
                         </VerticalStackLayout>
                         <VerticalStackLayout VerticalOptions="Center" Spacing="6"
                                              IsVisible="{Binding ShowNoResults, Converter={StaticResource InvertedBoolConverter}}">
-                            <Label Text="&#x1F50E;" FontSize="34" HorizontalOptions="Center" />
+                            <Label Text="{x:Static helpers:MaterialIcons.Search}" FontFamily="MaterialSymbols"
+                                   FontSize="40" TextColor="{StaticResource Gray300}" HorizontalOptions="Center" />
                             <Label Text="Start typing to find the item type."
                                    HorizontalOptions="Center"
                                    Style="{StaticResource CaptionStyle}" />

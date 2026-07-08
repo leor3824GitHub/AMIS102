@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.Chat"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              x:DataType="vm:ChatConversationViewModel"
              x:Class="AMIS.Maui.Features.Chat.ChatConversationPage"
              Title="{Binding Title}"
@@ -29,37 +31,77 @@
         <CollectionView Grid.Row="1"
                         x:Name="MessagesView"
                         ItemsSource="{Binding Messages}"
-                        ItemsUpdatingScrollMode="KeepItemsInView"
-                        EmptyView="No messages yet. Say hello.">
+                        ItemsUpdatingScrollMode="KeepItemsInView">
+            <CollectionView.EmptyView>
+                <ctl:EmptyStateView Glyph="{x:Static helpers:MaterialIcons.ChatBubble}"
+                                    Title="No messages yet"
+                                    Hint="Say hello to start the conversation." />
+            </CollectionView.EmptyView>
             <CollectionView.Header>
                 <!-- Tap-to-load older history. Collapses (no layout space) when there is nothing older. -->
                 <Button Text="Load earlier messages"
-                        Margin="16,8"
+                        Margin="16,8" Padding="14,6"
+                        FontSize="12"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ChatConversationViewModel}}, Path=LoadOlderCommand}"
                         IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:ChatConversationViewModel}}, Path=HasMore}"
                         IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type vm:ChatConversationViewModel}}, Path=IsLoadingOlder, Converter={StaticResource InvertedBoolConverter}}" />
             </CollectionView.Header>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ChatMessageItem">
-                    <Grid Padding="16,6" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="2">
-                        <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
-                            <Label Text="{Binding SenderLabel}" FontFamily="InterSemiBold" FontSize="13" />
-                            <Label Text="(edited)" Style="{StaticResource CaptionStyle}" VerticalOptions="Center"
-                                   IsVisible="{Binding Edited}" />
-                            <Label Text="📌" FontSize="11" VerticalOptions="Center" IsVisible="{Binding IsPinned}" />
-                        </HorizontalStackLayout>
-                        <Label Grid.Row="0" Grid.Column="1"
-                               Text="{Binding TimeDisplay}"
-                               Style="{StaticResource CaptionStyle}" />
-                        <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                               Text="{Binding Body}"
-                               FontSize="14"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}"
-                               IsVisible="{Binding IsDeleted}" />
-                        <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                               Text="{Binding Body}"
-                               FontSize="14"
-                               IsVisible="{Binding IsDeleted, Converter={StaticResource InvertedBoolConverter}}" />
+                    <Grid Padding="12,4" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+
+                        <!-- Sender avatar (received messages only) -->
+                        <Border Grid.Column="0"
+                                WidthRequest="32" HeightRequest="32"
+                                StrokeShape="RoundRectangle 16" Stroke="Transparent"
+                                BackgroundColor="{Binding SenderLabel, Converter={StaticResource NameToColorConverter}}"
+                                VerticalOptions="End"
+                                IsVisible="{Binding IsMine, Converter={StaticResource InvertedBoolConverter}}">
+                            <Label Text="{Binding SenderLabel, Converter={StaticResource InitialsConverter}}"
+                                   TextColor="{StaticResource White}"
+                                   FontFamily="InterBold" FontSize="11"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+
+                        <!-- Bubble column -->
+                        <VerticalStackLayout Grid.Column="1" Spacing="2"
+                                             MaximumWidthRequest="300"
+                                             HorizontalOptions="{Binding IsMine, Converter={StaticResource BoolToLayoutOptionsConverter}}">
+
+                            <!-- Sender name (received only) -->
+                            <Label Text="{Binding SenderLabel}"
+                                   FontFamily="InterSemiBold" FontSize="12"
+                                   TextColor="{StaticResource Gray500}"
+                                   Margin="10,0,0,0"
+                                   IsVisible="{Binding IsMine, Converter={StaticResource InvertedBoolConverter}}" />
+
+                            <Border StrokeShape="RoundRectangle 16" Stroke="Transparent"
+                                    BackgroundColor="{Binding IsMine, Converter={StaticResource ChatBubbleColorConverter}, ConverterParameter=bg}"
+                                    Padding="12,9"
+                                    HorizontalOptions="{Binding IsMine, Converter={StaticResource BoolToLayoutOptionsConverter}}">
+                                <Label Text="{Binding Body}"
+                                       FontSize="14"
+                                       TextColor="{Binding IsMine, Converter={StaticResource ChatBubbleColorConverter}, ConverterParameter=text}" />
+                            </Border>
+
+                            <!-- Time + edited/pinned meta -->
+                            <HorizontalStackLayout Spacing="5"
+                                                   HorizontalOptions="{Binding IsMine, Converter={StaticResource BoolToLayoutOptionsConverter}}"
+                                                   Margin="10,0">
+                                <Label Text="{x:Static helpers:MaterialIcons.PushPin}"
+                                       FontFamily="MaterialSymbols" FontSize="11"
+                                       TextColor="{StaticResource Gray400}"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding IsPinned}" />
+                                <Label Text="edited" Style="{StaticResource CaptionStyle}"
+                                       FontSize="11" VerticalOptions="Center"
+                                       IsVisible="{Binding Edited}" />
+                                <Label Text="{Binding TimeDisplay}" Style="{StaticResource CaptionStyle}"
+                                       FontSize="11" VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
@@ -72,27 +114,34 @@
                Margin="16,0,16,4"
                IsVisible="{Binding SomeoneTyping}" />
 
-        <!-- Composer -->
-        <Border Grid.Row="3"
-                Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                StrokeThickness="1"
-                StrokeShape="RoundRectangle 12"
-                Padding="6,2,6,2"
-                Margin="12,4,12,12">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <Entry Grid.Column="0"
-                       Text="{Binding Draft}"
+        <!-- Composer: pinned rounded pill + circular send -->
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="12,4,12,12">
+            <Border Grid.Column="0"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 24"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}"
+                    Padding="16,2">
+                <Entry Text="{Binding Draft}"
                        Placeholder="Write a message…"
                        ReturnType="Send"
                        ReturnCommand="{Binding SendCommand}"
                        VerticalOptions="Center" />
-                <Button Grid.Column="1"
-                        Text="Send"
-                        Command="{Binding SendCommand}"
-                        IsEnabled="{Binding IsSending, Converter={StaticResource InvertedBoolConverter}}"
-                        VerticalOptions="Center" />
-            </Grid>
-        </Border>
+            </Border>
+            <Border Grid.Column="1"
+                    WidthRequest="48" HeightRequest="48"
+                    StrokeShape="RoundRectangle 24" Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    VerticalOptions="Center">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SendCommand}" />
+                </Border.GestureRecognizers>
+                <Label Text="{x:Static helpers:MaterialIcons.Send}"
+                       FontFamily="MaterialSymbols" FontSize="20"
+                       TextColor="{StaticResource White}"
+                       HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+        </Grid>
 
         <!-- Loading overlay -->
         <ActivityIndicator Grid.RowSpan="4"

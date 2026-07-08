@@ -10,9 +10,21 @@ public sealed partial class ChatChannelListViewModel(
     IApiClient apiClient,
     ChatHubService hub) : ObservableObject
 {
-    [ObservableProperty] private ObservableCollection<ChatChannelDto> _channels = [];
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ChannelCount))]
+    [NotifyPropertyChangedFor(nameof(ShowSkeleton))]
+    public partial ObservableCollection<ChatChannelDto> Channels { get; set; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSkeleton))]
+    public partial bool IsLoading { get; set; }
+
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
+
+    public int ChannelCount => Channels.Count;
+
+    // First-load skeleton only; RefreshView's spinner covers reloads.
+    public bool ShowSkeleton => IsLoading && Channels.Count == 0;
 
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)

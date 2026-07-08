@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.Scan"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
              x:DataType="vm:ScanViewModel"
@@ -57,8 +58,8 @@
                              IsVisible="{Binding IsCameraAvailable, Converter={StaticResource InvertedBoolConverter}}"
                              VerticalOptions="Center" HorizontalOptions="Center"
                              Spacing="12" Padding="32">
-            <Label Text="&#x1F4F7;"
-                   FontSize="52"
+            <Label Text="{x:Static helpers:MaterialIcons.PhotoCamera}" FontFamily="MaterialSymbols"
+                   FontSize="52" TextColor="{StaticResource Gray400}"
                    HorizontalOptions="Center" />
                  <Label Text="Camera not available on this device."
                      FontSize="14"

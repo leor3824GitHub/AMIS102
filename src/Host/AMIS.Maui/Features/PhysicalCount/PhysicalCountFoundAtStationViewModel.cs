@@ -14,22 +14,23 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
 {
     private readonly IPhysicalCountSyncService _syncService;
     private readonly IApiClient _apiClient;
+    private readonly IFeedbackService _feedback;
 
-    [ObservableProperty] private string _sessionId = "";
-    [ObservableProperty] private string _propertyNo = "";
-    [ObservableProperty] private string _locationIdParam = "";
+    [ObservableProperty] public partial string SessionId { get; set; } = "";
+    [ObservableProperty] public partial string PropertyNo { get; set; } = "";
+    [ObservableProperty] public partial string LocationIdParam { get; set; } = "";
 
     // Form fields
-    [ObservableProperty] private string _description = "";
-    [ObservableProperty] private string _unitCostText = "";
-    [ObservableProperty] private string _remarks = "";
+    [ObservableProperty] public partial string Description { get; set; } = "";
+    [ObservableProperty] public partial string UnitCostText { get; set; } = "";
+    [ObservableProperty] public partial string Remarks { get; set; } = "";
 
     // Catalog search — live/incremental (debounced); matches catalog Code or Description server-side.
-    [ObservableProperty] private string _catalogSearchText = "";
-    [ObservableProperty] private ObservableCollection<CatalogItemDto> _catalogResults = [];
-    [ObservableProperty] private CatalogItemDto? _selectedCatalogItem;
-    [ObservableProperty] private bool _isCatalogSearching;
-    [ObservableProperty] private bool _showNoResults;
+    [ObservableProperty] public partial string CatalogSearchText { get; set; } = "";
+    [ObservableProperty] public partial ObservableCollection<CatalogItemDto> CatalogResults { get; set; } = [];
+    [ObservableProperty] public partial CatalogItemDto? SelectedCatalogItem { get; set; }
+    [ObservableProperty] public partial bool IsCatalogSearching { get; set; }
+    [ObservableProperty] public partial bool ShowNoResults { get; set; }
 
     private CancellationTokenSource? _searchCts;
 
@@ -52,13 +53,14 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
         }
     }
 
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
-    public PhysicalCountFoundAtStationViewModel(IPhysicalCountSyncService syncService, IApiClient apiClient)
+    public PhysicalCountFoundAtStationViewModel(IPhysicalCountSyncService syncService, IApiClient apiClient, IFeedbackService feedback)
     {
         _syncService = syncService;
         _apiClient = apiClient;
+        _feedback = feedback;
     }
 
     // Live search: each keystroke restarts a short debounce, then queries. The newest keystroke
@@ -97,7 +99,11 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             ErrorMessage = null;
         }
         catch (OperationCanceledException) { }
-        catch { ErrorMessage = "Could not search catalog. Check your connection."; }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FoundAtStation] catalog search failed: {ex}");
+            ErrorMessage = "Could not search catalog. Check your connection.";
+        }
         finally { if (_searchCts == cts) IsCatalogSearching = false; }
     }
 
@@ -176,11 +182,13 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             switch (result.Status)
             {
                 case RecordSaveStatus.SavedToServer:
-                    await Shell.Current.DisplayAlert("Success", "Asset added as Found at Station.", "OK");
+                    _feedback.Success();
+                    await _feedback.ShowToastAsync("Added as Found at Station.");
                     await Shell.Current.GoToAsync("..");
                     break;
                 case RecordSaveStatus.QueuedOffline:
-                    await Shell.Current.DisplayAlert("Saved offline", "Saved offline — will sync when connected.", "OK");
+                    _feedback.Success();
+                    await _feedback.ShowToastAsync("Saved offline — will sync when connected.");
                     await Shell.Current.GoToAsync("..");
                     break;
                 case RecordSaveStatus.Rejected:

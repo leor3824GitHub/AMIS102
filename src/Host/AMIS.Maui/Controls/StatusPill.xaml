@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             x:Class="AMIS.Maui.Controls.StatusPill"
+             x:DataType="ctl:StatusPill"
+             x:Name="Root"
+             HorizontalOptions="Start">
+
+    <!-- Tinted status/label chip. Callers supply Background + TextColor (usually converter-driven,
+         since a DataTrigger can't reliably override an AppThemeBinding base color in MAUI). -->
+    <Border Style="{StaticResource PillBorderStyle}"
+            BackgroundColor="{Binding PillBackground, Source={x:Reference Root}}">
+        <Label Text="{Binding Text, Source={x:Reference Root}}"
+               TextColor="{Binding PillTextColor, Source={x:Reference Root}}"
+               FontFamily="InterSemiBold"
+               FontSize="{Binding FontSize, Source={x:Reference Root}}" />
+    </Border>
+</ContentView>

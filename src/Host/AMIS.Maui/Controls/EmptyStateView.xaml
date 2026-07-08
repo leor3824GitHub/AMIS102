@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             x:Class="AMIS.Maui.Controls.EmptyStateView"
+             x:DataType="ctl:EmptyStateView"
+             x:Name="Root">
+
+    <!-- Consistent empty/blank state: Material glyph + title + hint + optional action button.
+         Modeled on the Found-at-Station empty state, generalized so every list can reuse it. -->
+    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center"
+                         Spacing="8" Padding="32,24">
+        <Label Text="{Binding Glyph, Source={x:Reference Root}}"
+               FontFamily="MaterialSymbols" FontSize="44"
+               HorizontalOptions="Center"
+               TextColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
+        <Label Text="{Binding Title, Source={x:Reference Root}}"
+               Style="{StaticResource SubtitleStyle}"
+               HorizontalTextAlignment="Center" HorizontalOptions="Center" />
+        <Label Text="{Binding Hint, Source={x:Reference Root}}"
+               Style="{StaticResource CaptionStyle}"
+               HorizontalTextAlignment="Center" HorizontalOptions="Center"
+               IsVisible="{Binding Hint, Source={x:Reference Root}, Converter={StaticResource IsNotNullConverter}}" />
+        <Button Text="{Binding ActionText, Source={x:Reference Root}}"
+                Command="{Binding ActionCommand, Source={x:Reference Root}}"
+                Margin="0,8,0,0"
+                HorizontalOptions="Center"
+                IsVisible="{Binding ActionCommand, Source={x:Reference Root}, Converter={StaticResource IsNotNullConverter}}" />
+    </VerticalStackLayout>
+</ContentView>

@@ -7,10 +7,10 @@ namespace AMIS.Maui.Features.Asset;
 [QueryProperty(nameof(PropertyNo), "PropertyNo")]
 public sealed partial class AssetDetailViewModel(IApiClient apiClient) : ObservableObject
 {
-    [ObservableProperty] private string _propertyNo = "";
-    [ObservableProperty] private TangibleInventoryItemDetailDto? _item;
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private string? _errorMessage;
+    [ObservableProperty] public partial string PropertyNo { get; set; } = "";
+    [ObservableProperty] public partial TangibleInventoryItemDetailDto? Item { get; set; }
+    [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     partial void OnPropertyNoChanged(string value) => _ = LoadAsync();
 

@@ -3,23 +3,57 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.PhysicalCount"
              xmlns:svc="clr-namespace:AMIS.Maui.Services"
+             xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
+             xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
+             xmlns:beh="clr-namespace:AMIS.Maui.Behaviors"
              x:Name="ThisPage"
              x:DataType="vm:PhysicalCountSessionListViewModel"
              x:Class="AMIS.Maui.Features.PhysicalCount.PhysicalCountSessionListPage"
              Title="Physical Count"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <RefreshView IsRefreshing="{Binding IsLoading}" Command="{Binding LoadCommand}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="0,16,0,0">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+            <!-- ── Hero ── -->
+            <Border Grid.Row="0" Style="{StaticResource HeroBorderStyle}" Padding="{StaticResource HeroPadding}">
+                <Border.Behaviors>
+                    <beh:EntranceAnimationBehavior />
+                </Border.Behaviors>
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="Physical Count" Style="{StaticResource DisplayStyle}" TextColor="{StaticResource White}" />
+                    <HorizontalStackLayout Spacing="10">
+                        <Border Style="{StaticResource HeroChipStyle}">
+                            <HorizontalStackLayout Spacing="6">
+                                <Label Text="{x:Static helpers:MaterialIcons.Checklist}" FontFamily="MaterialSymbols"
+                                       FontSize="14" TextColor="{StaticResource White}" VerticalOptions="Center" />
+                                <Label Text="{Binding SessionCount, StringFormat='{0} sessions'}"
+                                       TextColor="{StaticResource White}" FontFamily="InterSemiBold" FontSize="12"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+                        <Border Style="{StaticResource HeroChipStyle}" IsVisible="{Binding OngoingCount, Converter={StaticResource IsNotZeroConverter}}">
+                            <HorizontalStackLayout Spacing="6">
+                                <Label Text="{x:Static helpers:MaterialIcons.Pending}" FontFamily="MaterialSymbols"
+                                       FontSize="14" TextColor="{StaticResource White}" VerticalOptions="Center" />
+                                <Label Text="{Binding OngoingCount, StringFormat='{0} ongoing'}"
+                                       TextColor="{StaticResource White}" FontFamily="InterSemiBold" FontSize="12"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
             <!-- Sync banner: pending / failed + actions -->
-            <Border Grid.Row="0"
+            <Border Grid.Row="1"
                     IsVisible="{Binding HasQueuedWork}"
                     Stroke="Transparent"
                     StrokeShape="RoundRectangle 10"
                     BackgroundColor="{StaticResource WarningLight}"
                     Padding="14,10"
-                    Margin="16,0,16,10">
+                    Margin="16,12,16,0">
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                     <Label Grid.Column="0"
                            Text="{Binding SyncBannerText}"
@@ -41,95 +75,86 @@
             </Border>
 
             <!-- Sync status message -->
-            <Label Grid.Row="1"
+            <Label Grid.Row="2"
                    Text="{Binding SyncStatusMessage}"
                    IsVisible="{Binding SyncStatusMessage, Converter={StaticResource IsNotNullConverter}}"
                    FontSize="12"
                    TextColor="{StaticResource Gray500}"
-                   Margin="20,0,20,8" />
+                   Margin="20,10,20,0" />
 
             <!-- Error -->
-            <Label Grid.Row="2"
+            <Label Grid.Row="3"
                    Text="{Binding ErrorMessage}"
                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Danger}"
                    FontSize="13"
-                   Margin="20,0,20,12" />
-
-            <!-- Section header -->
-            <Label Grid.Row="3"
-                   Text="SESSIONS"
-                   Style="{StaticResource SectionHeaderStyle}" />
+                   Margin="20,10,20,0" />
 
             <!-- Sessions list -->
-            <CollectionView Grid.Row="4"
-                            ItemsSource="{Binding Sessions}"
-                            SelectionMode="Single"
-                            SelectionChanged="OnSessionSelected"
-                            EmptyView="No physical count sessions found.">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="svc:PhysicalCountSessionSummaryDto">
-                        <Border Style="{StaticResource CardBorderStyle}"
-                                Margin="16,4" Padding="16,14">
-                            <Grid ColumnDefinitions="*,Auto"
-                                  RowDefinitions="Auto,Auto,Auto"
-                                  RowSpacing="4">
+            <Grid Grid.Row="4">
+                <ctl:SkeletonView RowCount="6" IsVisible="{Binding ShowSkeleton}" VerticalOptions="Start" Margin="0,12,0,0" />
 
-                                <!-- SessionNo + Status badge -->
-                                <Label Grid.Row="0" Grid.Column="0"
-                                       Text="{Binding SessionNo}"
-                                       FontFamily="InterSemiBold" FontSize="15" />
-                                <Border Grid.Row="0" Grid.Column="1"
-                                        Stroke="Transparent"
-                                        StrokeShape="RoundRectangle 10"
-                                        BackgroundColor="{StaticResource Gray400}"
-                                        Padding="8,3">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Ongoing">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Warning}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Reconciled">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Closed">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Label Text="{Binding Status}"
-                                           TextColor="White"
-                                           FontFamily="InterSemiBold" FontSize="11" />
-                                </Border>
+                <CollectionView ItemsSource="{Binding Sessions}"
+                                SelectionMode="Single"
+                                SelectionChanged="OnSessionSelected"
+                                Margin="0,12,0,0"
+                                IsVisible="{Binding ShowSkeleton, Converter={StaticResource InvertedBoolConverter}}">
+                    <CollectionView.EmptyView>
+                        <ctl:EmptyStateView Glyph="{x:Static helpers:MaterialIcons.Checklist}"
+                                            Title="No count sessions"
+                                            Hint="Sessions you create on the web appear here. Pull down to refresh." />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="svc:PhysicalCountSessionSummaryDto">
+                            <Border Style="{StaticResource CardBorderStyle}"
+                                    Margin="16,4" Padding="16,14">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      RowDefinitions="Auto,Auto,Auto"
+                                      RowSpacing="4">
 
-                                <!-- FundCluster + Scope -->
-                                <Label Grid.Row="1" Grid.Column="0"
-                                       Text="{Binding FundCluster}"
-                                       FontSize="13"
-                                       TextColor="{StaticResource Gray500}" />
-                                <Label Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Scope}"
-                                       Style="{StaticResource CaptionStyle}" />
+                                    <!-- SessionNo + Status badge -->
+                                    <Label Grid.Row="0" Grid.Column="0"
+                                           Text="{Binding SessionNo}"
+                                           FontFamily="InterSemiBold" FontSize="15" />
+                                    <ctl:StatusPill Grid.Row="0" Grid.Column="1"
+                                                    Text="{Binding Status}"
+                                                    PillBackground="{Binding Status, Converter={StaticResource CountStatusColorConverter}}"
+                                                    PillTextColor="{StaticResource White}"
+                                                    FontSize="11" />
 
-                                <!-- Date + Progress breakdown -->
-                                <Label Grid.Row="2" Grid.Column="0"
-                                       Text="{Binding CountDate}"
-                                       Style="{StaticResource CaptionStyle}" />
+                                    <!-- FundCluster + Scope -->
+                                    <Label Grid.Row="1" Grid.Column="0"
+                                           Text="{Binding FundCluster}"
+                                           FontSize="13"
+                                           TextColor="{StaticResource Gray500}" />
+                                    <Label Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Scope}"
+                                           Style="{StaticResource CaptionStyle}"
+                                           HorizontalOptions="End" />
+
+                                    <!-- Date + Progress breakdown -->
+                                    <Label Grid.Row="2" Grid.Column="0"
+                                           Text="{Binding CountDate}"
+                                           Style="{StaticResource CaptionStyle}" />
                                     <Label Grid.Row="2" Grid.Column="1"
-                                        FontSize="11"
-                                        TextColor="{StaticResource Gray500}">
-                                    <Label.Text>
-                                        <MultiBinding StringFormat="{}{0} found · {1} missing · {2} new">
-                                            <Binding Path="Found" />
-                                            <Binding Path="Missing" />
-                                            <Binding Path="FoundAtStation" />
-                                        </MultiBinding>
-                                    </Label.Text>
-                                </Label>
+                                           FontSize="11"
+                                           TextColor="{StaticResource Gray500}"
+                                           HorizontalOptions="End">
+                                        <Label.Text>
+                                            <MultiBinding StringFormat="{}{0} found · {1} missing · {2} new">
+                                                <Binding Path="Found" />
+                                                <Binding Path="Missing" />
+                                                <Binding Path="FoundAtStation" />
+                                            </MultiBinding>
+                                        </Label.Text>
+                                    </Label>
 
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
 
         </Grid>
     </RefreshView>

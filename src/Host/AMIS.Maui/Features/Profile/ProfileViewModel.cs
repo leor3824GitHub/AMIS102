@@ -12,12 +12,12 @@ public sealed partial class ProfileViewModel(
     IPhysicalCountSyncService syncService,
     LocalDb localDb) : ObservableObject
 {
-    [ObservableProperty] private string _fullName = "";
-    [ObservableProperty] private string _email = "";
-    [ObservableProperty] private string? _department;
-    [ObservableProperty] private string? _position;
-    [ObservableProperty] private string _initials = "?";
-    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] public partial string FullName { get; set; } = "";
+    [ObservableProperty] public partial string Email { get; set; } = "";
+    [ObservableProperty] public partial string? Department { get; set; }
+    [ObservableProperty] public partial string? Position { get; set; }
+    [ObservableProperty] public partial string Initials { get; set; } = "?";
+    [ObservableProperty] public partial bool IsLoading { get; set; }
 
     // Live build version, read from the AssemblyInformationalVersion the build stamps in
     // (e.g. "1.0.0+build.142" -> "Version 1.0.0 (build 142)").
