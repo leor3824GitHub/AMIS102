@@ -44,6 +44,7 @@
     <MauiFont Include="Resources\Fonts\Inter-Regular.ttf" />
     <MauiFont Include="Resources\Fonts\Inter-SemiBold.ttf" />
     <MauiFont Include="Resources\Fonts\Inter-Bold.ttf" />
+    <MauiFont Include="Resources\Fonts\MaterialSymbolsOutlined.ttf" />
   </ItemGroup>
 
   <ItemGroup>
