@@ -40,6 +40,10 @@ public class NotificationsModule : IModule
         // (they surface in Chat's own unread indicator); if that changes, have Chat publish this generic event.
         services.AddScoped<IIntegrationEventHandler<NotificationRequestedIntegrationEvent>, NotificationRequestedConsumer>();
 
+        // Workflow-driven mark-read: producers publish this when the action a notification asked for is done
+        // (e.g. ICS/PAR accepted), so the bell entry resolves itself without the user opening it.
+        services.AddScoped<IIntegrationEventHandler<NotificationReadRequestedIntegrationEvent>, NotificationReadRequestedConsumer>();
+
         // FluentValidation validators are auto-discovered.
     }
 

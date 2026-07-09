@@ -63,7 +63,7 @@
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
                                                          Style="font-size:10px">@item.Phase</MudChip>
                                                 <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
-                                                <MudText Typo="Typo.caption">� @item.ItemCount items</MudText>
+                                                <MudText Typo="Typo.caption">— @item.ItemCount items</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
                                                     @Money.Symbol@item.TotalEstimatedBudget.ToString("N0")
@@ -132,7 +132,7 @@
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true"
                                                          Style="font-size:10px">@item.Phase</MudChip>
                                                 <MudText Typo="Typo.caption">FY @item.FiscalYear</MudText>
-                                                <MudText Typo="Typo.caption">� @item.ItemCount items</MudText>
+                                                <MudText Typo="Typo.caption">— @item.ItemCount items</MudText>
                                                 <MudSpacer />
                                                 <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-success)">
                                                     @Money.Symbol@item.TotalEstimatedBudget.ToString("N0")
@@ -177,7 +177,7 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.AppNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Published for approval � v@(_detail.VersionNumber) � @_detail.Phase
+                                    Published for approval — v@(_detail.VersionNumber) — @_detail.Phase
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
@@ -254,8 +254,8 @@
                                         @officeGroup.Key
                                     </MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        � @officeGroup.First().EndUserUnit
-                                        � @officeGroup.Count() items
+                                        — @officeGroup.First().EndUserUnit
+                                        — @officeGroup.Count() items
                                     </MudText>
                                     <MudSpacer />
                                     <MudText Typo="Typo.caption"
@@ -323,7 +323,7 @@
 
                 <MudDivider />
 
-                <!-- Action bar � only for Published APPs -->
+                <!-- Action bar — only for Published APPs -->
                 @if (_detail.Status == AppStatus.Published)
                 {
                     <MudCardActions Class="pa-3">
@@ -349,7 +349,7 @@
                         }
                         <MudSpacer />
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
-                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") �
+                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") —
                             @Money.Symbol@_detail.TotalEstimatedBudget.ToString("N2") total
                         </MudText>
                     </MudCardActions>

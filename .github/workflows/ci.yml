@@ -48,6 +48,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Exclude MAUI from the Linux solution build
+        # The MAUI heads (windows/ios TFMs) can't build on Linux and no MAUI workload is
+        # installed here; the MAUI app is validated separately in the build-maui job.
+        # Remove it from this ephemeral CI checkout so restore/build of the rest of the
+        # solution stays green (auto-includes any future backend project — no hand-kept list).
+        run: dotnet sln src/AMIS.Framework.slnx remove src/Host/AMIS.Maui/AMIS.Maui.csproj
+
       - name: Restore dependencies
         run: dotnet restore src/AMIS.Framework.slnx
 
@@ -62,6 +69,36 @@ jobs:
             src/**/bin/Release
             src/**/obj/Release
           retention-days: 1
+
+  build-maui:
+    name: Build MAUI (Windows head)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
+      - name: Build MAUI (Windows head)
+        # Build only the Windows TFM (ios needs macOS; android is validated by devs locally).
+        # This is the gate that catches MAUI compile errors and analyzer failures — e.g. the
+        # MVVMTK0045 class of issues — which the Linux solution build never sees.
+        run: dotnet build src/Host/AMIS.Maui/AMIS.Maui.csproj -c Release -f net10.0-windows10.0.19041.0
 
   test:
     name: Test - ${{ matrix.test-project.name }}
@@ -200,6 +237,11 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing version: $VERSION"
+
+      - name: Exclude MAUI from the Linux solution build
+        # Same reason as the build job: the MAUI app is a Windows/mobile client validated in
+        # build-maui, and is not packed or containerized here.
+        run: dotnet sln src/AMIS.Framework.slnx remove src/Host/AMIS.Maui/AMIS.Maui.csproj
 
       - name: Restore and Build with version
         run: |

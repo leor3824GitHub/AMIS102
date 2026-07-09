@@ -14,6 +14,13 @@ public static class NotificationsModuleConstants
     public const string NotificationCreatedEvent = "NotificationCreated";
 
     /// <summary>
+    /// Realtime client-method name pushed over <c>AppHub</c> when a workflow marks an inbox row read
+    /// server-side (e.g. an ICS/PAR acceptance resolving its "issued for your acceptance" entry).
+    /// Payload is the notification id. Same typo caveat as <see cref="NotificationCreatedEvent"/>.
+    /// </summary>
+    public const string NotificationReadEvent = "NotificationRead";
+
+    /// <summary>
     /// Permission registered with the Identity catalog. Marked <c>IsBasic</c> so the Basic role (assigned
     /// to every user) is seeded with it — the inbox is self-service and scoped to the calling user.
     /// </summary>

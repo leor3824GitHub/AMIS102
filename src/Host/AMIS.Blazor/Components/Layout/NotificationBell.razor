@@ -54,6 +54,7 @@
     {
         State.OnChanged += OnStateChanged;
         Hub.NotificationReceived += OnNotificationReceived;
+        Hub.NotificationRead += OnNotificationRead;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -85,6 +86,9 @@
     // Hub callback runs off the render thread; State.Add raises OnChanged which marshals the re-render.
     private void OnNotificationReceived(NotificationDto notification) => State.Add(notification);
 
+    // A workflow resolved this notification server-side (e.g. its ICS/PAR was accepted) — reflect it live.
+    private void OnNotificationRead(Guid id) => State.MarkRead(id);
+
     private async Task OpenAsync(NotificationDto notification)
     {
         if (!notification.IsRead)
@@ -114,5 +118,6 @@
     {
         State.OnChanged -= OnStateChanged;
         Hub.NotificationReceived -= OnNotificationReceived;
+        Hub.NotificationRead -= OnNotificationRead;
     }
 }

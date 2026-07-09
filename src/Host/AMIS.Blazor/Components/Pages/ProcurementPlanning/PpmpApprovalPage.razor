@@ -176,7 +176,7 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.PpmpNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Submitted for approval � v@(_detail.VersionNumber)
+                                    Submitted for approval — v@(_detail.VersionNumber)
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
@@ -253,7 +253,7 @@
                                             <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
                                         </td>
                                         <td>
-                                            <MudText Typo="Typo.caption">@item.ProcurementStart � @item.ProcurementEnd</MudText>
+                                            <MudText Typo="Typo.caption">@item.ProcurementStart — @item.ProcurementEnd</MudText>
                                             <MudText Typo="Typo.caption" Color="Color.Secondary">Del: @item.ExpectedDelivery</MudText>
                                         </td>
                                         <td style="text-align:right; font-weight:600">@Money.Symbol@item.EstimatedBudget.ToString("N2")</td>
@@ -277,7 +277,7 @@
 
                 <MudDivider />
 
-                <!-- Action bar � only for Submitted PPMPs -->
+                <!-- Action bar — only for Submitted PPMPs -->
                 @if (_detail.Status == PpmpStatus.Submitted)
                 {
                     <MudCardActions Class="pa-3">
@@ -303,7 +303,7 @@
                         }
                         <MudSpacer />
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
-                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") �
+                            @_detail.Items.Count item@(_detail.Items.Count != 1 ? "s" : "") —
                             @Money.Symbol@_detail.TotalEstimatedBudget.ToString("N2") total
                         </MudText>
                     </MudCardActions>

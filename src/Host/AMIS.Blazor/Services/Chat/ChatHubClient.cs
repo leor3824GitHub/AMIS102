@@ -31,6 +31,7 @@ internal sealed class ChatHubClient : IAsyncDisposable
     private const string PresenceChangedEvent = "PresenceChanged";
     private const string ChatMentionedEvent = "ChatMentioned";
     private const string NotificationCreatedEvent = "NotificationCreated";
+    private const string NotificationReadEvent = "NotificationRead";
 
     private readonly ICircuitTokenCache _tokenCache;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -61,6 +62,9 @@ internal sealed class ChatHubClient : IAsyncDisposable
 
     /// <summary>Raised when a workflow notification is pushed to the current user's bell (e.g. inspection requested).</summary>
     public event Action<NotificationDto>? NotificationReceived;
+
+    /// <summary>Raised when a workflow marked a bell notification read server-side (e.g. the user accepted the ICS/PAR it pointed at). Payload is the notification id.</summary>
+    public event Action<Guid>? NotificationRead;
 
     /// <summary>Raised when the underlying connection state changes (connect/reconnect/close).</summary>
     public event Action? ConnectionStateChanged;
@@ -112,6 +116,7 @@ internal sealed class ChatHubClient : IAsyncDisposable
         _connection.On<PresenceNotification>(PresenceChangedEvent, notification => PresenceChanged?.Invoke(notification));
         _connection.On<MentionNotification>(ChatMentionedEvent, notification => Mentioned?.Invoke(notification));
         _connection.On<NotificationDto>(NotificationCreatedEvent, notification => NotificationReceived?.Invoke(notification));
+        _connection.On<Guid>(NotificationReadEvent, id => NotificationRead?.Invoke(id));
 
         _connection.Reconnecting += _ => { ConnectionStateChanged?.Invoke(); return Task.CompletedTask; };
         _connection.Reconnected += _ => { ConnectionStateChanged?.Invoke(); return Task.CompletedTask; };

@@ -1,17 +1,26 @@
 using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Eventing.Abstractions;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Domain.Accountability;
 using AMIS.Modules.AssetRegister.Features.v1.Shared;
+using AMIS.Modules.Notifications.Contracts.Events;
+using AMIS.Modules.Notifications.Contracts.v1.Enums;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.Accountability.AcceptAccountability;
 
 public sealed class AcceptAccountabilityCommandHandler(
-    AssetRegisterDbContext db, ICurrentUser currentUser, IMediator mediator)
+    AssetRegisterDbContext db,
+    ICurrentUser currentUser,
+    IMediator mediator,
+    IEventBus eventBus,
+    ILogger<AcceptAccountabilityCommandHandler> logger)
     : ICommandHandler<AcceptAccountabilityCommand, PropertyAccountabilityDto>
 {
     public async ValueTask<PropertyAccountabilityDto> Handle(AcceptAccountabilityCommand cmd, CancellationToken cancellationToken)
@@ -43,6 +52,35 @@ public sealed class AcceptAccountabilityCommandHandler(
 
         accountability.Accept(cmd.AcceptedOn);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        // The "issued for your acceptance" bell entry is now actioned — resolve it to read so the
+        // recipient isn't nagged about a document they just accepted.
+        await MarkIssuanceNotificationReadAsync(accountability, cancellationToken).ConfigureAwait(false);
+
         return AccountabilityMapper.ToDto(accountability);
+    }
+
+    /// <summary>
+    /// Best-effort: mark the recipient's <see cref="NotificationType.AccountabilityIssued"/> notification
+    /// read (keyed by the same CorrelationId the issuance published). The ownership gate above guarantees
+    /// the caller IS the notified recipient. Never throws — a bell hiccup must not fail the acceptance.
+    /// </summary>
+    private async Task MarkIssuanceNotificationReadAsync(PropertyAccountability accountability, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var readRequest = new NotificationReadRequestedIntegrationEvent(
+                RecipientUserId: currentUser.GetUserId().ToString(),
+                Type: NotificationType.AccountabilityIssued,
+                Source: "AssetRegister",
+                CorrelationId: accountability.Id.ToString(),
+                TenantId: accountability.TenantId);
+
+            await eventBus.PublishAsync(readRequest, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to mark issuance notification read for accountability {Id}.", accountability.Id);
+        }
     }
 }

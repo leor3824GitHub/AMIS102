@@ -234,7 +234,8 @@ builder.Services.AddOutputCache(options =>
 });
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents(o => o.DetailedErrors = builder.Environment.IsDevelopment());
+    .AddInteractiveServerComponents(o => o.DetailedErrors = builder.Environment.IsDevelopment())
+    .AddHubOptions(o => o.MaximumReceiveMessageSize = 512 * 1024); // 512 KB — default 32 KB is too small for large form posts/uploads over the circuit
 
 var app = builder.Build();
 

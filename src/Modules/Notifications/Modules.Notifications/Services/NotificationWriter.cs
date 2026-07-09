@@ -88,4 +88,46 @@ internal sealed class NotificationWriter(
             logger.LogWarning(ex, "Failed to push NotificationCreated for notification {Id}.", notification.Id);
         }
     }
+
+    public async Task MarkReadAsync(NotificationReadRequestedIntegrationEvent request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!Guid.TryParse(request.RecipientUserId, out var recipientGuid))
+        {
+            logger.LogWarning(
+                "Notification mark-read skipped: recipient '{Recipient}' is not a valid user id.",
+                request.RecipientUserId);
+            return;
+        }
+
+        var notification = await dbContext.Notifications
+            .FirstOrDefaultAsync(
+                n => n.CorrelationId == request.CorrelationId
+                     && n.RecipientUserId == request.RecipientUserId
+                     && n.Type == request.Type,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        // Dismissed, never created (recipient had no login at issue time), or already read — nothing to do.
+        if (notification is null || notification.IsRead)
+        {
+            return;
+        }
+
+        notification.MarkRead();
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        // ---- After commit: live push is best-effort and must never fail the request. ----
+        try
+        {
+            await hub.Clients.Group(AppHub.UserGroup(recipientGuid))
+                .SendAsync(NotificationsModuleConstants.NotificationReadEvent, notification.Id, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to push NotificationRead for notification {Id}.", notification.Id);
+        }
+    }
 }

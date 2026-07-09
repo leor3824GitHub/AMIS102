@@ -123,6 +123,42 @@ public sealed class NotificationWriterTests
         theirs.IsRead.ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task MarkReadAsync_FlipsRow_PushesOnce_AndRedeliveryIsIdempotent()
+    {
+        var (db, conn) = CreateDbContext();
+        await using var _ = db;
+        await using var __ = conn;
+
+        var hub = new RecordingHubContext();
+        var writer = new NotificationWriter(db, hub, NullLogger<NotificationWriter>.Instance);
+
+        await writer.WriteAsync(Request(correlationId: "ICS-1"), CancellationToken.None);
+
+        await writer.MarkReadAsync(ReadRequest("ICS-1"), CancellationToken.None);
+
+        var row = await db.Notifications.SingleAsync();
+        row.IsRead.ShouldBeTrue();
+        row.ReadOnUtc.ShouldNotBeNull();
+
+        hub.Sends.Count.ShouldBe(2); // NotificationCreated + NotificationRead
+        hub.Sends[1].Method.ShouldBe("NotificationRead");
+        hub.Sends[1].Group.ShouldBe(AppHub.UserGroup(Guid.Parse(Recipient)));
+
+        // Redelivery of the same read-request and an unknown correlation are silent no-ops.
+        await writer.MarkReadAsync(ReadRequest("ICS-1"), CancellationToken.None);
+        await writer.MarkReadAsync(ReadRequest("ICS-404"), CancellationToken.None);
+        hub.Sends.Count.ShouldBe(2);
+    }
+
+    private static NotificationReadRequestedIntegrationEvent ReadRequest(string correlationId, string? recipient = null) =>
+        new(
+            RecipientUserId: recipient ?? Recipient,
+            Type: NotificationType.InspectionRequested,
+            Source: "ProcurementAcquisition",
+            CorrelationId: correlationId,
+            TenantId: "root");
+
     private static NotificationRequestedIntegrationEvent Request(string correlationId, string? recipient = null) =>
         new(
             RecipientUserId: recipient ?? Recipient,
