@@ -34,6 +34,44 @@ public static class MasterDataLookupEndpoint
             .Produces(StatusCodes.Status404NotFound)
             .RequirePermission(MasterDataPermissions.Lookup.View);
 
+        // Batch: resolve many employee references in one call (replaces UI per-row N+1 fetches).
+        endpoints.MapPost("/employees/by-ids", GetEmployeesByIds)
+            .WithName("MasterData_GetEmployeeReferencesByIds")
+            .WithSummary("Get employee references for a set of ids (batch)")
+            .Produces<IReadOnlyDictionary<Guid, EmployeeReferenceDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
+        // Unpaged "all active" lookups for bounded dropdowns — never truncated by the page-size clamp.
+        endpoints.MapGet("/departments/all", GetAllDepartments)
+            .WithName("MasterData_ListAllDepartments")
+            .WithSummary("List all active departments (unpaged lookup)")
+            .Produces<IReadOnlyList<DepartmentReferenceDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
+        endpoints.MapGet("/offices/all", GetAllOffices)
+            .WithName("MasterData_ListAllOffices")
+            .WithSummary("List all active offices (unpaged lookup)")
+            .Produces<IReadOnlyList<OfficeReferenceDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
+        endpoints.MapGet("/positions/all", GetAllPositions)
+            .WithName("MasterData_ListAllPositions")
+            .WithSummary("List all active positions (unpaged lookup)")
+            .Produces<IReadOnlyList<PositionReferenceDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
+        endpoints.MapGet("/unit-of-measures/all", GetAllUnitOfMeasures)
+            .WithName("MasterData_ListAllUnitOfMeasures")
+            .WithSummary("List all active unit of measures (unpaged lookup)")
+            .Produces<IReadOnlyList<UnitOfMeasureReferenceDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
+        endpoints.MapGet("/categories/all", GetAllCategories)
+            .WithName("MasterData_ListAllCategories")
+            .WithSummary("List all active categories (unpaged lookup)")
+            .Produces<IReadOnlyList<AMIS.Modules.MasterData.Contracts.v1.Categories.CategoryDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
         endpoints.MapGet("/offices", ListOffices)
             .WithName(nameof(ListOfficeReferencesQuery))
             .WithSummary("Search office references with pagination")
@@ -85,6 +123,30 @@ public static class MasterDataLookupEndpoint
         var result = await mediator.Send(new GetEmployeeReferenceByIdentityUserIdQuery(identityUserId), cancellationToken);
         return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
     }
+
+    private static async Task<IResult> GetEmployeesByIds(
+        [FromBody] IReadOnlyCollection<Guid> ids,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetEmployeeReferencesByIdsQuery(ids ?? []), cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> GetAllDepartments(IMediator mediator, CancellationToken cancellationToken)
+        => TypedResults.Ok(await mediator.Send(new ListAllDepartmentsQuery(), cancellationToken));
+
+    private static async Task<IResult> GetAllOffices(IMediator mediator, CancellationToken cancellationToken)
+        => TypedResults.Ok(await mediator.Send(new ListAllOfficesQuery(), cancellationToken));
+
+    private static async Task<IResult> GetAllPositions(IMediator mediator, CancellationToken cancellationToken)
+        => TypedResults.Ok(await mediator.Send(new ListAllPositionsQuery(), cancellationToken));
+
+    private static async Task<IResult> GetAllUnitOfMeasures(IMediator mediator, CancellationToken cancellationToken)
+        => TypedResults.Ok(await mediator.Send(new ListAllUnitOfMeasuresQuery(), cancellationToken));
+
+    private static async Task<IResult> GetAllCategories(IMediator mediator, CancellationToken cancellationToken)
+        => TypedResults.Ok(await mediator.Send(new ListAllCategoriesQuery(), cancellationToken));
 
     private static async Task<IResult> ListOffices(
         [AsParameters] ListOfficeReferencesQuery query,

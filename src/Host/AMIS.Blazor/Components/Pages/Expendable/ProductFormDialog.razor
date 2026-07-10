@@ -5,6 +5,7 @@
 @inject IProductsClient ProductsClient
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 
 <MudDialog>
     <DialogContent>
@@ -244,8 +245,7 @@
     {
         try
         {
-            var response = await MasterDataClient.CategoriesListAsync(pageSize: 1000, isActive: true);
-            _categories = response?.Items?.ToList() ?? new();
+            _categories = (await LookupData.GetCategoriesAsync()).ToList();
         }
         catch (Exception ex)
         {

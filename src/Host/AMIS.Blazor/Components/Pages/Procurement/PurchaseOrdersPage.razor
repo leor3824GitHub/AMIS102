@@ -6,6 +6,7 @@
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments
 @using AMIS.Framework.Shared.Persistence
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using PurchaseOrderContracts = AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @inject IPurchaseOrderClient Client
@@ -26,9 +27,28 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <!-- Header: title + primary action -->
+                <!-- Filter toolbar: search + date range -->
+                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Search for PO"
+                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
+                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
+
+                <!-- Status filter chips + primary action -->
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Purchase Orders</MudText>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="flex-grow-1">
+                        @foreach (var s in _statusFilters)
+                        {
+                            var isActive = _statusFilter == s;
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(isActive ? Color.Primary : Color.Default)"
+                                     Variant="@(isActive ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => SetStatusFilter(s))"
+                                     Title="@($"Filter by {s} status")"
+                                     Clickable="true">
+                                @GetStatusChipLabel(s)
+                            </MudChip>
+                        }
+                    </MudStack>
                     @if (_canCreate)
                     {
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
@@ -39,161 +59,101 @@
                     }
                 </MudStack>
 
-                <!-- Filter toolbar: search + date range -->
-                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
-                               SearchPlaceholder="Search for PO"
-                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
-                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
-
-                <!-- Status filter chips -->
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
-                    @foreach (var s in _statusFilters)
-                    {
-                        var isActive = _statusFilter == s;
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@(isActive ? Color.Primary : Color.Default)"
-                                 Variant="@(isActive ? Variant.Filled : Variant.Outlined)"
-                                 OnClick="@(() => SetStatusFilter(s))"
-                                 Title="@($"Filter by {s} status")"
-                                 Clickable="true">
-                            @GetStatusChipLabel(s)
-                        </MudChip>
-                    }
-                </MudStack>
-
-                @if (!_loaded)
-                {
-                    <MudProgressLinear Indeterminate="true" />
-                }
-                else if (_items.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">
-                        @if (!string.IsNullOrWhiteSpace(_keyword) || _statusFilter != "All")
-                        {
-                            <text>No purchase orders match your filters. Try adjusting your search or status filter.</text>
-                        }
-                        else if (_canCreate)
-                        {
-                            <text>No purchase orders yet. <MudLink Href="#" OnClick="OpenCreateDialog" Style="cursor:pointer;">Create your first PO</MudLink></text>
-                        }
-                        else
-                        {
-                            <text>No purchase orders yet.</text>
-                        }
-                    </MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th>PO #</th>
-                                <th>Date</th>
-                                <th>Supplier</th>
-                                <th>Mode</th>
-                                <th style="text-align:right">Total</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in _items)
-                            {
-                                <tr>
-                                    <td><b>@item.PoNumber</b></td>
-                                    <td>@item.PoDate.ToString("MM/dd/yyyy")</td>
-                                    <td>@item.SupplierName</td>
-                                    <td><MudText Typo="Typo.caption">@item.ModeOfProcurement.ToString().Replace("_"," ")</MudText></td>
-                                    <td style="text-align:right">@Money.Symbol@item.TotalAmount.ToString("N2")</td>
-                                    <td>@PoStatusChip(item.Status)</td>
-                                    <td>
-                                        <MudStack Row="true" Spacing="0">
-                                            @if (item.Status == PurchaseOrderStatus.Draft)
-                                            {
-                                                @if (_canUpdate)
-                                                {
-                                                    <MudTooltip Text="Edit draft">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                                       OnClick="@(async () => await OpenEditDialog(item.Id))" />
-                                                    </MudTooltip>
-                                                }
-                                                @if (_canSubmit)
-                                                {
-                                                    <MudTooltip Text="Submit for Funds Available certification">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Primary"
-                                                                       OnClick="@(async () => await SubmitAsync(item.Id))" />
-                                                    </MudTooltip>
-                                                }
-                                            }
-                                            @if (item.Status == PurchaseOrderStatus.PendingFundsAvailable && _canCertifyFundsAvailable)
-                                            {
-                                                <MudTooltip Text="Certify Funds Available">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
-                                                                   OnClick="@(async () => await CertifyFundsAvailableAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            @if (item.Status == PurchaseOrderStatus.PendingApproval && _canIssue)
-                                            {
-                                                <MudTooltip Text="Issue this PO">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
-                                                                   OnClick="@(async () => await IssueAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            @if ((item.Status == PurchaseOrderStatus.Draft
-                                                  || item.Status == PurchaseOrderStatus.PendingFundsAvailable
-                                                  || item.Status == PurchaseOrderStatus.PendingApproval
-                                                  || item.Status == PurchaseOrderStatus.Issued)
-                                                 && _canCancel)
-                                            {
-                                                <MudTooltip Text="Cancel this PO">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await CancelPoAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            <MudTooltip Text="View full details">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
-                                                               OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
-                                            </MudTooltip>
-                                            @if (IsSignedPo(item.Status) && (item.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
-                                            {
-                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                                   OnClick="@(() => OpenSignedCopyAsync(item.Id, item.PoNumber, item.Status))" />
-                                                </MudTooltip>
-                                            }
-                                            <MudMenu Icon="@Icons.Material.Filled.Print"
-                                                     Color="Color.Secondary"
-                                                     Size="Size.Small"
-                                                     Dense="true"
-                                                     AnchorOrigin="Origin.BottomLeft"
-                                                     TransformOrigin="Origin.TopLeft"
-                                                     ToolTip="Print or export">
-                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                             OnClick="@(() => DownloadFastReportPdfAsync(item.Id))">
-                                                    Download PDF
-                                                </MudMenuItem>
-                                                <MudDivider />
-                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
-                                                             OnClick="@(() => OpenFastReportSetupAsync(item.Id))">
-                                                    Page Setup…
-                                                </MudMenuItem>
-                                            </MudMenu>
-                                        </MudStack>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-
-                    @if (_totalCount > _pageSize)
-                    {
-                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
-                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
-                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-                        </MudStack>
-                    }
-                }
+                <AMISDataTable @ref="_table" T="PurchaseOrderSummaryDto" ServerData="LoadServerData"
+                               EmptyMessage="@EmptyMessage" EmptyDescription="@EmptyDescription">
+                    <HeaderContent>
+                        <MudTh>PO #</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Supplier</MudTh>
+                        <MudTh>Mode</MudTh>
+                        <MudTh Style="text-align:right">Total</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="PO #"><b>@context.PoNumber</b></MudTd>
+                        <MudTd DataLabel="Date">@context.PoDate.ToString("MM/dd/yyyy")</MudTd>
+                        <MudTd DataLabel="Supplier">@context.SupplierName</MudTd>
+                        <MudTd DataLabel="Mode"><MudText Typo="Typo.caption">@context.ModeOfProcurement.ToString().Replace("_"," ")</MudText></MudTd>
+                        <MudTd DataLabel="Total" Style="text-align:right">@Money.Symbol@context.TotalAmount.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Status">@PoStatusChip(context.Status)</MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudStack Row="true" Spacing="0">
+                                @if (context.Status == PurchaseOrderStatus.Draft)
+                                {
+                                    @if (_canUpdate)
+                                    {
+                                        <MudTooltip Text="Edit draft">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                                           OnClick="@(async () => await OpenEditDialog(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canSubmit)
+                                    {
+                                        <MudTooltip Text="Submit for Funds Available certification">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Primary"
+                                                           OnClick="@(async () => await SubmitAsync(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                }
+                                @if (context.Status == PurchaseOrderStatus.PendingFundsAvailable && _canCertifyFundsAvailable)
+                                {
+                                    <MudTooltip Text="Certify Funds Available">
+                                        <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                                       OnClick="@(async () => await CertifyFundsAvailableAsync(context.Id))" />
+                                    </MudTooltip>
+                                }
+                                @if (context.Status == PurchaseOrderStatus.PendingApproval && _canIssue)
+                                {
+                                    <MudTooltip Text="Issue this PO">
+                                        <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Success"
+                                                       OnClick="@(async () => await IssueAsync(context.Id))" />
+                                    </MudTooltip>
+                                }
+                                @if ((context.Status == PurchaseOrderStatus.Draft
+                                      || context.Status == PurchaseOrderStatus.PendingFundsAvailable
+                                      || context.Status == PurchaseOrderStatus.PendingApproval
+                                      || context.Status == PurchaseOrderStatus.Issued)
+                                     && _canCancel)
+                                {
+                                    <MudTooltip Text="Cancel this PO">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                                       OnClick="@(async () => await CancelPoAsync(context.Id))" />
+                                    </MudTooltip>
+                                }
+                                <MudTooltip Text="View full details">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                                   OnClick="@(async () => await ViewDetailsAsync(context.Id))" />
+                                </MudTooltip>
+                                @if (IsSignedPo(context.Status) && (context.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                {
+                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                       Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                       OnClick="@(() => OpenSignedCopyAsync(context.Id, context.PoNumber, context.Status))" />
+                                    </MudTooltip>
+                                }
+                                <MudMenu Icon="@Icons.Material.Filled.Print"
+                                         Color="Color.Secondary"
+                                         Size="Size.Small"
+                                         Dense="true"
+                                         AnchorOrigin="Origin.BottomLeft"
+                                         TransformOrigin="Origin.TopLeft"
+                                         ToolTip="Print or export">
+                                    <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                 OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
+                                        Download PDF
+                                    </MudMenuItem>
+                                    <MudDivider />
+                                    <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                 OnClick="@(() => OpenFastReportSetupAsync(context.Id))">
+                                        Page Setup…
+                                    </MudMenuItem>
+                                </MudMenu>
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -227,14 +187,11 @@
             new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = false, BackdropClick = false });
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 
@@ -243,15 +200,19 @@
     [SupplyParameterFromQuery(Name = "canvassId")]
     public Guid? CanvassId { get; set; }
 
+    private AMISDataTable<PurchaseOrderSummaryDto>? _table;
     private List<PurchaseOrderSummaryDto> _items = [];
-    private bool _loaded;
     private string _keyword = string.Empty;
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private string _statusFilter = "All";
-    private int _page = 1, _pageSize = 15, _totalCount;
     private Guid? _appliedCanvassId;
     private Dictionary<string, int> _statusCounts = [];
+
+    private bool HasActiveFilters => !string.IsNullOrWhiteSpace(_keyword) || _statusFilter != "All"
+                                     || _fromDate is not null || _toDate is not null;
+    private string EmptyMessage => HasActiveFilters ? "No purchase orders match your filters." : "No purchase orders yet.";
+    private string? EmptyDescription => HasActiveFilters ? "Try adjusting your search or status filter." : null;
 
     private static readonly string[] _statusFilters = ["All", "Draft", "PendingFundsAvailable", "PendingApproval", "Issued", "PartiallyDelivered", "Fulfilled", "Cancelled"];
 
@@ -259,7 +220,7 @@
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
         await LoadStatusCountsAsync();
-        await LoadAsync();
+        // AMISDataTable auto-loads via ServerData on first render.
     }
 
     // Permissions load asynchronously in AMISLayout after first render; re-render when they arrive
@@ -277,38 +238,43 @@
         }
     }
 
-    private async Task LoadAsync()
+    private async Task<TableData<PurchaseOrderSummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _loaded = false;
         try
         {
             PurchaseOrderStatus? filter = _statusFilter == "All" ? null : Enum.Parse<PurchaseOrderStatus>(_statusFilter);
-            var result = await Client.SearchAsync(_keyword, filter, _page, _pageSize, fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
+            var result = await Client.SearchAsync(_keyword, filter, state.Page + 1, state.PageSize, fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
             _items = result.Items?.ToList() ?? [];
-            _totalCount = (int)result.TotalCount;
+            return new TableData<PurchaseOrderSummaryDto> { Items = _items, TotalItems = (int)result.TotalCount };
         }
-        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
-        finally { _loaded = true; }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+            return new TableData<PurchaseOrderSummaryDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     private async Task SetStatusFilter(string s)
     {
         _statusFilter = s;
-        _page = 1;
         await LoadAsync();
     }
 
     private async Task OnKeywordChanged(string? keyword)
     {
         _keyword = keyword ?? string.Empty;
-        _page = 1;
         await LoadAsync();
     }
 
     private async Task OnFromDateChanged(DateTime? date)
     {
         _fromDate = date;
-        _page = 1;
         await LoadAsync();
         await RefreshStatusCountsAsync();
     }
@@ -316,7 +282,6 @@
     private async Task OnToDateChanged(DateTime? date)
     {
         _toDate = date;
-        _page = 1;
         await LoadAsync();
         await RefreshStatusCountsAsync();
     }

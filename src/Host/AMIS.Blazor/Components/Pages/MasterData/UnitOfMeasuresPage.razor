@@ -1,6 +1,7 @@
 @page "/master-data/unit-of-measures"
 @implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @inherits ComponentBase
@@ -8,6 +9,7 @@
 @inject IDialogService DialogService
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
 
@@ -32,79 +34,60 @@
 </AMISPageHeader>
 
 <div class="mt-4">
-    <MudGrid Spacing="2">
-        <!-- Units of Measure List -->
-        <MudItem xs="12">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">Units of Measure List</MudText>
-                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
-                    </MudStack>
+    <MudCard Class="AMIS-card">
+        <MudCardContent>
+            <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h6" Class="flex-grow-1">Units of Measure List</MudText>
+                <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+            </MudStack>
 
-                    @if (_unitOfMeasures.Any())
-                    {
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                            <thead>
-                                <tr>
-                                    <th style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</th>
-                                    <th style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var unit in _unitOfMeasures.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
-                                {
-                                    <tr>
-                                        <td>@unit.Code</td>
-                                        <td>@unit.Name</td>
-                                        <td><MudChip T="string" Size="Size.Small" Color="@(unit.IsActive ? Color.Success : Color.Default)">@(unit.IsActive ? "Active" : "Inactive")</MudChip></td>
-                                        <td>
-                                            @if (IsOwnedByMe(unit.OfficeCode) && (_canUpdate || _canDelete))
-                                            {
-                                                <MudStack Row="true" Spacing="1">
-                                                    @if (_canUpdate)
-                                                    {
-                                                        <MudTooltip Text="Edit unit of measure">
-                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(unit))" />
-                                                        </MudTooltip>
-                                                    }
-                                                    @if (_canDelete)
-                                                    {
-                                                        <MudTooltip Text="Delete unit of measure">
-                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                           Color="Color.Error" OnClick="@(() => DeleteUnitOfMeasure(unit.Id))" />
-                                                        </MudTooltip>
-                                                    }
-                                                </MudStack>
-                                            }
-                                            else
-                                            {
-                                                <MudTooltip Text="@(string.IsNullOrWhiteSpace(unit.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
-                                                </MudTooltip>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-                        @if (_unitOfMeasures.Count > PageSize)
+            <AMISDataTable T="AMIS.Blazor.ApiClient.UnitOfMeasureReferenceDto"
+                           Items="@_unitOfMeasures"
+                           Loading="_isLoading"
+                           RowsPerPage="15"
+                           EmptyMessage="No units of measure found"
+                           EmptyDescription="Create one to get started.">
+                <HeaderContent>
+                    <MudTh Style="cursor:pointer" @onclick='() => SetSort("Code")'>Code @SortIcon("Code")</MudTh>
+                    <MudTh Style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Code">@context.Code</MudTd>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
+                    <MudTd DataLabel="Actions">
+                        @if (IsOwnedByMe(context.OfficeCode) && (_canUpdate || _canDelete))
                         {
-                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_unitOfMeasures.Count / (double)PageSize))"
-                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
+                            <MudStack Row="true" Spacing="1">
+                                @if (_canUpdate)
+                                {
+                                    <MudTooltip Text="Edit unit of measure">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                                    </MudTooltip>
+                                }
+                                @if (_canDelete)
+                                {
+                                    <MudTooltip Text="Delete unit of measure">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error" OnClick="@(() => DeleteUnitOfMeasure(context.Id))" />
+                                    </MudTooltip>
+                                }
+                            </MudStack>
                         }
-                    }
-                    else
-                    {
-                        <MudAlert Severity="Severity.Info">No units of measure yet. Create one to get started.</MudAlert>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
+                        else
+                        {
+                            <MudTooltip Text="@(string.IsNullOrWhiteSpace(context.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
+                            </MudTooltip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </AMISDataTable>
+        </MudCardContent>
+    </MudCard>
 </div>
 
 @code {
@@ -118,8 +101,7 @@
     private string _sortField = "Name";
     private bool _sortAscending = true;
     private string? _myOfficeCode;
-    private int _pageIndex = 1;
-    private const int PageSize = 10;
+
 
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.UnitOfMeasures.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.UnitOfMeasures.Update);
@@ -236,6 +218,7 @@
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
+            LookupData.Invalidate(LookupSet.UnitOfMeasures);
             await LoadUnitOfMeasures();
         }
     }
@@ -248,6 +231,7 @@
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
+            LookupData.Invalidate(LookupSet.UnitOfMeasures);
             await LoadUnitOfMeasures();
         }
     }
@@ -260,6 +244,7 @@
         try
         {
             await MasterDataClient.UnitOfMeasuresDeleteAsync(id);
+            LookupData.Invalidate(LookupSet.UnitOfMeasures);
             await LoadUnitOfMeasures();
             Snackbar.Add("Unit of measure deleted", Severity.Success);
         }
@@ -302,7 +287,6 @@
             filtered = filtered.Where(x => x.OfficeCode != null &&
                 x.OfficeCode.Contains(_officeCodeFilter, StringComparison.OrdinalIgnoreCase));
 
-        _pageIndex = 1;
         _unitOfMeasures = (_sortField, _sortAscending) switch
         {
             ("Code", true)  => filtered.OrderBy(x => x.Code).ToList(),

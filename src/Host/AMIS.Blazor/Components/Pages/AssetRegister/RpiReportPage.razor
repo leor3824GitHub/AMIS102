@@ -143,8 +143,8 @@ else
         _error = null;
         try
         {
-            _report = await ReportsClient.GetRpiReportAsync(
-                ToDateOnly(_from), ToDateOnly(_to), pageNumber: 1, pageSize: 1000);
+            _report = await ReportsClient.GetRpiReportAllAsync(
+                ToDateOnly(_from), ToDateOnly(_to));
         }
         catch (Exception ex)
         {

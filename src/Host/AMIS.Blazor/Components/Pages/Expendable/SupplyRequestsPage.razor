@@ -10,6 +10,7 @@
 @inject ISupply_requestsClient SupplyRequestsClient
 @inject IInventoryClient InventoryClient
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
@@ -371,8 +372,8 @@
     {
         try
         {
-            var result = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
-            _departmentNames = result?.Items?.ToDictionary(d => d.Id, d => d.Name) ?? [];
+            var departments = await LookupData.GetDepartmentsAsync();
+            _departmentNames = departments.ToDictionary(d => d.Id, d => d.Name);
         }
         catch { _departmentNames = []; }
     }

@@ -12,12 +12,20 @@ namespace AMIS.Modules.Expendable.Features.v1.Reports.GetDepartmentIssuanceRepor
 
 public static class GetDepartmentIssuanceReportEndpoint
 {
-    public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
-        endpoints.MapGet("/department-issuance", GetReport)
+    public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("/department-issuance/all", GetAllReport)
+            .WithName("Expendable_GetDepartmentIssuanceReportAll")
+            .WithSummary("Full department issuance report (unpaged) for reporting and export")
+            .Produces<IReadOnlyList<DepartmentIssuanceSummaryDto>>(StatusCodes.Status200OK)
+            .RequirePermission(ExpendablePermissions.Inventory.ViewReports);
+
+        return endpoints.MapGet("/department-issuance", GetReport)
             .WithName(nameof(GetDepartmentIssuanceReportQuery))
             .WithSummary("Aggregated issuance report grouped by department â€” for supply officer reporting")
             .Produces<PagedResponse<DepartmentIssuanceSummaryDto>>(StatusCodes.Status200OK)
             .RequirePermission(ExpendablePermissions.Inventory.ViewReports);
+    }
 
     private static async Task<IResult> GetReport(
         [AsParameters] GetDepartmentIssuanceReportQuery query,
@@ -25,6 +33,18 @@ public static class GetDepartmentIssuanceReportEndpoint
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(query, cancellationToken);
+        return TypedResults.Ok(result);
+    }
+
+    private static async Task<IResult> GetAllReport(
+        string? departmentId,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new GetDepartmentIssuanceReportAllQuery(departmentId, from, to), cancellationToken);
         return TypedResults.Ok(result);
     }
 }

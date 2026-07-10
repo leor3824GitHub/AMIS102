@@ -157,6 +157,7 @@ public class MasterDataModule : IModule
         PermissionConstants.Register(RegisteredPermissions);
 
         services.AddHeroDbContext<MasterDataDbContext>();
+        services.AddMemoryCache(); // backs the unpaged "all active" lookup handlers (idempotent)
         services.AddScoped<IDbInitializer, MasterDataDbInitializer>();
         services.AddHostedService<AMIS.Modules.MasterData.Provisioning.MasterDataDbInitializerHostedService>();
         services.AddIntegrationEventHandlers(typeof(MasterDataModule).Assembly);

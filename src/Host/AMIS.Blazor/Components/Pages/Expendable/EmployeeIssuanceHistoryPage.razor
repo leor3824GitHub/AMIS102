@@ -144,7 +144,6 @@
     private readonly HashSet<Guid> _expandedRows = [];
     private readonly Dictionary<string, EmployeeReferenceDto> _employeeCache = [];
     private readonly Dictionary<Guid, string> _departmentCache = [];
-    private const int ApiPageSizeLimit = 200;
     private const string ReportKey = "quest-employee-issuance";
 
     [Parameter]
@@ -352,35 +351,14 @@
                 return;
             }
 
-            var items = new List<EmployeeIssuanceDto>();
-            var page = 1;
+            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
 
-            while (true)
-            {
-                var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-                var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-
-                var result = await ReportsClient.GetEmployeeIssuanceHistoryAsync(
-                    employeeId: _selectedEmployee?.Id.ToString(),
-                    from: from,
-                    toDate: to,
-                    pageNumber: page,
-                    pageSize: ApiPageSizeLimit);
-
-                var pageItems = result.Items?.ToList() ?? [];
-                if (pageItems.Count == 0)
-                {
-                    break;
-                }
-
-                items.AddRange(pageItems);
-                if (pageItems.Count < ApiPageSizeLimit)
-                {
-                    break;
-                }
-
-                page++;
-            }
+            // Export needs the whole dataset — one unpaged call instead of looping pages.
+            var items = await ReportsClient.GetEmployeeIssuanceHistoryAllAsync(
+                employeeId: _selectedEmployee?.Id.ToString(),
+                from: from,
+                toDate: to);
 
             if (items.Count == 0)
             {

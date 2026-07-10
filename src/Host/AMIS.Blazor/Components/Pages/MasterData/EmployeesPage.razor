@@ -8,6 +8,7 @@
 @inject IDialogService DialogService
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject IIdentityClient IdentityClient
 @inject IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
@@ -210,18 +211,27 @@
             .Where(id => !_linkedAccountDisplays.ContainsKey(id))
             .ToList();
 
-        foreach (var identityUserId in linkedIds)
+        if (linkedIds.Count == 0) return;
+
+        try
         {
-            if (!Guid.TryParse(identityUserId, out var identityGuid)) continue;
-            try
+            // Fetch all users once and resolve locally — avoids a per-employee HTTP round-trip (N+1).
+            var users = await IdentityClient.UsersGetAsync();
+            var usersById = users
+                .Where(u => !string.IsNullOrWhiteSpace(u.Id))
+                .GroupBy(u => u.Id, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var identityUserId in linkedIds)
             {
-                var user = await IdentityClient.UsersGetAsync(identityGuid);
-                _linkedAccountDisplays[identityUserId] = $"{user.FirstName} {user.LastName} ({user.Email})".Trim();
+                _linkedAccountDisplays[identityUserId] = usersById.TryGetValue(identityUserId, out var user)
+                    ? $"{user.FirstName} {user.LastName} ({user.Email})".Trim()
+                    : (identityUserId.Length >= 8 ? identityUserId[..8] + "…" : identityUserId);
             }
-            catch
-            {
-                _linkedAccountDisplays[identityUserId] = identityUserId[..8] + "…";
-            }
+        }
+        catch
+        {
+            // Leave unresolved; GetLinkedAccountDisplay falls back to "Linked".
         }
 
         StateHasChanged();
@@ -234,8 +244,7 @@
     {
         try
         {
-            var response = await LookupClient.OfficesAsync(pageSize: 1000, isActive: true);
-            _offices = response?.Items?.ToList() ?? new();
+            _offices = (await LookupData.GetOfficesAsync()).ToList();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }
@@ -244,8 +253,7 @@
     {
         try
         {
-            var response = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
-            _departments = response?.Items?.ToList() ?? new();
+            _departments = (await LookupData.GetDepartmentsAsync()).ToList();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }
@@ -254,8 +262,7 @@
     {
         try
         {
-            var response = await LookupClient.PositionsAsync(pageSize: 1000, isActive: true);
-            _positions = response?.Items?.ToList() ?? new();
+            _positions = (await LookupData.GetPositionsAsync()).ToList();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
     }

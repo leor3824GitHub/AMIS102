@@ -16,6 +16,8 @@ public interface IAssetRegisterReportsClient
     Task<IReadOnlyList<string>> GetRegPpeiFundClustersAsync(CancellationToken cancellationToken = default);
     Task<RspiReportDto?> GetRspiReportAsync(DateOnly? dateFrom, DateOnly? dateTo, AssetType? assetType, bool activeOnly, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<RpiReportDto?> GetRpiReportAsync(DateOnly? dateFrom, DateOnly? dateTo, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<RspiReportDto?> GetRspiReportAllAsync(DateOnly? dateFrom, DateOnly? dateTo, AssetType? assetType, bool activeOnly, CancellationToken cancellationToken = default);
+    Task<RpiReportDto?> GetRpiReportAllAsync(DateOnly? dateFrom, DateOnly? dateTo, CancellationToken cancellationToken = default);
     Task<PhysicalCountReportDto?> GetPhysicalCountReportAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<IssuanceReportDocumentDto?> GetIssuanceReportAsync(Guid reportId, CancellationToken cancellationToken = default);
     Task<AccountabilityReportDto?> GetAccountabilityReportAsync(Guid accountabilityId, CancellationToken cancellationToken = default);
@@ -124,6 +126,36 @@ public sealed class AssetRegisterReportsClient(HttpClient httpClient) : IAssetRe
             ["dateTo"] = dateTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ["pageNumber"] = pageNumber.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture)
+        });
+
+        return httpClient.GetFromJsonAsync<RpiReportDto>(url, JsonOptions, cancellationToken);
+    }
+
+    public Task<RspiReportDto?> GetRspiReportAllAsync(
+        DateOnly? dateFrom, DateOnly? dateTo, AssetType? assetType, bool activeOnly,
+        CancellationToken cancellationToken = default)
+    {
+        // Reports need the whole dataset — one unpaged call instead of a magic pageSize:1000.
+        var url = BuildUrl("api/v1/asset-register/reports/rspi", new Dictionary<string, string?>
+        {
+            ["dateFrom"] = dateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["dateTo"] = dateTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["assetType"] = assetType?.ToString(),
+            ["activeOnly"] = activeOnly ? "true" : "false",
+            ["all"] = "true"
+        });
+
+        return httpClient.GetFromJsonAsync<RspiReportDto>(url, JsonOptions, cancellationToken);
+    }
+
+    public Task<RpiReportDto?> GetRpiReportAllAsync(
+        DateOnly? dateFrom, DateOnly? dateTo, CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl("api/v1/asset-register/reports/rpi", new Dictionary<string, string?>
+        {
+            ["dateFrom"] = dateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["dateTo"] = dateTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["all"] = "true"
         });
 
         return httpClient.GetFromJsonAsync<RpiReportDto>(url, JsonOptions, cancellationToken);

@@ -282,7 +282,10 @@ public sealed record GetRspiReportQuery(
     AssetType? AssetType = null,
     bool ActiveOnly = true,
     int PageNumber = 1,
-    int PageSize = 20) : IQuery<RspiReportDto>;
+    int PageSize = 20,
+    // When true, paging is ignored and every matching row is returned — the report needs the full
+    // dataset in one response (replaces the client fetching pageSize:1000 as a "give me everything" hack).
+    bool All = false) : IQuery<RspiReportDto>;
 
 // ── RPI (Report on Property Issued — PPE, sourced from PAR accountabilities) ─────────────────────
 //
@@ -330,7 +333,9 @@ public sealed record GetRpiReportQuery(
     DateOnly? DateFrom = null,
     DateOnly? DateTo = null,
     int PageNumber = 1,
-    int PageSize = 20) : IQuery<RpiReportDto>;
+    int PageSize = 20,
+    // When true, paging is ignored and every matching row is returned (full-dataset report).
+    bool All = false) : IQuery<RpiReportDto>;
 
 // ── RegPPEI (Registry of Property, Plant and Equipment Issued) ───────────────────────────────────
 //

@@ -29,6 +29,18 @@ public interface IReportsClient
         int? pageSize = null,
         CancellationToken cancellationToken = default);
 
+    Task<List<DepartmentIssuanceSummaryDto>> GetDepartmentIssuanceReportAllAsync(
+        string? departmentId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? toDate = null,
+        CancellationToken cancellationToken = default);
+
+    Task<List<EmployeeIssuanceDto>> GetEmployeeIssuanceHistoryAllAsync(
+        string? employeeId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? toDate = null,
+        CancellationToken cancellationToken = default);
+
     Task<List<PhysicalCountGroupDto>> GetPhysicalCountReportAsync(
         Guid? warehouseLocationId = null,
         CancellationToken cancellationToken = default);
@@ -125,6 +137,44 @@ public sealed class ReportsClient : IReportsClient
             url, cancellationToken);
 
         return response ?? new PagedResponse<EmployeeIssuanceDto> { Items = [] };
+    }
+
+    public async Task<List<DepartmentIssuanceSummaryDto>> GetDepartmentIssuanceReportAllAsync(
+        string? departmentId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? toDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl("api/v1/expendable/reports/department-issuance/all", new()
+        {
+            ["departmentId"] = departmentId,
+            ["from"] = from?.ToString("O"),
+            ["to"] = toDate?.ToString("O")
+        });
+
+        var response = await _httpClient.GetFromJsonAsync<List<DepartmentIssuanceSummaryDto>>(
+            url, cancellationToken);
+
+        return response ?? [];
+    }
+
+    public async Task<List<EmployeeIssuanceDto>> GetEmployeeIssuanceHistoryAllAsync(
+        string? employeeId = null,
+        System.DateTimeOffset? from = null,
+        System.DateTimeOffset? toDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var url = BuildUrl("api/v1/expendable/reports/employee-issuance/all", new()
+        {
+            ["employeeId"] = employeeId,
+            ["from"] = from?.ToString("O"),
+            ["to"] = toDate?.ToString("O")
+        });
+
+        var response = await _httpClient.GetFromJsonAsync<List<EmployeeIssuanceDto>>(
+            url, cancellationToken);
+
+        return response ?? [];
     }
 
     public async Task<StockCardDto?> GetStockCardAsync(

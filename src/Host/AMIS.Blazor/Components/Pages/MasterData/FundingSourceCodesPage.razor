@@ -4,6 +4,7 @@
 @using AMIS.Modules.MasterData.Contracts.v1.FundingSourceCodes
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @inject IFundingSourceCodeClient FundingSourceCodeClient
 @inject IFundClusterClient FundClusterClient
@@ -46,73 +47,54 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h6" Class="mb-3">Funding Source Code List</MudText>
 
-                    @if (_isLoading)
-                    {
-                        <MudProgressLinear Indeterminate="true" />
-                    }
-                    else if (_items.Any())
-                    {
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="overflow-x:auto;">
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Cluster</th>
-                                    <th>Financing Source</th>
-                                    <th>Authorization</th>
-                                    <th>Fund Category</th>
-                                    <th>Fund Sub-Category</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in _items.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
-                                {
-                                    <tr>
-                                        <td>@item.Code</td>
-                                        <td>@item.FundClusterCode</td>
-                                        <td>@(Dash(item.FinancingSource))</td>
-                                        <td>@(Dash(item.Authorization))</td>
-                                        <td>@(Dash(item.FundCategory))</td>
-                                        <td>@(Dash(item.FundSubCategory))</td>
-                                        <td>
-                                            <MudChip T="string" Size="Size.Small" Color="@(item.IsActive ? Color.Success : Color.Default)">
-                                                @(item.IsActive ? "Active" : "Inactive")
-                                            </MudChip>
-                                        </td>
-                                        <td>
-                                            <MudStack Row="true" Spacing="1">
-                                                @if (_canUpdate)
-                                                {
-                                                    <MudTooltip Text="Edit code">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => OpenEditDialog(item))" />
-                                                    </MudTooltip>
-                                                }
-                                                @if (_canDelete)
-                                                {
-                                                    <MudTooltip Text="Delete code">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(item.Id))" />
-                                                    </MudTooltip>
-                                                }
-                                            </MudStack>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-
-                        @if (_items.Count > PageSize)
-                        {
-                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_items.Count / (double)PageSize))"
-                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
-                        }
-                    }
-                    else
-                    {
-                        <MudAlert Severity="Severity.Info">No funding source codes found. Adjust your filter or create one.</MudAlert>
-                    }
+                    <AMISDataTable T="FundingSourceCodeDto"
+                                   Items="@_items"
+                                   Loading="_isLoading"
+                                   RowsPerPage="15"
+                                   EmptyMessage="No funding source codes found"
+                                   EmptyDescription="Adjust your filter or create one.">
+                        <HeaderContent>
+                            <MudTh>Code</MudTh>
+                            <MudTh>Cluster</MudTh>
+                            <MudTh>Financing Source</MudTh>
+                            <MudTh>Authorization</MudTh>
+                            <MudTh>Fund Category</MudTh>
+                            <MudTh>Fund Sub-Category</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Code">@context.Code</MudTd>
+                            <MudTd DataLabel="Cluster">@context.FundClusterCode</MudTd>
+                            <MudTd DataLabel="Financing Source">@(Dash(context.FinancingSource))</MudTd>
+                            <MudTd DataLabel="Authorization">@(Dash(context.Authorization))</MudTd>
+                            <MudTd DataLabel="Fund Category">@(Dash(context.FundCategory))</MudTd>
+                            <MudTd DataLabel="Fund Sub-Category">@(Dash(context.FundSubCategory))</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                                    @(context.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudStack Row="true" Spacing="1">
+                                    @if (_canUpdate)
+                                    {
+                                        <MudTooltip Text="Edit code">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                           Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canDelete)
+                                    {
+                                        <MudTooltip Text="Delete code">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                           Color="Color.Error" OnClick="@(() => DeleteAsync(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                    </AMISDataTable>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -120,13 +102,12 @@
 </div>
 
 @code {
-    private const int PageSize = 15;
     private List<FundingSourceCodeDto> _items = [];
     private List<FundClusterDto> _clusters = [];
     private bool _isLoading;
     private string _searchKeyword = string.Empty;
     private string _clusterFilter = string.Empty;
-    private int _pageIndex = 1;
+
 
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.FundingSourceCodes.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.FundingSourceCodes.Update);
@@ -156,10 +137,6 @@
                 fundClusterCode: string.IsNullOrWhiteSpace(_clusterFilter) ? null : _clusterFilter,
                 pageSize: 500);
             _items = response?.Items?.OrderBy(x => x.Code).ToList() ?? [];
-
-            var maxPage = Math.Max(1, (int)Math.Ceiling(_items.Count / (double)PageSize));
-            if (_pageIndex > maxPage)
-                _pageIndex = maxPage;
         }
         catch (Exception ex)
         {
@@ -175,14 +152,12 @@
 
     private async Task SearchAsync()
     {
-        _pageIndex = 1;
         await LoadAsync();
     }
 
     private async Task OnClusterFilterChanged(string value)
     {
         _clusterFilter = value ?? string.Empty;
-        _pageIndex = 1;
         await LoadAsync();
     }
 

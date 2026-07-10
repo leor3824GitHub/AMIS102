@@ -296,6 +296,57 @@ Canonical reference: [DepartmentIssuanceReportPage.razor](../../src/Host/AMIS.Bl
 
 ---
 
+## Canonical List-Page Pattern
+
+Every list/index page follows the same three-part shape. Do not hand-roll `MudSimpleTable` + manual `MudPagination` + `MudAlert` empty states — use the shared components so every list page gets the same pager, skeleton loader, empty state, and density for free.
+
+```
+AMISPageHeader (Breadcrumbs + permission-gated CTA)
+    → optional AMISFilterBar / status chips
+        → AMISDataTable<T>  (skeleton loading · built-in empty state · pager)
+```
+
+### `AMISDataTable<T>` — `src/BuildingBlocks/Blazor.UI/Components/Data/AMISDataTable.razor`
+
+Wraps `MudTable` with a dense/hover baseline, `MudSkeleton` rows while `Loading`, a built-in `AMISEmptyState` no-records slot, and a `MudTablePager`. Provide **either** `Items` (client-side, for bounded reference data) **or** `ServerData` (server-paged, preferred for large sets) — never both.
+
+```razor
+@using AMIS.Framework.Blazor.UI.Components.Data
+
+<AMISDataTable T="DepartmentReferenceDto"
+               Items="@_departments"          @* client-side; OR ServerData="@LoadAsync" *@
+               Loading="_isLoading"
+               RowsPerPage="15"
+               EmptyMessage="No departments found"
+               EmptyDescription="Create one to get started.">
+    <HeaderContent>
+        <MudTh>Code</MudTh>
+        <MudTh>Name</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Code">@context.Code</MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+    </RowTemplate>
+</AMISDataTable>
+```
+
+- **Server paging (large sets):** pass `ServerData="@(async (state, ct) => …)"` returning `TableData<T>`, hold an `@ref`, and call `ReloadServerData()` after a filter change. MudTable `ServerData` is the chosen primitive (MudDataGrid's client-side filter model fights server paging). The table auto-loads on first render — do **not** also call `ReloadServerData()` from `OnInitializedAsync` (the `@ref` is still null there).
+- **Client mode (bounded reference data):** pass a pre-filtered/pre-sorted `Items`; the table pages it at `RowsPerPage`. Custom clickable-sort headers still work — feed the sorted list.
+- Header cells are `MudTh`, row cells are `MudTd`; `context` in `RowTemplate` is the row item.
+- **Expandable master-detail rows:** pass `ChildRowContent` (a `RenderFragment<T>`). Emit a full `<tr><td colspan="N">…</td></tr>` and self-gate it (e.g. `@if (_selected?.Id == context.Id) { … }`) so it only renders for the open row. Reference: [CanvassRequestsPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/Procurement/CanvassRequestsPage.razor).
+
+### `AMISEmptyState` — `Components/Feedback/AMISEmptyState.razor`
+
+Icon + message + optional `Description` + optional CTA (`ChildContent`). Used automatically by `AMISDataTable`; also usable standalone (`@using AMIS.Framework.Blazor.UI.Components.Feedback`).
+
+### No breadcrumbs
+
+Do **not** add breadcrumbs to list/index pages. `AMISPageHeader` still exposes an optional `Breadcrumbs` parameter, but per product decision the app does not use header breadcrumbs — leave it unset. (The shopping flow's own inline `<MudBreadcrumbs>` on `CartPage`/`ProductDetailsPage` is a separate, pre-existing pattern and stays.)
+
+**Reference implementation:** [DepartmentsPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/MasterData/DepartmentsPage.razor) (client `Items` mode). Namespaces `Components.Data` / `Components.Feedback` are **not** globally imported — add the `@using` where you consume them.
+
+---
+
 ## API Client Lifetimes
 
 All API clients (`IMaster_dataClient`, `ILookupClient`, etc.) are registered **Transient** in `ApiClientRegistration.cs`. They are stateless and resolved fresh per injection point. Do not cache them manually — inject and use directly.

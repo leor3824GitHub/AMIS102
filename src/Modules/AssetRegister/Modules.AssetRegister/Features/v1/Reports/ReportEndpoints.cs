@@ -154,10 +154,11 @@ public static class ReportEndpoints
         bool? activeOnly,
         int? pageNumber,
         int? pageSize,
+        bool? all,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new GetRspiReportQuery(dateFrom, dateTo, assetType, activeOnly ?? true, pageNumber ?? 1, pageSize ?? 20),
+            new GetRspiReportQuery(dateFrom, dateTo, assetType, activeOnly ?? true, pageNumber ?? 1, pageSize ?? 20, all ?? false),
             cancellationToken);
         return TypedResults.Ok(result);
     }
@@ -168,10 +169,11 @@ public static class ReportEndpoints
         DateOnly? dateTo,
         int? pageNumber,
         int? pageSize,
+        bool? all,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new GetRpiReportQuery(dateFrom, dateTo, pageNumber ?? 1, pageSize ?? 20),
+            new GetRpiReportQuery(dateFrom, dateTo, pageNumber ?? 1, pageSize ?? 20, all ?? false),
             cancellationToken);
         return TypedResults.Ok(result);
     }

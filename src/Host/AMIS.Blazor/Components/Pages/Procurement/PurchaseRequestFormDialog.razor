@@ -8,6 +8,7 @@
 @inject IExpendableClient ExpendableClient
 @inject ICapitalizationThresholdState ThresholdState
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject IMaster_dataClient MasterDataClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -325,8 +326,7 @@
     {
         try
         {
-            var response = await LookupClient.DepartmentsAsync(pageSize: 1000, isActive: true);
-            _departments = response?.Items?.ToList() ?? [];
+            _departments = (await LookupData.GetDepartmentsAsync()).ToList();
         }
         catch (Exception ex)
         {

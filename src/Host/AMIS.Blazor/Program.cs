@@ -106,6 +106,9 @@ builder.Services.AddScoped<IOrganizationProfileState, OrganizationProfileState>(
 // Capitalization threshold state — loaded once per session, consumed by PR/receiving forms and reports
 builder.Services.AddScoped<ICapitalizationThresholdState, CapitalizationThresholdState>();
 
+// Bounded reference-data lookups — cached once per circuit; fixes the >100-row dropdown truncation.
+builder.Services.AddScoped<ILookupDataService, LookupDataService>();
+
 // Remembers each report's last-used Fast Report Page Setup in encrypted browser localStorage
 builder.Services.AddScoped<IFastReportSetupPreferences, FastReportSetupPreferences>();
 

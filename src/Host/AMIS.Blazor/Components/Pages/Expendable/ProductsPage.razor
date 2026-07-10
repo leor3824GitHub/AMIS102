@@ -1,6 +1,7 @@
 @page "/expendable/products"
 @implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Modules.Expendable.Contracts.Permissions
 @inherits ComponentBase
@@ -10,6 +11,7 @@
 @inject IProductsClient ProductsClient
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Products" Description="Manage product catalog">
@@ -81,8 +83,8 @@
                 </MudItem>
             </MudGrid>
 
-            <MudTable @ref="_table" T="ProductDto" ServerData="LoadServerData"
-                      Dense="true" Hover="true" Striped="true">
+            <AMISDataTable @ref="_table" T="ProductDto" ServerData="LoadServerData"
+                           EmptyMessage="@EmptyMessage" EmptyDescription="@EmptyDescription">
                 <HeaderContent>
                     <MudTh>Image</MudTh>
                     <MudTh>Article</MudTh>
@@ -179,24 +181,21 @@
                         </MudStack>
                     </MudTd>
                 </RowTemplate>
-                <NoRecordsContent>
-                    <MudText Typo="Typo.body1" Class="my-4">
-                        @((!string.IsNullOrWhiteSpace(_searchKeyword) || _statusFilter != null || _categoryFilter != null || _supplierFilter != null || _parentProductFilter != null)
-                            ? "No products match the current filters."
-                            : "No products yet. Create one to get started.")
-                    </MudText>
-                </NoRecordsContent>
-                <PagerContent>
-                    <MudTablePager />
-                </PagerContent>
-            </MudTable>
+            </AMISDataTable>
         </MudCardContent>
     </MudCard>
 </div>
 
 @code {
-    private MudTable<ProductDto>? _table;
+    private AMISDataTable<ProductDto>? _table;
     private List<CategoryDto> _categories = new();
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(_searchKeyword) || _statusFilter != null ||
+        _categoryFilter != null || _supplierFilter != null || _parentProductFilter != null;
+
+    private string EmptyMessage => HasActiveFilters ? "No products match the current filters." : "No products yet.";
+    private string? EmptyDescription => HasActiveFilters ? null : "Create one to get started.";
     private List<SupplierDto> _suppliers = new();
     private List<ProductDto> _parentProducts = new();
     private bool _initialized = false;
@@ -288,8 +287,7 @@
     {
         try
         {
-            var response = await MasterDataClient.CategoriesListAsync(pageSize: 1000, isActive: true);
-            _categories = response?.Items?.ToList() ?? new();
+            _categories = (await LookupData.GetCategoriesAsync()).ToList();
         }
         catch (Exception ex)
         {

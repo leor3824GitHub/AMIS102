@@ -3,6 +3,7 @@
 @using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @inject IFundClusterClient FundClusterClient
 @inject ISnackbar Snackbar
@@ -30,90 +31,66 @@
 </AMISPageHeader>
 
 <div class="mt-4">
-    <MudGrid Spacing="2">
-        <MudItem xs="12">
-            <MudCard Class="AMIS-card">
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.h6" Class="flex-grow-1">Fund Cluster List</MudText>
-                        <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
-                    </MudStack>
+    <MudCard Class="AMIS-card">
+        <MudCardContent>
+            <MudStack Row="true" Spacing="1" Class="mb-3" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h6" Class="flex-grow-1">Fund Cluster List</MudText>
+                <MasterDataStatusFilterChips Value="_statusFilter" ValueChanged="OnStatusFilterChanged" />
+            </MudStack>
 
-                    @if (_isLoading)
-                    {
-                        <MudProgressLinear Indeterminate="true" />
-                    }
-                    else if (_items.Any())
-                    {
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in _items.Skip((_pageIndex - 1) * PageSize).Take(PageSize))
-                                {
-                                    <tr>
-                                        <td>@item.Code</td>
-                                        <td>@item.Name</td>
-                                        <td>@(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)</td>
-                                        <td>
-                                            <MudChip T="string" Size="Size.Small" Color="@(item.IsActive ? Color.Success : Color.Default)">
-                                                @(item.IsActive ? "Active" : "Inactive")
-                                            </MudChip>
-                                        </td>
-                                        <td>
-                                            <MudStack Row="true" Spacing="1">
-                                                @if (_canUpdate)
-                                                {
-                                                    <MudTooltip Text="Edit cluster">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                                       Color="Color.Primary" OnClick="@(() => OpenEditDialog(item))" />
-                                                    </MudTooltip>
-                                                }
-                                                @if (_canDelete)
-                                                {
-                                                    <MudTooltip Text="Delete cluster">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                       Color="Color.Error" OnClick="@(() => DeleteAsync(item.Id))" />
-                                                    </MudTooltip>
-                                                }
-                                            </MudStack>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-
-                        @if (_items.Count > PageSize)
-                        {
-                            <MudPagination Class="mt-2" Count="@((int)Math.Ceiling(_items.Count / (double)PageSize))"
-                                           @bind-Selected="_pageIndex" Color="Color.Primary" ShowFirstButton="true" ShowLastButton="true" />
-                        }
-                    }
-                    else
-                    {
-                        <MudAlert Severity="Severity.Info">No fund clusters yet. Create one to get started.</MudAlert>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
+            <AMISDataTable T="FundClusterDto"
+                           Items="@_items"
+                           Loading="_isLoading"
+                           RowsPerPage="15"
+                           EmptyMessage="No fund clusters found"
+                           EmptyDescription="Create one to get started.">
+                <HeaderContent>
+                    <MudTh>Code</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Description</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Code">@context.Code</MudTd>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Description">@(string.IsNullOrWhiteSpace(context.Description) ? "-" : context.Description)</MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                            @(context.IsActive ? "Active" : "Inactive")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true" Spacing="1">
+                            @if (_canUpdate)
+                            {
+                                <MudTooltip Text="Edit cluster">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                   Color="Color.Primary" OnClick="@(() => OpenEditDialog(context))" />
+                                </MudTooltip>
+                            }
+                            @if (_canDelete)
+                            {
+                                <MudTooltip Text="Delete cluster">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error" OnClick="@(() => DeleteAsync(context.Id))" />
+                                </MudTooltip>
+                            }
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </AMISDataTable>
+        </MudCardContent>
+    </MudCard>
 </div>
 
 @code {
-    private const int PageSize = 10;
     private List<FundClusterDto> _items = [];
     private List<FundClusterDto> _allItems = [];
     private bool _isLoading;
     private string _searchKeyword = string.Empty;
     private string _statusFilter = "All";
-    private int _pageIndex = 1;
+
 
     private bool _canCreate => UserProfileState.Permissions.Contains(MasterDataPermissions.FundClusters.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(MasterDataPermissions.FundClusters.Update);
@@ -202,7 +179,6 @@
     private void OnStatusFilterChanged(string value)
     {
         _statusFilter = value;
-        _pageIndex = 1;
         ApplyLocalFilters();
     }
 
@@ -216,9 +192,5 @@
             query = query.Where(x => !x.IsActive);
 
         _items = query.OrderBy(x => x.Code).ToList();
-
-        var maxPage = Math.Max(1, (int)Math.Ceiling(_items.Count / (double)PageSize));
-        if (_pageIndex > maxPage)
-            _pageIndex = maxPage;
     }
 }

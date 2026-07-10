@@ -119,6 +119,13 @@ public sealed class GetDepartmentIssuanceReportQuery : IPagedQuery, IQuery<Paged
     public string? Sort { get; set; }
 }
 
+/// <summary>Unpaged full-dataset variant — reports legitimately need every row in one response,
+/// so clients fetch once instead of looping pages against the 100-row page-size clamp.</summary>
+public sealed record GetDepartmentIssuanceReportAllQuery(
+    string? DepartmentId = null,
+    DateTimeOffset? From = null,
+    DateTimeOffset? To = null) : IQuery<IReadOnlyList<DepartmentIssuanceSummaryDto>>;
+
 public record DepartmentIssuanceSummaryDto(
     string DepartmentId,
     int TotalRequestsFulfilled,
@@ -149,6 +156,12 @@ public sealed class GetEmployeeIssuanceHistoryQuery : IPagedQuery, IQuery<PagedR
     public int? PageSize { get; set; }
     public string? Sort { get; set; }
 }
+
+/// <summary>Unpaged full-dataset variant of the employee issuance history.</summary>
+public sealed record GetEmployeeIssuanceHistoryAllQuery(
+    string? EmployeeId = null,
+    DateTimeOffset? From = null,
+    DateTimeOffset? To = null) : IQuery<IReadOnlyList<EmployeeIssuanceDto>>;
 
 public record EmployeeIssuanceDto(
     Guid RequestId,

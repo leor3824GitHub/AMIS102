@@ -281,30 +281,15 @@ else if (!_loading)
         _reportData = [];
         try
         {
-            var items = new List<DepartmentIssuanceSummaryDto>();
-            var page = 1;
-            const int pageSize = 100;
+            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
 
-            while (true)
-            {
-                var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-                var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            // Reports need the whole dataset — one unpaged call instead of looping pages.
+            _reportData = await ReportsClient.GetDepartmentIssuanceReportAllAsync(
+                departmentId: _selectedDepartmentId?.ToString(),
+                from: from,
+                toDate: to);
 
-                var result = await ReportsClient.GetDepartmentIssuanceReportAsync(
-                    departmentId: _selectedDepartmentId?.ToString(),
-                    from: from,
-                    toDate: to,
-                    pageNumber: page,
-                    pageSize: pageSize);
-
-                var batch = result.Items?.ToList() ?? [];
-                if (batch.Count == 0) break;
-                items.AddRange(batch);
-                if (batch.Count < pageSize) break;
-                page++;
-            }
-
-            _reportData = items;
             BuildMetadata();
         }
         catch (Exception ex)

@@ -694,9 +694,13 @@ public sealed class GetRspiReportQueryHandler(AssetRegisterDbContext db, IMediat
         // (e.g. pageNumber=3&pageSize=int.MaxValue), which would produce a negative SQL OFFSET.
         var skip = (int)Math.Min((long)(pageNumber - 1) * pageSize, int.MaxValue);
 
-        var pageRows = await baseQuery
-            .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo)
-            .Skip(skip).Take(pageSize)
+        var orderedQuery = baseQuery
+            .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo);
+
+        // Reports need the whole dataset — skip paging when All is set.
+        var rowsQuery = query.All ? orderedQuery : orderedQuery.Skip(skip).Take(pageSize);
+
+        var pageRows = await rowsQuery
             .Select(x => new
             {
                 x.a.Id,
@@ -737,7 +741,7 @@ public sealed class GetRspiReportQueryHandler(AssetRegisterDbContext db, IMediat
 
         return new RspiReportDto(
             query.DateFrom, query.DateTo, query.AssetType, query.ActiveOnly,
-            items, pageNumber, pageSize, totalCount, overallAmountTotal);
+            items, query.All ? 1 : pageNumber, query.All ? totalCount : pageSize, totalCount, overallAmountTotal);
     }
 
     // Office/department is not carried on the frozen AssetSnapshot/EmployeeRef, so it is resolved from
@@ -791,9 +795,13 @@ public sealed class GetRpiReportQueryHandler(AssetRegisterDbContext db, IMediato
         // Clamp via long math — see RSPI handler note on int overflow for crafted query params.
         var skip = (int)Math.Min((long)(pageNumber - 1) * pageSize, int.MaxValue);
 
-        var pageRows = await baseQuery
-            .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo)
-            .Skip(skip).Take(pageSize)
+        var orderedQuery = baseQuery
+            .OrderBy(x => x.a.IssuedOn).ThenBy(x => x.a.DocumentNo).ThenBy(x => x.l.Snapshot.PropertyNo);
+
+        // Reports need the whole dataset — skip paging when All is set.
+        var rowsQuery = query.All ? orderedQuery : orderedQuery.Skip(skip).Take(pageSize);
+
+        var pageRows = await rowsQuery
             .Select(x => new
             {
                 x.a.Id,
@@ -834,7 +842,7 @@ public sealed class GetRpiReportQueryHandler(AssetRegisterDbContext db, IMediato
             .ToList();
 
         return new RpiReportDto(
-            query.DateFrom, query.DateTo, items, pageNumber, pageSize, totalCount, overallAmountTotal);
+            query.DateFrom, query.DateTo, items, query.All ? 1 : pageNumber, query.All ? totalCount : pageSize, totalCount, overallAmountTotal);
     }
 
     private static async ValueTask<IReadOnlyDictionary<Guid, string?>> ResolveOfficesAsync(

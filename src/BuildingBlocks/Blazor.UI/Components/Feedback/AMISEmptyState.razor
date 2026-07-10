@@ -1,0 +1,30 @@
+@* Consistent empty-state block for list pages and AMISDataTable's no-records slot:
+   icon + message + optional description + optional call-to-action (ChildContent). *@
+<div class="AMIS-empty-state d-flex flex-column align-center justify-center pa-8">
+    <MudIcon Icon="@Icon" Size="Size.Large" Class="mb-2 text-muted" />
+    <MudText Typo="Typo.subtitle1" Align="Align.Center">@Message</MudText>
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="text-muted mt-1">@Description</MudText>
+    }
+    @if (ChildContent is not null)
+    {
+        <div class="mt-3">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Icon shown above the message. Defaults to an inbox glyph.</summary>
+    [Parameter] public string Icon { get; set; } = Icons.Material.Outlined.Inbox;
+
+    /// <summary>Primary message, e.g. "No departments yet".</summary>
+    [Parameter] public string Message { get; set; } = "No records found.";
+
+    /// <summary>Optional secondary line, e.g. "Create one to get started.".</summary>
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>Optional call-to-action content (e.g. a "New" button).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

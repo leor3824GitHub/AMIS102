@@ -1,5 +1,6 @@
 @page "/expendable/warehouse"
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @inherits ComponentBase
 @inject ISnackbar Snackbar
@@ -43,8 +44,8 @@
                 </MudGrid>
             </MudPaper>
 
-            <MudTable @ref="_invTable" T="ProductInventoryDto" ServerData="@LoadInventory"
-                      Dense="true" Hover="true" Striped="true" Elevation="2">
+            <AMISDataTable @ref="_invTable" T="ProductInventoryDto" ServerData="@LoadInventory"
+                           EmptyMessage="No inventory records found." Elevation="2">
                 <HeaderContent>
                     <MudTh>Code</MudTh>
                     <MudTh>Product</MudTh>
@@ -98,9 +99,7 @@
                         <MudText Typo="Typo.caption" Color="Color.Secondary">N/A</MudText>
                     </MudTd>
                 </RowTemplate>
-                <NoRecordsContent><MudText Class="my-4">No inventory records found.</MudText></NoRecordsContent>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
+            </AMISDataTable>
         </MudTabPanel>
 
     </MudTabs>
@@ -113,7 +112,8 @@
     private List<WarehouseOption> _warehouses = [];
 
     // Inventory tab
-    private MudTable<ProductInventoryDto>? _invTable;
+    private AMISDataTable<ProductInventoryDto>? _invTable;
+
     private WarehouseOption? _invWarehouse;
     private string _invSearch = string.Empty;
 

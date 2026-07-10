@@ -1,0 +1,83 @@
+@typeparam T
+@using AMIS.Framework.Blazor.UI.Components.Feedback
+@* Canonical list-page table: dense MudTable with skeleton loading, a built-in AMISEmptyState
+   no-records slot, and a pager. Provide EITHER Items (client-side) OR ServerData (server-paged) —
+   not both. Header cells go in HeaderContent (<MudTh>), row cells in RowTemplate (<MudTd>);
+   `context` in RowTemplate is the row item. *@
+<MudTable T="T"
+          Items="@Items"
+          ServerData="@ServerData"
+          @ref="_table"
+          Dense="true"
+          Hover="true"
+          Bordered="false"
+          Striped="false"
+          Loading="@Loading"
+          RowsPerPage="@RowsPerPage"
+          Breakpoint="Breakpoint.Sm"
+          Class="@Class"
+          ToolBarContent="@ToolBarContent"
+          ChildRowContent="@ChildRowContent"
+          @attributes="AdditionalAttributes">
+    <HeaderContent>
+        @HeaderContent
+    </HeaderContent>
+    <RowTemplate>
+        @RowTemplate(context)
+    </RowTemplate>
+    <LoadingContent>
+        <MudStack Spacing="2" Class="pa-4">
+            @for (var i = 0; i < SkeletonRows; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Animation="Animation.Wave" />
+            }
+        </MudStack>
+    </LoadingContent>
+    <NoRecordsContent>
+        <AMISEmptyState Icon="@EmptyIcon" Message="@EmptyMessage" Description="@EmptyDescription">
+            @EmptyActionContent
+        </AMISEmptyState>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@PageSizeOptions" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<T>? _table;
+
+    /// <summary>Client-side data source. Use this OR <see cref="ServerData"/>, never both.</summary>
+    [Parameter] public IEnumerable<T>? Items { get; set; }
+
+    /// <summary>Server-paged data source; the callback handles page/sort. Preferred for large sets.</summary>
+    [Parameter] public Func<TableState, CancellationToken, Task<TableData<T>>>? ServerData { get; set; }
+
+    /// <summary>Header cells — provide <c>MudTh</c> (optionally with <c>MudTableSortLabel</c>).</summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>Row cells — provide <c>MudTd</c> elements. <c>context</c> is the row item.</summary>
+    [Parameter] public RenderFragment<T> RowTemplate { get; set; } = default!;
+
+    /// <summary>Optional expandable detail row rendered beneath each row (e.g. inline master-detail).
+    /// Emit a full <c>&lt;tr&gt;</c> (typically a single <c>&lt;td colspan="N"&gt;</c>). <c>context</c> is the row item.</summary>
+    [Parameter] public RenderFragment<T>? ChildRowContent { get; set; }
+
+    /// <summary>Optional toolbar content rendered above the table (filters/actions).</summary>
+    [Parameter] public RenderFragment? ToolBarContent { get; set; }
+
+    /// <summary>Optional call-to-action shown inside the empty state (e.g. a "New" button).</summary>
+    [Parameter] public RenderFragment? EmptyActionContent { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public int RowsPerPage { get; set; } = 15;
+    [Parameter] public int[] PageSizeOptions { get; set; } = [15, 25, 50];
+    [Parameter] public int SkeletonRows { get; set; } = 6;
+    [Parameter] public string EmptyIcon { get; set; } = Icons.Material.Outlined.Inbox;
+    [Parameter] public string EmptyMessage { get; set; } = "No records found.";
+    [Parameter] public string? EmptyDescription { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>Re-invoke the ServerData callback — call after a filter/sort change.</summary>
+    public Task ReloadServerData() => _table?.ReloadServerData() ?? Task.CompletedTask;
+}
