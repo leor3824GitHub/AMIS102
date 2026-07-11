@@ -493,6 +493,8 @@ spec-os/
 /PLAN.md
 **/nul
 **/wwwroot/uploads/*
+# Generated at build time by the CopyUserGuides target (source of truth: docs/user-guide)
+src/Host/AMIS.Blazor/wwwroot/help/
 /agent_docs/blazor.md
 /.claude/settings.local.json
 tmpclaude**

@@ -25,6 +25,7 @@ public sealed class GetBudgetUtilizationRequestByIdQueryHandler(
             bur.PurchaseOrderNumber,
             bur.DisbursementVoucherId,
             bur.DisbursementVoucherNumber,
+            bur.FundCluster,
             bur.AllotmentClass,
             bur.UacsObjectCode,
             bur.ResponsibilityCenter,

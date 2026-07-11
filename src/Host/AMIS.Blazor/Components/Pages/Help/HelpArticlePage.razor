@@ -1,0 +1,43 @@
+@page "/help/{*Slug}"
+@inherits ComponentBase
+@inject AMIS.Blazor.Services.Help.IHelpContentService HelpContent
+
+<MudButton Href="/help"
+           Variant="Variant.Text"
+           StartIcon="@Icons.Material.Filled.ArrowBack"
+           Class="mb-3">
+    All guides
+</MudButton>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-4" />
+}
+else if (_html is null)
+{
+    <MudAlert Severity="Severity.Warning">
+        That guide could not be found. <MudLink Href="/help">Return to Help</MudLink>.
+    </MudAlert>
+}
+else
+{
+    <MudPaper Elevation="1" Class="pa-6">
+        <div class="help-article-surface">
+            @_html
+        </div>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public string? Slug { get; set; }
+
+    private MarkupString? _html;
+    private bool _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _html = await HelpContent.RenderAsync(Slug ?? string.Empty);
+        _loading = false;
+    }
+}

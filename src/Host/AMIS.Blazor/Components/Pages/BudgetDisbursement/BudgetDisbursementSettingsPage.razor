@@ -32,11 +32,11 @@ else
                     <MudSwitch @bind-Value="_watermarkEnabled"
                                Color="Color.Primary"
                                Disabled="@(!_canUpdate || _saving)"
-                               Label="Watermark downloaded signed copies" />
+                               Label="Watermark signed copies when viewed" />
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                         When enabled, every signed copy PDF served to users will be stamped with the
-                        downloader's name and access timestamp. This deters unauthorised sharing — any
-                        leaked copy can be traced back to the person who downloaded it.
+                        viewer's name and access timestamp. This deters unauthorised sharing — any
+                        leaked copy can be traced back to the person who viewed it.
                     </MudText>
                 </MudStack>
             </MudTabPanel>

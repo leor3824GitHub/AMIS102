@@ -1,5 +1,6 @@
 @page "/asset-register/repairs"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Modules.AssetRegister.Contracts.v1.Repairs
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
@@ -36,7 +37,9 @@
                         }
                     </MudStack>
 
-                    <MudTable Items="_repairs" Dense="true" Hover="true" Striped="true">
+                    <AMISDataTable T="PropertyRepairSummaryDto" Items="_repairs"
+                                   EmptyMessage="No repair records found."
+                                   EmptyDescription="Request a repair to get started.">
                         <HeaderContent>
                             <MudTh>RPRI No</MudTh>
                             <MudTh>Property No</MudTh>
@@ -69,7 +72,7 @@
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
-                    </MudTable>
+                    </AMISDataTable>
                 </MudCardContent>
             </MudCard>
         </MudItem>

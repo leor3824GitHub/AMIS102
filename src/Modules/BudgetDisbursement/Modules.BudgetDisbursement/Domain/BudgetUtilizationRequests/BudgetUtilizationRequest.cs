@@ -12,6 +12,7 @@ public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IHasTenant, 
     public string PurchaseOrderNumber { get; private set; } = default!;
     public Guid? DisbursementVoucherId { get; private set; }
     public string? DisbursementVoucherNumber { get; private set; }
+    public string FundCluster { get; private set; } = default!;
     public string AllotmentClass { get; private set; } = default!;
     public string UacsObjectCode { get; private set; } = default!;
     public string? ResponsibilityCenter { get; private set; }
@@ -38,6 +39,7 @@ public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IHasTenant, 
         Guid purchaseOrderId,
         string purchaseOrderNumber,
         DateOnly burDate,
+        string fundCluster,
         string allotmentClass,
         string uacsObjectCode,
         string? responsibilityCenter,
@@ -55,6 +57,7 @@ public sealed class BudgetUtilizationRequest : AggregateRoot<Guid>, IHasTenant, 
             PurchaseOrderId = purchaseOrderId,
             PurchaseOrderNumber = purchaseOrderNumber,
             BurDate = burDate,
+            FundCluster = fundCluster,
             AllotmentClass = allotmentClass,
             UacsObjectCode = uacsObjectCode,
             ResponsibilityCenter = responsibilityCenter,

@@ -106,6 +106,9 @@ builder.Services.AddScoped<IOrganizationProfileState, OrganizationProfileState>(
 // Capitalization threshold state — loaded once per session, consumed by PR/receiving forms and reports
 builder.Services.AddScoped<ICapitalizationThresholdState, CapitalizationThresholdState>();
 
+// Renders the end-user guides (wwwroot/help/**.md) for the in-app Help pages
+builder.Services.AddScoped<AMIS.Blazor.Services.Help.IHelpContentService, AMIS.Blazor.Services.Help.HelpContentService>();
+
 // Bounded reference-data lookups — cached once per circuit; fixes the >100-row dropdown truncation.
 builder.Services.AddScoped<ILookupDataService, LookupDataService>();
 

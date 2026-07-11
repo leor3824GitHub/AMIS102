@@ -19,7 +19,11 @@
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 
-<AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award" />
+<AMISPageHeader Title="Canvass Requests (RIV)" Description="Request for Issuance of Voucher • manage supplier quotations and award">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-cycle/02-canvass-riv" />
+    </ActionContent>
+</AMISPageHeader>
 
 <!-- List Panel -->
 <MudCard Elevation="1">

@@ -18,6 +18,8 @@ public sealed class BudgetUtilizationRequestConfiguration : IEntityTypeConfigura
         builder.Property(x => x.BurNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.PurchaseOrderNumber).HasMaxLength(32).IsRequired();
         builder.Property(x => x.DisbursementVoucherNumber).HasMaxLength(32);
+        // Stores the fund cluster code (e.g. "01"), sourced from the Fund Cluster master data.
+        builder.Property(x => x.FundCluster).HasMaxLength(16).IsRequired();
         // Stores the standard allotment-class code (PS / MOOE / FE / CO), not the full label.
         builder.Property(x => x.AllotmentClass).HasMaxLength(16).IsRequired();
         builder.Property(x => x.UacsObjectCode).HasMaxLength(32).IsRequired();

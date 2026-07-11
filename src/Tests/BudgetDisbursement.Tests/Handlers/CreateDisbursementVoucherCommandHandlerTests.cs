@@ -112,6 +112,7 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
             purchaseOrderId: poId,
             purchaseOrderNumber: "PO-2025-001",
             burDate: DateOnly.FromDateTime(DateTime.UtcNow),
+            fundCluster: "01",
             allotmentClass: "MOOE",
             uacsObjectCode: "5-02-99-990",
             responsibilityCenter: null,

@@ -20,7 +20,11 @@
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 
-<AMISPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)" />
+<AMISPageHeader Title="Purchase Orders" Description="Create and manage purchase orders (PO)">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-cycle/03-purchase-order" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <!-- List Panel - Full Width -->
@@ -142,7 +146,7 @@
                                          ToolTip="Print or export">
                                     <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                  OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
-                                        Download PDF
+                                        View PDF
                                     </MudMenuItem>
                                     <MudDivider />
                                     <MudMenuItem Icon="@Icons.Material.Filled.Settings"

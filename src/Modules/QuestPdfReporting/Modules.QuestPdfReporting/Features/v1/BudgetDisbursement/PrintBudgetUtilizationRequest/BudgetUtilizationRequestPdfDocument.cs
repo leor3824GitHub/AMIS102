@@ -82,7 +82,7 @@ internal sealed class BudgetUtilizationRequestPdfDocument(
                 c.Item().PaddingTop(6);
                 LabelValue(c, "Date", bur.BurDate.ToString("MMMM dd, yyyy"));
                 c.Item().PaddingTop(6);
-                LabelValue(c, "Fund Cluster", string.Empty);
+                LabelValue(c, "Fund Cluster", bur.FundCluster);
             });
         });
     }

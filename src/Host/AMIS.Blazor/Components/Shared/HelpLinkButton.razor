@@ -1,0 +1,19 @@
+@* Contextual help button for a page header. Opens the relevant user guide.
+   Usage:  <AMISPageHeader Title="...">
+               <ActionContent><HelpLinkButton Href="/help/procurement-cycle/01-purchase-request" /></ActionContent>
+           </AMISPageHeader> *@
+
+<MudTooltip Text="@Tooltip">
+    <MudIconButton Icon="@Icons.Material.Outlined.HelpOutline"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   Href="@Href" />
+</MudTooltip>
+
+@code {
+    /// <summary>In-app help route for this page's guide, e.g. "/help/procurement-cycle/01-purchase-request".</summary>
+    [Parameter, EditorRequired] public string Href { get; set; } = "/help";
+
+    /// <summary>Optional tooltip override.</summary>
+    [Parameter] public string Tooltip { get; set; } = "Open the guide for this page";
+}

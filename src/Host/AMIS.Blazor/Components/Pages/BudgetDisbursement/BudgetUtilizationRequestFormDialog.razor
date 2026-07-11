@@ -1,9 +1,11 @@
 ﻿@using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests
+@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Blazor.ApiClient
 @inject IBudgetUtilizationRequestClient Client
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject IPurchaseRequestClient PurchaseRequestClient
+@inject IFundClusterClient FundClusterClient
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -23,6 +25,14 @@
                              ResetValueOnEmptyText="true"
                              Dense="true" Margin="Margin.Dense" />
             <MudDatePicker @bind-Date="_form.BurDateNullable" Label="BUR Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
+            <MudSelect @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" T="string"
+                       Required="true" Dense="true" Margin="Margin.Dense" Clearable="true"
+                       HelperText="Select the applicable fund cluster.">
+                @foreach (var c in _fundClusters)
+                {
+                    <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
+                }
+            </MudSelect>
             <MudDivider Class="my-1" />
             <MudText Typo="Typo.subtitle2">Budget Classification</MudText>
             @* Stores the standard allotment-class code (PS/MOOE/FE/CO); the full label is shown to the user. *@
@@ -56,7 +66,26 @@
 
     private readonly BurForm _form = new();
     private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
+    private List<FundClusterDto> _fundClusters = [];
     private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await LoadFundClustersAsync();
+
+    private async Task LoadFundClustersAsync()
+    {
+        try
+        {
+            var response = await FundClusterClient.SearchAsync(pageSize: 200);
+            _fundClusters = response?.Items?
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code, StringComparer.Ordinal)
+                .ToList() ?? [];
+        }
+        catch
+        {
+            _fundClusters = [];
+        }
+    }
 
     private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
     {
@@ -89,24 +118,31 @@
         if (string.IsNullOrWhiteSpace(_form.Particulars))
             _form.Particulars = $"Budget utilization for {po.PoNumber}";
 
-        // The Responsibility Center is captured on the originating Purchase Request and flows through the
-        // PO to the BUR. The PO summary doesn't carry it, so resolve PO → PR to inherit the code. Only
-        // fill when empty so a user's own entry survives re-selection.
-        if (string.IsNullOrWhiteSpace(_form.ResponsibilityCenter))
+        // The Fund Cluster and Responsibility Center both flow from the purchase order (the RC via the
+        // originating Purchase Request). The PO summary carries neither, so resolve the PO detail to
+        // inherit them. Only fill empty fields so a user's own entry survives re-selection.
+        if (string.IsNullOrWhiteSpace(_form.FundCluster) || string.IsNullOrWhiteSpace(_form.ResponsibilityCenter))
         {
             try
             {
                 var poDetail = await PurchaseOrderClient.GetAsync(po.Id);
                 if (poDetail is not null)
                 {
-                    var pr = await PurchaseRequestClient.GetAsync(poDetail.PurchaseRequestId);
-                    if (!string.IsNullOrWhiteSpace(pr?.ResponsibilityCenterCode))
-                        _form.ResponsibilityCenter = pr!.ResponsibilityCenterCode;
+                    if (string.IsNullOrWhiteSpace(_form.FundCluster) && !string.IsNullOrWhiteSpace(poDetail.FundCluster)
+                        && _fundClusters.Any(c => string.Equals(c.Code, poDetail.FundCluster, StringComparison.OrdinalIgnoreCase)))
+                        _form.FundCluster = poDetail.FundCluster;
+
+                    if (string.IsNullOrWhiteSpace(_form.ResponsibilityCenter))
+                    {
+                        var pr = await PurchaseRequestClient.GetAsync(poDetail.PurchaseRequestId);
+                        if (!string.IsNullOrWhiteSpace(pr?.ResponsibilityCenterCode))
+                            _form.ResponsibilityCenter = pr!.ResponsibilityCenterCode;
+                    }
                 }
             }
             catch
             {
-                // Inheritance is a convenience; leave the field for manual entry if the lookup fails.
+                // Inheritance is a convenience; leave the fields for manual entry if the lookup fails.
             }
         }
     }
@@ -129,6 +165,7 @@
                 _selectedPurchaseOrder!.Id,
                 _selectedPurchaseOrder.PoNumber,
                 ToDateOnly(_form.BurDateNullable)!.Value,
+                _form.FundCluster!.Trim(),
                 _form.AllotmentClass,
                 _form.UacsObjectCode,
                 string.IsNullOrWhiteSpace(_form.ResponsibilityCenter) ? null : _form.ResponsibilityCenter,
@@ -147,6 +184,7 @@
     private bool IsFormValid() =>
         _selectedPurchaseOrder is not null &&
         _form.BurDateNullable.HasValue &&
+        !string.IsNullOrWhiteSpace(_form.FundCluster) &&
         !string.IsNullOrWhiteSpace(_form.AllotmentClass) &&
         !string.IsNullOrWhiteSpace(_form.UacsObjectCode) &&
         !string.IsNullOrWhiteSpace(_form.Particulars) &&
@@ -157,6 +195,7 @@
     private sealed class BurForm
     {
         public DateTime? BurDateNullable { get; set; } = DateTime.Today;
+        public string? FundCluster { get; set; }
         public string AllotmentClass { get; set; } = string.Empty;
         public string UacsObjectCode { get; set; } = string.Empty;
         public string? ResponsibilityCenter { get; set; }

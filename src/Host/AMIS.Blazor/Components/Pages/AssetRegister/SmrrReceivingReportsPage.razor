@@ -1,5 +1,6 @@
 @page "/asset-register/receiving/smrr"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
@@ -27,7 +28,7 @@
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                   OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
                     <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync">
                         Search
                     </AMISButton>
                     @if (_canCreate)
@@ -48,80 +49,61 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                @if (_busy)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                }
-                else if (_items.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">No SMRR yet.</MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th>SMRR No.</th>
-                                <th>Date</th>
-                                <th>Received From</th>
-                                <th>Type</th>
-                                <th>Lines</th>
-                                <th class="text-right">Amount</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var r in _items)
-                            {
-                                <tr>
-                                    <td><b>@r.ReportNo</b></td>
-                                    <td>@r.Date.ToString("MM/dd/yyyy")</td>
-                                    <td>@r.ReceivedFrom</td>
-                                    <td>@ReceiptTypeLabel(r.ReceiptType)</td>
-                                    <td><MudChip T="string" Size="Size.Small" Color="Color.Info">@r.ItemCount lines</MudChip></td>
-                                    <td class="text-right">@r.TotalAmount.ToString("N2")</td>
-                                    <td>
-                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Justify="Justify.FlexEnd">
-                                            <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
-                                                            Color="Color.Primary" Title="View" OnClick="@(() => ViewAsync(r.Id))" />
-                                            <MudMenu Icon="@Icons.Material.Filled.Print"
-                                                     Color="Color.Secondary"
-                                                     Size="Size.Small"
-                                                     Dense="true"
-                                                     AnchorOrigin="Origin.BottomLeft"
-                                                     TransformOrigin="Origin.TopLeft"
-                                                     ToolTip="Print">
-                                                <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                             OnClick="@(() => PrintFastAsync(r.Id))">
-                                                    Download PDF
-                                                </MudMenuItem>
-                                                <MudDivider />
-                                                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
-                                                             OnClick="@(() => OpenFastReportSetupAsync(r.Id))">
-                                                    Fast Report – Page Setup…
-                                                </MudMenuItem>
-                                            </MudMenu>
-                                            @if (r.HasSignedCopy ? _canViewSigned : _canUploadSigned)
-                                            {
-                                                <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                                Color="@(r.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                                Title="@(r.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")"
-                                                                OnClick="@(() => OpenSignedCopyAsync(r))" />
-                                            }
-                                            @if (_canDelete)
-                                            {
-                                                <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                                Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(r.Id, r.ReportNo))" />
-                                            }
-                                        </MudStack>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-                    <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
-                                   SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-                }
+                <AMISDataTable @ref="_table" T="ArReceivingReportSummaryDto" ServerData="LoadServerData"
+                               RowsPerPage="20" EmptyMessage="No SMRR yet.">
+                    <HeaderContent>
+                        <MudTh>SMRR No.</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Received From</MudTh>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Lines</MudTh>
+                        <MudTh Style="text-align:right">Amount</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="SMRR No."><b>@context.ReportNo</b></MudTd>
+                        <MudTd DataLabel="Date">@context.Date.ToString("MM/dd/yyyy")</MudTd>
+                        <MudTd DataLabel="Received From">@context.ReceivedFrom</MudTd>
+                        <MudTd DataLabel="Type">@ReceiptTypeLabel(context.ReceiptType)</MudTd>
+                        <MudTd DataLabel="Lines"><MudChip T="string" Size="Size.Small" Color="Color.Info">@context.ItemCount lines</MudChip></MudTd>
+                        <MudTd DataLabel="Amount" Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Justify="Justify.FlexEnd">
+                                <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                Color="Color.Primary" Title="View" OnClick="@(() => ViewAsync(context.Id))" />
+                                <MudMenu Icon="@Icons.Material.Filled.Print"
+                                         Color="Color.Secondary"
+                                         Size="Size.Small"
+                                         Dense="true"
+                                         AnchorOrigin="Origin.BottomLeft"
+                                         TransformOrigin="Origin.TopLeft"
+                                         ToolTip="Print">
+                                    <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                 OnClick="@(() => PrintFastAsync(context.Id))">
+                                        View PDF
+                                    </MudMenuItem>
+                                    <MudDivider />
+                                    <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                 OnClick="@(() => OpenFastReportSetupAsync(context.Id))">
+                                        Fast Report – Page Setup…
+                                    </MudMenuItem>
+                                </MudMenu>
+                                @if (context.HasSignedCopy ? _canViewSigned : _canUploadSigned)
+                                {
+                                    <AMISIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                    Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                    Title="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")"
+                                                    OnClick="@(() => OpenSignedCopyAsync(context))" />
+                                }
+                                @if (_canDelete)
+                                {
+                                    <AMISIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                    Color="Color.Error" Title="Delete" OnClick="@(() => DeleteAsync(context.Id, context.ReportNo))" />
+                                }
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -129,15 +111,9 @@
 
 @code {
     private const ReceivingDocumentKind SmrrDocumentKind = ReceivingDocumentKind.SMRR;
+    private AMISDataTable<ArReceivingReportSummaryDto>? _table;
     private string? _keyword;
     private ReceiptType? _receiptTypeFilter;
-    private bool _busy;
-    private int _page = 1;
-    private const int PageSize = 20;
-    private int _totalCount;
-    private int TotalPages => (int)Math.Ceiling(_totalCount / (double)PageSize);
-
-    private List<ArReceivingReportSummaryDto> _items = [];
 
     private bool _canCreate => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Create);
     private bool _canDelete => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Receiving.Delete);
@@ -160,42 +136,43 @@
         var dialog = await DialogService.ShowAsync<AMIS.Blazor.Components.Pages.AssetRegister.SignedCopyDialog>("Signed Copy", parameters, options);
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadAsync();
+        // AMISDataTable auto-loads via ServerData on first render.
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task LoadAsync()
+    private async Task<TableData<ArReceivingReportSummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _busy = true;
         try
         {
             var resp = await Client.SearchAsync(_keyword, SmrrDocumentKind, _receiptTypeFilter,
-                page: _page, pageSize: PageSize);
-            _items = resp.Items.ToList();
-            _totalCount = resp.TotalCount;
+                page: state.Page + 1, pageSize: state.PageSize);
+            return new TableData<ArReceivingReportSummaryDto> { Items = resp.Items, TotalItems = resp.TotalCount };
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error);
+            return new TableData<ArReceivingReportSummaryDto> { Items = [], TotalItems = 0 };
         }
-        finally { _busy = false; }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
@@ -203,7 +180,7 @@
         if (e.Key == "Enter") await LoadAsync();
     }
 
-    private async Task OnReceiptTypeChanged(ReceiptType? value) { _receiptTypeFilter = value; _page = 1; await LoadAsync(); }
+    private async Task OnReceiptTypeChanged(ReceiptType? value) { _receiptTypeFilter = value; await LoadAsync(); }
 
     private async Task OpenCreateDialogAsync()
     {

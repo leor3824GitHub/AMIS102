@@ -1,10 +1,12 @@
 ﻿@using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests
 @using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers
+@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Blazor.ApiClient
 @inject IDisbursementVoucherClient Client
 @inject IBudgetUtilizationRequestClient BurClient
 @inject IPurchaseOrderClient PurchaseOrderClient
+@inject IFundClusterClient FundClusterClient
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -40,7 +42,26 @@
                               ReadOnly="true" Dense="true" Margin="Margin.Dense" />
             }
             <MudDatePicker @bind-Date="_form.DvDateNullable" Label="DV Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
-            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
+            @* Fund cluster belongs to the BUR (BUR first, then DV). When the BUR carries one it is inherited
+               and locked read-only so the DV can never diverge from the obligation — no re-entry, no mismatch.
+               The editable select appears only as a fallback for legacy BURs with no cluster on file. *@
+            @if (_fundClusterFromBur)
+            {
+                <MudTextField Value="@FundClusterDisplay" Label="Fund Cluster" Variant="Variant.Outlined"
+                              ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                              HelperText="Inherited from the selected BUR." />
+            }
+            else
+            {
+                <MudSelect @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" T="string"
+                           Required="true" Dense="true" Margin="Margin.Dense" Clearable="true"
+                           HelperText="This BUR has no fund cluster on file — select one.">
+                    @foreach (var c in _fundClusters)
+                    {
+                        <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
             <MudDivider Class="my-1" />
             <MudText Typo="Typo.subtitle2">Payee Information</MudText>
             <MudTextField @bind-Value="_form.Payee" Label="Payee" Variant="Variant.Outlined" Required="true" Dense="true" Margin="Margin.Dense" />
@@ -124,7 +145,34 @@
 
     private readonly DvForm _form = new();
     private BudgetUtilizationRequestListItemDto? _selectedBur;
+    private List<FundClusterDto> _fundClusters = [];
+    // True when the fund cluster was inherited from the BUR: the field is then shown read-only so the DV
+    // can't be re-entered with a value that diverges from the obligation. False only for legacy BURs that
+    // carry no cluster, where the editable select is offered as a fallback.
+    private bool _fundClusterFromBur;
     private bool _busy;
+
+    // "Code — Name" for the read-only inherited field; falls back to the raw code if the cluster isn't
+    // in the loaded list (e.g. later deactivated).
+    private string FundClusterDisplay => ClusterDisplay(_form.FundCluster);
+
+    protected override async Task OnInitializedAsync() => await LoadFundClustersAsync();
+
+    private async Task LoadFundClustersAsync()
+    {
+        try
+        {
+            var response = await FundClusterClient.SearchAsync(pageSize: 200);
+            _fundClusters = response?.Items?
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code, StringComparer.Ordinal)
+                .ToList() ?? [];
+        }
+        catch
+        {
+            _fundClusters = [];
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -134,6 +182,9 @@
         // voucher fields are seeded here.
         _form.DvDateNullable = Editing.DvDate.ToDateTime(TimeOnly.MinValue);
         _form.FundCluster = Editing.FundCluster;
+        // The BUR/PO link is fixed at creation, so a stored fund cluster stays locked read-only too.
+        // Only a legacy DV with no cluster on file falls back to the editable select.
+        _fundClusterFromBur = !string.IsNullOrWhiteSpace(Editing.FundCluster);
         _form.Payee = Editing.Payee;
         _form.TinNo = Editing.TinNo;
         _form.PayeeAddress = Editing.PayeeAddress;
@@ -190,7 +241,13 @@
     private async Task OnBurChanged(BudgetUtilizationRequestListItemDto? bur)
     {
         _selectedBur = bur;
-        if (bur is null) return;
+        if (bur is null)
+        {
+            // BUR cleared: drop the inherited cluster and unlock the field so a fresh selection re-derives it.
+            _fundClusterFromBur = false;
+            _form.FundCluster = string.Empty;
+            return;
+        }
 
         // Pre-fill the voucher from the BUR and its purchase order. Only fill empty fields so a
         // re-selection never clobbers values the user already typed. All fields remain editable.
@@ -204,14 +261,29 @@
             if (string.IsNullOrWhiteSpace(_form.Particulars))
                 _form.Particulars = $"Payment for {burDetail.PurchaseOrderNumber}";
 
+            // Fund cluster is a property of the BUR (BUR first, then DV). When the BUR carries one, adopt it
+            // and lock the field read-only — the DV must not re-enter or diverge from the obligation. This
+            // overwrites any earlier value (e.g. from a previously selected BUR), because the cluster is
+            // funding data, not something the user hand-types. Legacy BURs with no cluster fall through to
+            // the PO's cluster and stay editable.
+            if (!string.IsNullOrWhiteSpace(burDetail.FundCluster))
+            {
+                _form.FundCluster = burDetail.FundCluster.Trim();
+                _fundClusterFromBur = true;
+            }
+            else
+            {
+                _fundClusterFromBur = false;
+            }
+
             var po = await PurchaseOrderClient.GetAsync(burDetail.PurchaseOrderId);
             if (po is not null)
             {
                 if (string.IsNullOrWhiteSpace(_form.Payee)) _form.Payee = po.SupplierName;
                 if (string.IsNullOrWhiteSpace(_form.PayeeAddress)) _form.PayeeAddress = po.SupplierAddress;
                 if (string.IsNullOrWhiteSpace(_form.TinNo)) _form.TinNo = po.SupplierTin;
-                if (string.IsNullOrWhiteSpace(_form.FundCluster) && !string.IsNullOrWhiteSpace(po.FundCluster))
-                    _form.FundCluster = po.FundCluster;
+                if (!_fundClusterFromBur && string.IsNullOrWhiteSpace(_form.FundCluster))
+                    _form.FundCluster = ResolveClusterCode(po.FundCluster);
             }
         }
         catch
@@ -225,6 +297,22 @@
         if (bur is null) return string.Empty;
         return $"{bur.BurNumber} — PO {bur.PurchaseOrderNumber}";
     }
+
+    // Resolves a cluster code to "Code — Name" for read-only display; shows the raw code if the cluster
+    // isn't in the loaded list (e.g. it was deactivated after the BUR was created).
+    private string ClusterDisplay(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return string.Empty;
+        var match = _fundClusters.FirstOrDefault(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase));
+        return match is null ? code : $"{match.Code} — {match.Name}";
+    }
+
+    // Returns the code only when it maps to a loaded, active cluster — so the MudSelect can render it.
+    // An unknown/legacy code would otherwise leave the select showing a value with no matching item.
+    private string ResolveClusterCode(string? code) =>
+        !string.IsNullOrWhiteSpace(code) && _fundClusters.Any(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase))
+            ? code!
+            : string.Empty;
 
     private async Task SaveAsync()
     {

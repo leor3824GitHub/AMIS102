@@ -63,6 +63,7 @@ public sealed class CreateBudgetUtilizationRequestCommandHandler(
                 command.PurchaseOrderId,
                 command.PurchaseOrderNumber,
                 command.BurDate,
+                command.FundCluster,
                 command.AllotmentClass,
                 command.UacsObjectCode,
                 command.ResponsibilityCenter,

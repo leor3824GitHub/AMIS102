@@ -22,7 +22,11 @@
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 
-<AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)" />
+<AMISPageHeader Title="Purchase Requests" Description="Manage procurement purchase requests (PR)">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-cycle/01-purchase-request" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <!-- List Panel - Full Width -->
@@ -104,7 +108,7 @@
                                          ToolTip="Print">
                                     <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                  OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
-                                        Download PDF
+                                        View PDF
                                     </MudMenuItem>
                                     <MudDivider />
                                     <MudMenuItem Icon="@Icons.Material.Filled.ContentCut"

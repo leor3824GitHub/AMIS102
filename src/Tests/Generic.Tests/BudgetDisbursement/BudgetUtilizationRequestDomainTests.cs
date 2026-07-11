@@ -19,6 +19,7 @@ public sealed class BudgetUtilizationRequestDomainTests
             purchaseOrderId: purchaseOrderId,
             purchaseOrderNumber: "PO-2026-0001",
             burDate: burDate,
+            fundCluster: "01",
             allotmentClass: "MOOE",
             uacsObjectCode: "5-02-99-990",
             responsibilityCenter: "FIN-01",
@@ -29,6 +30,7 @@ public sealed class BudgetUtilizationRequestDomainTests
         // Assert
         bur.Status.ShouldBe(BudgetUtilizationRequestStatus.Draft);
         bur.BurNumber.ShouldBe("BUR-2026-0001");
+        bur.FundCluster.ShouldBe("01");
         bur.PurchaseOrderId.ShouldBe(purchaseOrderId);
         bur.BurDate.ShouldBe(burDate);
         bur.Amount.ShouldBe(12500.50m);
@@ -83,6 +85,7 @@ public sealed class BudgetUtilizationRequestDomainTests
         purchaseOrderId: Guid.NewGuid(),
         purchaseOrderNumber: "PO-2026-0002",
         burDate: new DateOnly(2026, 4, 9),
+        fundCluster: "01",
         allotmentClass: "CO",
         uacsObjectCode: "1-07-05-010",
         responsibilityCenter: "FIN-02",

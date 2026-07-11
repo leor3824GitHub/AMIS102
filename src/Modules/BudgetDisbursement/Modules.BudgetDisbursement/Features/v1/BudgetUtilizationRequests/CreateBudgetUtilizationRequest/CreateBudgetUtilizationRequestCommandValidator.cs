@@ -9,6 +9,7 @@ public sealed class CreateBudgetUtilizationRequestCommandValidator : AbstractVal
     {
         RuleFor(x => x.PurchaseOrderId).NotEmpty();
         RuleFor(x => x.PurchaseOrderNumber).NotEmpty().MaximumLength(32);
+        RuleFor(x => x.FundCluster).NotEmpty().MaximumLength(16);
         RuleFor(x => x.AllotmentClass).NotEmpty().MaximumLength(16);
         RuleFor(x => x.UacsObjectCode).NotEmpty().MaximumLength(32);
         RuleFor(x => x.ResponsibilityCenter).MaximumLength(32);

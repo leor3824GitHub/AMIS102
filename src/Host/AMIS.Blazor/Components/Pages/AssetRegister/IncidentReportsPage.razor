@@ -1,5 +1,6 @@
 @page "/asset-register/incidents"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
 @using PropertyIncidentType = AMIS.Modules.AssetRegister.Contracts.v1.PropertyIncidentType
@@ -45,18 +46,9 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                @if (_busy)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                }
-                else if (!string.IsNullOrEmpty(_error))
-                {
-                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
-                }
-                else
-                {
-                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true"
-                              OnRowClick="OnRowClick" T="ArIncidentReportSummaryDto" RowClass="cursor-pointer">
+                <AMISDataTable @ref="_table" T="ArIncidentReportSummaryDto" ServerData="LoadServerData"
+                               OnRowClick="OnRowClick" RowClass="cursor-pointer"
+                               EmptyMessage="No incident reports found.">
                         <HeaderContent>
                             <MudTh>Incident No.</MudTh>
                             <MudTh>Type</MudTh>
@@ -94,21 +86,7 @@
                                 }
                             </MudTd>
                         </RowTemplate>
-                        <NoRecordsContent>
-                            <MudText Color="Color.Secondary">No incident reports found.</MudText>
-                        </NoRecordsContent>
-                    </MudTable>
-
-                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
-                        <MudText Typo="Typo.caption">Page @_page of @_totalPages (@_totalCount total)</MudText>
-                        <MudStack Row="true" Spacing="1">
-                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
-                        </MudStack>
-                    </MudStack>
-                }
+                </AMISDataTable>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -242,16 +220,11 @@
 </MudGrid>
 
 @code {
+    private AMISDataTable<ArIncidentReportSummaryDto>? _table;
     private bool _busy;
-    private string? _error;
     private string? _keyword;
     private PropertyIncidentType? _typeFilter;
     private PropertyIncidentStatus? _statusFilter;
-    private int _page = 1;
-    private int _totalPages = 1;
-    private int _totalCount;
-    private const int PageSize = 15;
-    private IReadOnlyList<ArIncidentReportSummaryDto> _items = [];
     private ArIncidentReportDto? _selected;
 
     // Police notify form
@@ -281,46 +254,42 @@
         var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadAsync();
+        // AMISDataTable auto-loads via ServerData on first render.
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task LoadAsync()
+    private async Task<TableData<ArIncidentReportSummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _busy = true;
-        _error = null;
         try
         {
-            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, _page, PageSize);
-            _items = result.Items;
-            _totalCount = result.TotalCount;
-            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, state.Page + 1, state.PageSize);
+            return new TableData<ArIncidentReportSummaryDto> { Items = result.Items, TotalItems = result.TotalCount };
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            Snackbar.Add($"Failed to load incidents: {ex.Message}", Severity.Error);
+            return new TableData<ArIncidentReportSummaryDto> { Items = [], TotalItems = 0 };
         }
-        finally
-        {
-            _busy = false;
-        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     private async Task OnRowClick(TableRowClickEventArgs<ArIncidentReportSummaryDto> args)
@@ -392,14 +361,12 @@
         }
     }
 
-    private async Task PrevPage() { _page--; await LoadAsync(); }
-    private async Task NextPage() { _page++; await LoadAsync(); }
-    private async Task OnTypeChanged(PropertyIncidentType? value) { _typeFilter = value; _page = 1; await LoadAsync(); }
-    private async Task OnStatusChanged(PropertyIncidentStatus? value) { _statusFilter = value; _page = 1; await LoadAsync(); }
+    private async Task OnTypeChanged(PropertyIncidentType? value) { _typeFilter = value; await LoadAsync(); }
+    private async Task OnStatusChanged(PropertyIncidentStatus? value) { _statusFilter = value; await LoadAsync(); }
 
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+        if (e.Key == "Enter") await LoadAsync();
     }
 
     private static string FormatIncidentType(PropertyIncidentType v) => v switch

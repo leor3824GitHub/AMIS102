@@ -49,6 +49,17 @@
     <NoWarn>$(NoWarn);MUD0002;S3260;S2933;S3459;S3923;S108;S1144;S4487;CA1031;CA5394;CA1812</NoWarn>
   </PropertyGroup>
 
+  <!-- Copy the end-user guides (single source: docs/user-guide) into wwwroot/help so the in-app
+       Help pages can render them at runtime. Keeps markdown as the one source of truth. -->
+  <Target Name="CopyUserGuides" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <UserGuideFiles Include="$(MSBuildProjectDirectory)\..\..\..\docs\user-guide\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(UserGuideFiles)"
+          DestinationFiles="@(UserGuideFiles->'$(MSBuildProjectDirectory)\wwwroot\help\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
   <!-- Live auto-incrementing build number (see ..\BuildVersioning.targets) -->
   <Import Project="..\BuildVersioning.targets" />
 </Project>

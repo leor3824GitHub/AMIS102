@@ -1,0 +1,161 @@
+@using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
+@using AMIS.Blazor.ApiClient
+@inject ISnackbar Snackbar
+@inject ICapitalizationThresholdClient Client
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="_form.CircularName"
+                          Label="Circular Name"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          MaxLength="100"
+                          CharacterCounter="true"
+                          Dense="true"
+                          Margin="Margin.Dense"
+                          Placeholder="e.g. COA Circular No. 2022-004" />
+
+            <MudTextField @bind-Value="_form.Description"
+                          Label="Description"
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          Required="true"
+                          MaxLength="500"
+                          CharacterCounter="true"
+                          Dense="true"
+                          Margin="Margin.Dense"
+                          Placeholder="Subject of the circular..." />
+
+            <MudNumericField @bind-Value="_form.CapitalizationAmount"
+                             Label="Capitalization Threshold (PPE)"
+                             Variant="Variant.Outlined"
+                             Format="N2"
+                             Adornment="Adornment.Start"
+                             AdornmentText="@Money.Symbol"
+                             Min="1"
+                             Required="true"
+                             Dense="true"
+                             Margin="Margin.Dense"
+                             HelperText="Items at or above this amount are capitalized as PPE" />
+
+            <MudNumericField @bind-Value="_form.SemiExpendableLowValueThreshold"
+                             Label="Semi-Expendable Low-Value Threshold"
+                             Variant="Variant.Outlined"
+                             Format="N2"
+                             Adornment="Adornment.Start"
+                             AdornmentText="@Money.Symbol"
+                             Min="1"
+                             Required="true"
+                             Dense="true"
+                             Margin="Margin.Dense"
+                             HelperText="Items at or below this amount are low-valued semi-expendable (§4.8)" />
+
+            <MudDatePicker @bind-Date="_form.EffectivityDateNullable"
+                           Label="Effectivity Date"
+                           Variant="Variant.Outlined"
+                           Required="true"
+                           DateFormat="MM/dd/yyyy"
+                           HelperText="Date the circular takes effect" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy || !IsFormValid">
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Class="mr-2" Indeterminate="true" />
+            }
+            @(_isEdit ? "Save" : "Add")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+    [Parameter] public CapitalizationThresholdDto? Existing { get; set; }
+
+    private FormModel _form = new();
+    private bool _busy;
+
+    private bool _isEdit => Existing is not null;
+
+    private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(_form.CircularName) &&
+        !string.IsNullOrWhiteSpace(_form.Description) &&
+        _form.CapitalizationAmount > 0 &&
+        _form.SemiExpendableLowValueThreshold > 0 &&
+        _form.SemiExpendableLowValueThreshold < _form.CapitalizationAmount &&
+        _form.EffectivityDateNullable.HasValue;
+
+    protected override void OnInitialized()
+    {
+        if (Existing is not null)
+        {
+            _form = new FormModel
+            {
+                CircularName = Existing.CircularName,
+                Description = Existing.Description,
+                CapitalizationAmount = Existing.CapitalizationAmount,
+                SemiExpendableLowValueThreshold = Existing.SemiExpendableLowValueThreshold,
+                EffectivityDateNullable = Existing.EffectivityDate.ToDateTime(TimeOnly.MinValue)
+            };
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!IsFormValid) return;
+
+        _busy = true;
+        try
+        {
+            if (Existing is null)
+            {
+                var cmd = new CreateCapitalizationThresholdCommand(
+                    _form.CircularName.Trim(),
+                    _form.Description.Trim(),
+                    _form.CapitalizationAmount,
+                    _form.SemiExpendableLowValueThreshold,
+                    DateOnly.FromDateTime(_form.EffectivityDateNullable!.Value));
+
+                await Client.CreateAsync(cmd);
+                Snackbar.Add("Circular record added.", Severity.Success);
+            }
+            else
+            {
+                var cmd = new UpdateCapitalizationThresholdCommand(
+                    Existing.Id,
+                    _form.CircularName.Trim(),
+                    _form.Description.Trim(),
+                    _form.CapitalizationAmount,
+                    _form.SemiExpendableLowValueThreshold,
+                    DateOnly.FromDateTime(_form.EffectivityDateNullable!.Value));
+
+                await Client.UpdateAsync(Existing.Id, cmd);
+                Snackbar.Add("Circular record updated.", Severity.Success);
+            }
+
+            Dialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private sealed class FormModel
+    {
+        public string CircularName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal CapitalizationAmount { get; set; } = 50_000m;
+        public decimal SemiExpendableLowValueThreshold { get; set; } = 5_000m;
+        public DateTime? EffectivityDateNullable { get; set; }
+    }
+}

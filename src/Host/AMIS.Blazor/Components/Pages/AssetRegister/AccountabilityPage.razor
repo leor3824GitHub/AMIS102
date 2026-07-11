@@ -1,5 +1,6 @@
 @page "/asset-register/accountability"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.AssetRegister.Contracts.v1
 @using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
@@ -28,7 +29,7 @@
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
                                   OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
                     <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
-                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync" Disabled="_busy">
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="LoadAsync">
                         Search
                     </AMISButton>
                     @if (_canIssue)
@@ -52,17 +53,8 @@
 
         <MudCard Elevation="1" Class="mt-3">
             <MudCardContent>
-                @if (_busy)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                }
-                else if (!string.IsNullOrEmpty(_error))
-                {
-                    <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
-                }
-                else
-                {
-                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true" T="ArAccountabilitySummaryDto">
+                <AMISDataTable @ref="_table" T="ArAccountabilitySummaryDto" ServerData="LoadServerData"
+                               EmptyMessage="No accountability documents found.">
                         <HeaderContent>
                             <MudTh>Document No.</MudTh>
                             <MudTh>Type</MudTh>
@@ -160,40 +152,18 @@
                                 </MudStack>
                             </MudTd>
                         </RowTemplate>
-                        <NoRecordsContent>
-                            <MudText Color="Color.Secondary">No accountability documents found.</MudText>
-                        </NoRecordsContent>
-                    </MudTable>
-
-                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-3">
-                        <MudText Typo="Typo.caption">
-                            Page @_page of @_totalPages (@_totalCount total)
-                        </MudText>
-                        <MudStack Row="true" Spacing="1">
-                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small"
-                                            Disabled="_page <= 1 || _busy" OnClick="PrevPage" />
-                            <AMISIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small"
-                                            Disabled="_page >= _totalPages || _busy" OnClick="NextPage" />
-                        </MudStack>
-                    </MudStack>
-                }
+                </AMISDataTable>
             </MudCardContent>
         </MudCard>
 </div>
 
 @code {
-    private bool _busy;
+    private AMISDataTable<ArAccountabilitySummaryDto>? _table;
     private Guid? _printingId;
     private Guid? _stickersId;
-    private string? _error;
     private string? _keyword;
     private AccountabilityType? _typeFilter;
     private AccountabilityStatus? _statusFilter;
-    private int _page = 1;
-    private int _totalPages = 1;
-    private int _totalCount;
-    private const int PageSize = 15;
-    private IReadOnlyList<ArAccountabilitySummaryDto> _items = [];
 
     [SupplyParameterFromQuery(Name = "id")]
     public Guid? QueryId { get; set; }
@@ -212,7 +182,7 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadAsync();
+        // AMISDataTable auto-loads via ServerData on first render.
         if (QueryId.HasValue)
             await OpenViewDialogAsync(QueryId.Value);
     }
@@ -221,25 +191,24 @@
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task LoadAsync()
+    private async Task<TableData<ArAccountabilitySummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _busy = true;
-        _error = null;
         try
         {
-            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, page: _page, pageSize: PageSize);
-            _items = result.Items;
-            _totalCount = result.TotalCount;
-            _totalPages = result.TotalPages > 0 ? result.TotalPages : 1;
+            var result = await Client.SearchAsync(_keyword, _typeFilter, _statusFilter, page: state.Page + 1, pageSize: state.PageSize);
+            return new TableData<ArAccountabilitySummaryDto> { Items = result.Items, TotalItems = result.TotalCount };
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            Snackbar.Add($"Failed to load accountability: {ex.Message}", Severity.Error);
+            return new TableData<ArAccountabilitySummaryDto> { Items = [], TotalItems = 0 };
         }
-        finally
-        {
-            _busy = false;
-        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     // ── Create ICS / PAR ─────────────────────────────────────────────────────
@@ -252,7 +221,6 @@
         if (result is null || result.Canceled)
             return;
 
-        _page = 1;
         await LoadAsync();
     }
 
@@ -399,21 +367,16 @@
         var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 
-    private async Task PrevPage() { _page--; await LoadAsync(); }
-    private async Task NextPage() { _page++; await LoadAsync(); }
-    private async Task OnTypeChanged(AccountabilityType? value) { _typeFilter = value; _page = 1; await LoadAsync(); }
-    private async Task OnStatusChanged(AccountabilityStatus? value) { _statusFilter = value; _page = 1; await LoadAsync(); }
+    private async Task OnTypeChanged(AccountabilityType? value) { _typeFilter = value; await LoadAsync(); }
+    private async Task OnStatusChanged(AccountabilityStatus? value) { _statusFilter = value; await LoadAsync(); }
 
     private static string AccountabilityTypeLabel(AccountabilityType t) => t switch
     {
@@ -424,7 +387,7 @@
 
     private async Task OnSearchKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") { _page = 1; await LoadAsync(); }
+        if (e.Key == "Enter") await LoadAsync();
     }
 
     private static string FormatStatus(AccountabilityStatus v) => v switch

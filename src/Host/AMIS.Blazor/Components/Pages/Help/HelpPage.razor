@@ -1,0 +1,67 @@
+@page "/help"
+@inherits ComponentBase
+
+<AMISPageHeader Title="Help & User Guides"
+               Description="Step-by-step guides for using AMIS. New here? Start with Getting Started." />
+
+<MudGrid Spacing="3">
+    @foreach (var grp in _sections)
+    {
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" Class="fw-700 mb-2">@grp.Title</MudText>
+        </MudItem>
+        @foreach (var g in grp.Guides)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="1" Class="h-100">
+                    <MudCardContent>
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudIcon Icon="@g.Icon" Color="Color.Primary" />
+                            <MudText Typo="Typo.subtitle1" Class="fw-700">@g.Title</MudText>
+                        </MudStack>
+                        <MudText Typo="Typo.body2" Class="text-muted">@g.Description</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="@g.Href"
+                                   Variant="Variant.Text"
+                                   Color="Color.Primary"
+                                   EndIcon="@Icons.Material.Filled.ArrowForward">
+                            Open guide
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    }
+</MudGrid>
+
+@code {
+    private sealed record Guide(string Title, string Description, string Href, string Icon);
+    private sealed record Section(string Title, Guide[] Guides);
+
+    private static readonly Section[] _sections =
+    [
+        new("Getting oriented", new[]
+        {
+            new Guide("Getting Started", "Log in and find your way around the app.",
+                "/help/getting-started", Icons.Material.Outlined.RocketLaunch),
+            new Guide("Glossary", "What every form and acronym means (PR, RIV, PO, IAR, ICS, PAR).",
+                "/help/glossary", Icons.Material.Outlined.MenuBook),
+            new Guide("FAQ & Troubleshooting", "Common questions and quick fixes.",
+                "/help/faq", Icons.Material.Outlined.HelpOutline),
+        }),
+        new("Procurement Cycle", new[]
+        {
+            new Guide("Overview", "See the whole cycle and who does each step.",
+                "/help/procurement-cycle/00-overview", Icons.Material.Outlined.AccountTree),
+            new Guide("1. Purchase Request", "Create, submit, and approve a request to buy.",
+                "/help/procurement-cycle/01-purchase-request", Icons.Material.Outlined.Description),
+            new Guide("2. Canvass / RIV", "Collect supplier quotes and award the winner.",
+                "/help/procurement-cycle/02-canvass-riv", Icons.Material.Outlined.RequestQuote),
+            new Guide("3. Purchase & Job Order", "Turn an award into an official order to the supplier.",
+                "/help/procurement-cycle/03-purchase-order", Icons.Material.Outlined.Receipt),
+            new Guide("4. Inspection & Acceptance", "Receive, inspect, and accept delivered items.",
+                "/help/procurement-cycle/04-inspection-acceptance", Icons.Material.Outlined.RuleFolder),
+        }),
+    ];
+}

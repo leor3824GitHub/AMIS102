@@ -1,5 +1,6 @@
 @page "/procurement/inspection-acceptance-reports"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.ProcurementAcquisition.Contracts.Permissions
@@ -15,16 +16,35 @@
 @inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Inspection &amp; Acceptance Reports"
-                Description="Track IARs from Draft to Inspection and Acceptance." />
+                Description="Track IARs from Draft to Inspection and Acceptance.">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-cycle/04-inspection-acceptance" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <!-- List Panel - Full Width -->
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <!-- Header: title + primary action -->
+                <!-- Filter toolbar: search + date range -->
+                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
+                               SearchPlaceholder="Search for IAR"
+                               DebounceInterval="350"
+                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
+                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
+
+                <!-- Status filter chips + primary action -->
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Inspection &amp; Acceptance Reports</MudText>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="flex-grow-1">
+                        @foreach (var (index, label) in _statusTabs)
+                        {
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_activeTab == index ? Color.Primary : Color.Default)"
+                                     Variant="@(_activeTab == index ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
+                        }
+                    </MudStack>
                     @if (_canCreate)
                     {
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
@@ -34,222 +54,180 @@
                     }
                 </MudStack>
 
-                <!-- Filter toolbar: search + date range -->
-                <AMISFilterBar Keyword="@_keyword" KeywordChanged="OnKeywordChanged"
-                               SearchPlaceholder="Search for IAR"
-                               DebounceInterval="350"
-                               FromDate="_fromDate" FromDateChanged="OnFromDateChanged"
-                               ToDate="_toDate" ToDateChanged="OnToDateChanged" />
-
-                <!-- Status filter chips -->
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
-                    @foreach (var (index, label) in _statusTabs)
-                    {
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@(_activeTab == index ? Color.Primary : Color.Default)"
-                                 Variant="@(_activeTab == index ? Variant.Filled : Variant.Outlined)"
-                                 OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
-                    }
-                </MudStack>
-
-                @if (_loading)
-                {
-                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                }
-                else if (_items.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">No IARs found.</MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                <thead>
-                    <tr>
-                        <th>IAR No.</th>
-                        <th>Date</th>
-                        <th>PO</th>
-                        <th>Supplier</th>
-                        <th>Lines</th>
-                        <th class="text-right">Total</th>
-                        <th class="text-center">Inspected</th>
-                        <th class="text-center">Accepted</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var iar in _items)
-                    {
-                        <tr>
-                            <td><b>@iar.IarNumber</b></td>
-                            <td>@iar.IarDate.ToString("MM/dd/yyyy")</td>
-                            <td>@iar.PoNumber</td>
-                            <td>@iar.SupplierName</td>
-                            <td>@iar.LineItemCount</td>
-                            <td class="text-right">@iar.TotalAmount.ToString("N2")</td>
-                            @if (iar.Status == InspectionAcceptanceReportStatus.Cancelled)
-                            {
-                                <td colspan="2" class="text-center">
-                                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(iar.Status)">
-                                        Cancelled
-                                    </MudChip>
-                                </td>
-                            }
-                            else
-                            {
-                                var inspected = Milestone(InspectedState(iar.Status),
-                                    "Inspected", "Awaiting inspection", "Not yet inspected");
-                                var accepted = Milestone(AcceptedState(iar.Status),
-                                    "Accepted", "Awaiting acceptance", "Not yet accepted");
-                                <td class="text-center">
-                                    <MudTooltip Text="@inspected.Tooltip">
-                                        <MudIcon Icon="@inspected.Icon" Color="@inspected.Color" Size="Size.Small"
-                                                 Style="@(inspected.Muted ? "opacity:.35" : null)" />
-                                    </MudTooltip>
-                                </td>
-                                <td class="text-center">
-                                    <MudTooltip Text="@accepted.Tooltip">
-                                        <MudIcon Icon="@accepted.Icon" Color="@accepted.Color" Size="Size.Small"
-                                                 Style="@(accepted.Muted ? "opacity:.35" : null)" />
-                                    </MudTooltip>
-                                </td>
-                            }
-                            <td>
-                                <MudStack Row="true" Spacing="0">
-                                    @if (iar.Status == InspectionAcceptanceReportStatus.Draft)
+                <AMISDataTable @ref="_table" T="InspectionAcceptanceReportSummaryDto" ServerData="LoadServerData"
+                               EmptyMessage="No IARs found."
+                               EmptyDescription="Create an IAR to get started.">
+                    <HeaderContent>
+                        <MudTh>IAR No.</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>PO</MudTh>
+                        <MudTh>Supplier</MudTh>
+                        <MudTh>Lines</MudTh>
+                        <MudTh Style="text-align:right">Total</MudTh>
+                        <MudTh Style="text-align:center">Inspected</MudTh>
+                        <MudTh Style="text-align:center">Accepted</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="IAR No."><b>@context.IarNumber</b></MudTd>
+                        <MudTd DataLabel="Date">@context.IarDate.ToString("MM/dd/yyyy")</MudTd>
+                        <MudTd DataLabel="PO">@context.PoNumber</MudTd>
+                        <MudTd DataLabel="Supplier">@context.SupplierName</MudTd>
+                        <MudTd DataLabel="Lines">@context.LineItemCount</MudTd>
+                        <MudTd DataLabel="Total" Style="text-align:right">@context.TotalAmount.ToString("N2")</MudTd>
+                        @if (context.Status == InspectionAcceptanceReportStatus.Cancelled)
+                        {
+                            <MudTd colspan="2" Style="text-align:center">
+                                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">
+                                    Cancelled
+                                </MudChip>
+                            </MudTd>
+                        }
+                        else
+                        {
+                            var inspected = Milestone(InspectedState(context.Status),
+                                "Inspected", "Awaiting inspection", "Not yet inspected");
+                            var accepted = Milestone(AcceptedState(context.Status),
+                                "Accepted", "Awaiting acceptance", "Not yet accepted");
+                            <MudTd DataLabel="Inspected" Style="text-align:center">
+                                <MudTooltip Text="@inspected.Tooltip">
+                                    <MudIcon Icon="@inspected.Icon" Color="@inspected.Color" Size="Size.Small"
+                                             Style="@(inspected.Muted ? "opacity:.35" : null)" />
+                                </MudTooltip>
+                            </MudTd>
+                            <MudTd DataLabel="Accepted" Style="text-align:center">
+                                <MudTooltip Text="@accepted.Tooltip">
+                                    <MudIcon Icon="@accepted.Icon" Color="@accepted.Color" Size="Size.Small"
+                                             Style="@(accepted.Muted ? "opacity:.35" : null)" />
+                                </MudTooltip>
+                            </MudTd>
+                        }
+                        <MudTd DataLabel="Actions">
+                            <MudStack Row="true" Spacing="0">
+                                @if (context.Status == InspectionAcceptanceReportStatus.Draft)
+                                {
+                                    @if (_canUpdate)
                                     {
-                                        @if (_canUpdate)
-                                        {
-                                            <MudTooltip Text="Edit">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                               Color="Color.Primary" Size="Size.Small"
-                                                               OnClick="@(() => OpenEditDialog(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canSubmitForInspection)
-                                        {
-                                            <MudTooltip Text="Submit for Inspection">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Send"
-                                                               Color="Color.Info" Size="Size.Small"
-                                                               OnClick="@(() => SubmitForInspectionAsync(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canCancel)
-                                        {
-                                            <MudTooltip Text="Cancel">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
-                                                               Color="Color.Error" Size="Size.Small"
-                                                               OnClick="@(() => CancelIarAsync(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                    }
-                                    else if (iar.Status == InspectionAcceptanceReportStatus.PendingInspection)
-                                    {
-                                        @if (_canInspect)
-                                        {
-                                            <MudTooltip Text="@(IsAssignedInspector(iar) ? "Record Inspection" : "View Inspection")">
-                                                <MudIconButton Icon="@Icons.Material.Filled.FactCheck"
-                                                               Color="@(IsAssignedInspector(iar) ? Color.Primary : Color.Default)"
-                                                               Size="Size.Small"
-                                                               OnClick="@(() => OpenInspectionPage(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canSubmitForInspection)
-                                        {
-                                            <MudTooltip Text="Reassign Inspector">
-                                                <MudIconButton Icon="@Icons.Material.Filled.SwitchAccount"
-                                                               Color="Color.Warning" Size="Size.Small"
-                                                               OnClick="@(() => OpenReassignInspectorDialog(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canCancel)
-                                        {
-                                            <MudTooltip Text="Cancel">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
-                                                               Color="Color.Error" Size="Size.Small"
-                                                               OnClick="@(() => CancelIarAsync(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                    }
-                                    else if (iar.Status == InspectionAcceptanceReportStatus.Inspected)
-                                    {
-                                        @if (_canAccept || _canAssignPropertyNo)
-                                        {
-                                            <MudTooltip Text="Accept">
-                                                <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
-                                                               Color="Color.Success" Size="Size.Small"
-                                                               OnClick="@(() => OpenAcceptanceDialog(iar))" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canCancel)
-                                        {
-                                            <MudTooltip Text="Cancel">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Cancel"
-                                                               Color="Color.Error" Size="Size.Small"
-                                                               OnClick="@(() => CancelIarAsync(iar.Id))" />
-                                            </MudTooltip>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <MudTooltip Text="View">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                                           Color="Color.Default" Size="Size.Small"
-                                                           OnClick="@(() => OpenAcceptanceDialog(iar))" />
+                                        <MudTooltip Text="Edit">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                           Color="Color.Primary" Size="Size.Small"
+                                                           OnClick="@(() => OpenEditDialog(context.Id))" />
                                         </MudTooltip>
                                     }
-                                    @if (iar.Status == InspectionAcceptanceReportStatus.Accepted && (iar.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                    @if (_canSubmitForInspection)
                                     {
-                                        <MudTooltip Text="@(iar.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                           Color="@(iar.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                           OnClick="@(() => OpenSignedCopyAsync(iar.Id, iar.IarNumber))" />
+                                        <MudTooltip Text="Submit for Inspection">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Send"
+                                                           Color="Color.Info" Size="Size.Small"
+                                                           OnClick="@(() => SubmitForInspectionAsync(context.Id))" />
                                         </MudTooltip>
                                     }
-                                    <MudMenu Icon="@Icons.Material.Filled.Print"
-                                             Color="Color.Secondary"
-                                             Size="Size.Small"
-                                             Dense="true"
-                                             AnchorOrigin="Origin.BottomLeft"
-                                             TransformOrigin="Origin.TopLeft"
-                                             ToolTip="Print">
-                                        <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
-                                                     OnClick="@(() => DownloadFastReportPdfAsync(iar.Id))">
-                                            Download PDF
-                                        </MudMenuItem>
-                                        <MudDivider />
-                                        <MudMenuItem Icon="@Icons.Material.Filled.Settings"
-                                                     OnClick="@(() => OpenFastReportSetupAsync(iar.Id))">
-                                            Fast Report – Page Setup…
-                                        </MudMenuItem>
-                                    </MudMenu>
-                                </MudStack>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </MudSimpleTable>
-
-            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2" Spacing="1">
-                <MudText Typo="Typo.caption">@_totalCount IARs total</MudText>
-                <MudSpacer />
-                <MudPagination Count="@TotalPages" Selected="_page" ShowFirstButton="true" ShowLastButton="true"
-                               SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-            </MudStack>
-                }
+                                    @if (_canCancel)
+                                    {
+                                        <MudTooltip Text="Cancel">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                           Color="Color.Error" Size="Size.Small"
+                                                           OnClick="@(() => CancelIarAsync(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                }
+                                else if (context.Status == InspectionAcceptanceReportStatus.PendingInspection)
+                                {
+                                    @if (_canInspect)
+                                    {
+                                        <MudTooltip Text="@(IsAssignedInspector(context) ? "Record Inspection" : "View Inspection")">
+                                            <MudIconButton Icon="@Icons.Material.Filled.FactCheck"
+                                                           Color="@(IsAssignedInspector(context) ? Color.Primary : Color.Default)"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => OpenInspectionPage(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canSubmitForInspection)
+                                    {
+                                        <MudTooltip Text="Reassign Inspector">
+                                            <MudIconButton Icon="@Icons.Material.Filled.SwitchAccount"
+                                                           Color="Color.Warning" Size="Size.Small"
+                                                           OnClick="@(() => OpenReassignInspectorDialog(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canCancel)
+                                    {
+                                        <MudTooltip Text="Cancel">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                           Color="Color.Error" Size="Size.Small"
+                                                           OnClick="@(() => CancelIarAsync(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                }
+                                else if (context.Status == InspectionAcceptanceReportStatus.Inspected)
+                                {
+                                    @if (_canAccept || _canAssignPropertyNo)
+                                    {
+                                        <MudTooltip Text="Accept">
+                                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                           Color="Color.Success" Size="Size.Small"
+                                                           OnClick="@(() => OpenAcceptanceDialog(context))" />
+                                        </MudTooltip>
+                                    }
+                                    @if (_canCancel)
+                                    {
+                                        <MudTooltip Text="Cancel">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel"
+                                                           Color="Color.Error" Size="Size.Small"
+                                                           OnClick="@(() => CancelIarAsync(context.Id))" />
+                                        </MudTooltip>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudTooltip Text="View">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                                       Color="Color.Default" Size="Size.Small"
+                                                       OnClick="@(() => OpenAcceptanceDialog(context))" />
+                                    </MudTooltip>
+                                }
+                                @if (context.Status == InspectionAcceptanceReportStatus.Accepted && (context.HasSignedCopy ? _canViewSignedCopy : _canUploadSignedCopy))
+                                {
+                                    <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                                       Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                                       OnClick="@(() => OpenSignedCopyAsync(context.Id, context.IarNumber))" />
+                                    </MudTooltip>
+                                }
+                                <MudMenu Icon="@Icons.Material.Filled.Print"
+                                         Color="Color.Secondary"
+                                         Size="Size.Small"
+                                         Dense="true"
+                                         AnchorOrigin="Origin.BottomLeft"
+                                         TransformOrigin="Origin.TopLeft"
+                                         ToolTip="Print">
+                                    <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
+                                                 OnClick="@(() => DownloadFastReportPdfAsync(context.Id))">
+                                        View PDF
+                                    </MudMenuItem>
+                                    <MudDivider />
+                                    <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                                                 OnClick="@(() => OpenFastReportSetupAsync(context.Id))">
+                                        Fast Report – Page Setup…
+                                    </MudMenuItem>
+                                </MudMenu>
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
             </MudCardContent>
         </MudCard>
     </MudItem>
 </MudGrid>
 
 @code {
+    private AMISDataTable<InspectionAcceptanceReportSummaryDto>? _table;
     private List<InspectionAcceptanceReportSummaryDto> _items = [];
     private string? _keyword;
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private InspectionAcceptanceReportStatus? _statusFilter;
-    private bool _loading;
     private int _activeTab;
-    private int _page = 1;
     private readonly Dictionary<int, int> _statusCounts = [];
 
     // Status filter chips — index mirrors the switch in OnTabChanged (tab 0 = "All").
@@ -262,9 +240,6 @@
         (4, "Accepted"),
         (5, "Cancelled"),
     ];
-    private int _totalCount;
-    private const int PageSize = 15;
-    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize));
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPermissions.InspectionAcceptanceReports.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPermissions.InspectionAcceptanceReports.Update);
     private bool _canSubmitForInspection => UserProfileState.Permissions.Contains(ProcurementPermissions.InspectionAcceptanceReports.SubmitForInspection);
@@ -275,10 +250,10 @@
     private bool _canViewSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.View);
     private bool _canUploadSignedCopy => UserProfileState.Permissions.Contains(ProcurementPermissions.SignedDocuments.Upload);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadAsync();
+        // AMISDataTable auto-loads via ServerData on first render.
     }
 
     // Permissions load asynchronously in AMISLayout after first render; re-render when they arrive
@@ -299,54 +274,55 @@
             5 => InspectionAcceptanceReportStatus.Cancelled,
             _ => null
         };
-        _page = 1;
         await LoadAsync();
     }
 
     private async Task OnKeywordChanged(string? keyword)
     {
         _keyword = keyword;
-        _page = 1;
         await LoadAsync();
     }
 
     private async Task OnFromDateChanged(DateTime? date)
     {
         _fromDate = date;
-        _page = 1;
         await LoadAsync();
     }
 
     private async Task OnToDateChanged(DateTime? date)
     {
         _toDate = date;
-        _page = 1;
         await LoadAsync();
     }
 
     private static DateOnly? ToDateOnly(DateTime? value) =>
         value is null ? null : DateOnly.FromDateTime(value.Value);
 
-    private async Task LoadAsync()
+    private async Task<TableData<InspectionAcceptanceReportSummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _loading = true;
         try
         {
-            var response = await IarClient.SearchAsync(_keyword, _statusFilter, page: _page, pageSize: PageSize,
+            var response = await IarClient.SearchAsync(_keyword, _statusFilter, page: state.Page + 1, pageSize: state.PageSize,
                 fromDate: ToDateOnly(_fromDate), toDate: ToDateOnly(_toDate));
             _items = [.. response.Items];
-            _totalCount = (int)response.TotalCount;
+            await LoadStatusCountsAsync();
+            return new TableData<InspectionAcceptanceReportSummaryDto>
+            {
+                Items = _items,
+                TotalItems = (int)response.TotalCount
+            };
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+            return new TableData<InspectionAcceptanceReportSummaryDto> { Items = [], TotalItems = 0 };
         }
-        finally
-        {
-            _loading = false;
-        }
+    }
 
-        await LoadStatusCountsAsync();
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     // Single grouped query (GROUP BY Status) backing the chip counts. Scoped to the date range only
@@ -598,14 +574,11 @@
             new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = false, BackdropClick = false });
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 }

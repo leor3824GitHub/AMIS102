@@ -54,6 +54,9 @@ else
         <MudAppBar Elevation="0">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
             <MudSpacer />
+            <MudTooltip Text="Help & user guides">
+                <MudIconButton Icon="@Icons.Material.Outlined.HelpOutline" Color="Color.Inherit" Href="/help" />
+            </MudTooltip>
             <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
             <NotificationBell />
             <AMISAccountMenu UserName="@_userName"
@@ -71,7 +74,7 @@ else
             <NavMenu />
         </MudDrawer>
         <MudMainContent Class="pt-20" Style="padding-left:0;padding-right:0;">
-            <MudContainer Class="AMIS-section page-shell" MaxWidth="MaxWidth.False">
+            <MudContainer Class="AMIS-section page-shell" MaxWidth="MaxWidth.False" Style="padding-top:0.5rem;">
                 @Body
             </MudContainer>
             <footer style="margin-top: 40px; padding: 16px; border-top: 1px solid var(--mud-palette-lines-default); display: flex; justify-content: flex-end; align-items: center; gap: 8px; font-size: 12px; color: var(--mud-palette-text-secondary);">

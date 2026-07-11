@@ -14,7 +14,11 @@
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 
-<AMISPageHeader Title="Job Orders" Description="Create and manage job orders (JO) for works — renovation, repair, fabrication" />
+<AMISPageHeader Title="Job Orders" Description="Create and manage job orders (JO) for works — renovation, repair, fabrication">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-cycle/03-purchase-order" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <MudItem xs="12">
@@ -150,11 +154,11 @@
                                          ToolTip="Print or export">
                                     <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                  OnClick="@(() => DownloadJoPdfAsync(context.Id, "a4"))">
-                                        Download PDF — A4
+                                        View PDF — A4
                                     </MudMenuItem>
                                     <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf"
                                                  OnClick="@(() => DownloadJoPdfAsync(context.Id, "longbond"))">
-                                        Download PDF — Long Bond
+                                        View PDF — Long Bond
                                     </MudMenuItem>
                                 </MudMenu>
                             </MudStack>
