@@ -50,6 +50,13 @@
             new Guide("FAQ & Troubleshooting", "Common questions and quick fixes.",
                 "/help/faq", Icons.Material.Outlined.HelpOutline),
         }),
+        new("Everyday tasks", new[]
+        {
+            new Guide("Request supplies", "Shop, fill your basket, submit and track a supply request.",
+                "/help/expendable/01-request-supplies", Icons.Material.Outlined.ShoppingCart),
+            new Guide("My Accountability", "See the property charged to you; request a repair or return.",
+                "/help/asset-register/01-my-accountability", Icons.Material.Outlined.AssignmentInd),
+        }),
         new("Procurement Cycle", new[]
         {
             new Guide("Overview", "See the whole cycle and who does each step.",
@@ -62,6 +69,50 @@
                 "/help/procurement-cycle/03-purchase-order", Icons.Material.Outlined.Receipt),
             new Guide("4. Inspection & Acceptance", "Receive, inspect, and accept delivered items.",
                 "/help/procurement-cycle/04-inspection-acceptance", Icons.Material.Outlined.RuleFolder),
+        }),
+        new("Expendable Supplies", new[]
+        {
+            new Guide("Overview", "How supply requests flow from shop to warehouse.",
+                "/help/expendable/00-overview", Icons.Material.Outlined.Inventory2),
+            new Guide("Approve & issue", "Approve or reject requests, and issue stock.",
+                "/help/expendable/02-approve-and-issue", Icons.Material.Outlined.FactCheck),
+            new Guide("Warehouse & reports", "Read stock levels; run issuance and stock-card reports.",
+                "/help/expendable/03-warehouse-and-reports", Icons.Material.Outlined.Warehouse),
+        }),
+        new("PPE & SE (Asset Register)", new[]
+        {
+            new Guide("Overview", "The asset lifecycle, and ICS vs. PAR explained.",
+                "/help/asset-register/00-overview", Icons.Material.Outlined.FolderSpecial),
+            new Guide("Receiving (PPERR / SMRR)", "Record property arriving into the register.",
+                "/help/asset-register/02-receiving", Icons.Material.Outlined.MoveToInbox),
+            new Guide("Issuance (ICS / PAR)", "Issue property to a custodian.",
+                "/help/asset-register/03-issuance-ics-par", Icons.Material.Outlined.AssignmentTurnedIn),
+            new Guide("Returns, Repairs & Incidents", "Returns, repairs, losses, and disposal.",
+                "/help/asset-register/04-returns-repairs-incidents", Icons.Material.Outlined.Build),
+            new Guide("Physical Count", "Run a count session and reconcile variances.",
+                "/help/asset-register/05-physical-count", Icons.Material.Outlined.Checklist),
+            new Guide("Reports", "Pick the right registry or property card.",
+                "/help/asset-register/06-reports", Icons.Material.Outlined.Assessment),
+        }),
+        new("Procurement Planning", new[]
+        {
+            new Guide("Overview", "How PPMP and APP fit together.",
+                "/help/procurement-planning/00-overview", Icons.Material.Outlined.Assignment),
+            new Guide("PPMP", "Build and submit your unit's plan.",
+                "/help/procurement-planning/01-ppmp", Icons.Material.Outlined.ListAlt),
+            new Guide("APP", "Consolidate and publish the agency plan.",
+                "/help/procurement-planning/02-app", Icons.Material.Outlined.Description),
+        }),
+        new("Other areas", new[]
+        {
+            new Guide("Budget & Disbursement", "Budget Utilization Requests and Disbursement Vouchers.",
+                "/help/budget-disbursement/00-overview", Icons.Material.Outlined.AccountBalance),
+            new Guide("Vehicle", "Enrol vehicles, plan maintenance, log fuel and odometer.",
+                "/help/vehicle/00-overview", Icons.Material.Outlined.DirectionsCar),
+            new Guide("Master Data", "Reference lists, Organization Profile, thresholds.",
+                "/help/master-data/00-overview", Icons.Material.Outlined.Storage),
+            new Guide("Administration", "Users, roles, permissions, tenants, audit logs.",
+                "/help/administration/00-overview", Icons.Material.Outlined.AdminPanelSettings),
         }),
     ];
 }

@@ -17,15 +17,11 @@
 
         @if (ShowDateRange)
         {
-            <MudItem xs="6" sm="3" md="3">
-                <MudDatePicker Label="@FromLabel" Date="FromDate" DateChanged="OnFromChanged"
-                               Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
-                               PickerVariant="PickerVariant.Inline" />
-            </MudItem>
-            <MudItem xs="6" sm="3" md="3">
-                <MudDatePicker Label="@ToLabel" Date="ToDate" DateChanged="OnToChanged"
-                               Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true"
-                               PickerVariant="PickerVariant.Inline" />
+            <MudItem xs="12" sm="@DateRangeSm" md="@DateRangeMd">
+                <AMISDateRangePicker FromLabel="@FromLabel" ToLabel="@ToLabel"
+                                     FromDate="FromDate" FromDateChanged="OnFromChanged"
+                                     ToDate="ToDate" ToDateChanged="OnToChanged"
+                                     RangeErrorText="@RangeErrorText" />
             </MudItem>
         }
 
@@ -64,6 +60,9 @@
     [Parameter] public DateTime? ToDate { get; set; }
     [Parameter] public EventCallback<DateTime?> ToDateChanged { get; set; }
 
+    /// <summary>Message shown on both pickers when From is later than To.</summary>
+    [Parameter] public string RangeErrorText { get; set; } = "From date must be on or before To date.";
+
     /// <summary>Optional extra filter controls appended to the grid (wrap each in its own MudItem).</summary>
     [Parameter] public RenderFragment? Extra { get; set; }
 
@@ -72,6 +71,12 @@
 
     /// <summary>Column span (md) for the search field.</summary>
     [Parameter] public int SearchMd { get; set; } = 6;
+
+    /// <summary>Column span (sm) for the From/To pair. Narrow it when Extra controls share the row.</summary>
+    [Parameter] public int DateRangeSm { get; set; } = 6;
+
+    /// <summary>Column span (md) for the From/To pair.</summary>
+    [Parameter] public int DateRangeMd { get; set; } = 6;
 
     /// <summary>Additional CSS classes appended to the toolbar paper.</summary>
     [Parameter] public string? Class { get; set; }
@@ -105,6 +110,7 @@
         return KeywordChanged.InvokeAsync(_keyword);
     }
 
+    // The From <= To rule lives in AMISDateRangePicker; these just relay the settled values upward.
     private Task OnFromChanged(DateTime? date)
     {
         FromDate = date;

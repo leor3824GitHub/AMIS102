@@ -26,6 +26,7 @@ using AMIS.Modules.Expendable.Features.v1.Products.GetProductRatingSummaries;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductRatingSummary;
 using AMIS.Modules.Expendable.Features.v1.Products.GetMyProductRating;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductRaters;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductsByIds;
 using AMIS.Modules.Expendable.Features.v1.Requests.CreateSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.SubmitSupplyRequest;
 using AMIS.Modules.Expendable.Features.v1.Requests.ApproveSupplyRequest;
@@ -51,6 +52,8 @@ using AMIS.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.SearchProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetWarehouseStockLevels;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.ListWarehouseLocations;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventoriesByProducts;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -165,6 +168,7 @@ public class ExpendableModule : IModule
         GetProductRatingSummaryEndpoint.Map(productsGroup);
         GetMyProductRatingEndpoint.Map(productsGroup);
         GetProductRatersEndpoint.Map(productsGroup);
+        GetProductsByIdsEndpoint.Map(productsGroup);
 
         // Purchase orders + receiving/inspection now live in ProcurementAcquisition. Expendable consumes
         // accepted Supply IAR lines into ProductInventory via SupplyIARAcceptedEvent (no PO endpoints here).
@@ -197,6 +201,8 @@ public class ExpendableModule : IModule
         GetProductInventoryEndpoint.Map(warehouseGroup);
         SearchProductInventoryEndpoint.Map(warehouseGroup);
         GetWarehouseStockLevelsEndpoint.Map(warehouseGroup);
+        ListWarehouseLocationsEndpoint.Map(warehouseGroup);
+        GetProductInventoriesByProductsEndpoint.Map(warehouseGroup);
 
         // Issuance Reports
         GetDepartmentIssuanceReportEndpoint.Map(reportsGroup);

@@ -1,5 +1,6 @@
 ﻿@page "/budget-disbursement/disbursement-vouchers"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers
 @using AMIS.Modules.BudgetDisbursement.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
@@ -10,136 +11,119 @@
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 
-<AMISPageHeader Title="Disbursement Vouchers" Description="Create and manage disbursement vouchers (DV)" />
+<AMISPageHeader Title="Disbursement Vouchers" Description="Create and manage disbursement vouchers (DV)">
+    <ActionContent>
+        <HelpLinkButton Href="/help/budget-disbursement/00-overview" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudCard Elevation="1">
     <MudCardContent>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-            <MudText Typo="Typo.h6" Class="flex-grow-1">Disbursement Vouchers</MudText>
-            <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
-                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                          Style="max-width:220px" DebounceInterval="400"
-                          OnDebounceIntervalElapsed="@(async () => await ReloadAsync())" />
-            @if (_canCreate)
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="OpenCreateDialog">New DV</MudButton>
-            }
+        <!-- Status filter chips + search + primary action -->
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-3">
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="flex-grow-1">
+                @foreach (var s in _statusFilters)
+                {
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                             OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
+                }
+            </MudStack>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="flex-none">
+                <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                              Dense="true" Margin="Margin.Dense"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                              Style="width:220px" DebounceInterval="400"
+                              OnDebounceIntervalElapsed="@(async () => await ReloadAsync())" />
+                @if (_canCreate)
+                {
+                    <AMISButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                StartIcon="@Icons.Material.Filled.Add"
+                                OnClick="OpenCreateDialog">New DV</AMISButton>
+                }
+            </MudStack>
         </MudStack>
 
-        <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
-            @foreach (var s in _statusFilters)
-            {
-                <MudChip T="string" Size="Size.Small"
-                         Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
-                         OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
-            }
-        </MudStack>
-
-        @if (!_loaded)
-        {
-            <MudProgressLinear Indeterminate="true" />
-        }
-        else if (_items.Count == 0)
-        {
-            <MudAlert Severity="Severity.Info">No disbursement vouchers found.</MudAlert>
-        }
-        else
-        {
-            <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                <thead>
-                    <tr>
-                        <th>DV #</th>
-                        <th>Date</th>
-                        <th>PO #</th>
-                        <th>Payee</th>
-                        <th style="text-align:right">Amount</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in _items)
-                    {
-                        <tr>
-                            <td><b>@item.DvNumber</b></td>
-                            <td>@item.DvDate.ToString("MM/dd/yyyy")</td>
-                            <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
-                            <td>@item.Payee</td>
-                            <td style="text-align:right">@Money.Symbol@item.Amount.ToString("N2")</td>
-                            <td>@DvStatusChip(item.Status)</td>
-                            <td>
-                                <MudStack Row="true" Spacing="0">
-                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canCreate)
-                                    {
-                                        <MudTooltip Text="Edit">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                           OnClick="@(async () => await OpenEditDialog(item.Id))" />
-                                        </MudTooltip>
-                                    }
-                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canDelete)
-                                    {
-                                        <MudTooltip Text="Delete">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                                           OnClick="@(async () => await DeleteDvAsync(item))" />
-                                        </MudTooltip>
-                                    }
-                                    @if (item.Status == DisbursementVoucherStatus.Draft && _canApprove)
-                                    {
-                                        <MudTooltip Text="Submit for Approval">
-                                            <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
-                                                           OnClick="@(async () => await ApproveAsync(item.Id))" />
-                                        </MudTooltip>
-                                    }
-                                    @if (item.Status == DisbursementVoucherStatus.Approved && _canPay)
-                                    {
-                                        <MudTooltip Text="Mark as Paid">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Color="Color.Success"
-                                                           OnClick="@(async () => await PayAsync(item.Id))" />
-                                        </MudTooltip>
-                                    }
-                                    @if (item.Status == DisbursementVoucherStatus.ForApproval && _canCancel)
-                                    {
-                                        <MudTooltip Text="Cancel">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                           OnClick="@(async () => await CancelDvAsync(item.Id))" />
-                                        </MudTooltip>
-                                    }
-                                    @if ((item.Status == DisbursementVoucherStatus.Approved || item.Status == DisbursementVoucherStatus.Paid) && _canViewSigned)
-                                    {
-                                        <MudTooltip Text="@(item.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                           Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                           OnClick="@(async () => await OpenSignedCopyAsync(item))" />
-                                        </MudTooltip>
-                                    }
-                                    @if (_canView)
-                                    {
-                                        <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — print disabled" : "Print")">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
-                                                           Disabled="@(item.HasSignedCopy)"
-                                                           OnClick="@(async () => await PrintPdfAsync(item.Id))" />
-                                        </MudTooltip>
-                                    }
-                                    <MudTooltip Text="View Details">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
-                                                       OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
-                                    </MudTooltip>
-                                </MudStack>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </MudSimpleTable>
-
-            @if (_totalCount > _pageSize)
-            {
-                <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
-                    <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
-                                   Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-                </MudStack>
-            }
-        }
+        <AMISDataTable @ref="_table" T="DisbursementVoucherListItemDto" ServerData="LoadServerData"
+                       EmptyMessage="No disbursement vouchers found."
+                       EmptyDescription="Create a disbursement voucher to get started.">
+            <HeaderContent>
+                <MudTh>DV #</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh>PO #</MudTh>
+                <MudTh>Payee</MudTh>
+                <MudTh Style="text-align:right">Amount</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="DV #"><b>@context.DvNumber</b></MudTd>
+                <MudTd DataLabel="Date">@context.DvDate.ToString("MM/dd/yyyy")</MudTd>
+                <MudTd DataLabel="PO #"><MudText Typo="Typo.caption">@context.PurchaseOrderNumber</MudText></MudTd>
+                <MudTd DataLabel="Payee">@context.Payee</MudTd>
+                <MudTd DataLabel="Amount" Style="text-align:right">@Money.Symbol@context.Amount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Status">@DvStatusChip(context.Status)</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudStack Row="true" Spacing="0">
+                        @if (context.Status == DisbursementVoucherStatus.Draft && _canCreate)
+                        {
+                            <MudTooltip Text="Edit">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                               OnClick="@(async () => await OpenEditDialog(context.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == DisbursementVoucherStatus.Draft && _canDelete)
+                        {
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(async () => await DeleteDvAsync(context))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == DisbursementVoucherStatus.Draft && _canApprove)
+                        {
+                            <MudTooltip Text="Submit for Approval">
+                                <MudIconButton Icon="@Icons.Material.Filled.TaskAlt" Size="Size.Small" Color="Color.Info"
+                                               OnClick="@(async () => await ApproveAsync(context.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == DisbursementVoucherStatus.Approved && _canPay)
+                        {
+                            <MudTooltip Text="Mark as Paid">
+                                <MudIconButton Icon="@Icons.Material.Filled.Payments" Size="Size.Small" Color="Color.Success"
+                                               OnClick="@(async () => await PayAsync(context.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == DisbursementVoucherStatus.ForApproval && _canCancel)
+                        {
+                            <MudTooltip Text="Cancel">
+                                <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(async () => await CancelDvAsync(context.Id))" />
+                            </MudTooltip>
+                        }
+                        @if ((context.Status == DisbursementVoucherStatus.Approved || context.Status == DisbursementVoucherStatus.Paid) && _canViewSigned)
+                        {
+                            <MudTooltip Text="@(context.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                               Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                               OnClick="@(async () => await OpenSignedCopyAsync(context))" />
+                            </MudTooltip>
+                        }
+                        @if (_canView)
+                        {
+                            <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — print disabled" : "Print")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
+                                               Disabled="@(context.HasSignedCopy)"
+                                               OnClick="@(async () => await PrintPdfAsync(context.Id))" />
+                            </MudTooltip>
+                        }
+                        <MudTooltip Text="View Details">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                           OnClick="@(async () => await ViewDetailsAsync(context.Id))" />
+                        </MudTooltip>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </AMISDataTable>
     </MudCardContent>
 </MudCard>
 
@@ -215,12 +199,10 @@
 }
 
 @code {
-    private List<DisbursementVoucherListItemDto> _items = [];
+    private AMISDataTable<DisbursementVoucherListItemDto>? _table;
     private DisbursementVoucherDto? _detail;
-    private bool _loaded;
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
-    private int _page = 1, _pageSize = 15, _totalCount;
     private Dictionary<string, int> _statusCounts = [];
 
     private static readonly string[] _statusFilters = ["All", "Draft", "ForApproval", "Approved", "Paid", "Returned", "Cancelled"];
@@ -236,7 +218,9 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await ReloadAsync();
+
+        // The table loads itself on first render (ServerData); only the chip counts need fetching here.
+        await LoadStatusCountsAsync();
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
@@ -257,14 +241,11 @@
         var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 
@@ -294,18 +275,30 @@
         }
     }
 
-    private async Task LoadAsync()
+    private async Task<TableData<DisbursementVoucherListItemDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _loaded = false;
         try
         {
             DisbursementVoucherStatus? filter = _statusFilter == "All" ? null : Enum.Parse<DisbursementVoucherStatus>(_statusFilter);
-            var result = await Client.SearchAsync(_keyword, filter, null, _page, _pageSize);
-            _items = result.Items?.ToList() ?? [];
-            _totalCount = result.TotalCount;
+            var result = await Client.SearchAsync(_keyword, filter, null, state.Page + 1, state.PageSize, ct);
+
+            return new TableData<DisbursementVoucherListItemDto>
+            {
+                Items = result.Items ?? [],
+                TotalItems = result.TotalCount
+            };
         }
-        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
-        finally { _loaded = true; }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+            return new TableData<DisbursementVoucherListItemDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     // Reloads the list AND the keyword-scoped chip counts. Called when the matched result set can
@@ -334,7 +327,7 @@
     private string GetChipLabel(string status) =>
         _statusCounts.TryGetValue(status, out var count) && count > 0 ? $"{status} ({count})" : status;
 
-    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+    private async Task SetStatusFilter(string s) { _statusFilter = s; await LoadAsync(); }
 
     private async Task DeleteDvAsync(DisbursementVoucherListItemDto item)
     {

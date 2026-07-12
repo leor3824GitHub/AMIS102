@@ -3,9 +3,11 @@
 @using AMIS.Blazor.ApiClient
 @using System.Globalization
 @using System.Text
+@using AMIS.Blazor.Services
 @inherits ComponentBase
 @inject IReportsClient ReportsClient
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
@@ -252,8 +254,7 @@ else if (!_loading)
     {
         try
         {
-            var result = await LookupClient.DepartmentsAsync(isActive: true, pageNumber: 1, pageSize: 200);
-            _departments = result.Items?.ToList() ?? [];
+            _departments = (await LookupData.GetDepartmentsAsync()).ToList();
             ApplyQueryFilters();
         }
         catch (Exception ex)

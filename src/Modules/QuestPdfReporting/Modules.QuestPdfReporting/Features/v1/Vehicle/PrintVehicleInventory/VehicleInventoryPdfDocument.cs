@@ -3,7 +3,6 @@ using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories;
 using AMIS.Modules.QuestPdfReporting.Services;
 using AMIS.Modules.Vehicle.Contracts.v1.Vehicles;
 using QuestPDF.Fluent;
-using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace AMIS.Modules.QuestPdfReporting.Features.v1.Vehicle.PrintVehicleInventory;
@@ -72,9 +71,7 @@ internal sealed class VehicleInventoryPdfDocument(
                 c.RelativeColumn(3);
             });
 
-            var hStyle  = TextStyle.Default.Bold().FontSize(7);
-            var specBg  = Colors.Blue.Lighten4;
-            var acqBg   = Colors.Green.Lighten4;
+            var hStyle = TextStyle.Default.Bold().FontSize(7);
 
             table.Header(h =>
             {
@@ -82,17 +79,17 @@ internal sealed class VehicleInventoryPdfDocument(
                 h.Cell().RowSpan(2).Border(1).Padding(2).AlignCenter()
                     .Text("DESCRIPTION\n(Make, Model, Motor No.,\nChassis No., Classification)").Style(hStyle);
                 h.Cell().RowSpan(2).Border(1).Padding(2).AlignCenter().Text("PLATE\nNUMBER").Style(hStyle);
-                h.Cell().ColumnSpan(3).Border(1).Padding(2).AlignCenter().Background(specBg).Text("SPECIFICATION").Style(hStyle);
-                h.Cell().ColumnSpan(3).Border(1).Padding(2).AlignCenter().Background(acqBg).Text("ACQUISITION").Style(hStyle);
+                h.Cell().ColumnSpan(3).Border(1).Padding(2).AlignCenter().Text("SPECIFICATION").Style(hStyle);
+                h.Cell().ColumnSpan(3).Border(1).Padding(2).AlignCenter().Text("ACQUISITION").Style(hStyle);
                 h.Cell().RowSpan(2).Border(1).Padding(2).AlignCenter().Text("RUNNING\nCONDITION").Style(hStyle);
                 h.Cell().RowSpan(2).Border(1).Padding(2).AlignCenter().Text("ACCOUNTABLE\nOFFICER").Style(hStyle);
 
-                h.Cell().Border(1).Padding(2).AlignCenter().Background(specBg).Text("VEHICLE\nTYPE/USE").Style(hStyle);
-                h.Cell().Border(1).Padding(2).AlignCenter().Background(specBg).Text("NO.\nCYL").Style(hStyle);
-                h.Cell().Border(1).Padding(2).AlignCenter().Background(specBg).Text("ENGINE\nDISP. (CC)").Style(hStyle);
-                h.Cell().Border(1).Padding(2).AlignCenter().Background(acqBg).Text("FUEL\nTYPE").Style(hStyle);
-                h.Cell().Border(1).Padding(2).AlignCenter().Background(acqBg).Text("YEAR").Style(hStyle);
-                h.Cell().Border(1).Padding(2).AlignCenter().Background(acqBg).Text("COST").Style(hStyle);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("VEHICLE\nTYPE/USE").Style(hStyle);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("NO.\nCYL").Style(hStyle);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("ENGINE\nDISP. (CC)").Style(hStyle);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("FUEL\nTYPE").Style(hStyle);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("YEAR").Style(hStyle);
+                h.Cell().Border(1).Padding(2).AlignCenter().Text("COST").Style(hStyle);
             });
 
             foreach (var v in items)
@@ -131,8 +128,7 @@ internal sealed class VehicleInventoryPdfDocument(
                         table.Cell().Padding(4).Column(inner =>
                         {
                             inner.Item().Text(sig.Label).Bold().FontSize(7).AlignCenter();
-                            inner.Item().PaddingTop(10).LineHorizontal(0.5f);
-                            inner.Item().Text(sig.Name).Bold().FontSize(8).AlignCenter();
+                            inner.Item().PaddingTop(22).Text(sig.Name).Bold().FontSize(8).AlignCenter();
                             inner.Item().Text(sig.Title).FontSize(7).AlignCenter();
                         });
                     }

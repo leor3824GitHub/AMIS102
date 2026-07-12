@@ -9,7 +9,11 @@
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="My Vehicle" Description="Record fuel &amp; odometer and track maintenance for vehicles assigned to you (accepted PAR)" />
+<AMISPageHeader Title="My Vehicle" Description="Record fuel &amp; odometer and track maintenance for vehicles assigned to you (accepted PAR)">
+    <ActionContent>
+        <HelpLinkButton Href="/help/vehicle/00-overview" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <!-- ============ LEFT: my vehicles list ============ -->

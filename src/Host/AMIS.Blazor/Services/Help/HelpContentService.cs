@@ -38,7 +38,69 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
         }
 
         var markdown = await File.ReadAllTextAsync(fullPath, ct);
-        return new MarkupString(ToHtml(markdown));
+
+        // The directory the article lives in, used to resolve its relative links/images.
+        var slashIndex = relative.LastIndexOf('/');
+        var baseDir = slashIndex < 0 ? string.Empty : relative[..slashIndex];
+
+        return new MarkupString(ToHtml(markdown, baseDir));
+    }
+
+    /// <summary>
+    /// Turns a link/image target that is relative to <paramref name="baseDir"/> into an absolute
+    /// <c>/help/...</c> URL. This is required because the Blazor host declares <c>&lt;base href="/"&gt;</c>,
+    /// which makes the browser resolve relative URLs against the site root rather than the current path —
+    /// so a bare "02-canvass-riv" would otherwise navigate to "/02-canvass-riv" and 404.
+    /// </summary>
+    private static string ResolveHelpUrl(string raw, string baseDir, bool isImage)
+    {
+        if (string.IsNullOrWhiteSpace(raw)
+            || raw.StartsWith('/')
+            || raw.StartsWith('#')
+            || raw.Contains("://", StringComparison.Ordinal)
+            || raw.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+        {
+            return raw;
+        }
+
+        // Split off any #anchor before manipulating the path.
+        var anchorIndex = raw.IndexOf('#', StringComparison.Ordinal);
+        var path = anchorIndex < 0 ? raw : raw[..anchorIndex];
+        var anchor = anchorIndex < 0 ? string.Empty : raw[anchorIndex..];
+
+        // Guide links point at .md files; the in-app route has no extension.
+        if (!isImage && path.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+        {
+            path = path[..^3];
+        }
+
+        // Resolve "." and ".." against the article's directory.
+        var segments = new List<string>();
+        if (!string.IsNullOrEmpty(baseDir))
+        {
+            segments.AddRange(baseDir.Split('/', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        foreach (var part in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part == ".")
+            {
+                continue;
+            }
+
+            if (part == "..")
+            {
+                if (segments.Count > 0)
+                {
+                    segments.RemoveAt(segments.Count - 1);
+                }
+                continue;
+            }
+
+            segments.Add(part);
+        }
+
+        return $"/{HelpRoot}/{string.Join('/', segments)}{anchor}";
     }
 
     /// <summary>Strips leading/trailing slashes, rejects traversal, and enforces forward slashes.</summary>
@@ -59,7 +121,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
     }
 
     // ── Minimal markdown → HTML ────────────────────────────────────────────────────────────────────
-    private static string ToHtml(string markdown)
+    private static string ToHtml(string markdown, string baseDir)
     {
         var lines = markdown.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n');
         var sb = new StringBuilder("<div class=\"help-article\">");
@@ -105,7 +167,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
             {
                 var level = (char)('0' + heading.Groups[1].Value.Length);
                 sb.Append("<h").Append(level).Append('>')
-                  .Append(Inline(heading.Groups[2].Value))
+                  .Append(Inline(heading.Groups[2].Value, baseDir))
                   .Append("</h").Append(level).Append('>');
                 i++;
                 continue;
@@ -117,7 +179,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
                 var quote = new StringBuilder();
                 while (i < lines.Length && lines[i].TrimStart().StartsWith('>'))
                 {
-                    quote.Append(Inline(Regex.Replace(lines[i].TrimStart(), "^>\\s?", ""))).Append(' ');
+                    quote.Append(Inline(Regex.Replace(lines[i].TrimStart(), "^>\\s?", ""), baseDir)).Append(' ');
                     i++;
                 }
                 sb.Append("<blockquote>").Append(quote.ToString().Trim()).Append("</blockquote>");
@@ -127,7 +189,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
             // Table (header row followed by a |---|---| separator)
             if (line.Contains('|', StringComparison.Ordinal) && i + 1 < lines.Length && Regex.IsMatch(lines[i + 1], "^\\s*\\|?\\s*:?-{2,}"))
             {
-                i = AppendTable(sb, lines, i);
+                i = AppendTable(sb, lines, i, baseDir);
                 continue;
             }
 
@@ -137,7 +199,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
                 sb.Append("<ol>");
                 while (i < lines.Length && Regex.IsMatch(lines[i], "^\\s*\\d+\\.\\s+"))
                 {
-                    sb.Append("<li>").Append(Inline(Regex.Replace(lines[i], "^\\s*\\d+\\.\\s+", ""))).Append("</li>");
+                    sb.Append("<li>").Append(Inline(Regex.Replace(lines[i], "^\\s*\\d+\\.\\s+", ""), baseDir)).Append("</li>");
                     i++;
                 }
                 sb.Append("</ol>");
@@ -150,7 +212,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
                 sb.Append("<ul>");
                 while (i < lines.Length && Regex.IsMatch(lines[i], "^\\s*[-*]\\s+"))
                 {
-                    sb.Append("<li>").Append(Inline(Regex.Replace(lines[i], "^\\s*[-*]\\s+", ""))).Append("</li>");
+                    sb.Append("<li>").Append(Inline(Regex.Replace(lines[i], "^\\s*[-*]\\s+", ""), baseDir)).Append("</li>");
                     i++;
                 }
                 sb.Append("</ul>");
@@ -167,7 +229,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
                 {
                     para.Append(' ');
                 }
-                para.Append(Inline(lines[i]));
+                para.Append(Inline(lines[i], baseDir));
                 i++;
             }
             if (para.Length > 0)
@@ -179,7 +241,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
         return sb.Append("</div>").ToString();
     }
 
-    private static int AppendTable(StringBuilder sb, string[] lines, int i)
+    private static int AppendTable(StringBuilder sb, string[] lines, int i, string baseDir)
     {
         static string[] Cells(string row) =>
             row.Trim().Trim('|').Split('|').Select(c => c.Trim()).ToArray();
@@ -189,7 +251,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
         sb.Append("<table class=\"help-table\"><thead><tr>");
         foreach (var h in headers)
         {
-            sb.Append("<th>").Append(Inline(h)).Append("</th>");
+            sb.Append("<th>").Append(Inline(h, baseDir)).Append("</th>");
         }
         sb.Append("</tr></thead><tbody>");
 
@@ -198,7 +260,7 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
             sb.Append("<tr>");
             foreach (var c in Cells(lines[i]))
             {
-                sb.Append("<td>").Append(Inline(c)).Append("</td>");
+                sb.Append("<td>").Append(Inline(c, baseDir)).Append("</td>");
             }
             sb.Append("</tr>");
             i++;
@@ -208,18 +270,21 @@ internal sealed partial class HelpContentService(IWebHostEnvironment env) : IHel
     }
 
     /// <summary>Inline formatting: images, links, bold, italic, code. Links to *.md become in-app routes.</summary>
-    private static string Inline(string text)
+    private static string Inline(string text, string baseDir)
     {
         text = Escape(text);
 
-        // Images: ![alt](src) — relative src is resolved by the browser against the /help/... route
+        // Images: ![alt](src) — rewritten to an absolute /help/... URL (see ResolveHelpUrl).
         text = ImageRegex().Replace(text, m =>
-            $"<img class=\"help-img\" src=\"{m.Groups[2].Value}\" alt=\"{m.Groups[1].Value}\" loading=\"lazy\" />");
+        {
+            var src = ResolveHelpUrl(m.Groups[2].Value, baseDir, isImage: true);
+            return $"<img class=\"help-img\" src=\"{src}\" alt=\"{m.Groups[1].Value}\" loading=\"lazy\" />";
+        });
 
-        // Links: [text](href) — strip trailing .md so guide links resolve to /help routes
+        // Links: [text](href) — rewritten to an absolute /help/... route, dropping the .md extension.
         text = LinkRegex().Replace(text, m =>
         {
-            var href = Regex.Replace(m.Groups[2].Value, "\\.md(#|$)", "$1");
+            var href = ResolveHelpUrl(m.Groups[2].Value, baseDir, isImage: false);
             return $"<a href=\"{href}\">{m.Groups[1].Value}</a>";
         });
 

@@ -112,6 +112,10 @@ builder.Services.AddScoped<AMIS.Blazor.Services.Help.IHelpContentService, AMIS.B
 // Bounded reference-data lookups — cached once per circuit; fixes the >100-row dropdown truncation.
 builder.Services.AddScoped<ILookupDataService, LookupDataService>();
 
+// Unpaged/batch inventory reads — warehouse pickers and per-product balances that the paged
+// inventory search would silently truncate at the 100-row clamp.
+builder.Services.AddScoped<IInventoryDataService, InventoryDataService>();
+
 // Remembers each report's last-used Fast Report Page Setup in encrypted browser localStorage
 builder.Services.AddScoped<IFastReportSetupPreferences, FastReportSetupPreferences>();
 

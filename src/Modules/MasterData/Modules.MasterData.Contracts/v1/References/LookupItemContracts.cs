@@ -1,4 +1,5 @@
 using AMIS.Modules.MasterData.Contracts.v1.Categories;
+using AMIS.Modules.MasterData.Contracts.v1.Suppliers;
 using Mediator;
 
 namespace AMIS.Modules.MasterData.Contracts.v1.References;
@@ -15,3 +16,5 @@ public sealed record ListAllPositionsQuery : IQuery<IReadOnlyList<PositionRefere
 public sealed record ListAllUnitOfMeasuresQuery : IQuery<IReadOnlyList<UnitOfMeasureReferenceDto>>;
 
 public sealed record ListAllCategoriesQuery : IQuery<IReadOnlyList<CategoryDto>>;
+
+public sealed record ListAllSuppliersQuery : IQuery<IReadOnlyList<SupplierDto>>;

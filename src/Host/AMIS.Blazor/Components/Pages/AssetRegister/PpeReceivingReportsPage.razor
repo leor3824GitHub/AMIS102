@@ -15,7 +15,11 @@
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="PPE Receiving Reports (PPERR)"
-               Description="Record receipt of Property, Plant & Equipment. Each line materializes one or more AssetRegistry rows with auto-generated property numbers." />
+               Description="Record receipt of Property, Plant & Equipment. Each line materializes one or more AssetRegistry rows with auto-generated property numbers.">
+    <ActionContent>
+        <HelpLinkButton Href="/help/asset-register/02-receiving" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <MudItem xs="12">

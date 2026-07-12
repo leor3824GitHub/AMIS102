@@ -1,6 +1,7 @@
 @page "/expendable/requests"
 @implements IDisposable
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Pages.Procurement
 @using AMIS.Modules.Expendable.Contracts.Permissions
@@ -11,13 +12,18 @@
 @inject IInventoryClient InventoryClient
 @inject ILookupClient LookupClient
 @inject ILookupDataService LookupData
+@inject IInventoryDataService InventoryData
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 @inject IDialogService DialogService
 @inject IFastReportSetupPreferences FastReportSetupPrefs
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Supply Requests" Description="Supply officer — approve, fulfill, and track employee supply requests" />
+<AMISPageHeader Title="Supply Requests" Description="Supply officer — approve, fulfill, and track employee supply requests">
+    <ActionContent>
+        <HelpLinkButton Href="/help/expendable/02-approve-and-issue" />
+    </ActionContent>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4"
@@ -25,9 +31,10 @@
 
         <!-- ===== PENDING APPROVAL ===== -->
         <MudTabPanel Text="Pending Approval" Icon="@Icons.Material.Filled.HourglassTop" BadgeData="@_pendingCount" BadgeColor="Color.Warning">
-            <MudTable @ref="_pendingTable" T="SupplyRequestDto"
-                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Submitted"))"
-                      Dense="true" Hover="true" Striped="true">
+            <AMISDataTable @ref="_pendingTable" T="SupplyRequestDto"
+                           ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Submitted"))"
+                           EmptyMessage="No pending requests."
+                           EmptyDescription="Requests awaiting approval will appear here.">
                 <HeaderContent>
                     <MudTh>Request #</MudTh>
                     <MudTh>Employee</MudTh>
@@ -59,16 +66,15 @@
                         </MudStack>
                     </MudTd>
                 </RowTemplate>
-                <NoRecordsContent><MudText Class="my-4">No pending requests.</MudText></NoRecordsContent>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
+            </AMISDataTable>
         </MudTabPanel>
 
         <!-- ===== APPROVED — AWAITING ISSUE ===== -->
         <MudTabPanel Text="Approved — Awaiting Issue" Icon="@Icons.Material.Filled.Inventory" BadgeData="@_approvedCount" BadgeColor="Color.Info">
-            <MudTable @ref="_approvedTable" T="SupplyRequestDto"
-                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Approved"))"
-                      Dense="true" Hover="true" Striped="true">
+            <AMISDataTable @ref="_approvedTable" T="SupplyRequestDto"
+                           ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Approved"))"
+                           EmptyMessage="No approved requests awaiting issuance."
+                           EmptyDescription="Approved requests ready to issue will appear here.">
                 <HeaderContent>
                     <MudTh>Request #</MudTh>
                     <MudTh>Employee</MudTh>
@@ -92,16 +98,15 @@
                         }
                     </MudTd>
                 </RowTemplate>
-                <NoRecordsContent><MudText Class="my-4">No approved requests awaiting issuance.</MudText></NoRecordsContent>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
+            </AMISDataTable>
         </MudTabPanel>
 
         <!-- ===== FULFILLED ===== -->
         <MudTabPanel Text="Fulfilled" Icon="@Icons.Material.Filled.TaskAlt">
-            <MudTable @ref="_fulfilledTable" T="SupplyRequestDto"
-                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Fulfilled"))"
-                      Dense="true" Hover="true" Striped="true">
+            <AMISDataTable @ref="_fulfilledTable" T="SupplyRequestDto"
+                           ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Fulfilled"))"
+                           EmptyMessage="No fulfilled requests yet."
+                           EmptyDescription="Issued requests will appear here.">
                 <HeaderContent>
                     <MudTh>Request #</MudTh>
                     <MudTh>Employee</MudTh>
@@ -141,16 +146,15 @@
                         }
                     </MudTd>
                 </RowTemplate>
-                <NoRecordsContent><MudText Class="my-4">No fulfilled requests yet.</MudText></NoRecordsContent>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
+            </AMISDataTable>
         </MudTabPanel>
 
         <!-- ===== REJECTED ===== -->
         <MudTabPanel Text="Rejected" Icon="@Icons.Material.Filled.Block">
-            <MudTable @ref="_rejectedTable" T="SupplyRequestDto"
-                      ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Rejected"))"
-                      Dense="true" Hover="true" Striped="true">
+            <AMISDataTable @ref="_rejectedTable" T="SupplyRequestDto"
+                           ServerData="@(async (s, ct) => await LoadRequests(s, ct, "Rejected"))"
+                           EmptyMessage="No rejected requests."
+                           EmptyDescription="Rejected requests will appear here.">
                 <HeaderContent>
                     <MudTh>Request #</MudTh>
                     <MudTh>Employee</MudTh>
@@ -167,9 +171,7 @@
                     <MudTd>@context.Items.Count item(s)</MudTd>
                     <MudTd><MudText Typo="Typo.caption" Color="Color.Error">@context.RejectionReason</MudText></MudTd>
                 </RowTemplate>
-                <NoRecordsContent><MudText Class="my-4">No rejected requests.</MudText></NoRecordsContent>
-                <PagerContent><MudTablePager /></PagerContent>
-            </MudTable>
+            </AMISDataTable>
         </MudTabPanel>
 
     </MudTabs>
@@ -311,10 +313,10 @@
 }
 
 @code {
-    private MudTable<SupplyRequestDto>? _pendingTable;
-    private MudTable<SupplyRequestDto>? _approvedTable;
-    private MudTable<SupplyRequestDto>? _fulfilledTable;
-    private MudTable<SupplyRequestDto>? _rejectedTable;
+    private AMISDataTable<SupplyRequestDto>? _pendingTable;
+    private AMISDataTable<SupplyRequestDto>? _approvedTable;
+    private AMISDataTable<SupplyRequestDto>? _fulfilledTable;
+    private AMISDataTable<SupplyRequestDto>? _rejectedTable;
     private int _activeTab;
     private int _pendingCount;
     private int _approvedCount;
@@ -347,7 +349,7 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await Task.WhenAll(LoadWarehouses(), LoadEmployees(), LoadDepartments());
+        await Task.WhenAll(LoadWarehouses(), LoadDepartments());
     }
 
     // Permissions load asynchronously in AMISLayout after first render; re-render when they arrive
@@ -356,16 +358,20 @@
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task LoadEmployees()
+    // Resolves only the employees on the page just loaded — one batch call, no full-roster prefetch.
+    private async Task LoadEmployeeNames(IEnumerable<SupplyRequestDto> requests)
     {
-        try
-        {
-            var result = await LookupClient.EmployeesGetAsync(pageSize: 1000, isActive: true);
-            _employeeNames = result?.Items?.ToDictionary(
-                e => e.Id,
-                e => $"{e.FirstName} {e.LastName}") ?? [];
-        }
-        catch { _employeeNames = []; }
+        var unknown = requests
+            .Select(r => Guid.TryParse(r.EmployeeId, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty && !_employeeNames.ContainsKey(id))
+            .Distinct()
+            .ToList();
+
+        if (unknown.Count == 0) return;
+
+        var employees = await LookupData.GetEmployeesByIdsAsync(unknown);
+        foreach (var (id, employee) in employees)
+            _employeeNames[id] = $"{employee.FirstName} {employee.LastName}";
     }
 
     private async Task LoadDepartments()
@@ -394,12 +400,8 @@
             if (status == "Submitted") _pendingCount = (int)(response?.TotalCount ?? 0);
             if (status == "Approved") _approvedCount = (int)(response?.TotalCount ?? 0);
 
-            // Pre-load product names for items not yet cached
-            var unknown = items
-                .SelectMany(r => r.Items.Select(i => i.ProductId))
-                .Where(id => !_productNames.ContainsKey(id))
-                .Distinct().ToList();
-            await Task.WhenAll(unknown.Select(LoadProductName));
+            // Resolve the names this page needs — two batch calls, not one call per row.
+            await Task.WhenAll(LoadProductNames(items), LoadEmployeeNames(items));
             StateHasChanged();
 
             return new TableData<SupplyRequestDto> { Items = items, TotalItems = (int)(response?.TotalCount ?? 0) };
@@ -415,19 +417,12 @@
     {
         try
         {
-            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 1000 });
-            _warehouses = result?.Items?
-                .Where(i => i.WarehouseLocationId != default)
-                .GroupBy(i => i.WarehouseLocationId)
-                .Select(g =>
-                {
-                    var name = g.First().WarehouseLocationName;
-                    var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}…"
-                        : name;
-                    return new WarehouseOption(g.Key, display);
-                })
-                .ToList() ?? [];
+            var locations = await InventoryData.GetWarehouseLocationsAsync();
+            _warehouses = locations
+                .Select(l => new WarehouseOption(
+                    l.Id,
+                    string.IsNullOrWhiteSpace(l.Name) ? $"Warehouse {l.Id.ToString()[..8]}…" : l.Name))
+                .ToList();
         }
         catch { _warehouses = []; }
     }
@@ -440,14 +435,26 @@
             _warehouses.Where(w => w.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
     }
 
-    private async Task LoadProductName(Guid productId)
+    private async Task LoadProductNames(IEnumerable<SupplyRequestDto> requests)
     {
+        var unknown = requests
+            .SelectMany(r => r.Items.Select(i => i.ProductId))
+            .Where(id => !_productNames.ContainsKey(id))
+            .Distinct()
+            .ToList();
+
+        if (unknown.Count == 0) return;
+
         try
         {
-            var product = await ExpendableClient.ProductsGetAsync(productId);
-            if (product != null) _productNames[productId] = product.Name;
+            foreach (var product in await InventoryData.GetProductsByIdsAsync(unknown))
+                _productNames[product.Id] = product.Name;
         }
-        catch { _productNames[productId] = productId.ToString()[..8] + "…"; }
+        catch
+        {
+            foreach (var id in unknown)
+                _productNames[id] = id.ToString()[..8] + "…";
+        }
     }
 
     private string GetProductName(Guid productId) =>

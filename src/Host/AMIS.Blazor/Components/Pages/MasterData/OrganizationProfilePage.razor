@@ -11,7 +11,11 @@
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Organization Profile"
-               Description="Agency information printed on official government reports" />
+               Description="Agency information printed on official government reports">
+    <ActionContent>
+        <HelpLinkButton Href="/help/master-data/00-overview" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3" Class="mt-2">
     <MudItem xs="12" md="6">

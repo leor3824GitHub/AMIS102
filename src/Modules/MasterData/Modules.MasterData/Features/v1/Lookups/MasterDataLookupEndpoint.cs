@@ -72,6 +72,12 @@ public static class MasterDataLookupEndpoint
             .Produces<IReadOnlyList<AMIS.Modules.MasterData.Contracts.v1.Categories.CategoryDto>>(StatusCodes.Status200OK)
             .RequirePermission(MasterDataPermissions.Lookup.View);
 
+        endpoints.MapGet("/suppliers/all", GetAllSuppliers)
+            .WithName("MasterData_ListAllSuppliers")
+            .WithSummary("List all active suppliers (unpaged lookup)")
+            .Produces<IReadOnlyList<AMIS.Modules.MasterData.Contracts.v1.Suppliers.SupplierDto>>(StatusCodes.Status200OK)
+            .RequirePermission(MasterDataPermissions.Lookup.View);
+
         endpoints.MapGet("/offices", ListOffices)
             .WithName(nameof(ListOfficeReferencesQuery))
             .WithSummary("Search office references with pagination")
@@ -147,6 +153,9 @@ public static class MasterDataLookupEndpoint
 
     private static async Task<IResult> GetAllCategories(IMediator mediator, CancellationToken cancellationToken)
         => TypedResults.Ok(await mediator.Send(new ListAllCategoriesQuery(), cancellationToken));
+
+    private static async Task<IResult> GetAllSuppliers(IMediator mediator, CancellationToken cancellationToken)
+        => TypedResults.Ok(await mediator.Send(new ListAllSuppliersQuery(), cancellationToken));
 
     private static async Task<IResult> ListOffices(
         [AsParameters] ListOfficeReferencesQuery query,

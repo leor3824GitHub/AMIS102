@@ -1,0 +1,91 @@
+@using MudBlazor
+@* From/To date pair with the range rule (From <= To) enforced in one place.
+
+   The To picker's MinDate tracks From, so an end date before the start is simply not selectable.
+   The From picker is deliberately left UNCONSTRAINED: capping it at To would grey out every day
+   past the current end date, leaving a user who wants to move the window forward staring at a dead
+   calendar with no explanation. Instead, a From past the current To clears To — the range reopens
+   as "from X onwards" and the next To pick is naturally valid. *@
+<MudStack Row="true" Spacing="2" Class="@Class">
+    <MudDatePicker Label="@FromLabel" Date="FromDate" DateChanged="OnFromChanged"
+                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                   Clearable="@Clearable" PickerVariant="PickerVariant.Inline"
+                   DateFormat="@DateFormat"
+                   Error="_rangeError" ErrorText="@RangeErrorText"
+                   Class="flex-grow-1" />
+    <MudDatePicker Label="@ToLabel" Date="ToDate" DateChanged="OnToChanged"
+                   Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                   Clearable="@Clearable" PickerVariant="PickerVariant.Inline"
+                   DateFormat="@DateFormat"
+                   MinDate="@FromDate"
+                   HelperText="@(_toCleared ? ToClearedText : null)"
+                   Error="_rangeError" ErrorText="@RangeErrorText"
+                   Class="flex-grow-1" />
+</MudStack>
+
+@code {
+    [Parameter] public DateTime? FromDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> FromDateChanged { get; set; }
+
+    [Parameter] public DateTime? ToDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> ToDateChanged { get; set; }
+
+    [Parameter] public string FromLabel { get; set; } = "From";
+    [Parameter] public string ToLabel { get; set; } = "To";
+
+    /// <summary>Optional display format (e.g. "yyyy-MM-dd"). Null uses the current culture's short date.</summary>
+    [Parameter] public string? DateFormat { get; set; }
+
+    [Parameter] public bool Clearable { get; set; } = true;
+
+    /// <summary>Shown on both pickers if an inverted range is ever set programmatically.</summary>
+    [Parameter] public string RangeErrorText { get; set; } = "From date must be on or before To date.";
+
+    /// <summary>Shown under the To picker after it is auto-cleared by a later From.</summary>
+    [Parameter] public string ToClearedText { get; set; } = "End date cleared. Pick a new one.";
+
+    [Parameter] public string? Class { get; set; }
+
+    private bool _rangeError;
+    private bool _toCleared;
+
+    private static bool IsInverted(DateTime? from, DateTime? to) =>
+        from is not null && to is not null && from > to;
+
+    protected override void OnParametersSet() => _rangeError = IsInverted(FromDate, ToDate);
+
+    private async Task OnFromChanged(DateTime? date)
+    {
+        FromDate = date;
+
+        if (IsInverted(date, ToDate))
+        {
+            // Reopen the range instead of refusing the click. This fires ToDateChanged before
+            // FromDateChanged, so a parent that reloads on each will run one throwaway query for the
+            // half-applied range — only on this corrective path, never on the common one.
+            ToDate = null;
+            _toCleared = true;
+            _rangeError = false;
+            await ToDateChanged.InvokeAsync(null);
+        }
+        else
+        {
+            _toCleared = false;
+        }
+
+        await FromDateChanged.InvokeAsync(date);
+    }
+
+    private async Task OnToChanged(DateTime? date)
+    {
+        ToDate = date;
+        _toCleared = false;
+
+        // Backstop only — MinDate makes an inverted To unreachable through the calendar. If one
+        // arrives anyway, show the error and don't hand the parent a range that can only return nothing.
+        _rangeError = IsInverted(FromDate, date);
+        if (_rangeError) return;
+
+        await ToDateChanged.InvokeAsync(date);
+    }
+}

@@ -5,8 +5,10 @@
 @using ProductRaterDto = AMIS.Modules.Expendable.Contracts.v1.Products.ProductRaterDto
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using AMIS.Blazor.Services
 @inject IExpendableClient _expendableClient
 @inject IInventoryClient _inventoryClient
+@inject IInventoryDataService _inventoryData
 @inject IProductRatingsClient _productRatingsClient
 @inject ICartClient _cartClient
 @inject IEmployeeClient _employeeClient
@@ -266,15 +268,7 @@
     {
         try
         {
-            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
-            {
-                ProductCode = _product?.StockNo,
-                PageNumber = 1,
-                PageSize = 1000
-            });
-
-            var items = inventoryList?.Items?.Where(i => i.ProductId == ProductId).ToList()
-                        ?? new List<ProductInventoryDto>();
+            var items = await _inventoryData.GetInventoriesByProductsAsync([ProductId]);
 
             _balance = items.Sum(i => i.QuantityAvailable);
 

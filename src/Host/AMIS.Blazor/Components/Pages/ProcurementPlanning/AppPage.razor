@@ -4,6 +4,7 @@
 @using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps
 @using AMIS.Modules.ProcurementPlanning.Contracts.Permissions
 @using AMIS.Framework.Shared.Persistence
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Shared
 @inject IAppClient AppClient
@@ -12,7 +13,11 @@
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Annual Procurement Plan (APP)"
-               Description="Consolidate approved PPMPs and manage the annual procurement plan" />
+               Description="Consolidate approved PPMPs and manage the annual procurement plan">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-planning/02-app" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudCard Elevation="1">
     <MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="0" Rounded="false" ApplyEffectsToContainer="true"
@@ -58,83 +63,63 @@
                 </MudButton>
             </MudStack>
 
-            @if (_loading)
-            {
-                <MudProgressLinear Indeterminate="true" />
-            }
-            else if (_items.Count == 0)
-            {
-                <MudAlert Severity="Severity.Info">No APPs found. Create one to consolidate approved PPMPs.</MudAlert>
-            }
-            else
-            {
-                <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="overflow-x:auto">
-                    <thead>
-                        <tr>
-                            <th>APP No.</th>
-                            <th>FY</th>
-                            <th>Phase</th>
-                            <th>Ver.</th>
-                            <th>Status</th>
-                            <th style="text-align:right">Items</th>
-                            <th style="text-align:right">Total Budget</th>
-                            <th style="width:90px"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in _items)
+            <AMISDataTable @ref="_table" T="AnnualProcurementPlanSummaryDto" ServerData="LoadServerData"
+                           RowClass="cursor-pointer"
+                           OnRowClick="@(async (TableRowClickEventArgs<AnnualProcurementPlanSummaryDto> e) => { if (e.Item is not null) await SelectAppAsync(e.Item.Id); })"
+                           EmptyMessage="No APPs found."
+                           EmptyDescription="Create one to consolidate approved PPMPs.">
+                <HeaderContent>
+                    <MudTh>APP No.</MudTh>
+                    <MudTh>FY</MudTh>
+                    <MudTh>Phase</MudTh>
+                    <MudTh>Ver.</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh Style="text-align:right">Items</MudTh>
+                    <MudTh Style="text-align:right">Total Budget</MudTh>
+                    <MudTh Style="width:90px"></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="APP No."><strong>@context.AppNumber</strong></MudTd>
+                    <MudTd DataLabel="FY">@context.FiscalYear</MudTd>
+                    <MudTd DataLabel="Phase">
+                        <MudChip T="string" Size="Size.Small" Color="@PhaseColor(context.Phase)" Label="true">
+                            @context.Phase
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Ver.">v@(context.VersionNumber)</MudTd>
+                    <MudTd DataLabel="Status">@StatusChip(context.Status)</MudTd>
+                    <MudTd DataLabel="Items" Style="text-align:right">@context.ItemCount</MudTd>
+                    <MudTd DataLabel="Total Budget" Style="text-align:right; font-weight:600">
+                        @Money.Symbol@context.TotalEstimatedBudget.ToString("N2")
+                    </MudTd>
+                    <MudTd @onclick:stopPropagation="true">
+                        @if (context.Status == AppStatus.Draft)
                         {
-                            <tr style="cursor:pointer" @onclick="@(() => SelectAppAsync(row.Id))">
-                                <td><strong>@row.AppNumber</strong></td>
-                                <td>@row.FiscalYear</td>
-                                <td>
-                                    <MudChip T="string" Size="Size.Small" Color="@PhaseColor(row.Phase)" Label="true">
-                                        @row.Phase
-                                    </MudChip>
-                                </td>
-                                <td>v@(row.VersionNumber)</td>
-                                <td>@StatusChip(row.Status)</td>
-                                <td style="text-align:right">@row.ItemCount</td>
-                                <td style="text-align:right; font-weight:600">
-                                    @Money.Symbol@row.TotalEstimatedBudget.ToString("N2")
-                                </td>
-                                <td @onclick:stopPropagation="true">
-                                    @if (row.Status == AppStatus.Draft)
-                                    {
-                                        @if (_canPublish)
-                                        {
-                                            <MudTooltip Text="Publish">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Publish" Size="Size.Small"
-                                                               Color="Color.Primary" OnClick="@(() => QuickPublishAsync(row))" Disabled="_busy" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canDelete)
-                                        {
-                                            <MudTooltip Text="Delete">
-                                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
-                                                               Color="Color.Error" OnClick="@(() => DeleteFromListAsync(row))" Disabled="_busy" />
-                                            </MudTooltip>
-                                        }
-                                    }
-                                    @if (row.Status == AppStatus.Published && _canPublish)
-                                    {
-                                        <MudTooltip Text="Recall (return to Draft)">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
-                                                           Color="Color.Warning" OnClick="@(() => QuickRecallAsync(row))" Disabled="_busy" />
-                                        </MudTooltip>
-                                    }
-                                </td>
-                            </tr>
+                            @if (_canPublish)
+                            {
+                                <MudTooltip Text="Publish">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Publish" Size="Size.Small"
+                                                   Color="Color.Primary" OnClick="@(() => QuickPublishAsync(context))" Disabled="_busy" />
+                                </MudTooltip>
+                            }
+                            @if (_canDelete)
+                            {
+                                <MudTooltip Text="Delete">
+                                    <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline" Size="Size.Small"
+                                                   Color="Color.Error" OnClick="@(() => DeleteFromListAsync(context))" Disabled="_busy" />
+                                </MudTooltip>
+                            }
                         }
-                    </tbody>
-                </MudSimpleTable>
-
-                <MudStack Row="true" Class="mt-2" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.caption">@_totalCount total</MudText>
-                    <MudSpacer />
-                    <MudPagination Selected="@_page" Count="_totalPages" SelectedChanged="OnPageChanged" />
-                </MudStack>
-            }
+                        @if (context.Status == AppStatus.Published && _canPublish)
+                        {
+                            <MudTooltip Text="Recall (return to Draft)">
+                                <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
+                                               Color="Color.Warning" OnClick="@(() => QuickRecallAsync(context))" Disabled="_busy" />
+                            </MudTooltip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </AMISDataTable>
         </MudTabPanel>
 
         <!-- -- DETAIL / CREATE TAB -------------------------------------- -->
@@ -567,20 +552,15 @@
 @code {
     // -- State --------------------------------------------------------
     private int _activeTab;
-    private List<AnnualProcurementPlanSummaryDto> _items = [];
+    private AMISDataTable<AnnualProcurementPlanSummaryDto>? _table;
     private List<AnnualProcurementPlanSummaryDto> _versions = [];
     private AnnualProcurementPlanDto? _editing;
-    private bool _loading;
     private bool _loadingPpmps;
     private bool _busy;
     private string? _search;
     private int? _filterFiscalYear;
     private AppStatus? _filterStatus;
     private AppPhase? _filterPhase;
-    private int _page = 1;
-    private int _totalCount;
-    private int _totalPages = 1;
-    private const int PageSize = 15;
     private Guid _selectedVersionId;
 
     // -- New APP form -------------------------------------------------
@@ -611,20 +591,31 @@
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
     // -- Load list ----------------------------------------------------
-    private async Task LoadAsync()
+    private async Task<TableData<AnnualProcurementPlanSummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _loading = true;
         try
         {
             var result = await AppClient.SearchAsync(
                 keyword: _search, fiscalYear: _filterFiscalYear,
-                status: _filterStatus, phase: _filterPhase, page: _page, pageSize: PageSize);
-            _items = result.Items.ToList();
-            _totalCount = (int)result.TotalCount;
-            _totalPages = (int)Math.Ceiling(_totalCount / (double)PageSize);
+                status: _filterStatus, phase: _filterPhase, page: state.Page + 1, pageSize: state.PageSize);
+
+            return new TableData<AnnualProcurementPlanSummaryDto>
+            {
+                Items = result.Items,
+                TotalItems = (int)result.TotalCount
+            };
         }
-        catch (Exception ex) { Snackbar.Add($"Error loading APPs: {ex.Message}", Severity.Error); }
-        finally { _loading = false; }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading APPs: {ex.Message}", Severity.Error);
+            return new TableData<AnnualProcurementPlanSummaryDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     // -- Select / version ---------------------------------------------
@@ -917,11 +908,10 @@
         finally { _busy = false; }
     }
 
-    // -- Filter / pagination ------------------------------------------
-    private async Task OnFyFilterChanged(int? val) { _filterFiscalYear = val; _page = 1; await LoadAsync(); }
-    private async Task OnStatusFilterChanged(AppStatus? val) { _filterStatus = val; _page = 1; await LoadAsync(); }
-    private async Task OnPhaseFilterChanged(AppPhase? val) { _filterPhase = val; _page = 1; await LoadAsync(); }
-    private async Task OnPageChanged(int page) { _page = page; await LoadAsync(); }
+    // -- Filters (the table owns paging) -------------------------------
+    private async Task OnFyFilterChanged(int? val) { _filterFiscalYear = val; await LoadAsync(); }
+    private async Task OnStatusFilterChanged(AppStatus? val) { _filterStatus = val; await LoadAsync(); }
+    private async Task OnPhaseFilterChanged(AppPhase? val) { _filterPhase = val; await LoadAsync(); }
 
     // -- Helpers ------------------------------------------------------
     private RenderFragment StatusChip(AppStatus status) =>

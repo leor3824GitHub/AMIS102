@@ -1,6 +1,7 @@
 @page "/vehicle/fuel-odometer"
 @implements IDisposable
 @using AMIS.Framework.Shared.Persistence
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @using AMIS.Modules.Vehicle.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
@@ -39,10 +40,8 @@
                                                          ValueChanged="OnVehicleChanged" SearchFunc="SearchVehicles"
                                                          ToStringFunc="@(v => v is null ? string.Empty : $"{v.PlateNumber} - {v.Make} {v.Model}")"
                                                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Clearable="true" />
-                                        <MudDatePicker Label="From" @bind-Date="_fromDate" Variant="Variant.Outlined"
-                                                       Dense="true" Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
-                                        <MudDatePicker Label="To" @bind-Date="_toDate" Variant="Variant.Outlined"
-                                                       Dense="true" Margin="Margin.Dense" DateFormat="yyyy-MM-dd" />
+                                        <AMISDateRangePicker @bind-FromDate="_fromDate" @bind-ToDate="_toDate"
+                                                             DateFormat="yyyy-MM-dd" />
                                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData"
                                                    Disabled="_busy || _selectedVehicle is null">Refresh</MudButton>
                                         @if (_canRecord)
@@ -59,47 +58,44 @@
                                     }
                                     else
                                     {
-                                                    <MudTable T="VehicleDailyUsageDto" Items="_rows" Dense="true" Hover="true" Striped="true"
-                                                              Loading="_busy">
-                                                        <HeaderContent>
-                                                            <MudTh>Date</MudTh>
-                                                            <MudTh>Start (km)</MudTh>
-                                                            <MudTh>End (km)</MudTh>
-                                                            <MudTh>Distance</MudTh>
-                                                            <MudTh>Fuel (L)</MudTh>
-                                                            <MudTh>Cost (&#8369;)</MudTh>
-                                                            <MudTh>km/L</MudTh>
-                                                            <MudTh>Cost/km</MudTh>
-                                                            <MudTh>Destination</MudTh>
-                                                        </HeaderContent>
-                                                        <RowTemplate>
-                                                            <MudTd>@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                                                            <MudTd>@context.OdometerStart.ToString("N0")</MudTd>
-                                                            <MudTd>@context.OdometerEnd.ToString("N0")</MudTd>
-                                                            <MudTd>@context.DistanceKm.ToString("N0")</MudTd>
-                                                            <MudTd>@context.FuelLiters.ToString("N3")</MudTd>
-                                                            <MudTd>@context.FuelCost.ToString("N2")</MudTd>
-                                                            <MudTd>@context.KmPerLiter.ToString("N2")</MudTd>
-                                                            <MudTd>@context.CostPerKm.ToString("N2")</MudTd>
-                                                            <MudTd>
-                                                                @if (!string.IsNullOrWhiteSpace(context.Remarks))
-                                                                {
-                                                                    <MudTooltip Text="@context.Remarks">
-                                                                        <span>@(context.Destination ?? "-") *</span>
-                                                                    </MudTooltip>
-                                                                }
-                                                                else
-                                                                {
-                                                                    @(context.Destination ?? "-")
-                                                                }
-                                                            </MudTd>
-                                                        </RowTemplate>
-                                                        <NoRecordsContent>
-                                                            <MudText Align="Align.Center" Class="pa-4">No usage records found for the selected period.
-                                                            </MudText>
-                                                        </NoRecordsContent>
-                                                    </MudTable>
-                                                }
+                                        <AMISDataTable T="VehicleDailyUsageDto" Items="_rows" Loading="_busy"
+                                                       EmptyMessage="No usage records found for the selected period."
+                                                       EmptyDescription="Record fuel or odometer readings, or widen the date range.">
+                                            <HeaderContent>
+                                                <MudTh>Date</MudTh>
+                                                <MudTh>Start (km)</MudTh>
+                                                <MudTh>End (km)</MudTh>
+                                                <MudTh>Distance</MudTh>
+                                                <MudTh>Fuel (L)</MudTh>
+                                                <MudTh>Cost (&#8369;)</MudTh>
+                                                <MudTh>km/L</MudTh>
+                                                <MudTh>Cost/km</MudTh>
+                                                <MudTh>Destination</MudTh>
+                                            </HeaderContent>
+                                            <RowTemplate>
+                                                <MudTd DataLabel="Date">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                                                <MudTd DataLabel="Start (km)">@context.OdometerStart.ToString("N0")</MudTd>
+                                                <MudTd DataLabel="End (km)">@context.OdometerEnd.ToString("N0")</MudTd>
+                                                <MudTd DataLabel="Distance">@context.DistanceKm.ToString("N0")</MudTd>
+                                                <MudTd DataLabel="Fuel (L)">@context.FuelLiters.ToString("N3")</MudTd>
+                                                <MudTd DataLabel="Cost">@context.FuelCost.ToString("N2")</MudTd>
+                                                <MudTd DataLabel="km/L">@context.KmPerLiter.ToString("N2")</MudTd>
+                                                <MudTd DataLabel="Cost/km">@context.CostPerKm.ToString("N2")</MudTd>
+                                                <MudTd DataLabel="Destination">
+                                                    @if (!string.IsNullOrWhiteSpace(context.Remarks))
+                                                    {
+                                                        <MudTooltip Text="@context.Remarks">
+                                                            <span>@(context.Destination ?? "-") *</span>
+                                                        </MudTooltip>
+                                                    }
+                                                    else
+                                                    {
+                                                        @(context.Destination ?? "-")
+                                                    }
+                                                </MudTd>
+                                            </RowTemplate>
+                                        </AMISDataTable>
+                                    }
                                             </MudCardContent>
                                         </MudCard>
                                     </MudItem>

@@ -20,6 +20,7 @@
           ChildRowContent="@ChildRowContent"
           OnRowClick="@OnRowClick"
           RowClass="@RowClass"
+          RowClassFunc="@RowClassFunc"
           @attributes="AdditionalAttributes">
     <HeaderContent>
         @HeaderContent
@@ -75,6 +76,9 @@
 
     /// <summary>Optional CSS class applied to each data row (e.g. <c>cursor-pointer</c>).</summary>
     [Parameter] public string? RowClass { get; set; }
+
+    /// <summary>Optional per-row CSS class (row item + index), e.g. to highlight overdue rows.</summary>
+    [Parameter] public Func<T, int, string>? RowClassFunc { get; set; }
 
     [Parameter] public bool Loading { get; set; }
     [Parameter] public int RowsPerPage { get; set; } = 15;

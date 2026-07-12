@@ -13,7 +13,11 @@
 @inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="My Accountability (ICS / PAR)"
-               Description="Property issued to you — Inventory Custodian Slips (ICS) and Property Acknowledgement Receipts (PAR) where you are the accountable person." />
+               Description="Property issued to you — Inventory Custodian Slips (ICS) and Property Acknowledgement Receipts (PAR) where you are the accountable person.">
+    <ActionContent>
+        <HelpLinkButton Href="/help/asset-register/01-my-accountability" />
+    </ActionContent>
+</AMISPageHeader>
 
 @if (!_canView)
 {

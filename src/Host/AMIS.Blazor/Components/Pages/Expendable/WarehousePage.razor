@@ -2,11 +2,17 @@
 @using AMIS.Framework.Blazor.UI.Components.Cards
 @using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
+@using AMIS.Blazor.Services
 @inherits ComponentBase
 @inject ISnackbar Snackbar
 @inject IInventoryClient InventoryClient
+@inject IInventoryDataService InventoryData
 
-<AMISPageHeader Title="Warehouse" Description="Inventory stock levels" />
+<AMISPageHeader Title="Warehouse" Description="Inventory stock levels">
+    <ActionContent>
+        <HelpLinkButton Href="/help/expendable/03-warehouse-and-reports" />
+    </ActionContent>
+</AMISPageHeader>
 
 <div class="mt-4">
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
@@ -128,19 +134,12 @@
     {
         try
         {
-            var result = await InventoryClient.SearchAsync(new SearchProductInventoryQuery { PageSize = 1000 });
-            _warehouses = result?.Items?
-                .Where(i => i.WarehouseLocationId != default)
-                .GroupBy(i => i.WarehouseLocationId)
-                .Select(g =>
-                {
-                    var name = g.First().WarehouseLocationName;
-                    var display = string.IsNullOrWhiteSpace(name)
-                        ? $"Warehouse {g.Key.ToString()[..8]}…"
-                        : name;
-                    return new WarehouseOption(g.Key, display);
-                })
-                .ToList() ?? [];
+            var locations = await InventoryData.GetWarehouseLocationsAsync();
+            _warehouses = locations
+                .Select(l => new WarehouseOption(
+                    l.Id,
+                    string.IsNullOrWhiteSpace(l.Name) ? $"Warehouse {l.Id.ToString()[..8]}…" : l.Name))
+                .ToList();
         }
         catch { _warehouses = []; }
     }

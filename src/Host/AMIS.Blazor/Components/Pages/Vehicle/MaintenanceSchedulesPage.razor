@@ -1,5 +1,6 @@
 @page "/vehicle/maintenance/schedules"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @using AMIS.Modules.Vehicle.Contracts.Permissions
@@ -15,19 +16,6 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <!-- Header: title + primary action -->
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Maintenance Schedules</MudText>
-                    @if (_canCreate)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
-                                   OnClick="OpenCreateDialog" Disabled="_busy"
-                                   Title="Plan a recurring maintenance schedule">
-                            NEW SCHEDULE
-                        </MudButton>
-                    }
-                </MudStack>
-
                 <!-- Filter toolbar: type search + vehicle / status (date range not applicable) -->
                 <AMISFilterBar Keyword="@_query.MaintenanceType" KeywordChanged="OnTypeChanged"
                                SearchLabel="Type" SearchPlaceholder="Search by type"
@@ -50,67 +38,74 @@
                     </Extra>
                 </AMISFilterBar>
 
-                <!-- Status summary chips -->
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                <!-- Status summary chips + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
                     <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">Total: @_items.Count</MudChip>
                     <MudChip T="string" Variant="Variant.Outlined" Color="Color.Success">Active: @_items.Count(s => s.IsActive)</MudChip>
                     <MudChip T="string" Variant="Variant.Outlined" Color="Color.Default">Inactive: @_items.Count(s => !s.IsActive)</MudChip>
                     <MudChip T="string" Variant="Variant.Outlined" Color="Color.Error">Overdue: @_items.Count(IsOverdue)</MudChip>
+                    <MudSpacer />
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog" Disabled="_busy"
+                                   Title="Plan a recurring maintenance schedule">
+                            NEW SCHEDULE
+                        </MudButton>
+                    }
                 </MudStack>
 
-                @if (_busy)
-                {
-                    <MudProgressLinear Indeterminate="true" Class="mb-2" />
-                }
-
-                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true" RowClassFunc="@( (row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)">
-                        <HeaderContent>
-                            <MudTh>Type</MudTh>
-                            <MudTh>Due Date</MudTh>
-                            <MudTh>Due Mileage</MudTh>
-                            <MudTh>Active</MudTh>
-                            <MudTh>Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>@context.MaintenanceType</MudTd>
-                            <MudTd>
-                                @if (context.DueDate is not null)
+                <AMISDataTable T="MaintenanceScheduleDto" Items="_items" Loading="_busy"
+                               RowClassFunc="@((row, _) => IsOverdue(row) ? "overdue-row" : string.Empty)"
+                               EmptyMessage="No maintenance schedules found."
+                               EmptyDescription="Plan a recurring maintenance schedule to get started.">
+                    <HeaderContent>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Due Date</MudTh>
+                        <MudTh>Due Mileage</MudTh>
+                        <MudTh>Active</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Type">@context.MaintenanceType</MudTd>
+                        <MudTd DataLabel="Due Date">
+                            @if (context.DueDate is not null)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="@(IsOverdue(context) ? Color.Error : Color.Default)">
+                                    @context.DueDate.Value.ToString("yyyy-MM-dd")
+                                </MudChip>
+                            }
+                            else
+                            {
+                                <MudText>-</MudText>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Due Mileage">@(context.DueMileage?.ToString() ?? "-")</MudTd>
+                        <MudTd DataLabel="Active"><MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudStack Row="true" Spacing="1">
+                                @if (context.IsActive && _canUpdate)
                                 {
-                                    <MudChip T="string" Size="Size.Small" Color="@(IsOverdue(context) ? Color.Error : Color.Default)">
-                                        @context.DueDate.Value.ToString("yyyy-MM-dd")
-                                    </MudChip>
+                                    <MudTooltip Text="Deactivate schedule">
+                                        <MudIconButton Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small"
+                                                       OnClick="@(() => Deactivate(context.Id))" Disabled="_busy" />
+                                    </MudTooltip>
                                 }
-                                else
+                                @if (_canDelete)
                                 {
-                                    <MudText>-</MudText>
+                                    <MudTooltip Text="Delete schedule">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                                       OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
+                                    </MudTooltip>
                                 }
-                            </MudTd>
-                            <MudTd>@(context.DueMileage?.ToString() ?? "-")</MudTd>
-                            <MudTd><MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
-                            <MudTd>
-                                <MudStack Row="true" Spacing="1">
-                                    @if (context.IsActive && _canUpdate)
-                                    {
-                                        <MudTooltip Text="Deactivate schedule">
-                                            <MudIconButton Icon="@Icons.Material.Filled.PauseCircle" Color="Color.Warning" Size="Size.Small"
-                                                           OnClick="@(() => Deactivate(context.Id))" Disabled="_busy" />
-                                        </MudTooltip>
-                                    }
-                                    @if (_canDelete)
-                                    {
-                                        <MudTooltip Text="Delete schedule">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                                           OnClick="@(() => Delete(context.Id))" Disabled="_busy" />
-                                        </MudTooltip>
-                                    }
-                                </MudStack>
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 <style>
     .overdue-row {
@@ -120,7 +115,6 @@
 
 @code {
     private readonly List<MaintenanceScheduleDto> _items = [];
-    private List<VehicleDto> _vehicles = [];
     private ScheduleQueryModel _query = new();
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;
@@ -133,42 +127,28 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadVehicles();
         await Load();
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
-    private async Task LoadVehicles()
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
     {
         try
         {
             var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
             {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
                 PageNumber = 1,
-                PageSize = 1000
-            });
+                PageSize = 20
+            }, ct);
 
-            _vehicles.Clear();
-            _vehicles.AddRange(result.Items ?? []);
+            return result.Items ?? [];
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+            return [];
         }
-    }
-
-    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return _vehicles;
-
-        var searchValue = value.ToLowerInvariant();
-        return _vehicles.Where(v =>
-            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Year.ToString().Contains(searchValue)).ToList();
     }
 
     private async Task Load()

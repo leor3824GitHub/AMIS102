@@ -300,8 +300,7 @@
     {
         try
         {
-            var response = await MasterDataClient.SuppliersListAsync(pageSize: 1000, isActive: true);
-            _suppliers = response?.Items?.ToList() ?? new();
+            _suppliers = (await LookupData.GetSuppliersAsync()).ToList();
         }
         catch (Exception ex)
         {

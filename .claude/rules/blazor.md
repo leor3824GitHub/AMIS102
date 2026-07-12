@@ -333,6 +333,7 @@ Wraps `MudTable` with a dense/hover baseline, `MudSkeleton` rows while `Loading`
 - **Server paging (large sets):** pass `ServerData="@(async (state, ct) => …)"` returning `TableData<T>`, hold an `@ref`, and call `ReloadServerData()` after a filter change. MudTable `ServerData` is the chosen primitive (MudDataGrid's client-side filter model fights server paging). The table auto-loads on first render — do **not** also call `ReloadServerData()` from `OnInitializedAsync` (the `@ref` is still null there).
 - **Client mode (bounded reference data):** pass a pre-filtered/pre-sorted `Items`; the table pages it at `RowsPerPage`. Custom clickable-sort headers still work — feed the sorted list.
 - Header cells are `MudTh`, row cells are `MudTd`; `context` in `RowTemplate` is the row item.
+- **Row emphasis:** `RowClassFunc="@((row, _) => …)"` applies a per-row CSS class (e.g. highlighting overdue rows on [MaintenanceSchedulesPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/Vehicle/MaintenanceSchedulesPage.razor)). `RowClass` sets one class on every row (e.g. `cursor-pointer` when paired with `OnRowClick`).
 - **Expandable master-detail rows:** pass `ChildRowContent` (a `RenderFragment<T>`). Emit a full `<tr><td colspan="N">…</td></tr>` and self-gate it (e.g. `@if (_selected?.Id == context.Id) { … }`) so it only renders for the open row. Reference: [CanvassRequestsPage.razor](../../src/Host/AMIS.Blazor/Components/Pages/Procurement/CanvassRequestsPage.razor).
 
 ### `AMISEmptyState` — `Components/Feedback/AMISEmptyState.razor`

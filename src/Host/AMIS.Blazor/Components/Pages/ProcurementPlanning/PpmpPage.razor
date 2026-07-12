@@ -4,11 +4,14 @@
 @using AMIS.Modules.ProcurementPlanning.Contracts.Permissions
 @using AMIS.Modules.MasterData.Contracts.v1.FundingSourceCodes
 @using AMIS.Framework.Shared.Persistence
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Shared
+@using AMIS.Blazor.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject IPpmpClient PpmpClient
+@inject ILookupDataService LookupData
 @inject IModeOfProcurementClient ModeOfProcurementClient
 @inject IFundingSourceCodeClient FundingSourceCodeClient
 @inject IOrganizationProfileClient OrgProfileClient
@@ -19,7 +22,11 @@
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="Project Procurement Management Plan (PPMP)"
-               Description="Manage per-section procurement plans for the fiscal year" />
+               Description="Manage per-section procurement plans for the fiscal year">
+    <ActionContent>
+        <HelpLinkButton Href="/help/procurement-planning/01-ppmp" />
+    </ActionContent>
+</AMISPageHeader>
 
 <!-- -- Add / Edit Line Item Dialog ---------------------------------- -->
 <MudDialog @bind-Visible="_itemDialogOpen"
@@ -162,79 +169,59 @@
                 </MudButton>
             </MudStack>
 
-            @if (_loading)
-            {
-                <MudProgressLinear Indeterminate="true" />
-            }
-            else if (_items.Count == 0)
-            {
-                <MudAlert Severity="Severity.Info">No PPMPs found.</MudAlert>
-            }
-            else
-            {
-                <MudSimpleTable Dense="true" Hover="true" Striped="true" Style="overflow-x:auto">
-                    <thead>
-                        <tr>
-                            <th>PPMP No.</th>
-                            <th>FY</th>
-                            <th>Office</th>
-                            <th>End-User / Section</th>
-                            <th>Type</th>
-                            <th>Ver.</th>
-                            <th>Status</th>
-                            <th>Total Budget</th>
-                            <th style="width:110px"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in _items)
+            <AMISDataTable @ref="_table" T="PpmpSummaryDto" ServerData="LoadServerData"
+                           RowClass="cursor-pointer"
+                           OnRowClick="@(async (TableRowClickEventArgs<PpmpSummaryDto> e) => { if (e.Item is not null) await SelectPpmpAsync(e.Item.Id); })"
+                           EmptyMessage="No PPMPs found."
+                           EmptyDescription="Create a PPMP to plan next year's procurement.">
+                <HeaderContent>
+                    <MudTh>PPMP No.</MudTh>
+                    <MudTh>FY</MudTh>
+                    <MudTh>Office</MudTh>
+                    <MudTh>End-User / Section</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Ver.</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Total Budget</MudTh>
+                    <MudTh Style="width:110px"></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="PPMP No."><strong>@context.PpmpNumber</strong></MudTd>
+                    <MudTd DataLabel="FY">@context.FiscalYear</MudTd>
+                    <MudTd DataLabel="Office">@context.OfficeCode</MudTd>
+                    <MudTd DataLabel="End-User / Section">@context.EndUserUnit</MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(context.Phase == PpmpPhase.Final ? Color.Primary : Color.Default)">
+                            @context.Phase
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Ver.">v@(context.VersionNumber)</MudTd>
+                    <MudTd DataLabel="Status">@StatusChip(context.Status)</MudTd>
+                    <MudTd DataLabel="Total Budget">@Money.Symbol@context.TotalEstimatedBudget.ToString("N2")</MudTd>
+                    <MudTd @onclick:stopPropagation="true">
+                        @if (context.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                         {
-                            <tr style="cursor:pointer" @onclick="@(() => SelectPpmpAsync(row.Id))">
-                                <td><strong>@row.PpmpNumber</strong></td>
-                                <td>@row.FiscalYear</td>
-                                <td>@row.OfficeCode</td>
-                                <td>@row.EndUserUnit</td>
-                                <td>
-                                    <MudChip T="string" Size="Size.Small"
-                                             Color="@(row.Phase == PpmpPhase.Final ? Color.Primary : Color.Default)">
-                                        @row.Phase
-                                    </MudChip>
-                                </td>
-                                <td>v@(row.VersionNumber)</td>
-                                <td>@StatusChip(row.Status)</td>
-                                <td>@Money.Symbol@row.TotalEstimatedBudget.ToString("N2")</td>
-                                <td @onclick:stopPropagation="true">
-                                    @if (row.Status is PpmpStatus.Draft or PpmpStatus.Returned)
-                                    {
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                                       OnClick="@(() => SelectPpmpAsync(row.Id))" />
-                                    }
-                                    @if ((row.Status is PpmpStatus.Draft or PpmpStatus.Returned) && _canSubmit)
-                                    {
-                                        <MudTooltip Text="Submit for Approval">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
-                                                           OnClick="@(() => QuickSubmitAsync(row))" />
-                                        </MudTooltip>
-                                    }
-                                    @if (row.Status == PpmpStatus.Submitted && _canSubmit)
-                                    {
-                                        <MudTooltip Text="Recall (return to Draft)">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
-                                                           Color="Color.Warning" OnClick="@(() => QuickRecallAsync(row))" />
-                                        </MudTooltip>
-                                    }
-                                </td>
-                            </tr>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => SelectPpmpAsync(context.Id))" />
                         }
-                    </tbody>
-                </MudSimpleTable>
-
-                <MudStack Row="true" Class="mt-2" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.caption">@_totalCount total</MudText>
-                    <MudSpacer />
-                    <MudPagination Selected="@_page" Count="_totalPages" SelectedChanged="OnPageChanged" />
-                </MudStack>
-            }
+                        @if ((context.Status is PpmpStatus.Draft or PpmpStatus.Returned) && _canSubmit)
+                        {
+                            <MudTooltip Text="Submit for Approval">
+                                <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Color="Color.Info"
+                                               OnClick="@(() => QuickSubmitAsync(context))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == PpmpStatus.Submitted && _canSubmit)
+                        {
+                            <MudTooltip Text="Recall (return to Draft)">
+                                <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
+                                               Color="Color.Warning" OnClick="@(() => QuickRecallAsync(context))" />
+                            </MudTooltip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </AMISDataTable>
         </MudTabPanel>
 
         <!-- -- FORM TAB -------------------------------------------------- -->
@@ -505,20 +492,15 @@
 @code {
     // -- State --------------------------------------------------------
     private int _activeTab;
-    private List<PpmpSummaryDto> _items = [];
+    private AMISDataTable<PpmpSummaryDto>? _table;
     private List<PpmpSummaryDto> _versions = [];
     private PpmpDto? _editing;
-    private bool _loading;
     private bool _busy;
     private bool _isReadOnly => _editing is not null &&
         _editing.Status is not (PpmpStatus.Draft or PpmpStatus.Returned);
     private string? _search;
     private int? _filterFiscalYear;
     private PpmpStatus? _filterStatus;
-    private int _page = 1;
-    private int _totalCount;
-    private int _totalPages = 1;
-    private const int PageSize = 15;
     private Guid _selectedVersionId;
 
     private string? _orgOfficeCode;
@@ -691,30 +673,40 @@
     {
         try
         {
-            var result = await LookupClient.UnitOfMeasuresAsync(isActive: true, pageSize: 200);
-            _unitCodes = result?.Items?
+            _unitCodes = (await LookupData.GetUnitOfMeasuresAsync())
                 .Where(u => !string.IsNullOrWhiteSpace(u.Code))
                 .Select(u => u.Code!)
                 .OrderBy(c => c)
-                .ToList() ?? [];
+                .ToList();
         }
         catch { /* non-critical */ }
     }
 
-    private async Task LoadAsync()
+    private async Task<TableData<PpmpSummaryDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _loading = true;
         try
         {
             var result = await PpmpClient.SearchAsync(
                 keyword: _search, fiscalYear: _filterFiscalYear,
-                status: _filterStatus, page: _page, pageSize: PageSize);
-            _items = result.Items.ToList();
-            _totalCount = (int)result.TotalCount;
-            _totalPages = (int)Math.Ceiling(_totalCount / (double)PageSize);
+                status: _filterStatus, page: state.Page + 1, pageSize: state.PageSize);
+
+            return new TableData<PpmpSummaryDto>
+            {
+                Items = result.Items,
+                TotalItems = (int)result.TotalCount
+            };
         }
-        catch (Exception ex) { Snackbar.Add($"Error loading PPMPs: {ex.Message}", Severity.Error); }
-        finally { _loading = false; }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading PPMPs: {ex.Message}", Severity.Error);
+            return new TableData<PpmpSummaryDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     // -- Navigation ---------------------------------------------------
@@ -1100,10 +1092,9 @@
         }
     }
 
-    // -- Filter / pagination ------------------------------------------
-    private async Task OnFilterChanged(int? val) { _filterFiscalYear = val; _page = 1; await LoadAsync(); }
-    private async Task OnStatusFilterChanged(PpmpStatus? val) { _filterStatus = val; _page = 1; await LoadAsync(); }
-    private async Task OnPageChanged(int page) { _page = page; await LoadAsync(); }
+    // -- Filters (the table owns paging) -------------------------------
+    private async Task OnFilterChanged(int? val) { _filterFiscalYear = val; await LoadAsync(); }
+    private async Task OnStatusFilterChanged(PpmpStatus? val) { _filterStatus = val; await LoadAsync(); }
 
     // -- Helpers ------------------------------------------------------
     private RenderFragment StatusChip(PpmpStatus status) =>

@@ -1,5 +1,6 @@
 @page "/expendable/my-requests"
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Blazor.ApiClient
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
@@ -15,7 +16,11 @@
 @inject IReportsClient ReportsClient
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<AMISPageHeader Title="My Requests" Description="View your supply request status and item issuance history" />
+<AMISPageHeader Title="My Requests" Description="View your supply request status and item issuance history">
+    <ActionContent>
+        <HelpLinkButton Href="/help/expendable/01-request-supplies" />
+    </ActionContent>
+</AMISPageHeader>
 
 @if (_loadingEmployee)
 {
@@ -56,9 +61,10 @@ else
                     </MudStack>
                 </MudPaper>
 
-                <MudTable @ref="_requestsTable" T="SupplyRequestDto"
-                          ServerData="@(async (s, ct) => await LoadMyRequests(s, ct))"
-                          Dense="true" Hover="true" Striped="true">
+                <AMISDataTable @ref="_requestsTable" T="SupplyRequestDto"
+                               ServerData="@(async (s, ct) => await LoadMyRequests(s, ct))"
+                               EmptyMessage="No supply requests found."
+                               EmptyDescription="Browse the catalog and submit a request to get started.">
                     <HeaderContent>
                         <MudTh>Request #</MudTh>
                         <MudTh>Date</MudTh>
@@ -166,11 +172,7 @@ else
                             </MudTr>
                         }
                     </ChildRowContent>
-                    <NoRecordsContent>
-                        <MudText Class="my-4">No supply requests found.</MudText>
-                    </NoRecordsContent>
-                    <PagerContent><MudTablePager /></PagerContent>
-                </MudTable>
+                </AMISDataTable>
             </MudTabPanel>
 
             <!-- ===== RECEIVED ITEMS HISTORY ===== -->
@@ -203,9 +205,10 @@ else
                     </MudGrid>
                 </MudPaper>
 
-                <MudTable @ref="_historyTable" T="EmployeeIssuanceDto"
-                          ServerData="@(async (s, ct) => await LoadIssuanceHistory(s, ct))"
-                          Dense="true" Hover="true" Striped="true">
+                <AMISDataTable @ref="_historyTable" T="EmployeeIssuanceDto"
+                               ServerData="@(async (s, ct) => await LoadIssuanceHistory(s, ct))"
+                               EmptyMessage="No items received yet."
+                               EmptyDescription="Issued supplies will appear here once your requests are fulfilled.">
                     <HeaderContent>
                         <MudTh>Request #</MudTh>
                         <MudTh>Fulfilled On</MudTh>
@@ -252,11 +255,7 @@ else
                             </MudTr>
                         }
                     </ChildRowContent>
-                    <NoRecordsContent>
-                        <MudText Class="my-4">No items received yet.</MudText>
-                    </NoRecordsContent>
-                    <PagerContent><MudTablePager /></PagerContent>
-                </MudTable>
+                </AMISDataTable>
             </MudTabPanel>
 
         </MudTabs>
@@ -310,14 +309,10 @@ else
             <MudText Typo="Typo.subtitle2" Class="mb-2">Add Product</MudText>
             <MudGrid Spacing="2">
                 <MudItem xs="12" sm="6">
-                    <MudSelect T="Guid" @bind-Value="_addProductId" Label="Product" Variant="Variant.Outlined"
-                               Dense="true" AnchorOrigin="Origin.BottomCenter">
-                        <MudSelectItem Value="Guid.Empty">Select product…</MudSelectItem>
-                        @foreach (var p in _availableProducts)
-                        {
-                            <MudSelectItem Value="@p.Id">@p.Name</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudAutocomplete T="ProductDto" @bind-Value="_addProduct" Label="Product"
+                                     Placeholder="Search product…" SearchFunc="@SearchProducts"
+                                     ToStringFunc="@(p => p?.Name)" Variant="Variant.Outlined"
+                                     Dense="true" Margin="Margin.Dense" Clearable="true" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
                     <MudNumericField @bind-Value="_addQuantity" Label="Qty" Min="1"
@@ -399,7 +394,7 @@ else
     private int _activeTab;
 
     // My Requests tab
-    private MudTable<SupplyRequestDto>? _requestsTable;
+    private AMISDataTable<SupplyRequestDto>? _requestsTable;
     private string? _requestsStatusFilter;
     private readonly HashSet<Guid> _expandedRequests = [];
     private readonly Dictionary<Guid, string> _productNames = [];
@@ -415,14 +410,14 @@ else
     private bool _showCancelDialog;
     private SupplyRequestDto? _cancelDialog;
     private bool _isCancelling;
-    private List<ProductDto> _availableProducts = [];
-    private Guid _addProductId = Guid.Empty;
+    private ProductDto? _addProduct;
+    private Guid _addProductId => _addProduct?.Id ?? Guid.Empty;
     private int _addQuantity = 1;
     private string? _addNotes;
     private bool _isEditActioning;
 
     // Received Items tab
-    private MudTable<EmployeeIssuanceDto>? _historyTable;
+    private AMISDataTable<EmployeeIssuanceDto>? _historyTable;
     private DateTime? _historyFrom;
     private DateTime? _historyTo;
     private readonly HashSet<Guid> _expandedHistory = [];
@@ -568,27 +563,34 @@ else
 
     // ===== EDIT DRAFT =====
 
-    private async Task OpenEditDialog(SupplyRequestDto req)
+    private void OpenEditDialog(SupplyRequestDto req)
     {
         _editDialog = req;
-        _addProductId = Guid.Empty;
+        _addProduct = null;
         _addQuantity = 1;
         _addNotes = null;
 
-        if (!_availableProducts.Any())
-        {
-            try
-            {
-                var result = await ProductsClient.ActiveAsync(1, 1000);
-                _availableProducts = result.Items?.ToList() ?? [];
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add($"Failed to load products: {ex.Message}", Severity.Warning);
-            }
-        }
-
         _showEditDialog = true;
+    }
+
+    // Server-driven product search — the catalog is unbounded, so it is never prefetched in full.
+    private async Task<IEnumerable<ProductDto>> SearchProducts(string value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await ProductsClient.SearchAsync(new SearchProductsQuery
+            {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
+                PageNumber = 1,
+                PageSize = 20
+            }, ct);
+
+            return result.Items ?? [];
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
     }
 
     private async Task RemoveItemFromDraft(Guid productId)
@@ -618,7 +620,7 @@ else
                 Quantity = _addQuantity,
                 Notes = string.IsNullOrWhiteSpace(_addNotes) ? null : _addNotes
             });
-            _addProductId = Guid.Empty;
+            _addProduct = null;
             _addQuantity = 1;
             _addNotes = null;
             await ReloadEditDialog();

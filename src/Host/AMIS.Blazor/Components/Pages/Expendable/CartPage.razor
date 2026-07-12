@@ -5,12 +5,14 @@
 @using AMIS.Modules.Expendable.Contracts.Permissions
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using AMIS.Blazor.Services
 @inject IEmployeeClient _employeeClient
 @inject IEmployeesClient _employeesClient
 @inject ICartClient _cartClient
 @inject IProductsClient _productsClient
 @inject ILookupClient _lookupClient
 @inject IInventoryClient _inventoryClient
+@inject IInventoryDataService _inventoryData
 @inject IWarehouseClient _warehouseClient
 @inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
@@ -245,9 +247,8 @@
         UserProfileState.OnProfileChanged += OnProfileChanged;
         _loading = true;
         try {
-            await Task.WhenAll(ResolveCurrentEmployeeContext(), LoadProducts(), LoadDepartments());
+            await Task.WhenAll(ResolveCurrentEmployeeContext(), LoadDepartments());
             await LoadCart();
-            await LoadInventoryBalancesAsync();
         } finally {
             _loading = false;
         }
@@ -293,6 +294,47 @@
         }
 
         _cart = await _employeeClient.CartAsync(_currentEmployeeId);
+        await LoadCartProductDataAsync();
+    }
+
+    // Names + inventory for the products actually in the cart — batch calls scoped to the cart,
+    // instead of pulling the whole catalog and every inventory row (which the page-size clamp truncated).
+    private async Task LoadCartProductDataAsync()
+    {
+        var productIds = _cart?.Items?.Select(i => i.ProductId).Distinct().ToList() ?? [];
+
+        if (productIds.Count == 0)
+        {
+            _productNameCache.Clear();
+            _productBalances.Clear();
+            _productInventories.Clear();
+            return;
+        }
+
+        try
+        {
+            var productsTask = _inventoryData.GetProductsByIdsAsync(productIds);
+            var inventoriesTask = _inventoryData.GetInventoriesByProductsAsync(productIds);
+            await Task.WhenAll(productsTask, inventoriesTask);
+
+            _productNameCache = (await productsTask).ToDictionary(p => p.Id, p => p.Name);
+
+            var inventories = await inventoriesTask;
+
+            // Cache full inventory DTOs (with batches) keyed by ProductId
+            _productInventories = inventories
+                .GroupBy(i => i.ProductId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            _productBalances = inventories
+                .GroupBy(i => i.ProductId)
+                .ToDictionary(g => g.Key, g => g.Sum(i => i.QuantityAvailable));
+        }
+        catch
+        {
+            _productBalances.Clear();
+            _productInventories.Clear();
+        }
     }
 
     private async Task UpdateQuantity(Guid productId, int newQty)
@@ -388,41 +430,6 @@
         } catch (Exception ex) {
             _snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    private async Task LoadInventoryBalancesAsync()
-    {
-        try
-        {
-            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
-            {
-                PageNumber = 1,
-                PageSize = 1000
-            });
-
-            if (inventoryList.Items != null)
-            {
-                // Cache full inventory DTOs (with batches) keyed by ProductId
-                _productInventories = inventoryList.Items
-                    .GroupBy(i => i.ProductId)
-                    .ToDictionary(g => g.Key, g => g.First());
-
-                _productBalances = inventoryList.Items
-                    .GroupBy(x => x.ProductId)
-                    .ToDictionary(g => g.Key, g => g.Sum(i => i.QuantityAvailable));
-            }
-        }
-        catch
-        {
-            _productBalances.Clear();
-            _productInventories.Clear();
-        }
-    }
-
-    private async Task LoadProducts()
-    {
-        var result = await _productsClient.ActiveAsync(1, 1000);
-        _productNameCache = result.Items?.ToDictionary(p => p.Id, p => p.Name) ?? new();
     }
 
     private async Task LoadDepartments()

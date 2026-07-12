@@ -74,7 +74,17 @@ public sealed class GetWarehouseStockLevelsQuery : IPagedQuery, IQuery<PagedResp
     public string? Sort { get; set; }
 }
 
+/// <summary>Unpaged list of warehouse locations that hold inventory — for bounded warehouse pickers.</summary>
+public sealed record ListWarehouseLocationsQuery : IQuery<IReadOnlyList<WarehouseLocationDto>>;
+
+/// <summary>Inventory rows (all warehouses) for a bounded set of products — replaces "fetch every row and filter client-side".</summary>
+public sealed record GetProductInventoriesByProductsQuery(
+    IReadOnlyCollection<Guid> ProductIds
+) : IQuery<IReadOnlyList<ProductInventoryDto>>;
+
 // ============= DTOs =============
+
+public record WarehouseLocationDto(Guid Id, string Name);
 
 public record ProductInventoryDto(
     Guid Id,

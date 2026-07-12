@@ -1,5 +1,6 @@
 @page "/vehicle/maintenance/logs"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @using AMIS.Modules.Vehicle.Contracts.Permissions
@@ -15,25 +16,14 @@
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <!-- Header: title + primary action -->
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Maintenance Logs</MudText>
-                    @if (_canCreate)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
-                                   OnClick="OpenCreateDialog"
-                                   Title="Record a maintenance activity">
-                            NEW LOG
-                        </MudButton>
-                    }
-                </MudStack>
-
-                <!-- Filter toolbar: type search + date range + vehicle / schedule -->
+                <!-- Filter toolbar: type search + date range + vehicle / schedule.
+                     Four filters share one md row, so each takes 3 of the 12 columns (3+3+3+3). -->
                 <AMISFilterBar Keyword="@_query.MaintenanceType" KeywordChanged="OnTypeChanged"
                                SearchLabel="Type" SearchPlaceholder="Search by type"
                                FromDate="_query.FromDate" FromDateChanged="OnFromChanged"
                                ToDate="_query.ToDate" ToDateChanged="OnToChanged"
-                               SearchSm="6" SearchMd="3">
+                               SearchSm="6" SearchMd="3"
+                               DateRangeSm="6" DateRangeMd="3">
                     <Extra>
                         <MudItem xs="12" sm="6" md="3">
                             <MudAutocomplete T="VehicleDto" Value="_query.SelectedVehicle" ValueChanged="OnVehicleChanged" Label="Vehicle"
@@ -49,41 +39,58 @@
                     </Extra>
                 </AMISFilterBar>
 
-                    <MudTable Items="_items" Dense="true" Hover="true" Striped="true">
-                        <HeaderContent>
-                            <MudTh>Date</MudTh>
-                            <MudTh>Type</MudTh>
-                            <MudTh>Vehicle</MudTh>
-                            <MudTh>Odometer</MudTh>
-                            <MudTh>Performed By</MudTh>
-                            <MudTh>Cost</MudTh>
-                            <MudTh>Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd>@context.PerformedDate.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>@context.MaintenanceType</MudTd>
-                            <MudTd>@context.VehicleId</MudTd>
-                            <MudTd>@(context.OdometerAtService?.ToString() ?? "-")</MudTd>
-                            <MudTd>@(string.IsNullOrWhiteSpace(context.PerformedBy) ? "-" : context.PerformedBy)</MudTd>
-                            <MudTd>@(context.Cost?.ToString("N2") ?? "-")</MudTd>
-                            <MudTd>
-                                @if (_canDelete)
-                                {
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                                   OnClick="@(() => Delete(context.Id))" />
-                                }
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
+                <!-- Summary chips + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary">Total: @_items.Count</MudChip>
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Warning">Total Cost: &#8369;@_items.Sum(l => l.Cost ?? 0m).ToString("N2")</MudChip>
+                    <MudSpacer />
+                    @if (_canCreate)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="OpenCreateDialog"
+                                   Title="Record a maintenance activity">
+                            NEW LOG
+                        </MudButton>
+                    }
+                </MudStack>
+
+                <AMISDataTable T="MaintenanceLogDto" Items="_items" Loading="_loading"
+                               EmptyMessage="No maintenance logs found."
+                               EmptyDescription="Record a maintenance activity to get started.">
+                    <HeaderContent>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Type</MudTh>
+                        <MudTh>Vehicle</MudTh>
+                        <MudTh>Odometer</MudTh>
+                        <MudTh>Performed By</MudTh>
+                        <MudTh>Cost</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Date">@context.PerformedDate.ToString("yyyy-MM-dd")</MudTd>
+                        <MudTd DataLabel="Type">@context.MaintenanceType</MudTd>
+                        <MudTd DataLabel="Vehicle">@context.VehicleId</MudTd>
+                        <MudTd DataLabel="Odometer">@(context.OdometerAtService?.ToString() ?? "-")</MudTd>
+                        <MudTd DataLabel="Performed By">@(string.IsNullOrWhiteSpace(context.PerformedBy) ? "-" : context.PerformedBy)</MudTd>
+                        <MudTd DataLabel="Cost">@(context.Cost?.ToString("N2") ?? "-")</MudTd>
+                        <MudTd DataLabel="Actions">
+                            @if (_canDelete)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => Delete(context.Id))" />
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
     private readonly List<MaintenanceLogDto> _items = [];
-    private List<VehicleDto> _vehicles = [];
     private LogQueryModel _query = new();
+    private bool _loading;
 
     private bool _canCreate => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Create);
     private bool _canDelete => UserProfileState.Permissions.Contains(VehiclePermissions.Maintenance.Delete);
@@ -91,7 +98,6 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await LoadVehicles();
         await Load();
     }
 
@@ -99,42 +105,31 @@
 
     public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
 
-    private async Task LoadVehicles()
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
     {
         try
         {
             var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
             {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
                 PageNumber = 1,
-                PageSize = 1000
-            });
+                PageSize = 20
+            }, ct);
 
-            _vehicles.Clear();
-            _vehicles.AddRange(result.Items ?? []);
+            return result.Items ?? [];
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+            return [];
         }
-    }
-
-    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return _vehicles;
-
-        var searchValue = value.ToLowerInvariant();
-        return _vehicles.Where(v =>
-            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Year.ToString().Contains(searchValue)).ToList();
     }
 
     private async Task Load()
     {
         try
         {
+            _loading = true;
+
             var items = await VehicleClient.SearchMaintenanceLogsAsync(new MaintenanceLogSearchRequest(
                 _query.MaintenanceType,
                 _query.SelectedVehicle?.Id,
@@ -148,6 +143,10 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load maintenance logs: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
         }
     }
 

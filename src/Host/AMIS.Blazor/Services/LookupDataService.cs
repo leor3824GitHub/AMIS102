@@ -9,7 +9,8 @@ internal enum LookupSet
     Offices,
     Positions,
     UnitOfMeasures,
-    Categories
+    Categories,
+    Suppliers
 }
 
 /// <summary>
@@ -26,6 +27,13 @@ internal interface ILookupDataService
     Task<IReadOnlyList<PositionReferenceDto>> GetPositionsAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UnitOfMeasureReferenceDto>> GetUnitOfMeasuresAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SupplierDto>> GetSuppliersAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Resolves many employee references in one call — replaces per-row employee fetch loops.</summary>
+    Task<IReadOnlyDictionary<Guid, EmployeeReferenceDto>> GetEmployeesByIdsAsync(
+        IReadOnlyCollection<Guid> employeeIds,
+        CancellationToken cancellationToken = default);
+
     void Invalidate(LookupSet lookupSet);
 }
 
@@ -50,6 +58,36 @@ internal sealed class LookupDataService(HttpClient httpClient) : ILookupDataServ
 
     public Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync(CancellationToken cancellationToken = default)
         => GetOrLoadAsync<CategoryDto>(LookupSet.Categories, "categories", cancellationToken);
+
+    public Task<IReadOnlyList<SupplierDto>> GetSuppliersAsync(CancellationToken cancellationToken = default)
+        => GetOrLoadAsync<SupplierDto>(LookupSet.Suppliers, "suppliers", cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, EmployeeReferenceDto>> GetEmployeesByIdsAsync(
+        IReadOnlyCollection<Guid> employeeIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (employeeIds.Count == 0)
+            return new Dictionary<Guid, EmployeeReferenceDto>();
+
+        try
+        {
+            var response = await httpClient
+                .PostAsJsonAsync("api/v1/master-data/lookup/employees/by-ids", employeeIds, cancellationToken)
+                .ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<Dictionary<Guid, EmployeeReferenceDto>>(cancellationToken)
+                .ConfigureAwait(false);
+
+            return result ?? new Dictionary<Guid, EmployeeReferenceDto>();
+        }
+        catch
+        {
+            return new Dictionary<Guid, EmployeeReferenceDto>();
+        }
+    }
 
     public void Invalidate(LookupSet lookupSet)
     {

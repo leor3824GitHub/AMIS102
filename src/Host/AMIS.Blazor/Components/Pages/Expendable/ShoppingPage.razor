@@ -13,6 +13,7 @@
 @inject IEmployeesClient _employeesClient
 @inject ICartClient _cartClient
 @inject IInventoryClient _inventoryClient
+@inject IInventoryDataService _inventoryData
 @inject IProductRatingsClient _productRatingsClient
 @inject AuthenticationStateProvider _authenticationStateProvider
 @inject NavigationManager _navigationManager
@@ -194,9 +195,8 @@
         await LoadCategories(); // MUST call this to see chips!
         await ResolveCurrentEmployeeContext();
         await GetOrCreateCart();
-        await LoadProductBalancesAsync();
         await LoadProductRatingsAsync();
-        await LoadProducts();
+        await LoadProducts();   // loads balances for the products it fetched
         _isLoading = false;
     }
 
@@ -242,6 +242,9 @@
         var result = await _productsClient.SearchAsync(query);
         var allItems = result.Items?.ToList() ?? new List<ProductDto>();
 
+        // Balances must be in hand before the stock filter below reads them.
+        await LoadProductBalancesAsync(allItems.Select(p => p.Id).Distinct().ToList());
+
         // 2. Apply the Category Filter locally
         // We compare the ProductDto.CategoryId (string) to our _selectedCategory (string)
         if (_selectedCategory != "All")
@@ -281,41 +284,37 @@
         await LoadProducts();
     }
 
-    private async Task LoadProductBalancesAsync()
+    // Balances for the products on the current catalog page only. Fetching every inventory row instead
+    // let the 100-row page-size clamp silently zero out balances for anything past the first page.
+    private async Task LoadProductBalancesAsync(IReadOnlyCollection<Guid> productIds)
     {
+        _productBalances.Clear();
+        _productAveragePrices.Clear();
+
+        if (productIds.Count == 0)
+            return;
+
         try
         {
             // Aggregate available stock across ALL warehouses so the catalog shows total balance
-            var inventoryList = await _inventoryClient.SearchAsync(new SearchProductInventoryQuery
-            {
-                PageNumber = 1,
-                PageSize = 1000
-            });
+            var inventories = await _inventoryData.GetInventoriesByProductsAsync(productIds);
 
-            if (inventoryList?.Items != null)
-            {
-                _productBalances = inventoryList.Items
-                    .GroupBy(i => i.ProductId)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Sum(i => i.QuantityAvailable));
+            _productBalances = inventories
+                .GroupBy(i => i.ProductId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(i => i.QuantityAvailable));
 
-                _productAveragePrices = inventoryList.Items
-                    .GroupBy(i => i.ProductId)
-                    .ToDictionary(
-                        g => g.Key,
-                        g =>
-                        {
-                            var totalQty = g.Sum(i => i.QuantityOnHand);
-                            var totalValue = g.Sum(i => (decimal)i.TotalValue);
-                            return totalQty > 0 ? Math.Round(totalValue / totalQty, 4) : 0m;
-                        });
-            }
-            else
-            {
-                _productBalances.Clear();
-                _productAveragePrices.Clear();
-            }
+            _productAveragePrices = inventories
+                .GroupBy(i => i.ProductId)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var totalQty = g.Sum(i => i.QuantityOnHand);
+                        var totalValue = g.Sum(i => (decimal)i.TotalValue);
+                        return totalQty > 0 ? Math.Round(totalValue / totalQty, 4) : 0m;
+                    });
         }
         catch (Exception ex)
         {

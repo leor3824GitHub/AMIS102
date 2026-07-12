@@ -1,5 +1,6 @@
 ﻿@page "/budget-disbursement/budget-utilization-requests"
 @implements IDisposable
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests
 @using AMIS.Modules.BudgetDisbursement.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
@@ -10,119 +11,100 @@
 @inject IJSRuntime JS
 @inject IPdfDownloadService PdfDownload
 
-<AMISPageHeader Title="Budget Utilization Request and Status" Description="Create and manage budget utilization request and status (BUR)" />
+<AMISPageHeader Title="Budget Utilization Request and Status" Description="Create and manage budget utilization request and status (BUR)">
+    <ActionContent>
+        <HelpLinkButton Href="/help/budget-disbursement/00-overview" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudCard Elevation="1">
     <MudCardContent>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-            <MudText Typo="Typo.h6" Class="flex-grow-1">Budget Utilization Request and Status</MudText>
+        <!-- Status filter chips + search + primary action -->
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2" Class="mb-3">
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="flex-grow-1">
+                @foreach (var s in _statusFilters)
+                {
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
+                             OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
+                }
+            </MudStack>
             <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
+                          Dense="true" Margin="Margin.Dense"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
                           Style="max-width:220px" DebounceInterval="400"
                           OnDebounceIntervalElapsed="@(async () => await ReloadAsync())" />
             @if (_canCreate)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="OpenCreateDialog">New BUR</MudButton>
+                <AMISButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                            StartIcon="@Icons.Material.Filled.Add"
+                            OnClick="OpenCreateDialog">New BUR</AMISButton>
             }
         </MudStack>
 
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
-                    @foreach (var s in _statusFilters)
-                    {
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@(_statusFilter == s ? Color.Primary : Color.Default)"
-                                 OnClick="@(() => SetStatusFilter(s))">@GetChipLabel(s)</MudChip>
-                    }
-                </MudStack>
-
-                @if (!_loaded)
-                {
-                    <MudProgressLinear Indeterminate="true" />
-                }
-                else if (_items.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">No budget utilization request and status records found.</MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th>BUR #</th>
-                                <th>Date</th>
-                                <th>PO #</th>
-                                <th>Allotment Class</th>
-                                <th style="text-align:right">Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in _items)
-                            {
-                                <tr>
-                                    <td><b>@item.BurNumber</b></td>
-                                    <td>@item.BurDate.ToString("MM/dd/yyyy")</td>
-                                    <td><MudText Typo="Typo.caption">@item.PurchaseOrderNumber</MudText></td>
-                                    <td><MudText Typo="Typo.caption">@item.AllotmentClass</MudText></td>
-                                    <td style="text-align:right">@Money.Symbol@item.Amount.ToString("N2")</td>
-                                    <td>@BurStatusChip(item.Status)</td>
-                                    <td>
-                                        <MudStack Row="true" Spacing="0">
-                                            @if (item.Status == BudgetUtilizationRequestStatus.Draft && _canDelete)
-                                            {
-                                                <MudTooltip Text="Delete">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await DeleteBurAsync(item))" />
-                                                </MudTooltip>
-                                            }
-                                            @if (item.Status == BudgetUtilizationRequestStatus.Draft && _canObligate)
-                                            {
-                                                <MudTooltip Text="Obligate">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
-                                                                   OnClick="@(async () => await ObligateAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            @if (item.Status == BudgetUtilizationRequestStatus.Obligated && _canCancel)
-                                            {
-                                                <MudTooltip Text="Cancel">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
-                                                                   OnClick="@(async () => await CancelBurAsync(item.Id))" />
-                                                </MudTooltip>
-                                            }
-                                            @if ((item.Status == BudgetUtilizationRequestStatus.Obligated || item.Status == BudgetUtilizationRequestStatus.Utilized) && _canViewSigned)
-                                            {
-                                                <MudTooltip Text="@(item.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
-                                                                   Color="@(item.HasSignedCopy ? Color.Success : Color.Secondary)"
-                                                                   OnClick="@(async () => await OpenSignedCopyAsync(item))" />
-                                                </MudTooltip>
-                                            }
-                                            <MudTooltip Text="View Details">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
-                                                               OnClick="@(async () => await ViewDetailsAsync(item.Id))" />
-                                            </MudTooltip>
-                                            <MudTooltip Text="@(item.HasSignedCopy ? "Signed copy uploaded — print disabled" : "Print")">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
-                                                               Disabled="@(_busy || item.HasSignedCopy)"
-                                                               OnClick="@(async () => await DownloadPdfAsync(item.Id))" />
-                                            </MudTooltip>
-                                        </MudStack>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
-
-                    @if (_totalCount > _pageSize)
-                    {
-                        <MudStack Row="true" JustifyContent="JustifyContent.Center" Class="mt-3">
-                            <MudPagination Count="@((_totalCount + _pageSize - 1) / _pageSize)"
-                                           Selected="_page" SelectedChanged="@(async p => { _page = p; await LoadAsync(); })" />
-                        </MudStack>
-                    }
-                }
+        <AMISDataTable @ref="_table" T="BudgetUtilizationRequestListItemDto" ServerData="LoadServerData"
+                       EmptyMessage="No budget utilization request and status records found."
+                       EmptyDescription="Create a BUR to get started.">
+            <HeaderContent>
+                <MudTh>BUR #</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh>PO #</MudTh>
+                <MudTh>Allotment Class</MudTh>
+                <MudTh Style="text-align:right">Amount</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="BUR #"><b>@context.BurNumber</b></MudTd>
+                <MudTd DataLabel="Date">@context.BurDate.ToString("MM/dd/yyyy")</MudTd>
+                <MudTd DataLabel="PO #"><MudText Typo="Typo.caption">@context.PurchaseOrderNumber</MudText></MudTd>
+                <MudTd DataLabel="Allotment Class"><MudText Typo="Typo.caption">@context.AllotmentClass</MudText></MudTd>
+                <MudTd DataLabel="Amount" Style="text-align:right">@Money.Symbol@context.Amount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Status">@BurStatusChip(context.Status)</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudStack Row="true" Spacing="0">
+                        @if (context.Status == BudgetUtilizationRequestStatus.Draft && _canDelete)
+                        {
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(async () => await DeleteBurAsync(context))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == BudgetUtilizationRequestStatus.Draft && _canObligate)
+                        {
+                            <MudTooltip Text="Obligate">
+                                <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Color="Color.Info"
+                                               OnClick="@(async () => await ObligateAsync(context.Id))" />
+                            </MudTooltip>
+                        }
+                        @if (context.Status == BudgetUtilizationRequestStatus.Obligated && _canCancel)
+                        {
+                            <MudTooltip Text="Cancel">
+                                <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(async () => await CancelBurAsync(context.Id))" />
+                            </MudTooltip>
+                        }
+                        @if ((context.Status == BudgetUtilizationRequestStatus.Obligated || context.Status == BudgetUtilizationRequestStatus.Utilized) && _canViewSigned)
+                        {
+                            <MudTooltip Text="@(context.HasSignedCopy ? "Signed Copy (uploaded)" : "Signed Copy")">
+                                <MudIconButton Icon="@Icons.Material.Filled.Draw" Size="Size.Small"
+                                               Color="@(context.HasSignedCopy ? Color.Success : Color.Secondary)"
+                                               OnClick="@(async () => await OpenSignedCopyAsync(context))" />
+                            </MudTooltip>
+                        }
+                        <MudTooltip Text="View Details">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Default"
+                                           OnClick="@(async () => await ViewDetailsAsync(context.Id))" />
+                        </MudTooltip>
+                        <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — print disabled" : "Print")">
+                            <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Secondary"
+                                           Disabled="@(_busy || context.HasSignedCopy)"
+                                           OnClick="@(async () => await DownloadPdfAsync(context.Id))" />
+                        </MudTooltip>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </AMISDataTable>
     </MudCardContent>
 </MudCard>
 
@@ -193,12 +175,11 @@
 }
 
 @code {
-    private List<BudgetUtilizationRequestListItemDto> _items = [];
+    private AMISDataTable<BudgetUtilizationRequestListItemDto>? _table;
     private BudgetUtilizationRequestDto? _detail;
-    private bool _busy, _loaded;
+    private bool _busy;
     private string _keyword = string.Empty;
     private string _statusFilter = "All";
-    private int _page = 1, _pageSize = 15, _totalCount;
     private Dictionary<string, int> _statusCounts = [];
 
     private static readonly string[] _statusFilters = ["All", "Draft", "Obligated", "Utilized", "Cancelled"];
@@ -212,7 +193,9 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await ReloadAsync();
+
+        // The table loads itself on first render (ServerData); only the chip counts need fetching here.
+        await LoadStatusCountsAsync();
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
@@ -230,18 +213,30 @@
         }
     }
 
-    private async Task LoadAsync()
+    private async Task<TableData<BudgetUtilizationRequestListItemDto>> LoadServerData(TableState state, CancellationToken ct)
     {
-        _loaded = false;
         try
         {
             BudgetUtilizationRequestStatus? filter = _statusFilter == "All" ? null : Enum.Parse<BudgetUtilizationRequestStatus>(_statusFilter);
-            var result = await Client.SearchAsync(_keyword, filter, null, null, _page, _pageSize);
-            _items = result.Items?.ToList() ?? [];
-            _totalCount = result.TotalCount;
+            var result = await Client.SearchAsync(_keyword, filter, null, null, state.Page + 1, state.PageSize, ct);
+
+            return new TableData<BudgetUtilizationRequestListItemDto>
+            {
+                Items = result.Items ?? [],
+                TotalItems = result.TotalCount
+            };
         }
-        catch (Exception ex) { Snackbar.Add($"Load failed: {ex.Message}", Severity.Error); }
-        finally { _loaded = true; }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Load failed: {ex.Message}", Severity.Error);
+            return new TableData<BudgetUtilizationRequestListItemDto> { Items = [], TotalItems = 0 };
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_table is not null)
+            await _table.ReloadServerData();
     }
 
     // Reloads the list AND the keyword-scoped chip counts. Called when the matched result set can
@@ -270,7 +265,7 @@
     private string GetChipLabel(string status) =>
         _statusCounts.TryGetValue(status, out var count) && count > 0 ? $"{status} ({count})" : status;
 
-    private async Task SetStatusFilter(string s) { _statusFilter = s; _page = 1; await LoadAsync(); }
+    private async Task SetStatusFilter(string s) { _statusFilter = s; await LoadAsync(); }
 
     private async Task DeleteBurAsync(BudgetUtilizationRequestListItemDto item)
     {
@@ -320,14 +315,11 @@
         var dialog = await DialogService.ShowAsync<SignedCopyDialog>("Signed Copy", parameters, options);
         var result = await dialog.Result;
 
-        // A signed copy was just uploaded — flip the row's HasSignedCopy so the icon turns green
-        // immediately, without waiting for the next server search (which computes it via EXISTS).
+        // A signed copy was just uploaded — reload so the row's HasSignedCopy (computed server-side
+        // via EXISTS) turns the icon green.
         if (result is { Canceled: false, Data: true })
         {
-            _items = _items
-                .Select(x => x.Id == item.Id ? x with { HasSignedCopy = true } : x)
-                .ToList();
-            StateHasChanged();
+            await LoadAsync();
         }
     }
 

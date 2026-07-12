@@ -10,6 +10,7 @@
 @inject IDialogService DialogService
 @inject MasterDataService MasterDataService
 @inject ILookupClient LookupClient
+@inject ILookupDataService LookupData
 @inject IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
 
@@ -189,6 +190,7 @@
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
+            LookupData.Invalidate(LookupSet.Suppliers);
             await LoadSuppliers();
         }
     }
@@ -201,6 +203,7 @@
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
         {
+            LookupData.Invalidate(LookupSet.Suppliers);
             await LoadSuppliers();
         }
     }
@@ -213,6 +216,7 @@
         try
         {
             await MasterDataService.DeleteSupplierAsync(id);
+            LookupData.Invalidate(LookupSet.Suppliers);
             await LoadSuppliers();
             Snackbar.Add("Supplier deleted", Severity.Success);
         }

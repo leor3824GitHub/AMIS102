@@ -1,13 +1,28 @@
 @inherits AMISComponentBase
 
 <MudDrawerHeader Class="px-4 py-3">
-    <MudText Typo="Typo.h6" Class="mt-1">
-        @Title
-    </MudText>
+    @if (!string.IsNullOrWhiteSpace(LogoUrl))
+    {
+        <MudImage Src="@LogoUrl"
+                  Alt="@Title"
+                  ObjectFit="ObjectFit.Contain"
+                  Style="max-height:32px;max-width:100%;" />
+    }
+    else
+    {
+        <MudText Typo="Typo.h6" Class="mt-1">
+            @Title
+        </MudText>
+    }
 </MudDrawerHeader>
 
 @code {
     [Parameter]
     public string Title { get; set; } = "AMIS";
-}
 
+    // Tenant brand logo. Falls back to the Title text when unset.
+#pragma warning disable CA1056 // URL comes from the API as a string and is bound straight to img src
+    [Parameter]
+    public string? LogoUrl { get; set; }
+#pragma warning restore CA1056
+}

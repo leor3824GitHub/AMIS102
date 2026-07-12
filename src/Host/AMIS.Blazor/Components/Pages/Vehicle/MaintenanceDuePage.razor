@@ -1,4 +1,5 @@
 @page "/vehicle/maintenance/due"
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Modules.Vehicle.Contracts.v1.Maintenance
 @using AMIS.Modules.Vehicle.Contracts.v1.Vehicles
 @inject IVehicleClient VehicleClient
@@ -41,90 +42,73 @@
                 </MudGrid>
             </MudPaper>
 
-            @if (_items.Count == 0)
-            {
-                <MudAlert Severity="Severity.Info">No due schedules found for the selected window.</MudAlert>
-            }
-            else
-            {
-                <MudTable Items="_items" Dense="true" Hover="true" Striped="true">
-                    <HeaderContent>
-                        <MudTh>Vehicle Id</MudTh>
-                        <MudTh>Type</MudTh>
-                        <MudTh>Due Date</MudTh>
-                        <MudTh>Due Mileage</MudTh>
-                        <MudTh>Status</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.VehicleId</MudTd>
-                        <MudTd>@context.MaintenanceType</MudTd>
-                        <MudTd>@(context.DueDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
-                        <MudTd>@(context.DueMileage?.ToString() ?? "-")</MudTd>
-                        <MudTd>
-                            @if (IsOverdue(context))
-                            {
-                                <MudChip T="string" Color="Color.Error" Size="Size.Small">Overdue</MudChip>
-                            }
-                            else
-                            {
-                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Upcoming</MudChip>
-                            }
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            }
+            <AMISDataTable T="MaintenanceScheduleDto" Items="_items" Loading="_loading"
+                           EmptyMessage="No due schedules found for the selected window."
+                           EmptyDescription="Widen the days-ahead window or clear the vehicle filter.">
+                <HeaderContent>
+                    <MudTh>Vehicle Id</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Due Date</MudTh>
+                    <MudTh>Due Mileage</MudTh>
+                    <MudTh>Status</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Vehicle Id">@context.VehicleId</MudTd>
+                    <MudTd DataLabel="Type">@context.MaintenanceType</MudTd>
+                    <MudTd DataLabel="Due Date">@(context.DueDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                    <MudTd DataLabel="Due Mileage">@(context.DueMileage?.ToString() ?? "-")</MudTd>
+                    <MudTd DataLabel="Status">
+                        @if (IsOverdue(context))
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small">Overdue</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">Upcoming</MudChip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </AMISDataTable>
         </MudCardContent>
     </MudCard>
 </div>
 
 @code {
     private readonly List<MaintenanceScheduleDto> _items = [];
-    private List<VehicleDto> _vehicles = [];
     private VehicleDto? _selectedVehicle;
     private int _daysAhead = 30;
+    private bool _loading;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadVehicles();
         await Load();
     }
 
-    private async Task LoadVehicles()
+    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
     {
         try
         {
             var result = await VehicleClient.SearchVehiclesAsync(new SearchVehiclesQuery
             {
+                Keyword = string.IsNullOrWhiteSpace(value) ? null : value,
                 PageNumber = 1,
-                PageSize = 1000
-            });
+                PageSize = 20
+            }, ct);
 
-            _vehicles.Clear();
-            _vehicles.AddRange(result.Items ?? []);
+            return result.Items ?? [];
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            Snackbar.Add($"Failed to load vehicles: {ex.Message}", Severity.Error);
+            return [];
         }
-    }
-
-    private async Task<IEnumerable<VehicleDto>> SearchVehicles(string value, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return _vehicles;
-
-        var searchValue = value.ToLowerInvariant();
-        return _vehicles.Where(v =>
-            v.PlateNumber.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Make.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Model.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
-            v.Year.ToString().Contains(searchValue)).ToList();
     }
 
     private async Task Load()
     {
         try
         {
+            _loading = true;
+
             var items = await VehicleClient.GetDueMaintenanceSchedulesAsync(new DueMaintenanceScheduleSearchRequest(
                 _selectedVehicle?.Id,
                 _daysAhead));
@@ -135,6 +119,10 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load due schedules: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
         }
     }
 

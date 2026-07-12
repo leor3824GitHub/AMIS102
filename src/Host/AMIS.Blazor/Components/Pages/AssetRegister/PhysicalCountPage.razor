@@ -18,7 +18,11 @@
 @inject IDialogService DialogService
 
 <AMISPageHeader Title="Physical Count Sessions (RPCSEMEX / RPCPPE)"
-               Description="Manage physical count sessions per COA 2022-004. Produces RPCSEMEX (SE) and RPCPPE (PPE) reports." />
+               Description="Manage physical count sessions per COA 2022-004. Produces RPCSEMEX (SE) and RPCPPE (PPE) reports.">
+    <ActionContent>
+        <HelpLinkButton Href="/help/asset-register/05-physical-count" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <!-- Filters -->

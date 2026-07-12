@@ -32,6 +32,15 @@
 @inject IJSRuntime JS
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+
+@* Applies the tenant's Default Elevation to content surfaces. MudBlazor has no global
+   elevation setting, so remap the default (elevation-1) shadow that page cards use. *@
+<style>
+    .page-shell .mud-paper.mud-elevation-1 {
+        box-shadow: var(--mud-elevation-@_defaultElevation);
+    }
+</style>
+
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -69,7 +78,7 @@ else
         </MudAppBar>
         <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" Elevation="0">
             <MudDrawerHeader>
-                <AMISDrawerHeader Title="AMIS" />
+                <AMISDrawerHeader Title="AMIS" LogoUrl="@_logoUrl" />
             </MudDrawerHeader>
             <NavMenu />
         </MudDrawer>
@@ -102,6 +111,7 @@ else
     private string? _userRole;
     private string? _avatarUrl;
     private string? _logoUrl;
+    private int _defaultElevation = 1;
     private bool _orgProfileChecked;
 
     protected override async Task OnInitializedAsync()
@@ -129,6 +139,7 @@ else
                 _theme = themeSettings.ToMudTheme();
                 TenantThemeState.UpdateSettings(themeSettings);
                 _logoUrl = themeSettings.BrandAssets.LogoUrl; // light mode initially
+                _defaultElevation = themeSettings.Layout.DefaultElevation;
                 // Dark mode preference is user-specific, default to false for SSR
                 _isDarkMode = false;
             }
@@ -165,8 +176,19 @@ else
     {
         _theme = TenantThemeState.Theme;
         _isDarkMode = TenantThemeState.IsDarkMode;
-        _logoUrl = _isDarkMode ? TenantThemeState.Current.BrandAssets.LogoDarkUrl : TenantThemeState.Current.BrandAssets.LogoUrl;
+        _logoUrl = ResolveLogoUrl();
+        _defaultElevation = TenantThemeState.Current.Layout.DefaultElevation;
         InvokeAsync(StateHasChanged);
+    }
+
+    // Dark-mode logo when set; otherwise fall back to the light logo so dark mode
+    // never loses the brand mark just because no dark variant was uploaded.
+    private string? ResolveLogoUrl()
+    {
+        var assets = TenantThemeState.Current.BrandAssets;
+        return _isDarkMode
+            ? assets.LogoDarkUrl ?? assets.LogoUrl
+            : assets.LogoUrl;
     }
 
     private void HandleProfileChanged()
@@ -195,7 +217,8 @@ else
             await TenantThemeState.LoadThemeAsync();
             _theme = TenantThemeState.Theme;
             _isDarkMode = TenantThemeState.IsDarkMode;
-            _logoUrl = _isDarkMode ? TenantThemeState.Current.BrandAssets.LogoDarkUrl : TenantThemeState.Current.BrandAssets.LogoUrl;
+            _logoUrl = ResolveLogoUrl();
+            _defaultElevation = TenantThemeState.Current.Layout.DefaultElevation;
 
             await InvokeAsync(StateHasChanged);
         }
@@ -208,6 +231,7 @@ else
                 _theme = TenantThemeState.Theme;
                 _isDarkMode = false;
                 _logoUrl = null;
+                _defaultElevation = TenantThemeState.Current.Layout.DefaultElevation;
                 await ApplyFaviconAsync(); // reset to default
             }
             catch (Exception)

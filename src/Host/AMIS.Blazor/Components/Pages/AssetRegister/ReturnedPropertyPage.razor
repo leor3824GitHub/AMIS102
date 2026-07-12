@@ -14,15 +14,28 @@
 @inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Returned Property Receipts (RRSP / RRP)"
-               Description="End-users request the return of property assigned to them; an inspector records each item's condition, then the property custodian receives and accepts it. Accepting marks each asset back to Available at its inspected condition." />
+               Description="End-users request the return of property assigned to them; an inspector records each item's condition, then the property custodian receives and accepts it. Accepting marks each asset back to Available at its inspected condition.">
+    <ActionContent>
+        <HelpLinkButton Href="/help/asset-register/04-returns-repairs-incidents" />
+    </ActionContent>
+</AMISPageHeader>
 
 <MudGrid Spacing="3">
     <!-- List Panel -->
     <MudItem xs="12">
         <MudCard Elevation="1">
             <MudCardContent>
-                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3" Spacing="2">
-                    <MudText Typo="Typo.h6" Class="flex-grow-1">Return Receipts</MudText>
+                <!-- Status filter chips + search + primary action -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3" Spacing="2">
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="flex-grow-1">
+                        @foreach (var (index, label) in _statusTabs)
+                        {
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(_activeTabIndex == index ? Color.Primary : Color.Default)"
+                                     Variant="@(_activeTabIndex == index ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
+                        }
+                    </MudStack>
                     <MudTextField @bind-Value="_keyword" Label="Search" Variant="Variant.Outlined" Size="Size.Small"
                                   Dense="true" Margin="Margin.Dense"
                                   Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
@@ -33,17 +46,6 @@
                                     StartIcon="@Icons.Material.Filled.Add" OnClick="OpenRequestDialog">
                             Request a Return
                         </AMISButton>
-                    }
-                </MudStack>
-
-                <!-- Status filter chips -->
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" Class="mb-3">
-                    @foreach (var (index, label) in _statusTabs)
-                    {
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@(_activeTabIndex == index ? Color.Primary : Color.Default)"
-                                 Variant="@(_activeTabIndex == index ? Variant.Filled : Variant.Outlined)"
-                                 OnClick="@(() => OnTabChanged(index))">@GetTabLabel(index, label)</MudChip>
                     }
                 </MudStack>
 
