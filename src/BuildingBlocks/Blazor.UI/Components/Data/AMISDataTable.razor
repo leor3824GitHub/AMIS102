@@ -16,6 +16,9 @@
           RowsPerPage="@RowsPerPage"
           Breakpoint="Breakpoint.Sm"
           Class="@Class"
+          MultiSelection="@MultiSelection"
+          SelectedItems="@SelectedItems"
+          SelectedItemsChanged="@SelectedItemsChanged"
           ToolBarContent="@ToolBarContent"
           ChildRowContent="@ChildRowContent"
           OnRowClick="@OnRowClick"
@@ -79,6 +82,15 @@
 
     /// <summary>Optional per-row CSS class (row item + index), e.g. to highlight overdue rows.</summary>
     [Parameter] public Func<T, int, string>? RowClassFunc { get; set; }
+
+    /// <summary>Enable row checkboxes for multi-select (e.g. bulk actions). Off by default.</summary>
+    [Parameter] public bool MultiSelection { get; set; }
+
+    /// <summary>Selected rows when <see cref="MultiSelection"/> is on. Two-way bindable.</summary>
+    [Parameter] public HashSet<T> SelectedItems { get; set; } = [];
+
+    /// <summary>Raised when the multi-select set changes.</summary>
+    [Parameter] public EventCallback<HashSet<T>> SelectedItemsChanged { get; set; }
 
     [Parameter] public bool Loading { get; set; }
     [Parameter] public int RowsPerPage { get; set; } = 15;

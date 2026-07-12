@@ -19,6 +19,11 @@ public interface IUserProfileService
     Task<List<UserDto>> GetListAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// Gets the users for a set of ids in one query. Unknown ids are skipped (never throws for a missing id).
+    /// </summary>
+    Task<List<UserDto>> GetByIdsAsync(IReadOnlyCollection<string> userIds, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets the total user count.
     /// </summary>
     Task<int> GetCountAsync(CancellationToken cancellationToken);

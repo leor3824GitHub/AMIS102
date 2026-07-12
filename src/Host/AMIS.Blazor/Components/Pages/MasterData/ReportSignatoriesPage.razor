@@ -3,6 +3,7 @@
 @using AMIS.Modules.MasterData.Contracts.v1.ReportSignatories
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using MudBlazor
 @inject IReportSignatoryClient SignatoryClient
 @inject ISnackbar Snackbar
@@ -39,64 +40,51 @@
                 </MudSelect>
             </MudStack>
 
-            @if (_loading)
-            {
-                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-            }
-            else
-            {
-                <MudSimpleTable Dense="true" Striped="true" Bordered="true">
-                    <thead>
-                        <tr>
-                            <th>Report</th>
-                            <th style="width:50px">Order</th>
-                            <th>Label</th>
-                            <th>Name</th>
-                            <th>Title</th>
-                            <th style="width:60px">Active</th>
-                            <th style="width:90px"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var s in FilteredSignatories)
-                        {
-                            <tr>
-                                <td><MudChip T="string" Size="Size.Small" Color="@ReportColor(s.ReportType)">@ReportLabel(s.ReportType)</MudChip></td>
-                                <td style="text-align:center">@s.SortOrder</td>
-                                <td><small>@s.Label</small></td>
-                                <td><strong>@s.Name</strong></td>
-                                <td><small>@s.Title</small></td>
-                                <td style="text-align:center">
-                                    @if (s.IsActive) { <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /> }
-                                    else { <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" /> }
-                                </td>
-                                <td>
-                                    <MudStack Row="true" Spacing="0">
-                                        @if (_canUpdate)
-                                        {
-                                            <MudTooltip Text="Edit signatory">
-                                                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                               OnClick="() => OpenEditDialog(s)" Disabled="_busy" />
-                                            </MudTooltip>
-                                        }
-                                        @if (_canDelete)
-                                        {
-                                            <MudTooltip Text="Delete signatory">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error" OnClick="() => ConfirmDeleteAsync(s)" Disabled="_busy" />
-                                            </MudTooltip>
-                                        }
-                                    </MudStack>
-                                </td>
-                            </tr>
-                        }
-                        @if (!FilteredSignatories.Any())
-                        {
-                            <tr><td colspan="7" style="text-align:center;color:#999">No signatories found.</td></tr>
-                        }
-                    </tbody>
-                </MudSimpleTable>
-            }
+            <AMISDataTable T="ReportSignatoryDto"
+                           Items="@FilteredSignatories"
+                           Loading="_loading"
+                           RowsPerPage="15"
+                           EmptyMessage="No signatories found"
+                           EmptyDescription="@(_canCreate ? "Add one to get started." : null)">
+                <HeaderContent>
+                    <MudTh>Report</MudTh>
+                    <MudTh Style="width:50px">Order</MudTh>
+                    <MudTh>Label</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Title</MudTh>
+                    <MudTh Style="width:60px">Active</MudTh>
+                    <MudTh Style="width:90px"></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Report"><MudChip T="string" Size="Size.Small" Color="@ReportColor(context.ReportType)">@ReportLabel(context.ReportType)</MudChip></MudTd>
+                    <MudTd DataLabel="Order" Style="text-align:center">@context.SortOrder</MudTd>
+                    <MudTd DataLabel="Label"><small>@context.Label</small></MudTd>
+                    <MudTd DataLabel="Name"><strong>@context.Name</strong></MudTd>
+                    <MudTd DataLabel="Title"><small>@context.Title</small></MudTd>
+                    <MudTd DataLabel="Active" Style="text-align:center">
+                        @if (context.IsActive) { <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" /> }
+                        else { <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Default" Size="Size.Small" /> }
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudStack Row="true" Spacing="0">
+                            @if (_canUpdate)
+                            {
+                                <MudTooltip Text="Edit signatory">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                   OnClick="() => OpenEditDialog(context)" Disabled="_busy" />
+                                </MudTooltip>
+                            }
+                            @if (_canDelete)
+                            {
+                                <MudTooltip Text="Delete signatory">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error" OnClick="() => ConfirmDeleteAsync(context)" Disabled="_busy" />
+                                </MudTooltip>
+                            }
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </AMISDataTable>
         </MudPaper>
     </MudItem>
 </MudGrid>

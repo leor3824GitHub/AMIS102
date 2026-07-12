@@ -3,6 +3,7 @@
 @using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using MudBlazor
 @inject ICapitalizationThresholdClient Client
 @inject ICapitalizationThresholdState ThresholdState
@@ -83,78 +84,65 @@ else if (_loaded)
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">Circular History</MudText>
 
-                @if (!_loaded)
-                {
-                    <MudProgressLinear Indeterminate="true" />
-                }
-                else if (_thresholds.Count == 0)
-                {
-                    <MudAlert Severity="Severity.Info">No threshold records yet. Add the first one.</MudAlert>
-                }
-                else
-                {
-                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                        <thead>
-                            <tr>
-                                <th>Circular</th>
-                                <th style="text-align:right">PPE Threshold</th>
-                                <th style="text-align:right">Low-Value Limit</th>
-                                <th>Effectivity</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var t in _thresholds)
+                <AMISDataTable T="CapitalizationThresholdDto"
+                               Items="@_thresholds"
+                               Loading="@(!_loaded)"
+                               RowsPerPage="15"
+                               EmptyMessage="No threshold records yet"
+                               EmptyDescription="Add the first one.">
+                    <HeaderContent>
+                        <MudTh>Circular</MudTh>
+                        <MudTh Style="text-align:right">PPE Threshold</MudTh>
+                        <MudTh Style="text-align:right">Low-Value Limit</MudTh>
+                        <MudTh>Effectivity</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Circular">
+                            <MudText Typo="Typo.body2"><b>@context.CircularName</b></MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="max-width:260px;white-space:normal">
+                                @(context.Description.Length > 80 ? context.Description[..80] + "…" : context.Description)
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="PPE Threshold" Style="text-align:right">@Money.Symbol@context.CapitalizationAmount.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Low-Value Limit" Style="text-align:right">@Money.Symbol@context.SemiExpendableLowValueThreshold.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Effectivity">@context.EffectivityDate.ToString("MMM dd, yyyy")</MudTd>
+                        <MudTd DataLabel="Status">
+                            @if (context.IsActive)
                             {
-                                <tr>
-                                    <td>
-                                        <MudText Typo="Typo.body2"><b>@t.CircularName</b></MudText>
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="max-width:260px;white-space:normal">
-                                            @(t.Description.Length > 80 ? t.Description[..80] + "…" : t.Description)
-                                        </MudText>
-                                    </td>
-                                    <td style="text-align:right">@Money.Symbol@t.CapitalizationAmount.ToString("N2")</td>
-                                    <td style="text-align:right">@Money.Symbol@t.SemiExpendableLowValueThreshold.ToString("N2")</td>
-                                    <td>@t.EffectivityDate.ToString("MMM dd, yyyy")</td>
-                                    <td>
-                                        @if (t.IsActive)
-                                        {
-                                            <MudChip T="string" Color="Color.Success" Size="Size.Small"
-                                                     Icon="@Icons.Material.Filled.CheckCircle">Active</MudChip>
-                                        }
-                                        else
-                                        {
-                                            <MudChip T="string" Color="Color.Default" Size="Size.Small">Inactive</MudChip>
-                                        }
-                                    </td>
-                                    <td>
-                                        <MudStack Row="true" Spacing="0">
-                                            @if (_canManage)
-                                            {
-                                                <MudTooltip Text="Edit">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                                   Size="Size.Small"
-                                                                   Color="Color.Primary"
-                                                                   OnClick="@(() => OpenEditDialog(t))" />
-                                                </MudTooltip>
-                                            }
-                                            @if (!t.IsActive && _canManage)
-                                            {
-                                                <MudTooltip Text="Set as Active">
-                                                    <MudIconButton Icon="@Icons.Material.Filled.TaskAlt"
-                                                                   Size="Size.Small"
-                                                                   Color="Color.Success"
-                                                                   OnClick="@(() => ConfirmSetActiveAsync(t))" />
-                                                </MudTooltip>
-                                            }
-                                        </MudStack>
-                                    </td>
-                                </tr>
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small"
+                                         Icon="@Icons.Material.Filled.CheckCircle">Active</MudChip>
                             }
-                        </tbody>
-                    </MudSimpleTable>
-                }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Default" Size="Size.Small">Inactive</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudStack Row="true" Spacing="0">
+                                @if (_canManage)
+                                {
+                                    <MudTooltip Text="Edit">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       OnClick="@(() => OpenEditDialog(context))" />
+                                    </MudTooltip>
+                                }
+                                @if (!context.IsActive && _canManage)
+                                {
+                                    <MudTooltip Text="Set as Active">
+                                        <MudIconButton Icon="@Icons.Material.Filled.TaskAlt"
+                                                       Size="Size.Small"
+                                                       Color="Color.Success"
+                                                       OnClick="@(() => ConfirmSetActiveAsync(context))" />
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -163,7 +151,6 @@ else if (_loaded)
 @code {
     private List<CapitalizationThresholdDto> _thresholds = [];
     private CapitalizationThresholdDto? _active;
-    private bool _busy;
     private bool _loaded;
 
     private bool _canManage => UserProfileState.Permissions.Contains(MasterDataPermissions.CapitalizationThresholds.Manage);
@@ -234,7 +221,6 @@ else if (_loaded)
 
         if (result is not true) return;
 
-        _busy = true;
         try
         {
             await Client.SetActiveAsync(threshold.Id);
@@ -244,10 +230,6 @@ else if (_loaded)
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to activate: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _busy = false;
         }
     }
 

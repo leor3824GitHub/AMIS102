@@ -313,6 +313,8 @@ internal interface IArCatalogClient
 {
     Task<ArPagedResponse<ArCatalogItemDto>> SearchAsync(string? keyword = null, bool? isActive = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArCatalogItemDto?> GetAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Resolves many catalog entries in one round-trip — replaces per-line <see cref="GetAsync"/> loops.</summary>
+    Task<IReadOnlyList<ArCatalogItemDto>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
     Task<ArCatalogItemDto> CreateAsync(CreateArCatalogItemRequest request, CancellationToken ct = default);
     Task<ArCatalogItemDto> UpdateAsync(Guid id, UpdateArCatalogItemRequest request, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
@@ -338,6 +340,16 @@ internal sealed class ArCatalogClient(HttpClient http) : IArCatalogClient
 
     public Task<ArCatalogItemDto?> GetAsync(Guid id, CancellationToken ct = default) =>
         http.GetFromJsonAsync<ArCatalogItemDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
+
+    public async Task<IReadOnlyList<ArCatalogItemDto>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default)
+    {
+        if (ids.Count == 0)
+            return [];
+
+        var resp = await http.PostAsJsonAsync($"{Base}/by-ids", ids, ArJsonOptions.Default, ct);
+        resp.EnsureSuccessStatusCode();
+        return (await resp.Content.ReadFromJsonAsync<List<ArCatalogItemDto>>(ArJsonOptions.Default, ct)) ?? [];
+    }
 
     public async Task<ArCatalogItemDto> CreateAsync(CreateArCatalogItemRequest request, CancellationToken ct = default)
     {

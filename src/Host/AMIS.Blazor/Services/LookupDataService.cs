@@ -34,6 +34,14 @@ internal interface ILookupDataService
         IReadOnlyCollection<Guid> employeeIds,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Resolves many Identity users by id in one call — replaces fetching the whole user list just to
+    /// show a few linked accounts (e.g. EmployeesPage). Keyed by user id (case-insensitive).
+    /// </summary>
+    Task<IReadOnlyDictionary<string, UserDto>> GetUsersByIdsAsync(
+        IReadOnlyCollection<string> userIds,
+        CancellationToken cancellationToken = default);
+
     void Invalidate(LookupSet lookupSet);
 }
 
@@ -86,6 +94,41 @@ internal sealed class LookupDataService(HttpClient httpClient) : ILookupDataServ
         catch
         {
             return new Dictionary<Guid, EmployeeReferenceDto>();
+        }
+    }
+
+    public async Task<IReadOnlyDictionary<string, UserDto>> GetUsersByIdsAsync(
+        IReadOnlyCollection<string> userIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = userIds
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (ids.Length == 0)
+            return new Dictionary<string, UserDto>();
+
+        try
+        {
+            var response = await httpClient
+                .PostAsJsonAsync("api/v1/identity/users/by-ids", ids, cancellationToken)
+                .ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var users = await response.Content
+                .ReadFromJsonAsync<List<UserDto>>(cancellationToken)
+                .ConfigureAwait(false);
+
+            return (users ?? [])
+                .Where(u => !string.IsNullOrWhiteSpace(u.Id))
+                .GroupBy(u => u.Id!, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return new Dictionary<string, UserDto>();
         }
     }
 

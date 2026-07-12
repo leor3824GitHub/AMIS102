@@ -3,6 +3,7 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @using System.Security.Claims
@@ -65,123 +66,103 @@
 
 @* Sessions List *@
 <MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
-    @if (_loading)
-    {
-        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
-    }
-
-    <MudDataGrid T="UserSessionDto"
-                 Items="_sessions"
-                 Loading="_loading"
-                 Hover="true"
-                 Dense="true"
-                 Striped="true"
-                 SortMode="SortMode.Single"
-                 Filterable="false"
-                 RowsPerPage="@_pageSize"
-                 Class="sessions-datagrid">
-        <Columns>
-            <TemplateColumn Title="Device" Sortable="true" SortBy="@(x => x.DeviceType)">
-                <CellTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudAvatar Size="Size.Small" Class="device-avatar" Color="@GetDeviceColor(context.Item.DeviceType)">
-                            <MudIcon Icon="@GetDeviceIcon(context.Item.DeviceType)" Size="Size.Small" />
-                        </MudAvatar>
-                        <MudStack Spacing="0">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body2" Class="fw-600">
-                                    @(context.Item.Browser ?? "Unknown Browser")
-                                    @if (!string.IsNullOrEmpty(context.Item.BrowserVersion))
-                                    {
-                                        <span class="text-muted"> @context.Item.BrowserVersion</span>
-                                    }
-                                </MudText>
-                                @if (context.Item.IsCurrentSession)
+    <AMISDataTable T="UserSessionDto"
+                   Items="_sessions"
+                   Loading="_loading"
+                   RowsPerPage="@_pageSize"
+                   PageSizeOptions="@_pageSizeOptions"
+                   Class="sessions-datagrid"
+                   EmptyIcon="@Icons.Material.Filled.DevicesOther"
+                   EmptyMessage="No active sessions"
+                   EmptyDescription="You don't have any active sessions at the moment.">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel T="UserSessionDto" SortBy="@(x => x.DeviceType ?? string.Empty)">Device</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="UserSessionDto" SortBy="@(x => x.IpAddress ?? string.Empty)">IP Address</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="UserSessionDto" SortBy="@(x => x.LastActivityAt)">Last Activity</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="UserSessionDto" SortBy="@(x => x.CreatedAt)">Created</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="UserSessionDto" SortBy="@(x => x.IsActive)">Status</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Device">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudAvatar Size="Size.Small" Class="device-avatar" Color="@GetDeviceColor(context.DeviceType)">
+                        <MudIcon Icon="@GetDeviceIcon(context.DeviceType)" Size="Size.Small" />
+                    </MudAvatar>
+                    <MudStack Spacing="0">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body2" Class="fw-600">
+                                @(context.Browser ?? "Unknown Browser")
+                                @if (!string.IsNullOrEmpty(context.BrowserVersion))
                                 {
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
-                                        Current
-                                    </MudChip>
-                                }
-                            </MudStack>
-                            <MudText Typo="Typo.caption" Class="text-muted">
-                                @(context.Item.OperatingSystem ?? "Unknown OS")
-                                @if (!string.IsNullOrEmpty(context.Item.OsVersion))
-                                {
-                                    <span> @context.Item.OsVersion</span>
+                                    <span class="text-muted"> @context.BrowserVersion</span>
                                 }
                             </MudText>
+                            @if (context.IsCurrentSession)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                                    Current
+                                </MudChip>
+                            }
                         </MudStack>
+                        <MudText Typo="Typo.caption" Class="text-muted">
+                            @(context.OperatingSystem ?? "Unknown OS")
+                            @if (!string.IsNullOrEmpty(context.OsVersion))
+                            {
+                                <span> @context.OsVersion</span>
+                            }
+                        </MudText>
                     </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <PropertyColumn Property="x => x.IpAddress" Title="IP Address" Sortable="true">
-                <CellTemplate>
-                    <MudText Typo="Typo.body2" Style="font-family: monospace;">@context.Item.IpAddress</MudText>
-                </CellTemplate>
-            </PropertyColumn>
-            <TemplateColumn Title="Last Activity" Sortable="true" SortBy="@(x => x.LastActivityAt)">
-                <CellTemplate>
-                    <MudStack Spacing="0">
-                        <MudText Typo="Typo.body2">@FormatRelativeTime(context.Item.LastActivityAt)</MudText>
-                        <MudText Typo="Typo.caption" Class="text-muted">@context.Item.LastActivityAt.ToString("MMM dd, yyyy HH:mm")</MudText>
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Created" Sortable="true" SortBy="@(x => x.CreatedAt)">
-                <CellTemplate>
-                    <MudStack Spacing="0">
-                        <MudText Typo="Typo.body2">@FormatRelativeTime(context.Item.CreatedAt)</MudText>
-                        <MudText Typo="Typo.caption" Class="text-muted">@context.Item.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudText>
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.IsActive)">
-                <CellTemplate>
-                    @if (context.Item.IsActive)
-                    {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Expired</MudChip>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
-                <CellTemplate>
-                    @if (!context.Item.IsCurrentSession && _canRevoke)
-                    {
-                        <MudTooltip Text="Revoke this session">
-                            <MudIconButton Icon="@Icons.Material.Filled.Logout"
-                                           Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => RevokeSession(context.Item))"
-                                           Disabled="_busySessionId == context.Item.Id" />
-                        </MudTooltip>
-                    }
-                    else
-                    {
-                        <MudTooltip Text="This is your current session">
-                            <MudIconButton Icon="@Icons.Material.Filled.Lock"
-                                           Size="Size.Small"
-                                           Color="Color.Default"
-                                           Disabled="true" />
-                        </MudTooltip>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="UserSessionDto" PageSizeOptions="@_pageSizeOptions" />
-        </PagerContent>
-        <NoRecordsContent>
-            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
-                <MudIcon Icon="@Icons.Material.Filled.DevicesOther" Size="Size.Large" Color="Color.Default" />
-                <MudText Typo="Typo.h6">No active sessions</MudText>
-                <MudText Typo="Typo.body2" Class="text-muted">You don't have any active sessions at the moment.</MudText>
-            </MudStack>
-        </NoRecordsContent>
-    </MudDataGrid>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="IP Address">
+                <MudText Typo="Typo.body2" Style="font-family: monospace;">@context.IpAddress</MudText>
+            </MudTd>
+            <MudTd DataLabel="Last Activity">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.body2">@FormatRelativeTime(context.LastActivityAt)</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@context.LastActivityAt.ToString("MMM dd, yyyy HH:mm")</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Created">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.body2">@FormatRelativeTime(context.CreatedAt)</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@context.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                @if (context.IsActive)
+                {
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Expired</MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align:right">
+                @if (!context.IsCurrentSession && _canRevoke)
+                {
+                    <MudTooltip Text="Revoke this session">
+                        <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       OnClick="@(() => RevokeSession(context))"
+                                       Disabled="_busySessionId == context.Id" />
+                    </MudTooltip>
+                }
+                else
+                {
+                    <MudTooltip Text="This is your current session">
+                        <MudIconButton Icon="@Icons.Material.Filled.Lock"
+                                       Size="Size.Small"
+                                       Color="Color.Default"
+                                       Disabled="true" />
+                    </MudTooltip>
+                }
+            </MudTd>
+        </RowTemplate>
+    </AMISDataTable>
 </MudPaper>
 
 <style>

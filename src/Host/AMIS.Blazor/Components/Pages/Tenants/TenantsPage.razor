@@ -2,6 +2,7 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
 @using Microsoft.AspNetCore.Components.Authorization
@@ -110,124 +111,110 @@ else
 
     @* Data Grid *@
     <MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
-        <MudDataGrid T="TenantDto"
-                     @ref="_dataGrid"
-                     Items="_filtered"
-                     Loading="_loading"
-                     Hover="true"
-                     Dense="true"
-                     Striped="true"
-                     SortMode="SortMode.Single"
-                     Filterable="false"
-                     RowsPerPage="@_pageSize"
-                     Class="tenants-datagrid">
-            <Columns>
-                <TemplateColumn Title="Tenant" Sortable="true" SortBy="@(x => x.Name)">
-                    <CellTemplate>
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudAvatar Size="Size.Small" Class="tenant-avatar">
-                                @GetInitials(context.Item)
-                            </MudAvatar>
-                            <MudStack Spacing="0">
-                                <MudLink Typo="Typo.body2" Class="fw-600" OnClick="@(() => GoToDetail(context.Item.Id))">
-                                    @context.Item.Name
-                                </MudLink>
-                                <MudText Typo="Typo.caption" Class="text-muted">@context.Item.Id</MudText>
-                            </MudStack>
-                        </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
-                <PropertyColumn Property="x => x.AdminEmail" Title="Admin Email" Sortable="true" />
-                <TemplateColumn Title="Subscription" Sortable="true" SortBy="@(x => x.ValidUpto)">
-                    <CellTemplate>
+        <AMISDataTable T="TenantDto"
+                       Items="_filtered"
+                       Loading="_loading"
+                       RowsPerPage="@_pageSize"
+                       PageSizeOptions="@_pageSizeOptions"
+                       Class="tenants-datagrid"
+                       EmptyIcon="@Icons.Material.Filled.Business"
+                       EmptyMessage="No tenants found"
+                       EmptyDescription="Try adjusting your filters or create a new tenant.">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.Name ?? string.Empty)">Tenant</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.AdminEmail ?? string.Empty)">Admin Email</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.ValidUpto)">Subscription</MudTableSortLabel></MudTh>
+                <MudTh>Database</MudTh>
+                <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.IsActive)">Status</MudTableSortLabel></MudTh>
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Tenant">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudAvatar Size="Size.Small" Class="tenant-avatar">
+                            @GetInitials(context)
+                        </MudAvatar>
                         <MudStack Spacing="0">
-                            <MudText Typo="Typo.body2">@context.Item.ValidUpto.ToString("MMM dd, yyyy")</MudText>
-                            @if (IsExpiringSoon(context.Item.ValidUpto))
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Warning">
-                                    @GetExpiryText(context.Item.ValidUpto)
-                                </MudText>
-                            }
-                            else if (IsExpired(context.Item.ValidUpto))
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Error">Expired</MudText>
-                            }
-                            else
-                            {
-                                <MudText Typo="Typo.caption" Class="text-muted">
-                                    @GetExpiryText(context.Item.ValidUpto)
-                                </MudText>
-                            }
+                            <MudLink Typo="Typo.body2" Class="fw-600" OnClick="@(() => GoToDetail(context.Id))">
+                                @context.Name
+                            </MudLink>
+                            <MudText Typo="Typo.caption" Class="text-muted">@context.Id</MudText>
                         </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn Title="Database" Sortable="false">
-                    <CellTemplate>
-                        @if (!string.IsNullOrWhiteSpace(context.Item.ConnectionString))
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Admin Email">@context.AdminEmail</MudTd>
+                <MudTd DataLabel="Subscription">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2">@context.ValidUpto.ToString("MMM dd, yyyy")</MudText>
+                        @if (IsExpiringSoon(context.ValidUpto))
                         {
-                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
-                                <MudIcon Icon="@Icons.Material.Filled.Storage" Size="Size.Small" Class="mr-1" />
-                                Dedicated
-                            </MudChip>
+                            <MudText Typo="Typo.caption" Color="Color.Warning">
+                                @GetExpiryText(context.ValidUpto)
+                            </MudText>
+                        }
+                        else if (IsExpired(context.ValidUpto))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Error">Expired</MudText>
                         }
                         else
                         {
-                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">
-                                <MudIcon Icon="@Icons.Material.Filled.Cloud" Size="Size.Small" Class="mr-1" />
-                                Shared
-                            </MudChip>
+                            <MudText Typo="Typo.caption" Class="text-muted">
+                                @GetExpiryText(context.ValidUpto)
+                            </MudText>
                         }
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.IsActive)">
-                    <CellTemplate>
-                        @if (context.Item.IsActive)
-                        {
-                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
-                        }
-                        else
-                        {
-                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
-                        }
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
-                    <CellTemplate>
-                        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
-                            <MudTooltip Text="View Details">
-                                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                               Size="Size.Small"
-                                               Color="Color.Primary"
-                                               OnClick="@(() => GoToDetail(context.Item.Id))" />
-                            </MudTooltip>
-                            <MudTooltip Text="Upgrade Subscription">
-                                <MudIconButton Icon="@Icons.Material.Filled.Upgrade"
-                                               Size="Size.Small"
-                                               Color="Color.Info"
-                                               OnClick="@(() => ShowUpgrade(context.Item))" />
-                            </MudTooltip>
-                            <MudTooltip Text="@GetToggleTooltip(context.Item)">
-                                <MudIconButton Icon="@(context.Item.IsActive ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
-                                               Size="Size.Small"
-                                               Color="@(context.Item.IsActive ? Color.Warning : Color.Success)"
-                                               OnClick="@(() => ToggleStatus(context.Item))"
-                                               Disabled="@IsToggleDisabled(context.Item)" />
-                            </MudTooltip>
-                        </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="TenantDto" PageSizeOptions="@_pageSizeOptions" />
-            </PagerContent>
-            <NoRecordsContent>
-                <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
-                    <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Large" Color="Color.Default" />
-                    <MudText Typo="Typo.h6">No tenants found</MudText>
-                    <MudText Typo="Typo.body2" Class="text-muted">Try adjusting your filters or create a new tenant.</MudText>
-                </MudStack>
-            </NoRecordsContent>
-        </MudDataGrid>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Database">
+                    @if (!string.IsNullOrWhiteSpace(context.ConnectionString))
+                    {
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Storage" Size="Size.Small" Class="mr-1" />
+                            Dedicated
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Cloud" Size="Size.Small" Class="mr-1" />
+                            Shared
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.IsActive)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Actions" Style="text-align:right">
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
+                        <MudTooltip Text="View Details">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => GoToDetail(context.Id))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Upgrade Subscription">
+                            <MudIconButton Icon="@Icons.Material.Filled.Upgrade"
+                                           Size="Size.Small"
+                                           Color="Color.Info"
+                                           OnClick="@(() => ShowUpgrade(context))" />
+                        </MudTooltip>
+                        <MudTooltip Text="@GetToggleTooltip(context)">
+                            <MudIconButton Icon="@(context.IsActive ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                           Size="Size.Small"
+                                           Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                           OnClick="@(() => ToggleStatus(context))"
+                                           Disabled="@IsToggleDisabled(context)" />
+                        </MudTooltip>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </AMISDataTable>
     </MudPaper>
 }
 
@@ -252,7 +239,6 @@ else
 </style>
 
 @code {
-    private MudDataGrid<TenantDto>? _dataGrid;
     private List<TenantDto> _tenants = new();
     private List<TenantDto> _filtered = new();
     private bool _loading = true;

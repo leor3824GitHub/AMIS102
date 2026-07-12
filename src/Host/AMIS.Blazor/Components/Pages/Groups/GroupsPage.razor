@@ -3,6 +3,7 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
@@ -114,140 +115,124 @@
 
 @* Groups Grid *@
 <MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
-    <MudDataGrid T="GroupDto"
-                 @ref="_dataGrid"
-                 Items="_filtered"
-                 Loading="_loading"
-                 Hover="true"
-                 Dense="true"
-                 Striped="true"
-                 MultiSelection="true"
-                 SelectedItems="_selectedGroups"
-                 SelectedItemsChanged="OnSelectionChanged"
-                 SortMode="SortMode.Single"
-                 Filterable="false"
-                 RowsPerPage="@_pageSize"
-                 Class="groups-datagrid">
-        <Columns>
-            <SelectColumn T="GroupDto" ShowInFooter="false" />
-            <TemplateColumn Title="Group" Sortable="true" SortBy="@(x => x.Name)">
-                <CellTemplate>
-                    <MudStack Spacing="0">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudLink Typo="Typo.body1" Class="fw-600" OnClick="@(() => GoToMembers(context.Item.Id))">
-                                @context.Item.Name
-                            </MudLink>
-                            @if (context.Item.IsDefault)
-                            {
-                                <MudTooltip Text="New users are automatically added to this group">
-                                    <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" Color="Color.Warning" />
-                                </MudTooltip>
-                            }
-                        </MudStack>
-                        <MudText Typo="Typo.caption" Class="text-muted">
-                            @(string.IsNullOrEmpty(context.Item.Description) ? "No description" : context.Item.Description)
-                        </MudText>
+    <AMISDataTable T="GroupDto"
+                   Items="_filtered"
+                   Loading="_loading"
+                   MultiSelection="true"
+                   SelectedItems="_selectedGroups"
+                   SelectedItemsChanged="OnSelectionChanged"
+                   RowsPerPage="@_pageSize"
+                   PageSizeOptions="@_pageSizeOptions"
+                   Class="groups-datagrid"
+                   EmptyIcon="@Icons.Material.Filled.Groups"
+                   EmptyMessage="No groups found"
+                   EmptyDescription="Try adjusting your filters or create a new group.">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel T="GroupDto" SortBy="@(x => x.Name ?? string.Empty)">Group</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="GroupDto" SortBy="@(x => x.IsSystemGroup)">Type</MudTableSortLabel></MudTh>
+            <MudTh>Roles</MudTh>
+            <MudTh><MudTableSortLabel T="GroupDto" SortBy="@(x => x.MemberCount)">Members</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Group">
+                <MudStack Spacing="0">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudLink Typo="Typo.body1" Class="fw-600" OnClick="@(() => GoToMembers(context.Id))">
+                            @context.Name
+                        </MudLink>
+                        @if (context.IsDefault)
+                        {
+                            <MudTooltip Text="New users are automatically added to this group">
+                                <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Small" Color="Color.Warning" />
+                            </MudTooltip>
+                        }
                     </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Type" Sortable="true" SortBy="@(x => x.IsSystemGroup)">
-                <CellTemplate>
-                    @if (context.Item.IsSystemGroup)
-                    {
-                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="mr-1" />
-                            System
-                        </MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mr-1" />
-                            Custom
-                        </MudChip>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Roles" Sortable="false">
-                <CellTemplate>
-                    @if (context.Item.RoleNames?.Any() == true)
-                    {
-                        <MudStack Row="true" Spacing="1">
-                            @foreach (var role in context.Item.RoleNames.Take(2))
-                            {
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetRoleColor(role)">
-                                    @role
-                                </MudChip>
-                            }
-                            @if (context.Item.RoleNames.Count > 2)
-                            {
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
-                                    +@(context.Item.RoleNames.Count - 2)
-                                </MudChip>
-                            }
-                        </MudStack>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.caption" Class="text-muted">No roles assigned</MudText>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Members" Sortable="true" SortBy="@(x => x.MemberCount)">
-                <CellTemplate>
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Primary">
-                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-1" />
-                        @context.Item.MemberCount
+                    <MudText Typo="Typo.caption" Class="text-muted">
+                        @(string.IsNullOrEmpty(context.Description) ? "No description" : context.Description)
+                    </MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Type">
+                @if (context.IsSystemGroup)
+                {
+                    <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Outlined">
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="mr-1" />
+                        System
                     </MudChip>
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
-                <CellTemplate>
-                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
-                        @if (_canManageMembers)
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mr-1" />
+                        Custom
+                    </MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Roles">
+                @if (context.RoleNames?.Any() == true)
+                {
+                    <MudStack Row="true" Spacing="1">
+                        @foreach (var role in context.RoleNames.Take(2))
                         {
-                            <MudTooltip Text="Manage Members">
-                                <MudIconButton Icon="@Icons.Material.Filled.PeopleAlt"
-                                               Size="Size.Small"
-                                               Color="Color.Primary"
-                                               OnClick="@(() => GoToMembers(context.Item.Id))" />
-                            </MudTooltip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@GetRoleColor(role)">
+                                @role
+                            </MudChip>
                         }
-                        @if (_canUpdate)
+                        @if (context.RoleNames.Count > 2)
                         {
-                            <MudTooltip Text="@(context.Item.IsSystemGroup ? "System groups cannot be edited" : "Edit Group")">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Size="Size.Small"
-                                               Color="Color.Info"
-                                               OnClick="@(() => EditGroup(context.Item))"
-                                               Disabled="@context.Item.IsSystemGroup" />
-                            </MudTooltip>
-                        }
-                        @if (_canDelete)
-                        {
-                            <MudTooltip Text="@(context.Item.IsSystemGroup ? "System groups cannot be deleted" : "Delete Group")">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Size="Size.Small"
-                                               Color="Color.Error"
-                                               OnClick="@(() => DeleteGroup(context.Item))"
-                                               Disabled="@(context.Item.IsSystemGroup || _busyGroupId == context.Item.Id)" />
-                            </MudTooltip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
+                                +@(context.RoleNames.Count - 2)
+                            </MudChip>
                         }
                     </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="GroupDto" PageSizeOptions="@_pageSizeOptions" />
-        </PagerContent>
-        <NoRecordsContent>
-            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
-                <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Default" />
-                <MudText Typo="Typo.h6">No groups found</MudText>
-                <MudText Typo="Typo.body2" Class="text-muted">Try adjusting your filters or create a new group.</MudText>
-            </MudStack>
-        </NoRecordsContent>
-    </MudDataGrid>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Class="text-muted">No roles assigned</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Members">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mr-1" />
+                    @context.MemberCount
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align:right">
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
+                    @if (_canManageMembers)
+                    {
+                        <MudTooltip Text="Manage Members">
+                            <MudIconButton Icon="@Icons.Material.Filled.PeopleAlt"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => GoToMembers(context.Id))" />
+                        </MudTooltip>
+                    }
+                    @if (_canUpdate)
+                    {
+                        <MudTooltip Text="@(context.IsSystemGroup ? "System groups cannot be edited" : "Edit Group")">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Size="Size.Small"
+                                           Color="Color.Info"
+                                           OnClick="@(() => EditGroup(context))"
+                                           Disabled="@context.IsSystemGroup" />
+                        </MudTooltip>
+                    }
+                    @if (_canDelete)
+                    {
+                        <MudTooltip Text="@(context.IsSystemGroup ? "System groups cannot be deleted" : "Delete Group")">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeleteGroup(context))"
+                                           Disabled="@(context.IsSystemGroup || _busyGroupId == context.Id)" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </AMISDataTable>
 </MudPaper>
 
 <style>
@@ -262,7 +247,6 @@
 </style>
 
 @code {
-    private MudDataGrid<GroupDto>? _dataGrid;
     private List<GroupDto> _groups = new();
     private List<GroupDto> _filtered = new();
     private HashSet<GroupDto> _selectedGroups = new();

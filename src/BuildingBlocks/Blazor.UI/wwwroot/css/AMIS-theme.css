@@ -31,6 +31,27 @@
   --amis-control-padding-compact: 8px 12px;
   --amis-control-padding-normal: 10px 14px;
   --amis-control-border-radius: 4px;
+
+  /* Typography scale — use these instead of inline font-size so text is consistent app-wide */
+  --amis-text-xs: 0.75rem;      /* 12px — captions, footers, meta */
+  --amis-text-sm: 0.8125rem;    /* 13px — secondary text */
+  --amis-text-base: 0.875rem;   /* 14px — body/table cells */
+  --amis-text-lg: 1rem;         /* 16px — emphasized body */
+  --amis-heading: 1.125rem;     /* 18px — card/section headings */
+  --amis-heading-lg: 1.25rem;   /* 20px — page section titles */
+
+  /* Spacing scale */
+  --amis-space-xs: 4px;
+  --amis-space-sm: 8px;
+  --amis-space-md: 16px;
+  --amis-space-lg: 24px;
+  --amis-space-xl: 40px;
+
+  /* List/table + card density */
+  --amis-table-row-height: 44px;
+  --amis-table-row-height-dense: 36px;
+  --amis-card-padding: 16px;
+  --amis-card-padding-lg: 24px;
 }
 
 .AMIS-card {
@@ -52,6 +73,19 @@
 }
 .AMIS-chip {
   border-radius: 9999px;
+}
+
+/* Page footer (API status strip). Theme-token driven — no inline styles on the layout. */
+.AMIS-footer {
+  margin-top: var(--amis-space-xl);
+  padding: var(--amis-space-md);
+  border-top: 1px solid var(--mud-palette-lines-default);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--amis-space-sm);
+  font-size: var(--amis-text-xs);
+  color: var(--mud-palette-text-secondary);
 }
 
 .hero-card {
@@ -93,12 +127,18 @@
   font-weight: 700;
 }
 
+/* Muted/secondary text — theme-adaptive (readable in light AND dark). Referenced widely by list
+   pages for captions and meta text; defined here so the intent actually renders. */
+.text-muted {
+  color: var(--mud-palette-text-secondary) !important;
+}
+
 /* ===== AMISAccountMenu Styles ===== */
 /* Popover container - needs to be global because MudBlazor renders popovers at document root */
 .AMIS-account-popover {
   border-radius: 12px !important;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--mud-palette-lines-default) !important;
   overflow: hidden !important;
   min-width: 280px !important;
   margin-top: 8px !important;
@@ -381,12 +421,12 @@
 #nav-drawer .mud-drawer-header {
   min-height: 64px;
   padding: 0 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--mud-palette-lines-default);
 }
 
 /* Drawer styling */
 #nav-drawer {
-  border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-right: 1px solid var(--mud-palette-lines-default) !important;
 }
 
 /* AMISStatCard styles are in the component's scoped CSS */

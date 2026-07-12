@@ -3,6 +3,7 @@
 @using AMIS.Modules.MasterData.Contracts.v1.PropertyClasses
 @using AMIS.Modules.MasterData.Contracts.Permissions
 @using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Data
 @inject IPropertyClassClient Client
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -107,52 +108,39 @@
                     </MudStack>
 
                     <!-- Items table -->
-                    @if (_selectedClass.Items.Count == 0)
-                    {
-                        <MudAlert Severity="Severity.Info">
-                            No category codes yet for <b>@_selectedClass.Code</b>. Add one above.
-                        </MudAlert>
-                    }
-                    else
-                    {
-                        <MudSimpleTable Dense="true" Hover="true" Striped="true">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px">Code</th>
-                                    <th>Name</th>
-                                    <!-- <th>Description</th> -->
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in _selectedClass.Items.OrderBy(x => x.ItemCode))
+                    <AMISDataTable T="PropertyClassItemDto"
+                                   Items="@_selectedClass.Items.OrderBy(x => x.ItemCode)"
+                                   RowsPerPage="15"
+                                   EmptyMessage="@($"No category codes yet for {_selectedClass.Code}")"
+                                   EmptyDescription="Add one above.">
+                        <HeaderContent>
+                            <MudTh Style="width: 80px">Code</MudTh>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Code">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Label="true"
+                                         Style="font-weight: 700; font-family: monospace;">@context.ItemCode</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Name">@context.Name</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(context.IsActive ? Color.Success : Color.Default)">
+                                    @(context.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Actions">
+                                @if (_canUpdate)
                                 {
-                                    <tr>
-                                        <td>
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Label="true"
-                                                     Style="font-weight: 700; font-family: monospace;">@item.ItemCode</MudChip>
-                                        </td>
-                                        <td>@item.Name</td>
-                                        <td>
-                                            <MudChip T="string" Size="Size.Small"
-                                                     Color="@(item.IsActive ? Color.Success : Color.Default)">
-                                                @(item.IsActive ? "Active" : "Inactive")
-                                            </MudChip>
-                                        </td>
-                                        <td>
-                                            @if (_canUpdate)
-                                            {
-                                                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
-                                                               Color="Color.Primary"
-                                                               OnClick="@(() => OpenItemDialog(item))" />
-                                            }
-                                        </td>
-                                    </tr>
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small"
+                                                   Color="Color.Primary"
+                                                   OnClick="@(() => OpenItemDialog(context))" />
                                 }
-                            </tbody>
-                        </MudSimpleTable>
-                    }
+                            </MudTd>
+                        </RowTemplate>
+                    </AMISDataTable>
                 </MudCardContent>
             </MudCard>
         }

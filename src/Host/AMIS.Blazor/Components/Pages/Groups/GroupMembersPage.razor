@@ -2,6 +2,7 @@
 @implements IDisposable
 @using AMIS.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
+@using AMIS.Framework.Blazor.UI.Components.Data
 @using AMIS.Framework.Shared.Identity
 @inherits ComponentBase
 @inject IIdentityClient IdentityClient
@@ -78,17 +79,15 @@
 
 @* Members Grid *@
 <MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
-    <MudDataGrid T="GroupMemberDto"
-                 @ref="_dataGrid"
-                 Items="_members"
-                 Loading="_loading"
-                 Hover="true"
-                 Dense="true"
-                 Striped="true"
-                 SortMode="SortMode.Single"
-                 Filterable="false"
-                 RowsPerPage="@_pageSize"
-                 Class="members-datagrid">
+    <AMISDataTable T="GroupMemberDto"
+                   Items="_filteredMembers"
+                   Loading="_loading"
+                   RowsPerPage="@_pageSize"
+                   PageSizeOptions="@_pageSizeOptions"
+                   Class="members-datagrid"
+                   EmptyIcon="@Icons.Material.Filled.GroupOff"
+                   EmptyMessage="No members in this group"
+                   EmptyDescription="Add members to get started.">
         <ToolBarContent>
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="Search members..."
@@ -105,66 +104,58 @@
                 @_filteredMembers.Count member(s)
             </MudText>
         </ToolBarContent>
-        <Columns>
-            <TemplateColumn Title="Member" Sortable="true" SortBy="@(x => $"{x.FirstName} {x.LastName}")">
-                <CellTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudAvatar Size="Size.Small" Class="member-avatar">
-                            @GetInitials(context.Item)
-                        </MudAvatar>
-                        <MudStack Spacing="0">
-                            <MudText Typo="Typo.body2" Class="fw-600">
-                                @($"{context.Item.FirstName} {context.Item.LastName}".Trim())
-                            </MudText>
-                            <MudText Typo="Typo.caption" Class="text-muted">@@@context.Item.UserName</MudText>
-                        </MudStack>
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" />
-            <TemplateColumn Title="Added" Sortable="true" SortBy="@(x => x.AddedAt)">
-                <CellTemplate>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel T="GroupMemberDto" SortBy="@(x => $"{x.FirstName} {x.LastName}")">Member</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="GroupMemberDto" SortBy="@(x => x.Email ?? string.Empty)">Email</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="GroupMemberDto" SortBy="@(x => x.AddedAt)">Added</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Member">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudAvatar Size="Size.Small" Class="member-avatar">
+                        @GetInitials(context)
+                    </MudAvatar>
                     <MudStack Spacing="0">
-                        <MudText Typo="Typo.body2">@context.Item.AddedAt.LocalDateTime.ToString("MMM d, yyyy")</MudText>
-                        <MudText Typo="Typo.caption" Class="text-muted">by @(context.Item.AddedBy ?? "System")</MudText>
+                        <MudText Typo="Typo.body2" Class="fw-600">
+                            @($"{context.FirstName} {context.LastName}".Trim())
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">@@@context.UserName</MudText>
                     </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
-                <CellTemplate>
-                    @if (_canManageMembers)
-                    {
-                        <MudTooltip Text="Remove from group">
-                            <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
-                                           Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => RemoveMember(context.Item))"
-                                           Disabled="_busyUserId == context.Item.UserId" />
-                        </MudTooltip>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="GroupMemberDto" PageSizeOptions="@_pageSizeOptions" />
-        </PagerContent>
-        <NoRecordsContent>
-            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
-                <MudIcon Icon="@Icons.Material.Filled.GroupOff" Size="Size.Large" Color="Color.Default" />
-                <MudText Typo="Typo.h6">No members in this group</MudText>
-                <MudText Typo="Typo.body2" Class="text-muted">Add members to get started.</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Added">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.body2">@context.AddedAt.LocalDateTime.ToString("MMM d, yyyy")</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">by @(context.AddedBy ?? "System")</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align:right">
                 @if (_canManageMembers)
                 {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.PersonAdd"
-                               OnClick="ShowAddMembers">
-                        Add Members
-                    </MudButton>
+                    <MudTooltip Text="Remove from group">
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       OnClick="@(() => RemoveMember(context))"
+                                       Disabled="_busyUserId == context.UserId" />
+                    </MudTooltip>
                 }
-            </MudStack>
-        </NoRecordsContent>
-    </MudDataGrid>
+            </MudTd>
+        </RowTemplate>
+        <EmptyActionContent>
+            @if (_canManageMembers)
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="ShowAddMembers">
+                    Add Members
+                </MudButton>
+            }
+        </EmptyActionContent>
+    </AMISDataTable>
 </MudPaper>
 
 <style>
@@ -191,7 +182,6 @@
     [Parameter]
     public Guid GroupId { get; set; }
 
-    private MudDataGrid<GroupMemberDto>? _dataGrid;
     private GroupDto? _group;
     private List<GroupMemberDto> _members = new();
     private List<GroupMemberDto> _filteredMembers = new();

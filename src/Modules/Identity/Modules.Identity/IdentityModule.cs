@@ -212,6 +212,7 @@ public class IdentityModule : IModule
         group.MapGetMeEndpoint();
         group.MapGetUserRolesEndpoint();
         group.MapGetUsersListEndpoint();
+        group.MapGetUsersByIdsEndpoint();
         group.MapSearchUsersEndpoint();
         group.MapRegisterUserEndpoint();
         group.MapForgotPasswordEndpoint().RequireRateLimiting("auth");

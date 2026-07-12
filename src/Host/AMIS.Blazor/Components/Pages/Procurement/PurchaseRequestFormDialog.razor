@@ -464,31 +464,31 @@
             }).ToList()
         };
 
-        for (var i = 0; i < pr.LineItems.Count; i++)
+        // Hydrate Asset line items' catalog selection in ONE batch call — never a per-line fetch loop.
+        // Supply lines carry their StockNumber straight from the DTO; the read-only line table and Save
+        // both use StockNumber, so no per-row product lookup is needed on the Supply side.
+        if (pr.Category == ProcurementCategory.Asset)
         {
-            var src = pr.LineItems[i];
-            if (pr.Category == ProcurementCategory.Supply)
-            {
-                if (!string.IsNullOrWhiteSpace(src.StockNumber))
-                {
-                    try
-                    {
-                        var page = await ExpendableClient.ProductsGetAsync(keyword: src.StockNumber, pageNumber: 1, pageSize: 10);
-                        var match = page?.Items?.FirstOrDefault(p =>
-                            string.Equals(p.StockNo, src.StockNumber, StringComparison.OrdinalIgnoreCase));
-                        if (match is not null) _form.LineItems[i].SelectedProduct = match;
-                    }
-                    catch { }
-                }
-            }
-            else if (src.CatalogItemId is not null && src.CatalogItemId != Guid.Empty)
+            var catalogIds = pr.LineItems
+                .Where(li => li.CatalogItemId is { } id && id != Guid.Empty)
+                .Select(li => li.CatalogItemId!.Value)
+                .Distinct()
+                .ToList();
+
+            if (catalogIds.Count > 0)
             {
                 try
                 {
-                    var c = await CatalogClient.GetAsync(src.CatalogItemId.Value);
-                    if (c is not null) _form.LineItems[i].SelectedCatalog = c;
+                    var byId = (await CatalogClient.GetByIdsAsync(catalogIds))
+                        .ToDictionary(c => c.Id);
+
+                    for (var i = 0; i < pr.LineItems.Count; i++)
+                    {
+                        if (pr.LineItems[i].CatalogItemId is { } id && byId.TryGetValue(id, out var match))
+                            _form.LineItems[i].SelectedCatalog = match;
+                    }
                 }
-                catch { }
+                catch { /* leave rows unhydrated; the catalog Code subtext is best-effort */ }
             }
         }
     }

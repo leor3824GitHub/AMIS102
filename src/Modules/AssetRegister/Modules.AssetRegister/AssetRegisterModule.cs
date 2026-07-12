@@ -173,6 +173,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Catalog.DeletePropertyItemCatalog.DeletePropertyItemCatalogEndpoint.Map(catalog);
         Features.v1.Catalog.SetPropertyItemCatalogActivation.SetPropertyItemCatalogActivationEndpoint.Map(catalog);
         Features.v1.Catalog.GetPropertyItemCatalog.GetPropertyItemCatalogEndpoint.Map(catalog);
+        Features.v1.Catalog.GetPropertyItemCatalogsByIds.GetPropertyItemCatalogsByIdsEndpoint.Map(catalog);
         Features.v1.Catalog.SearchPropertyItemCatalogs.SearchPropertyItemCatalogsEndpoint.Map(catalog);
 
         // Assets

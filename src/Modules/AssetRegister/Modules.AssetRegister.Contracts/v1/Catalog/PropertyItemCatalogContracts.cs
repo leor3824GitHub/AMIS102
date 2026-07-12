@@ -66,3 +66,11 @@ public sealed record SearchPropertyItemCatalogsQuery(
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyItemCatalogDto>>;
 
+/// <summary>
+/// Resolves many catalog entries in one round-trip. Backs the "by-ids" batch endpoint that replaces
+/// per-line-item catalog fetches when a consumer (e.g. the PR edit form) needs to hydrate several rows.
+/// Returns only the ids that exist; missing/deleted ids are simply absent from the result.
+/// </summary>
+public sealed record GetPropertyItemCatalogsByIdsQuery(IReadOnlyCollection<Guid> Ids)
+    : IQuery<IReadOnlyList<PropertyItemCatalogDto>>;
+

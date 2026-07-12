@@ -10,7 +10,6 @@
 @inject IMaster_dataClient MasterDataClient
 @inject ILookupClient LookupClient
 @inject ILookupDataService LookupData
-@inject IIdentityClient IdentityClient
 @inject IOrganizationProfileClient OrgProfileClient
 @inject IUserProfileState UserProfileState
 
@@ -203,18 +202,15 @@
 
         try
         {
-            // Fetch all users once and resolve locally — avoids a per-employee HTTP round-trip (N+1).
-            var users = await IdentityClient.UsersGetAsync();
-            var usersById = users
-                .Where(u => !string.IsNullOrWhiteSpace(u.Id))
-                .GroupBy(u => u.Id, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            // Resolve only the linked accounts we actually display — one batch call, not the whole
+            // (potentially unbounded) user list.
+            var usersById = await LookupData.GetUsersByIdsAsync(linkedIds);
 
             foreach (var identityUserId in linkedIds)
             {
                 _linkedAccountDisplays[identityUserId] = usersById.TryGetValue(identityUserId, out var user)
                     ? $"{user.FirstName} {user.LastName} ({user.Email})".Trim()
-                    : (identityUserId.Length >= 8 ? identityUserId[..8] + "…" : identityUserId);
+                    : ShortenIdentityId(identityUserId);
             }
         }
         catch
@@ -227,6 +223,9 @@
 
     private string GetLinkedAccountDisplay(string identityUserId) =>
         _linkedAccountDisplays.TryGetValue(identityUserId, out var display) ? display : "Linked";
+
+    // Fallback label when the linked user record can't be resolved — show a short id prefix, not the full GUID.
+    private static string ShortenIdentityId(string id) => id.Length >= 8 ? id[..8] + "…" : id;
 
     private async Task LoadOffices()
     {

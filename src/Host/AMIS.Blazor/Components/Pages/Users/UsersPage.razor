@@ -3,6 +3,7 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Framework.Blazor.UI.Components.Dialogs
 @using AMIS.Framework.Blazor.UI.Components.Cards
+@using AMIS.Framework.Blazor.UI.Components.Data
 @inherits ComponentBase
 @using System.Security.Claims
 @using AMIS.Framework.Shared.Constants
@@ -148,151 +149,136 @@
 
 @* Data Grid *@
 <MudPaper Class="AMIS-card pa-0" Style="overflow: hidden;">
-    <MudDataGrid T="UserDto"
-                 @ref="_dataGrid"
-                 Items="_filtered"
-                 Loading="_loading"
-                 Hover="true"
-                 Dense="true"
-                 Striped="true"
-                 MultiSelection="true"
-                 SelectedItems="_selectedUsers"
-                 SelectedItemsChanged="OnSelectionChanged"
-                 SortMode="SortMode.Single"
-                 Filterable="false"
-                 RowsPerPage="@_pageSize"
-                 Class="users-datagrid">
-        <Columns>
-            <SelectColumn T="UserDto" ShowInFooter="false" />
-            <TemplateColumn Title="User" Sortable="true" SortBy="@(x => $"{x.FirstName} {x.LastName}")">
-                <CellTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudAvatar Size="Size.Small" Class="user-avatar">
-                            @if (!string.IsNullOrEmpty(context.Item.ImageUrl))
-                            {
-                                <MudImage Src="@context.Item.ImageUrl" Alt="@context.Item.UserName" />
-                            }
-                            else
-                            {
-                                @GetInitials(context.Item)
-                            }
-                        </MudAvatar>
-                        <MudStack Spacing="0">
-                            <MudLink Typo="Typo.body2" Class="fw-600" OnClick="@(() => GoToDetail(context.Item.Id))">
-                                @($"{context.Item.FirstName} {context.Item.LastName}".Trim())
-                            </MudLink>
-                            <MudText Typo="Typo.caption" Class="text-muted">@@@context.Item.UserName</MudText>
-                        </MudStack>
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true">
-                <CellTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText Typo="Typo.body2">@context.Item.Email</MudText>
-                        @if (context.Item.EmailConfirmed)
+    <AMISDataTable T="UserDto"
+                   Items="_filtered"
+                   Loading="_loading"
+                   MultiSelection="true"
+                   SelectedItems="_selectedUsers"
+                   SelectedItemsChanged="OnSelectionChanged"
+                   RowsPerPage="@_pageSize"
+                   PageSizeOptions="@_pageSizeOptions"
+                   Class="users-datagrid"
+                   EmptyIcon="@Icons.Material.Filled.PersonSearch"
+                   EmptyMessage="No users found"
+                   EmptyDescription="Try adjusting your filters or create a new user.">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel T="UserDto" SortBy="@(x => $"{x.FirstName} {x.LastName}")">User</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="UserDto" SortBy="@(x => x.Email ?? string.Empty)">Email</MudTableSortLabel></MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Roles</MudTh>
+            <MudTh><MudTableSortLabel T="UserDto" SortBy="@(x => x.IsActive)">Status</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="User">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudAvatar Size="Size.Small" Class="user-avatar">
+                        @if (!string.IsNullOrEmpty(context.ImageUrl))
                         {
-                            <MudTooltip Text="Email verified">
-                                <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Success" />
-                            </MudTooltip>
+                            <MudImage Src="@context.ImageUrl" Alt="@context.UserName" />
                         }
                         else
                         {
-                            <MudTooltip Text="Email not verified">
-                                <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning" />
-                            </MudTooltip>
+                            @GetInitials(context)
                         }
+                    </MudAvatar>
+                    <MudStack Spacing="0">
+                        <MudLink Typo="Typo.body2" Class="fw-600" OnClick="@(() => GoToDetail(context.Id))">
+                            @($"{context.FirstName} {context.LastName}".Trim())
+                        </MudLink>
+                        <MudText Typo="Typo.caption" Class="text-muted">@@@context.UserName</MudText>
                     </MudStack>
-                </CellTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="x => x.PhoneNumber" Title="Phone" Sortable="false" />
-            <TemplateColumn Title="Roles" Sortable="false">
-                <CellTemplate>
-                    @if (_userRolesCache.TryGetValue(context.Item.Id ?? "", out var roles) && roles.Any())
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Email">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.body2">@context.Email</MudText>
+                    @if (context.EmailConfirmed)
                     {
-                        <MudStack Row="true" Spacing="1">
-                            @RenderRoleChips(roles.Where(r => r.Enabled).Take(2))
-                            @if (roles.Count(r => r.Enabled) > 2)
-                            {
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
-                                    +@(roles.Count(r => r.Enabled) - 2)
-                                </MudChip>
-                            }
-                        </MudStack>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
-                            No roles
-                        </MudChip>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.IsActive)">
-                <CellTemplate>
-                    @if (context.Item.IsActive)
-                    {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn Title="Actions" Sortable="false" HeaderClass="text-right" CellClass="text-right">
-                <CellTemplate>
-                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
-                        <MudTooltip Text="View Details">
-                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                           Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => GoToDetail(context.Item.Id))" />
+                        <MudTooltip Text="Email verified">
+                            <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Success" />
                         </MudTooltip>
-                        @if (_canManageRoles)
+                    }
+                    else
+                    {
+                        <MudTooltip Text="Email not verified">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Warning" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Phone">@context.PhoneNumber</MudTd>
+            <MudTd DataLabel="Roles">
+                @if (_userRolesCache.TryGetValue(context.Id ?? "", out var roles) && roles.Any())
+                {
+                    <MudStack Row="true" Spacing="1">
+                        @RenderRoleChips(roles.Where(r => r.Enabled).Take(2))
+                        @if (roles.Count(r => r.Enabled) > 2)
                         {
-                            <MudTooltip Text="Manage Roles">
-                                <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
-                                               Size="Size.Small"
-                                               Color="Color.Info"
-                                               OnClick="@(() => GoToRoles(context.Item.Id))" />
-                            </MudTooltip>
-                        }
-                        @if (_canUpdate)
-                        {
-                            <MudTooltip Text="@GetToggleTooltip(context.Item)">
-                                <MudIconButton Icon="@(context.Item.IsActive ? Icons.Material.Filled.PersonOff : Icons.Material.Filled.PersonAdd)"
-                                               Size="Size.Small"
-                                               Color="@(context.Item.IsActive ? Color.Warning : Color.Success)"
-                                               OnClick="@(() => ToggleStatus(context.Item))"
-                                               Disabled="@IsToggleDisabled(context.Item)" />
-                            </MudTooltip>
-                        }
-                        @if (_canDelete)
-                        {
-                            <MudTooltip Text="Delete User">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Size="Size.Small"
-                                               Color="Color.Error"
-                                               OnClick="@(() => DeleteUser(context.Item))"
-                                               Disabled="_busyUserId == context.Item.Id" />
-                            </MudTooltip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text">
+                                +@(roles.Count(r => r.Enabled) - 2)
+                            </MudChip>
                         }
                     </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="UserDto" PageSizeOptions="@_pageSizeOptions" />
-        </PagerContent>
-        <NoRecordsContent>
-            <MudStack AlignItems="AlignItems.Center" Spacing="4" Class="pa-8">
-                <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Size="Size.Large" Color="Color.Default" />
-                <MudText Typo="Typo.h6">No users found</MudText>
-                <MudText Typo="Typo.body2" Class="text-muted">Try adjusting your filters or create a new user.</MudText>
-            </MudStack>
-        </NoRecordsContent>
-    </MudDataGrid>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                        No roles
+                    </MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Status">
+                @if (context.IsActive)
+                {
+                    <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">Active</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">Inactive</MudChip>
+                }
+            </MudTd>
+            <MudTd DataLabel="Actions" Style="text-align:right">
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="0">
+                    <MudTooltip Text="View Details">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       Size="Size.Small"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => GoToDetail(context.Id))" />
+                    </MudTooltip>
+                    @if (_canManageRoles)
+                    {
+                        <MudTooltip Text="Manage Roles">
+                            <MudIconButton Icon="@Icons.Material.Filled.AdminPanelSettings"
+                                           Size="Size.Small"
+                                           Color="Color.Info"
+                                           OnClick="@(() => GoToRoles(context.Id))" />
+                        </MudTooltip>
+                    }
+                    @if (_canUpdate)
+                    {
+                        <MudTooltip Text="@GetToggleTooltip(context)">
+                            <MudIconButton Icon="@(context.IsActive ? Icons.Material.Filled.PersonOff : Icons.Material.Filled.PersonAdd)"
+                                           Size="Size.Small"
+                                           Color="@(context.IsActive ? Color.Warning : Color.Success)"
+                                           OnClick="@(() => ToggleStatus(context))"
+                                           Disabled="@IsToggleDisabled(context)" />
+                        </MudTooltip>
+                    }
+                    @if (_canDelete)
+                    {
+                        <MudTooltip Text="Delete User">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeleteUser(context))"
+                                           Disabled="_busyUserId == context.Id" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </AMISDataTable>
 </MudPaper>
 
 <style>
@@ -316,7 +302,6 @@
 </style>
 
 @code {
-    private MudDataGrid<UserDto>? _dataGrid;
     private List<UserDto> _users = new();
     private List<UserDto> _filtered = new();
     private HashSet<UserDto> _selectedUsers = new();

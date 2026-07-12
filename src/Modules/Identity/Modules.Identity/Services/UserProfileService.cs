@@ -34,16 +34,7 @@ internal sealed class UserProfileService(
 
         _ = user ?? throw new NotFoundException("user not found");
 
-        return new UserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            UserName = user.UserName,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ImageUrl = ResolveImageUrl(user.ImageUrl),
-            IsActive = user.IsActive
-        };
+        return MapToDto(user);
     }
 
     public Task<int> GetCountAsync(CancellationToken cancellationToken) =>
@@ -55,20 +46,46 @@ internal sealed class UserProfileService(
         var result = new List<UserDto>(users.Count);
         foreach (var user in users)
         {
-            result.Add(new UserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                UserName = user.UserName,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                ImageUrl = ResolveImageUrl(user.ImageUrl),
-                IsActive = user.IsActive
-            });
+            result.Add(MapToDto(user));
         }
 
         return result;
     }
+
+    public async Task<List<UserDto>> GetByIdsAsync(IReadOnlyCollection<string> userIds, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(userIds);
+
+        // Distinct, non-empty ids only — one WHERE Id IN (...) round-trip, never a per-id N+1.
+        var ids = userIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.Ordinal).ToArray();
+        if (ids.Length == 0)
+        {
+            return [];
+        }
+
+        var users = await userManager.Users.AsNoTracking()
+            .Where(u => ids.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+
+        var result = new List<UserDto>(users.Count);
+        foreach (var user in users)
+        {
+            result.Add(MapToDto(user));
+        }
+
+        return result;
+    }
+
+    private UserDto MapToDto(AmisUser user) => new()
+    {
+        Id = user.Id,
+        Email = user.Email,
+        UserName = user.UserName,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        ImageUrl = ResolveImageUrl(user.ImageUrl),
+        IsActive = user.IsActive
+    };
 
     public async Task UpdateAsync(string userId, string firstName, string lastName, string phoneNumber, FileUploadRequest? image, bool deleteCurrentImage)
     {

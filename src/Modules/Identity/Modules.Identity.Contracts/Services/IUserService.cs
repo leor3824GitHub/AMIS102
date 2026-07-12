@@ -10,6 +10,7 @@ public interface IUserService
     Task<bool> ExistsWithEmailAsync(string email, string? exceptId = null);
     Task<bool> ExistsWithPhoneNumberAsync(string phoneNumber, string? exceptId = null);
     Task<List<UserDto>> GetListAsync(CancellationToken cancellationToken);
+    Task<List<UserDto>> GetByIdsAsync(IReadOnlyCollection<string> userIds, CancellationToken cancellationToken);
     Task<int> GetCountAsync(CancellationToken cancellationToken);
     Task<UserDto> GetAsync(string userId, CancellationToken cancellationToken);
     Task ToggleStatusAsync(bool activateUser, string userId, CancellationToken cancellationToken);
