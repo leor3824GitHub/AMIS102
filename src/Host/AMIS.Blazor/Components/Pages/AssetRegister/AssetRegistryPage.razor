@@ -102,7 +102,7 @@
                     <RowTemplate>
                         @if (_canIssue)
                         {
-                            <MudTd>
+                            <MudTd DataLabel="Select">
                                 @{
                                     var selectable = context.LifecycleState == LifecycleState.Available;
                                 }
@@ -116,7 +116,7 @@
                                 </div>
                             </MudTd>
                         }
-                        <MudTd>
+                        <MudTd DataLabel="Photo">
                             @if (context.HasImage)
                             {
                                 @* Lazily fetched per visible row from the same-origin proxy — the browser
@@ -129,30 +129,30 @@
                                 <MudIcon Icon="@Icons.Material.Outlined.Image" Color="Color.Default" />
                             }
                         </MudTd>
-                        <MudTd>
+                        <MudTd DataLabel="Property No.">
                             <MudText Typo="Typo.body2"><strong>@context.PropertyNo</strong></MudText>
                         </MudTd>
-                        <MudTd>
+                        <MudTd DataLabel="Type">
                             <MudChip T="string" Size="Size.Small"
                                      Color="@(context.AssetType == AssetType.SE ? Color.Info : Color.Secondary)"
                                      Variant="Variant.Outlined">
                                 @FormatAssetType(context.AssetType)
                             </MudChip>
                         </MudTd>
-                        <MudTd>@context.Description</MudTd>
-                        <MudTd>@context.AcquisitionDate.ToString("yyyy-MM-dd")</MudTd>
-                        <MudTd Style="text-align:right">@context.UnitCost.ToString("N2")</MudTd>
-                        <MudTd>
+                        <MudTd DataLabel="Description">@context.Description</MudTd>
+                        <MudTd DataLabel="Acquisition Date">@context.AcquisitionDate.ToString("yyyy-MM-dd")</MudTd>
+                        <MudTd DataLabel="@($"Unit Cost ({Money.Symbol})")" Style="text-align:right">@context.UnitCost.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Lifecycle">
                             <MudChip T="string" Size="Size.Small"
                                      Color="@LifecycleColor(context.LifecycleState)"
                                      Variant="Variant.Filled">
                                 @FormatLifecycle(context.LifecycleState)
                             </MudChip>
                         </MudTd>
-                        <MudTd>@FormatCondition(context.CurrentCondition)</MudTd>
+                        <MudTd DataLabel="Condition">@FormatCondition(context.CurrentCondition)</MudTd>
                         @if (_canView)
                         {
-                            <MudTd Style="text-align:center">
+                            <MudTd DataLabel="Actions" Style="text-align:center">
                                 @* Stop the click from bubbling to OnRowClick (which opens the detail dialog). *@
                                 <div @onclick:stopPropagation="true">
                                     <MudTooltip Text="@PhotoActionLabel(context)">

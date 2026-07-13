@@ -88,24 +88,24 @@ else
                                 <MudTh Style="text-align:center">Actions</MudTh>
                             </HeaderContent>
                             <RowTemplate>
-                                <MudTd><strong>@context.DocumentNo</strong></MudTd>
-                                <MudTd>
+                                <MudTd DataLabel="Document No."><strong>@context.DocumentNo</strong></MudTd>
+                                <MudTd DataLabel="Type">
                                     <MudChip T="string" Size="Size.Small"
                                              Color="@(context.AccountabilityType == AccountabilityType.SE_ICS ? Color.Info : Color.Secondary)"
                                              Variant="Variant.Outlined">
                                         @(context.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
                                     </MudChip>
                                 </MudTd>
-                                <MudTd>
+                                <MudTd DataLabel="Status">
                                     <MudChip T="string" Size="Size.Small"
                                              Color="@StatusColor(context.Status)"
                                              Variant="Variant.Filled">
                                         @FormatStatus(context.Status)
                                     </MudChip>
                                 </MudTd>
-                                <MudTd>@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd>@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
-                                <MudTd Style="text-align:right">@context.LineCount</MudTd>
+                                <MudTd DataLabel="Issued On">@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
+                                <MudTd DataLabel="Expires On">@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                                <MudTd DataLabel="Lines" Style="text-align:right">@context.LineCount</MudTd>
                                 <MudTd DataLabel="Actions" Style="text-align:center" @onclick:stopPropagation="true">
                                     <MudStack Row="true" Spacing="0" Justify="Justify.Center">
                                         <MudTooltip Text="View">
@@ -226,26 +226,26 @@ else
                                 <MudTh Style="text-align:center">Actions</MudTh>
                             </HeaderContent>
                             <RowTemplate>
-                                <MudTd><strong>@context.PropertyNo</strong></MudTd>
-                                <MudTd>
+                                <MudTd DataLabel="Property No."><strong>@context.PropertyNo</strong></MudTd>
+                                <MudTd DataLabel="Type">
                                     <MudChip T="string" Size="Size.Small"
                                              Color="@(context.AssetType == AssetType.SE ? Color.Info : Color.Secondary)"
                                              Variant="Variant.Outlined">
                                         @FormatAssetType(context.AssetType)
                                     </MudChip>
                                 </MudTd>
-                                <MudTd>@context.Description</MudTd>
-                                <MudTd>@context.AcquisitionDate.ToString("yyyy-MM-dd")</MudTd>
-                                <MudTd Style="text-align:right">@context.UnitCost.ToString("N2")</MudTd>
-                                <MudTd>
+                                <MudTd DataLabel="Description">@context.Description</MudTd>
+                                <MudTd DataLabel="Acquisition Date">@context.AcquisitionDate.ToString("yyyy-MM-dd")</MudTd>
+                                <MudTd DataLabel="@($"Unit Cost ({Money.Symbol})")" Style="text-align:right">@context.UnitCost.ToString("N2")</MudTd>
+                                <MudTd DataLabel="Lifecycle">
                                     <MudChip T="string" Size="Size.Small"
                                              Color="@LifecycleColor(context.LifecycleState)"
                                              Variant="Variant.Filled">
                                         @FormatLifecycle(context.LifecycleState)
                                     </MudChip>
                                 </MudTd>
-                                <MudTd>@FormatCondition(context.CurrentCondition)</MudTd>
-                                <MudTd Style="text-align:center">
+                                <MudTd DataLabel="Condition">@FormatCondition(context.CurrentCondition)</MudTd>
+                                <MudTd DataLabel="Actions" Style="text-align:center">
                                     @if (_canRequestRepair)
                                     {
                                         <MudTooltip Text="Request Repair (RPRI)">

@@ -106,9 +106,13 @@
         <Setter Property="FontFamily" Value="InterRegular" />
     </Style>
 
+    <!-- Default surface for an unstyled Border. Must set BackgroundColor, NOT Background: a view's paint
+         resolves as Background (Brush) ?? BackgroundColor (Color), so a Background setter here would
+         outrank any BackgroundColor a page sets locally — WinUI then paints the border white and
+         white-on-gradient text vanishes. -->
     <Style TargetType="Border">
         <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray500}}" />
-        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
     </Style>
 
     <Style TargetType="Shell" ApplyToDerivedTypes="True">

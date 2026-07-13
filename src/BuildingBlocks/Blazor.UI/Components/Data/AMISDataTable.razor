@@ -14,7 +14,7 @@
           Striped="false"
           Loading="@Loading"
           RowsPerPage="@RowsPerPage"
-          Breakpoint="Breakpoint.Sm"
+          Breakpoint="@Breakpoint"
           Class="@Class"
           MultiSelection="@MultiSelection"
           SelectedItems="@SelectedItems"
@@ -91,6 +91,12 @@
 
     /// <summary>Raised when the multi-select set changes.</summary>
     [Parameter] public EventCallback<HashSet<T>> SelectedItemsChanged { get; set; }
+
+    /// <summary>Width at or below which rows stack into label/value cards instead of a table. Defaults to
+    /// <c>Xs</c> (under 600px — phones only), so a half-width desktop window keeps the real table and
+    /// scrolls horizontally. Raise to <c>Sm</c> on narrow-column pages that read better stacked sooner.
+    /// Stacked cells take their label from <c>DataLabel</c> on each <c>MudTd</c> — set it, or they render blank.</summary>
+    [Parameter] public Breakpoint Breakpoint { get; set; } = Breakpoint.Xs;
 
     [Parameter] public bool Loading { get; set; }
     [Parameter] public int RowsPerPage { get; set; } = 15;

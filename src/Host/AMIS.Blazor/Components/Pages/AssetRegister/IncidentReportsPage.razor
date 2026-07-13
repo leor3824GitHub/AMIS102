@@ -58,24 +58,24 @@
                             <MudTh Style="text-align:center">Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd><strong>@context.IncidentNo</strong></MudTd>
-                            <MudTd>
+                            <MudTd DataLabel="Incident No."><strong>@context.IncidentNo</strong></MudTd>
+                            <MudTd DataLabel="Type">
                                 <MudChip T="string" Size="Size.Small"
                                          Color="@IncidentTypeColor(context.IncidentType)"
                                          Variant="Variant.Outlined">
                                     @FormatIncidentType(context.IncidentType)
                                 </MudChip>
                             </MudTd>
-                            <MudTd>
+                            <MudTd DataLabel="Status">
                                 <MudChip T="string" Size="Size.Small"
                                          Color="@IncidentStatusColor(context.Status)"
                                          Variant="Variant.Filled">
                                     @FormatIncidentStatus(context.Status)
                                 </MudChip>
                             </MudTd>
-                            <MudTd>@context.IncidentDate.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd Style="text-align:right">@context.ItemCount</MudTd>
-                            <MudTd Style="text-align:center" @onclick:stopPropagation="true">
+                            <MudTd DataLabel="Incident Date">@context.IncidentDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd DataLabel="Items" Style="text-align:right">@context.ItemCount</MudTd>
+                            <MudTd DataLabel="Actions" Style="text-align:center" @onclick:stopPropagation="true">
                                 @if (IsSigned(context.Status) && (context.HasSignedCopy ? _canViewSigned : _canUploadSigned))
                                 {
                                     <MudTooltip Text="@(context.HasSignedCopy ? "Signed copy uploaded — click to view" : "Upload signed copy")">
@@ -172,12 +172,12 @@
                             <MudTh>Resolved On</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@context.Snapshot.PropertyNo</MudTd>
-                            <MudTd>@context.Snapshot.Description</MudTd>
-                            <MudTd Style="text-align:right">@context.SnapshotAcquisitionCost.ToString("N2")</MudTd>
-                            <MudTd Style="text-align:right">@context.SnapshotCurrentReplacementCost.ToString("N2")</MudTd>
-                            <MudTd>@FormatItemResolution(context.ItemResolution)</MudTd>
-                            <MudTd>@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
+                            <MudTd DataLabel="Property No.">@context.Snapshot.PropertyNo</MudTd>
+                            <MudTd DataLabel="Description">@context.Snapshot.Description</MudTd>
+                            <MudTd DataLabel="@($"Acq. Cost ({Money.Symbol})")" Style="text-align:right">@context.SnapshotAcquisitionCost.ToString("N2")</MudTd>
+                            <MudTd DataLabel="@($"CRC ({Money.Symbol})")" Style="text-align:right">@context.SnapshotCurrentReplacementCost.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Resolution">@FormatItemResolution(context.ItemResolution)</MudTd>
+                            <MudTd DataLabel="Resolved On">@(context.ResolvedOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
                         </RowTemplate>
                     </MudTable>
 

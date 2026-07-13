@@ -44,12 +44,12 @@
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
-                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
-                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
-                    <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
-                    <MudTd>@context.Items.Count item(s)</MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Request #"><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd DataLabel="Employee">@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd DataLabel="Department">@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd DataLabel="Date">@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd DataLabel="Items">@context.Items.Count item(s)</MudTd>
+                    <MudTd DataLabel="Actions">
                         <MudStack Row="true" Spacing="1">
                             @if (_canApprove)
                             {
@@ -84,12 +84,12 @@
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
-                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
-                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
-                    <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
-                    <MudTd>@context.Items.Count item(s)</MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Request #"><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd DataLabel="Employee">@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd DataLabel="Department">@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd DataLabel="Date">@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd DataLabel="Items">@context.Items.Count item(s)</MudTd>
+                    <MudTd DataLabel="Actions">
                         @if (_canFulfill)
                         {
                             <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
@@ -117,17 +117,17 @@
                     <MudTh Style="text-align:center">Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
-                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
-                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
-                    <MudTd>@(context.FulfilledOnUtc?.ToString("MMM d, yyyy") ?? context.ApprovedOnUtc?.ToString("MMM d, yyyy") ?? "-")</MudTd>
-                    <MudTd>@context.Items.Count item(s)</MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Request #"><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd DataLabel="Employee">@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd DataLabel="Department">@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd DataLabel="Date Issued">@(context.FulfilledOnUtc?.ToString("MMM d, yyyy") ?? context.ApprovedOnUtc?.ToString("MMM d, yyyy") ?? "-")</MudTd>
+                    <MudTd DataLabel="Items">@context.Items.Count item(s)</MudTd>
+                    <MudTd DataLabel="Status">
                         <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Done">
                             Issued
                         </MudChip>
                     </MudTd>
-                    <MudTd Style="text-align:center">
+                    <MudTd DataLabel="Actions" Style="text-align:center">
                         @if (_canPrintRis)
                         {
                             <MudMenu Icon="@Icons.Material.Filled.Print" Color="Color.Secondary" Size="Size.Small"
@@ -164,12 +164,12 @@
                     <MudTh>Reason</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
-                    <MudTd>@GetEmployeeName(context.EmployeeId)</MudTd>
-                    <MudTd>@GetDepartmentName(context.DepartmentId)</MudTd>
-                    <MudTd>@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
-                    <MudTd>@context.Items.Count item(s)</MudTd>
-                    <MudTd><MudText Typo="Typo.caption" Color="Color.Error">@context.RejectionReason</MudText></MudTd>
+                    <MudTd DataLabel="Request #"><MudText Typo="Typo.body2" Style="font-weight:500">@context.RequestNumber</MudText></MudTd>
+                    <MudTd DataLabel="Employee">@GetEmployeeName(context.EmployeeId)</MudTd>
+                    <MudTd DataLabel="Department">@GetDepartmentName(context.DepartmentId)</MudTd>
+                    <MudTd DataLabel="Date">@context.RequestDate.ToString("MMM d, yyyy")</MudTd>
+                    <MudTd DataLabel="Items">@context.Items.Count item(s)</MudTd>
+                    <MudTd DataLabel="Reason"><MudText Typo="Typo.caption" Color="Color.Error">@context.RejectionReason</MudText></MudTd>
                 </RowTemplate>
             </AMISDataTable>
         </MudTabPanel>
@@ -218,11 +218,11 @@
                         <MudTh>Approve Qty</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>
+                        <MudTd DataLabel="Product">
                             <MudText Typo="Typo.body2">@GetProductName(context.ProductId)</MudText>
                         </MudTd>
-                        <MudTd>@context.RequestedQuantity</MudTd>
-                        <MudTd>
+                        <MudTd DataLabel="Requested">@context.RequestedQuantity</MudTd>
+                        <MudTd DataLabel="Approve Qty">
                             <MudNumericField T="int"
                                             Value="@GetApproveQty(context.ProductId)"
                                             ValueChanged="@(v => SetApproveQty(context.ProductId, v))"

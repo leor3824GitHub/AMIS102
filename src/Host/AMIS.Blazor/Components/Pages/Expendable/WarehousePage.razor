@@ -66,30 +66,30 @@
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd>
+                    <MudTd DataLabel="Code">
                         <MudText Typo="Typo.caption" Style="font-family:monospace">@context.ProductCode</MudText>
                     </MudTd>
-                    <MudTd>@context.ProductName</MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Product">@context.ProductName</MudTd>
+                    <MudTd DataLabel="Warehouse">
                         <MudText Typo="Typo.body2">@context.WarehouseLocationName</MudText>
                     </MudTd>
-                    <MudTd Style="text-align:center">
+                    <MudTd DataLabel="On Hand" Style="text-align:center">
                         <MudChip T="string" Size="Size.Small" Color="@(context.QuantityOnHand > 0 ? Color.Primary : Color.Default)">
                             @context.QuantityOnHand
                         </MudChip>
                     </MudTd>
-                    <MudTd Style="text-align:center">@context.QuantityAvailable</MudTd>
-                    <MudTd Style="text-align:center">
+                    <MudTd DataLabel="Available" Style="text-align:center">@context.QuantityAvailable</MudTd>
+                    <MudTd DataLabel="Reserved" Style="text-align:center">
                         @if (context.QuantityReserved > 0)
                         {
                             <MudChip T="string" Size="Size.Small" Color="Color.Warning">@context.QuantityReserved</MudChip>
                         }
                         else { <MudText>0</MudText> }
                     </MudTd>
-                    <MudTd Style="text-align:center">@context.QuantityIssued</MudTd>
-                    <MudTd Style="text-align:right">$@context.AverageUnitPrice.ToString("F4")</MudTd>
-                    <MudTd Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Issued" Style="text-align:center">@context.QuantityIssued</MudTd>
+                    <MudTd DataLabel="Avg Cost" Style="text-align:right">$@context.AverageUnitPrice.ToString("F4")</MudTd>
+                    <MudTd DataLabel="Total Value" Style="text-align:right">$@context.TotalValue.ToString("F2")</MudTd>
+                    <MudTd DataLabel="Status">
                         @{
                             var (sc, si) = context.Status switch
                             {
@@ -101,7 +101,7 @@
                         }
                         <MudChip T="string" Size="Size.Small" Color="@sc" Icon="@si">@context.Status</MudChip>
                     </MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Actions">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">N/A</MudText>
                     </MudTd>
                 </RowTemplate>

@@ -98,7 +98,7 @@
                     <MudTh>Actions</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd>
+                    <MudTd DataLabel="Image">
                         @if (!string.IsNullOrEmpty(context.ImageUrl))
                         {
                             <MudImage Src="@context.ImageUrl" Alt="@context.Name"
@@ -109,19 +109,19 @@
                             <MudAvatar>@context.Name.FirstOrDefault()</MudAvatar>
                         }
                     </MudTd>
-                    <MudTd>@context.Article</MudTd>
-                    <MudTd>@context.Name</MudTd>
-                    <MudTd>@context.StockNo</MudTd>
-                    <MudTd>@context.UnitPrice.ToString("C")</MudTd>
-                    <MudTd>@context.UnitOfMeasure</MudTd>
-                    <MudTd>@context.MinimumStockLevel</MudTd>
-                    <MudTd>@context.VariantName</MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Article">@context.Article</MudTd>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Stock No.">@context.StockNo</MudTd>
+                    <MudTd DataLabel="Price">@context.UnitPrice.ToString("C")</MudTd>
+                    <MudTd DataLabel="UoM">@context.UnitOfMeasure</MudTd>
+                    <MudTd DataLabel="Min Stock">@context.MinimumStockLevel</MudTd>
+                    <MudTd DataLabel="Variant">@context.VariantName</MudTd>
+                    <MudTd DataLabel="Status">
                         <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
                             @context.Status
                         </MudChip>
                     </MudTd>
-                    <MudTd>
+                    <MudTd DataLabel="Actions">
                         <MudStack Row="true" Spacing="1">
                             @if (context.Status == "Active")
                             {

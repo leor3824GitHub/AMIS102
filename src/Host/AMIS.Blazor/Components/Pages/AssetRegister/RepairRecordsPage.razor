@@ -50,13 +50,13 @@
                             <MudTh>Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@context.RpriNo</MudTd>
-                            <MudTd>@context.PropertyNo</MudTd>
-                            <MudTd>@context.Description</MudTd>
-                            <MudTd>@context.NatureOfWork</MudTd>
-                            <MudTd><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@DisplayStatus(context.Status)</MudChip></MudTd>
-                            <MudTd>@context.RequestedOn.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd>
+                            <MudTd DataLabel="RPRI No">@context.RpriNo</MudTd>
+                            <MudTd DataLabel="Property No">@context.PropertyNo</MudTd>
+                            <MudTd DataLabel="Description">@context.Description</MudTd>
+                            <MudTd DataLabel="Nature of Work">@context.NatureOfWork</MudTd>
+                            <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@DisplayStatus(context.Status)</MudChip></MudTd>
+                            <MudTd DataLabel="Requested">@context.RequestedOn.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd DataLabel="Actions">
                                 <MudStack Row="true" Spacing="0">
                                     @if (CanAct(context.Status))
                                     {
