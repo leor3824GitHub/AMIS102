@@ -29,7 +29,7 @@ internal static class ProcurementJson
 
 internal interface IPurchaseRequestClient
 {
-    Task<PagedResponse<PurchaseRequestSummaryDto>> SearchAsync(string? keyword = null, PurchaseRequestStatus? status = null, int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, bool excludeFullyCanvassed = false, CancellationToken ct = default);
+    Task<PagedResponse<PurchaseRequestSummaryDto>> SearchAsync(string? keyword = null, PurchaseRequestStatus? status = null, int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, bool excludeFullyCanvassed = false, bool excludeWithIar = false, CancellationToken ct = default);
     Task<IReadOnlyList<PurchaseRequestStatusCountDto>> GetStatusCountsAsync(DateOnly? fromDate = null, DateOnly? toDate = null, CancellationToken ct = default);
     Task<PurchaseRequestDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<byte[]> GetPrintPdfAsync(Guid id, string? pageWidth = null, string? pageHeight = null, CancellationToken ct = default);
@@ -48,7 +48,7 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
 {
     private const string Base = "api/v1/procurement/purchase-requests";
 
-    public Task<PagedResponse<PurchaseRequestSummaryDto>> SearchAsync(string? keyword = null, PurchaseRequestStatus? status = null, int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, bool excludeFullyCanvassed = false, CancellationToken ct = default)
+    public Task<PagedResponse<PurchaseRequestSummaryDto>> SearchAsync(string? keyword = null, PurchaseRequestStatus? status = null, int page = 1, int pageSize = 20, DateOnly? fromDate = null, DateOnly? toDate = null, bool excludeFullyCanvassed = false, bool excludeWithIar = false, CancellationToken ct = default)
     {
         var q = HttpUtility.ParseQueryString(string.Empty);
         if (!string.IsNullOrWhiteSpace(keyword)) q["Keyword"] = keyword;
@@ -56,6 +56,7 @@ internal sealed class PurchaseRequestClient(HttpClient http) : IPurchaseRequestC
         if (fromDate.HasValue) q["FromDate"] = fromDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (toDate.HasValue) q["ToDate"] = toDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (excludeFullyCanvassed) q["ExcludeFullyCanvassed"] = "true";
+        if (excludeWithIar) q["ExcludeWithIar"] = "true";
         q["PageNumber"] = page.ToString(CultureInfo.InvariantCulture);
         q["PageSize"] = pageSize.ToString(CultureInfo.InvariantCulture);
         return http.GetFromJsonAsync<PagedResponse<PurchaseRequestSummaryDto>>($"{Base}?{q}", ProcurementJson.Options, ct)!;

@@ -1,6 +1,5 @@
 using AMIS.Blazor.Services;
 using Microsoft.AspNetCore.Authentication;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 
 namespace AMIS.Blazor.Services.Api;
@@ -16,12 +15,6 @@ internal sealed class AuthorizationHeaderHandler : DelegatingHandler
     private readonly IServiceProvider _serviceProvider;
     private readonly ICircuitTokenCache _circuitTokenCache;
     private readonly ILogger<AuthorizationHeaderHandler> _logger;
-
-    /// <summary>
-    /// Buffer time before token expiration to proactively refresh.
-    /// This prevents edge cases where token expires during request processing.
-    /// </summary>
-    private static readonly TimeSpan TokenExpirationBuffer = TimeSpan.FromMinutes(2);
 
     /// <summary>
     /// Track if sign-out has already been initiated to prevent multiple sign-out attempts.
@@ -56,8 +49,20 @@ internal sealed class AuthorizationHeaderHandler : DelegatingHandler
             return CreateSyntheticUnauthorizedResponse(request);
         }
 
-        // Get current access token from circuit cache or claims
-        var accessToken = await GetAccessTokenAsync();
+        // Get current access token from the circuit cache, hydrating from the shared session store
+        var accessToken = await GetAccessTokenAsync(cancellationToken);
+
+        // An authenticated cookie with no tokens behind it means the session store entry is gone
+        // (evicted, expired, or signed out elsewhere). The cookie is useless — end the session
+        // rather than firing off requests that will all 401.
+        if (string.IsNullOrEmpty(accessToken) && IsAuthenticated() && !_signOutInitiated)
+        {
+            _logger.LogInformation("Authenticated cookie has no session tokens - signing out");
+            _signOutInitiated = true;
+            MarkSessionExpired();
+            await SignOutUserAsync();
+            return CreateSyntheticUnauthorizedResponse(request);
+        }
 
         // Attach access token to request
         if (!string.IsNullOrEmpty(accessToken))
@@ -183,70 +188,22 @@ internal sealed class AuthorizationHeaderHandler : DelegatingHandler
         };
     }
 
-    private Task<string?> GetAccessTokenAsync()
+    private async Task<string?> GetAccessTokenAsync(CancellationToken cancellationToken)
     {
         try
         {
-            // First, check circuit-scoped cache for refreshed tokens
-            // This is critical because httpContext.User claims are cached per circuit
-            // and don't update even after SignInAsync
-            if (!string.IsNullOrEmpty(_circuitTokenCache.AccessToken))
-            {
-                return Task.FromResult<string?>(_circuitTokenCache.AccessToken);
-            }
-
-            // Fall back to claims (initial token from cookie)
-            var httpContext = _httpContextAccessor.HttpContext;
-            var user = httpContext?.User;
-
-            if (user?.Identity?.IsAuthenticated == true)
-            {
-                return Task.FromResult(user.FindFirst("access_token")?.Value);
-            }
+            // In-memory for this circuit, else read the shared session store via the cookie's session id
+            return await _circuitTokenCache.GetAccessTokenAsync(cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Failed to get access token");
-        }
-
-        return Task.FromResult<string?>(null);
-    }
-
-    /// <summary>
-    /// Checks if the JWT token is about to expire within the buffer window.
-    /// </summary>
-    private bool IsTokenExpiringSoon(string token)
-    {
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-
-            if (jwtToken.ValidTo == DateTime.MinValue)
-            {
-                // Token doesn't have an expiration, consider it valid
-                return false;
-            }
-
-            var timeUntilExpiration = jwtToken.ValidTo - DateTime.UtcNow;
-            var isExpiringSoon = timeUntilExpiration <= TokenExpirationBuffer;
-
-            if (isExpiringSoon)
-            {
-                _logger.LogDebug(
-                    "Token expires in {Minutes:F1} minutes (buffer: {Buffer} minutes)",
-                    timeUntilExpiration.TotalMinutes,
-                    TokenExpirationBuffer.TotalMinutes);
-            }
-
-            return isExpiringSoon;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to parse JWT token for expiration check");
-            return false;
+            return null;
         }
     }
+
+    private bool IsAuthenticated() =>
+        _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated == true;
 
     private async Task<string?> TryRefreshTokenAsync(CancellationToken cancellationToken)
     {

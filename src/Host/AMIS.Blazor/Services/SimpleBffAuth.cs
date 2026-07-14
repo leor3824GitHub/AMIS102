@@ -1,4 +1,5 @@
 using AMIS.Blazor.ApiClient;
+using AMIS.Blazor.Services.Api;
 using AMIS.Framework.Shared.Multitenancy;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,6 +18,7 @@ internal static class SimpleBffAuth
         app.MapPost("/bff/auth/login", async (
             HttpContext httpContext,
             ITokenClient tokenClient,
+            ISessionTokenStore tokenStore,
             ILogger<Program> logger) =>
         {
             try
@@ -63,12 +65,17 @@ internal static class SimpleBffAuth
                             c.Type == "sub")?.Value
                     ?? Guid.NewGuid().ToString();
 
+                // Tokens go to the session store, NOT into the cookie. The API rotates the refresh
+                // token on every refresh and a circuit cannot rewrite the cookie, so a cookie-borne
+                // token would go stale on first refresh and get the next circuit signed out.
+                var sessionId = Guid.NewGuid().ToString("N");
+                await tokenStore.SaveAsync(sessionId, new SessionTokens(token.AccessToken, token.RefreshToken));
+
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, userId),
                     new(ClaimTypes.Email, email),
-                    new("access_token", token.AccessToken), // Store JWT for API calls
-                    new("refresh_token", token.RefreshToken), // Store refresh token for token renewal
+                    new(CircuitTokenCache.SessionIdClaim, sessionId), // Looks up the token pair
                     new("tenant", normalizedTenant), // Store tenant for token refresh
                 };
 
@@ -122,16 +129,18 @@ internal static class SimpleBffAuth
         .DisableAntiforgery();
 
         // Logout endpoint - POST for API calls
-        app.MapPost("/bff/auth/logout", async (HttpContext httpContext) =>
+        app.MapPost("/bff/auth/logout", async (HttpContext httpContext, ISessionTokenStore tokenStore) =>
         {
+            await DiscardSessionTokensAsync(httpContext, tokenStore);
             await httpContext.SignOutAsync("Cookies");
             return Results.Ok();
         })
         .DisableAntiforgery();
 
         // Logout endpoint - GET for browser redirects (ensures cookie is cleared in browser)
-        app.MapGet("/auth/logout", async (HttpContext httpContext) =>
+        app.MapGet("/auth/logout", async (HttpContext httpContext, ISessionTokenStore tokenStore) =>
         {
+            await DiscardSessionTokensAsync(httpContext, tokenStore);
             await httpContext.SignOutAsync("Cookies");
 
             var toast = httpContext.Request.Query["toast"].ToString();
@@ -143,6 +152,16 @@ internal static class SimpleBffAuth
             return Results.Redirect($"/login?toast={Uri.EscapeDataString(toast)}");
         })
         .AllowAnonymous();
+    }
+
+    /// <summary>Deletes the session's token pair so a stolen cookie can't be replayed against the store.</summary>
+    private static async Task DiscardSessionTokensAsync(HttpContext httpContext, ISessionTokenStore tokenStore)
+    {
+        var sessionId = httpContext.User.GetSessionId();
+        if (sessionId is not null)
+        {
+            await tokenStore.RemoveAsync(sessionId);
+        }
     }
 }
 

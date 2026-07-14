@@ -18,10 +18,10 @@ public sealed record MentionNotification(Guid ChannelId, Guid MessageId, string 
 
 /// <summary>
 /// Circuit-scoped wrapper around the SignalR .NET client that connects to the app-wide <c>AppHub</c>.
-/// Feeds the existing JWT (from <see cref="ICircuitTokenCache"/>, falling back to the <c>access_token</c>
-/// claim) via <c>AccessTokenProvider</c> — which SignalR re-invokes on every (re)connect, so a token
-/// refreshed on the REST path is picked up automatically. Hub callbacks run off the render thread; the
-/// page marshals them with <c>InvokeAsync(StateHasChanged)</c>.
+/// Feeds the existing JWT (from <see cref="ICircuitTokenCache"/>) via <c>AccessTokenProvider</c> — which
+/// SignalR re-invokes on every (re)connect, so a token refreshed on the REST path is picked up
+/// automatically. Hub callbacks run off the render thread; the page marshals them with
+/// <c>InvokeAsync(StateHasChanged)</c>.
 /// </summary>
 internal sealed class ChatHubClient : IAsyncDisposable
 {
@@ -34,7 +34,6 @@ internal sealed class ChatHubClient : IAsyncDisposable
     private const string NotificationReadEvent = "NotificationRead";
 
     private readonly ICircuitTokenCache _tokenCache;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ChatHubClient> _logger;
@@ -43,13 +42,11 @@ internal sealed class ChatHubClient : IAsyncDisposable
 
     public ChatHubClient(
         ICircuitTokenCache tokenCache,
-        IHttpContextAccessor httpContextAccessor,
         IConfiguration configuration,
         IWebHostEnvironment environment,
         ILogger<ChatHubClient> logger)
     {
         _tokenCache = tokenCache;
-        _httpContextAccessor = httpContextAccessor;
         _configuration = configuration;
         _environment = environment;
         _logger = logger;
@@ -88,7 +85,7 @@ internal sealed class ChatHubClient : IAsyncDisposable
             .WithUrl(hubUrl, options =>
             {
                 // SignalR calls this on every (re)connect — always read the freshest token.
-                options.AccessTokenProvider = () => Task.FromResult(GetAccessToken());
+                options.AccessTokenProvider = GetAccessTokenAsync;
 
                 if (bypassCert)
                 {
@@ -165,9 +162,7 @@ internal sealed class ChatHubClient : IAsyncDisposable
         }
     }
 
-    private string? GetAccessToken() =>
-        _tokenCache.AccessToken
-        ?? _httpContextAccessor.HttpContext?.User?.FindFirst("access_token")?.Value;
+    private Task<string?> GetAccessTokenAsync() => _tokenCache.GetAccessTokenAsync();
 
     private bool IsDevLocalhost(Uri apiUri) =>
         _environment.IsDevelopment() &&

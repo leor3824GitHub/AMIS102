@@ -2,6 +2,9 @@
 
 **Date:** May 14, 2026  
 **Status:** Phases 1–2 complete · Phase 3 in progress (reconciled against code 2026-06-10)  
+**⚠️ Stale:** the Phase 3 worklist below has **not** been re-verified since 2026-06-10. The `AMISDataTable` /
+`AMISButton` sweeps done under `BLAZOR-UI-IMPROVEMENT-PLAN.md` likely closed part of it. **Re-reconcile against
+the code before working this plan** — do not trust the page counts as-is.  
 **Priority:** Medium (UX consistency & maintainability)  
 
 ---

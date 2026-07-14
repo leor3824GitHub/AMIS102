@@ -327,9 +327,11 @@
     {
         try
         {
+            // excludeWithIar: a PR whose goods have already been received (its PO carries a non-cancelled IAR)
+            // is finished procurement — it must not be offered as the origin of a new Job Order.
             var result = await PurchaseRequestClient.SearchAsync(
                 keyword: string.IsNullOrWhiteSpace(value) ? null : value,
-                page: 1, pageSize: 20, ct: ct);
+                page: 1, pageSize: 20, excludeWithIar: true, ct: ct);
             return result.Items ?? Enumerable.Empty<PurchaseRequestSummaryDto>();
         }
         catch

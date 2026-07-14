@@ -1,5 +1,6 @@
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
+using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
@@ -35,6 +36,18 @@ public sealed class SearchPurchaseRequestsQueryHandler(ProcurementDbContext dbCo
 
         if (query.ToDate.HasValue)
             q = q.Where(x => x.PrDate <= query.ToDate.Value);
+
+        if (query.ExcludeWithIar == true)
+        {
+            // Drop PRs whose goods are already received: some purchase order raised against the PR carries a
+            // non-cancelled IAR. IARs hang off a PO (never off a PR or a Job Order directly), so this walks
+            // PR → PO → IAR. Both are regular tables, so it translates to a nested SQL NOT EXISTS.
+            q = q.Where(x => !dbContext.PurchaseOrders
+                .Any(po => po.PurchaseRequestId == x.Id
+                           && dbContext.InspectionAcceptanceReports
+                               .Any(iar => iar.PurchaseOrderId == po.Id
+                                           && iar.Status != InspectionAcceptanceReportStatus.Cancelled)));
+        }
 
         if (query.ExcludeFullyCanvassed == true)
         {

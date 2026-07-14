@@ -197,6 +197,17 @@ public sealed class SearchPurchaseRequestsQuery : IQuery<PagedResponse<PurchaseR
     /// </summary>
     public bool? ExcludeFullyCanvassed { get; set; }
 
+    /// <summary>
+    /// When <c>true</c>, excludes purchase requests whose goods have already been received — that is, one of the
+    /// PR's purchase orders already carries a non-cancelled Inspection &amp; Acceptance Report. Used by the Job
+    /// Order "Link Purchase Request" picker so a PR drops off once its procurement has been inspected and accepted.
+    /// </summary>
+    /// <remarks>
+    /// IARs hang off a <c>PurchaseOrder</c> — never off a PR or a Job Order directly — so the check walks
+    /// PR → PO → IAR. (A Job Order records its own inspection inline and never produces an IAR.)
+    /// </remarks>
+    public bool? ExcludeWithIar { get; set; }
+
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 10;
 }

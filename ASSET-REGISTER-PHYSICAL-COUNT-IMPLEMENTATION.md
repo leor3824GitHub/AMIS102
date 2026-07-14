@@ -1,8 +1,9 @@
 # AssetRegister — Physical Count "Balance = Found" Implementation Guide
 
-> **Status:** Backend complete. Migration `20260611120000_PhysicalCountFoundAtStationIdentity` adds `ProposedPropertyNo`/`ProposedCatalogItemId` columns (apply before running).
-> Blazor (Annex B/C print, FAS dialog with catalog autocomplete) complete. MAUI Phase 1b (record-as-you-go + catalog picker) complete.
-> **Last updated:** 2026-06-11
+> **Status: COMPLETE** — backend, Blazor, MAUI, and all print formats (RPCPPE + Annex B/C). Nothing outstanding
+> except the COA-circular refinements in §5, which are backlog by design.
+> Migration `20260611120000_PhysicalCountFoundAtStationIdentity` adds `ProposedPropertyNo`/`ProposedCatalogItemId` columns (apply before running).
+> **Last updated:** 2026-07-14 (reconciled against HEAD)
 > **Module:** `src/Modules/AssetRegister`
 > **Legal basis:** COA Circular No. 2020-006 (Jan 31, 2020) — physical count of PPE, recognition of
 > items found at station, disposition of non-existing/missing PPE.
@@ -140,9 +141,13 @@ Also update `PhysicalCountSession.Close` guard: the "FoundAtStation entry has no
 
 **MAUI — landed 2026-06-11:** `PhysicalCountFoundAtStationPage` PropertyNo changed from a read-only label to an
 editable `Entry` (manual-entry fallback for damaged/missing stickers, per MAUI rules); VM validates PropertyNo is
-non-empty before save (already normalized `.Trim().ToUpperInvariant()`). Note: MAUI counting targets the
-**AssetManagement** physical-count API, not AssetRegister.Counting — the catalog-item / proposed-identity
-materialization is an AssetRegister concept and does not apply to MAUI's current backend (rewiring out of scope).
+non-empty before save (already normalized `.Trim().ToUpperInvariant()`).
+
+> **Superseded 2026-07-14:** the note that once stood here — "MAUI counting targets the AssetManagement
+> physical-count API, rewiring out of scope" — is obsolete. The `AssetManagement` module has been **deleted**
+> from HEAD and MAUI now calls AssetRegister's record-as-you-go counting endpoints
+> (`AMIS.Maui/Services/ApiClient.cs`). Blazor's location autocomplete likewise no longer depends on an
+> `asset-management` route or an AssetManagement `Locations.View` permission — read the code above as historical.
 
 **Annex B / Annex C print-parity — landed 2026-06-11 (QuestPDF):**
 - `Modules.QuestPdfReporting` now references `Modules.AssetRegister.Contracts`; new slice
@@ -153,10 +158,15 @@ materialization is an AssetRegister concept and does not apply to MAUI's current
   `Endpoints/AssetRegisterEndpoints.cs`. Blazor reconciliation panel gained **Annex B / Annex C** download buttons
   (`GetCountAnnexPdfAsync`, data-URL open).
 
-**Still pending:**
-- Full RPCPPE (Appendix 73) print-parity — the main count report itself (Annexes B/C done; RPCPPE form still uses the
-  AssetManagement reports path).
-- Regenerate NSwag client if used for these endpoints.
+**Still pending: nothing.** (Reconciled against HEAD 2026-07-14.)
+
+- ~~Full RPCPPE (Appendix 73) print-parity~~ — **done.** The main count report now has its own QuestPDF slice,
+  `Features/v1/AssetRegister/PrintPhysicalCountReport/` (`PrintPhysicalCountReportQuery` + `PhysicalCountReportPdfDocument`
+  + endpoint). It no longer routes through the (now deleted) AssetManagement reports path.
+- ~~Regenerate NSwag client~~ — **not applicable.** NSwag regeneration is deferred by explicit decision across the
+  Blazor client; these endpoints are consumed via raw `HttpClient`.
+
+Remaining work on physical count is limited to the COA-circular refinements in §5 below, which are backlog by design.
 
 ---
 

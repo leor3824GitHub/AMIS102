@@ -128,8 +128,13 @@ builder.Services.AddScoped<IAssumedAccountabilityDatePreference, AssumedAccounta
 // Auth state notifier for session expiration (Blazor-compatible)
 builder.Services.AddScoped<IAuthStateNotifier, AuthStateNotifier>();
 
-// Circuit-scoped token cache for storing refreshed tokens
-// Critical: httpContext.User claims are cached per circuit and don't update after SignInAsync
+// Session token store: the token pair lives server-side, keyed by the session id in the auth cookie.
+// Critical: the API rotates the refresh token on every refresh and a circuit cannot rewrite the cookie
+// (SignInAsync throws once the SignalR response has started), so tokens must not live in the cookie —
+// otherwise a reload or second tab replays the rotated-away token and gets signed out.
+builder.Services.AddSingleton<ISessionTokenStore, SessionTokenStore>();
+
+// Circuit-scoped L1 over that store
 builder.Services.AddScoped<ICircuitTokenCache, CircuitTokenCache>();
 
 // Authorization header handler for API calls

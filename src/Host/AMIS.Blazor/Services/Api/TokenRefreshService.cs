@@ -1,7 +1,5 @@
 using AMIS.Blazor.ApiClient;
-using Microsoft.AspNetCore.Authentication;
 using System.Diagnostics.Metrics;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace AMIS.Blazor.Services.Api;
@@ -60,7 +58,7 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
             return null;
         }
 
-        var currentRefreshToken = GetCurrentRefreshToken(httpContext);
+        var currentRefreshToken = await _circuitTokenCache.GetRefreshTokenAsync(cancellationToken);
         if (string.IsNullOrEmpty(currentRefreshToken))
         {
             _logger.LogDebug("No refresh token available");
@@ -86,14 +84,6 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
         }
 
         return await RefreshWithLockAsync(httpContext, currentRefreshToken, cancellationToken);
-    }
-
-    private string? GetCurrentRefreshToken(HttpContext httpContext)
-    {
-        var circuitRefreshToken = _circuitTokenCache.RefreshToken;
-        var claimsRefreshToken = httpContext.User?.FindFirst("refresh_token")?.Value;
-
-        return !string.IsNullOrEmpty(circuitRefreshToken) ? circuitRefreshToken : claimsRefreshToken;
     }
 
     private bool IsTokenRecentlyFailed(string refreshToken) =>
@@ -152,7 +142,7 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
             return null;
         }
 
-        var tokens = GetCurrentTokens(user);
+        var tokens = await GetCurrentTokensAsync(user, cancellationToken);
         if (tokens is null)
         {
             return null;
@@ -166,9 +156,9 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
                 return null;
             }
 
-            var newClaims = BuildNewClaims(user, refreshResponse);
-            UpdateCaches(refreshResponse, currentRefreshToken);
-            await TryUpdateCookieAsync(httpContext, newClaims);
+            // Persist to the shared session store — this is what lets the next circuit (reload,
+            // second tab, reconnect) use the rotated pair instead of the dead login-time one.
+            await UpdateCachesAsync(refreshResponse, currentRefreshToken, cancellationToken);
 
             RefreshSuccessCounter.Add(1);
             _logger.LogInformation("Access token refreshed successfully");
@@ -177,7 +167,7 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
         catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 401)
         {
             var reasonCode = ResolveFailureReasonCode(ex);
-            HandleRefreshFailure(currentRefreshToken, ex, reasonCode);
+            await HandleRefreshFailureAsync(currentRefreshToken, ex, reasonCode, cancellationToken);
             return null;
         }
         catch (Exception ex)
@@ -188,16 +178,12 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
         }
     }
 
-    private (string AccessToken, string RefreshToken, string Tenant)? GetCurrentTokens(ClaimsPrincipal user)
+    private async Task<(string AccessToken, string RefreshToken, string Tenant)?> GetCurrentTokensAsync(
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
     {
-        var currentAccessToken = !string.IsNullOrEmpty(_circuitTokenCache.AccessToken)
-            ? _circuitTokenCache.AccessToken
-            : user.FindFirst("access_token")?.Value;
-
-        var refreshToken = !string.IsNullOrEmpty(_circuitTokenCache.RefreshToken)
-            ? _circuitTokenCache.RefreshToken
-            : user.FindFirst("refresh_token")?.Value;
-
+        var currentAccessToken = await _circuitTokenCache.GetAccessTokenAsync(cancellationToken);
+        var refreshToken = await _circuitTokenCache.GetRefreshTokenAsync(cancellationToken);
         var tenant = user.FindFirst("tenant")?.Value ?? "root";
 
         if (string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(currentAccessToken))
@@ -230,80 +216,25 @@ internal sealed class TokenRefreshService : ITokenRefreshService, IDisposable
         return refreshResponse;
     }
 
-    private static List<Claim> BuildNewClaims(ClaimsPrincipal user, RefreshTokenCommandResponse response)
+    private async Task UpdateCachesAsync(
+        RefreshTokenCommandResponse response,
+        string oldRefreshToken,
+        CancellationToken cancellationToken)
     {
-        var jwtHandler = new JwtSecurityTokenHandler();
-        var jwtToken = jwtHandler.ReadJwtToken(response.Token);
-        var tenant = user.FindFirst("tenant")?.Value ?? "root";
-
-        var newClaims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier,
-                jwtToken.Subject
-                ?? jwtToken.Claims.FirstOrDefault(c =>
-                        c.Type == ClaimTypes.NameIdentifier ||
-                        c.Type == "nameid" ||
-                        c.Type == "sub")?.Value
-                ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? Guid.NewGuid().ToString()),
-            new(ClaimTypes.Email, user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty),
-            new("access_token", response.Token),
-            new("refresh_token", response.RefreshToken),
-            new("tenant", tenant),
-        };
-
-        AddNameClaim(newClaims, jwtToken);
-        AddRoleClaims(newClaims, jwtToken);
-
-        return newClaims;
-    }
-
-    private static void AddNameClaim(List<Claim> claims, JwtSecurityToken jwtToken)
-    {
-        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "name" || c.Type == ClaimTypes.Name);
-        if (nameClaim != null)
-        {
-            claims.Add(new Claim(ClaimTypes.Name, nameClaim.Value));
-        }
-    }
-
-    private static void AddRoleClaims(List<Claim> claims, JwtSecurityToken jwtToken)
-    {
-        var roleClaims = jwtToken.Claims.Where(c => c.Type == "role" || c.Type == ClaimTypes.Role);
-        claims.AddRange(roleClaims.Select(r => new Claim(ClaimTypes.Role, r.Value)));
-    }
-
-    private void UpdateCaches(RefreshTokenCommandResponse response, string oldRefreshToken)
-    {
-        _circuitTokenCache.UpdateTokens(response.Token, response.RefreshToken);
+        await _circuitTokenCache.UpdateTokensAsync(response.Token, response.RefreshToken, cancellationToken);
 
         _lastRefreshedToken = response.Token;
         _cachedForRefreshToken = oldRefreshToken;
         _lastRefreshTime = DateTime.UtcNow;
     }
 
-    private static async Task TryUpdateCookieAsync(HttpContext httpContext, List<Claim> newClaims)
+    private async Task HandleRefreshFailureAsync(
+        string currentRefreshToken,
+        ApiException ex,
+        string reasonCode,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var identity = new ClaimsIdentity(newClaims, "Cookies");
-            var principal = new ClaimsPrincipal(identity);
-
-            await httpContext.SignInAsync("Cookies", principal, new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
-            });
-        }
-        catch (InvalidOperationException)
-        {
-            // Expected in Blazor Server SignalR context
-        }
-    }
-
-    private void HandleRefreshFailure(string currentRefreshToken, ApiException ex, string reasonCode)
-    {
-        _circuitTokenCache.Clear();
+        await _circuitTokenCache.ClearAsync(cancellationToken);
         _lastRefreshedToken = null;
         _cachedForRefreshToken = null;
         _lastRefreshTime = DateTime.MinValue;
