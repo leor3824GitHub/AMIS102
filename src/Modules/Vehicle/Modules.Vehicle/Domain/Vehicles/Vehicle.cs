@@ -1,6 +1,5 @@
 ﻿using AMIS.Framework.Core.Domain;
 using AMIS.Modules.Vehicle.Domain.Events;
-using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.Vehicles;
 
@@ -57,7 +56,6 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public decimal? AcquisitionCost { get; private set; }  // mirrored from PPE asset UnitCost at enrollment
 
     public string? Notes { get; set; }
-    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
@@ -105,15 +103,12 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             EngineDisplacementCC = engineDisplacementCC,
             FuelType = fuelType,
             VehicleUse = vehicleUse,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
 
         vehicle.AddDomainEvent(VehicleCreatedEvent.Create(vehicle.Id, tenantId, vehicle.PlateNumber, vehicle.Make, vehicle.Model, vehicle.Year));
         return vehicle;
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void Update(string plateNumber, string make, string model, int year, VehicleType type, string? notes,
         string? motorNumber = null, string? chassisNumber = null,
@@ -132,9 +127,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         EngineDisplacementCC = engineDisplacementCC;
         FuelType = fuelType;
         VehicleUse = vehicleUse;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void UpdateOdometer(int reading)
     {
@@ -142,9 +135,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Odometer reading cannot be less than the current reading.");
 
         Odometer = reading;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void MarkUnderRepair()
     {
@@ -155,9 +146,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Only active vehicles can be moved to under repair.");
 
         Status = VehicleStatus.UnderRepair;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void Reactivate()
     {
@@ -168,9 +157,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Vehicle cannot be reactivated from its current status.");
 
         Status = VehicleStatus.Active;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-        AddDomainEvent(VehicleReactivatedEvent.Create(Id, TenantId, PlateNumber));
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;        AddDomainEvent(VehicleReactivatedEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void Retire()
@@ -182,9 +169,7 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Only active vehicles can be retired.");
 
         Status = VehicleStatus.Retired;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-        AddDomainEvent(VehicleRetiredEvent.Create(Id, TenantId, PlateNumber));
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;        AddDomainEvent(VehicleRetiredEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void Decommission()
@@ -196,18 +181,14 @@ public class Vehicle : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Only active or retired vehicles can be decommissioned.");
 
         Status = VehicleStatus.Decommissioned;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-        AddDomainEvent(VehicleDecommissionedEvent.Create(Id, TenantId, PlateNumber));
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;        AddDomainEvent(VehicleDecommissionedEvent.Create(Id, TenantId, PlateNumber));
     }
 
     public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
-        DeletedBy = deletedBy;
-        Version = NewVersion();
-    }
+        DeletedBy = deletedBy;    }
 
     internal void SetCreatedBy(string? userId)
     {

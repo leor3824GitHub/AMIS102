@@ -19,7 +19,14 @@ public sealed class VehicleDailyUsageConfiguration : IEntityTypeConfiguration<Ve
         builder.Property(x => x.Remarks).HasMaxLength(1000);
         builder.Property(x => x.FuelLiters).HasPrecision(18, 3);
         builder.Property(x => x.FuelCost).HasPrecision(18, 2);
-        builder.Property(x => x.Version).IsConcurrencyToken();
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
+
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
 
         builder.HasOne<VehicleEntity>()

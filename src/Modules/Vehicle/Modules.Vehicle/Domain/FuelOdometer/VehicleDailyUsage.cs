@@ -1,5 +1,4 @@
 ﻿using AMIS.Framework.Core.Domain;
-using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.FuelOdometer;
 
@@ -17,7 +16,6 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
     public decimal CostPerKm => CalculateCostPerKm(DistanceKm, FuelCost);
     public string? Destination { get; private set; }
     public string? Remarks { get; private set; }
-    public byte[] Version { get; private set; } = [];
 
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; private set; }
@@ -54,8 +52,7 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
             FuelCost = fuelCost,
             Destination = destination,
             Remarks = remarks,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
 
@@ -78,17 +75,13 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
         FuelCost = fuelCost;
         Destination = destination;
         Remarks = remarks;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
-        DeletedBy = deletedBy;
-        Version = NewVersion();
-    }
+        DeletedBy = deletedBy;    }
 
     internal void SetCreatedBy(string? userId)
     {
@@ -120,7 +113,5 @@ public sealed class VehicleDailyUsage : AggregateRoot<Guid>, IHasTenant, IAudita
         if (fuelCost < 0)
             throw new InvalidOperationException("Fuel cost must be zero or greater.");
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 }
 

@@ -19,7 +19,14 @@ public class MaintenanceLogConfiguration : IEntityTypeConfiguration<MaintenanceL
         builder.Property(l => l.Cost).HasPrecision(18, 2);
         builder.Property(l => l.PerformedBy).HasMaxLength(255);
         builder.Property(l => l.Notes).HasMaxLength(2000);
-        builder.Property(l => l.Version).IsConcurrencyToken();
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
+
         builder.Property(l => l.IsDeleted).HasDefaultValue(false);
 
         builder.HasIndex(l => new { l.TenantId, l.VehicleId });

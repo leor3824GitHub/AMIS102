@@ -33,7 +33,14 @@ public class VehicleConfiguration : IEntityTypeConfiguration<VehicleEntity>
         builder.Property(v => v.VehicleUse).HasMaxLength(100);
         builder.Property(v => v.AcquisitionCost).HasPrecision(18, 2);
 
-        builder.Property(v => v.Version).IsConcurrencyToken();
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
+
         builder.Property(v => v.IsDeleted).HasDefaultValue(false);
 
         builder.HasIndex(v => new { v.TenantId, v.PlateNumber }).IsUnique();

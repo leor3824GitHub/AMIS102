@@ -1,5 +1,4 @@
 ﻿using AMIS.Framework.Core.Domain;
-using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.Maintenance;
 
@@ -16,7 +15,6 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
     public DateOnly? LastDoneDate { get; private set; }
     public int? LastDoneMileage { get; private set; }
     public bool IsActive { get; private set; } = true;
-    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
@@ -45,12 +43,9 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
             DueDate = initialDueDate,
             DueMileage = initialDueMileage,
             IsActive = true,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void Update(string maintenanceType, string? description,
         int? intervalDays, int? intervalMileage, DateOnly? dueDate, int? dueMileage)
@@ -61,9 +56,7 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         IntervalMileage = intervalMileage;
         DueDate = dueDate;
         DueMileage = dueMileage;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Records a completed maintenance and advances the next due date/mileage.</summary>
     public void RecordCompletion(DateOnly doneDate, int? doneMileage)
@@ -77,31 +70,23 @@ public class MaintenanceSchedule : AggregateRoot<Guid>, IHasTenant, IAuditableEn
         if (IntervalMileage.HasValue && doneMileage.HasValue)
             DueMileage = doneMileage.Value + IntervalMileage.Value;
 
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void Activate()
     {
         IsActive = true;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void Deactivate()
     {
         IsActive = false;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
-        DeletedBy = deletedBy;
-        Version = NewVersion();
-    }
+        DeletedBy = deletedBy;    }
 
     internal void SetCreatedBy(string? userId)
     {

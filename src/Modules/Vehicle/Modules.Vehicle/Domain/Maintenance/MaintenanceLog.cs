@@ -1,5 +1,4 @@
 ﻿using AMIS.Framework.Core.Domain;
-using System.Security.Cryptography;
 
 namespace AMIS.Modules.Vehicle.Domain.Maintenance;
 
@@ -15,7 +14,6 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public decimal? Cost { get; private set; }
     public string? PerformedBy { get; private set; }
     public string? Notes { get; set; }
-    public byte[] Version { get; private set; } = [];
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; private set; } = DateTimeOffset.UtcNow;
@@ -45,12 +43,9 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             Cost = cost,
             PerformedBy = performedBy,
             Notes = notes,
-            CreatedOnUtc = DateTimeOffset.UtcNow,
-            Version = NewVersion()
+            CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     public void Update(string maintenanceType, DateOnly performedDate, int? odometerAtService,
         string? description, decimal? cost, string? performedBy, string? notes)
@@ -62,17 +57,13 @@ public class MaintenanceLog : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         Cost = cost;
         PerformedBy = performedBy;
         Notes = notes;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     public void SoftDelete(string deletedBy)
     {
         IsDeleted = true;
         DeletedOnUtc = DateTimeOffset.UtcNow;
-        DeletedBy = deletedBy;
-        Version = NewVersion();
-    }
+        DeletedBy = deletedBy;    }
 
     internal void SetCreatedBy(string? userId)
     {

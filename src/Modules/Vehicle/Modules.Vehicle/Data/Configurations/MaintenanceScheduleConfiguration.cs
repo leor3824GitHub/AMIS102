@@ -17,7 +17,14 @@ public class MaintenanceScheduleConfiguration : IEntityTypeConfiguration<Mainten
         builder.Property(s => s.MaintenanceType).HasMaxLength(100).IsRequired();
         builder.Property(s => s.Description).HasMaxLength(1000);
         builder.Property(s => s.IsActive).HasDefaultValue(true);
-        builder.Property(s => s.Version).IsConcurrencyToken();
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
+
         builder.Property(s => s.IsDeleted).HasDefaultValue(false);
 
         builder.HasIndex(s => new { s.TenantId, s.VehicleId });
