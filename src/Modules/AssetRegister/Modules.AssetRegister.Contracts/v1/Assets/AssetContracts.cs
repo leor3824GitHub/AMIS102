@@ -47,6 +47,10 @@ public sealed record AssetRegistrySummaryDto(
     Guid Id,
     string PropertyNo,
     AssetType AssetType,
+    // Semi-expendable low/high classification (PPE assets carry Category.PPE). Surfaced on the summary
+    // so callers can enforce COA Circular 2022-004 §4.14 (no low+high mix on one ICS) at selection time
+    // without a per-row detail fetch.
+    AssetCategory Category,
     string Description,
     decimal UnitCost,
     DateOnly AcquisitionDate,

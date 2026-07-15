@@ -5,6 +5,7 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Pages.Procurement
 @inject IArAccountabilityClient Client
+@inject IArReturnedPropertyClient ReturnedPropertyClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 @inject IDialogService DialogService
@@ -97,11 +98,23 @@ else
                                     </MudChip>
                                 </MudTd>
                                 <MudTd DataLabel="Status">
-                                    <MudChip T="string" Size="Size.Small"
-                                             Color="@StatusColor(context.Status)"
-                                             Variant="Variant.Filled">
-                                        @FormatStatus(context.Status)
-                                    </MudChip>
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@StatusColor(context.Status)"
+                                                 Variant="Variant.Filled">
+                                            @FormatStatus(context.Status)
+                                        </MudChip>
+                                        @if (context.PendingReturnStatus is { } prs)
+                                        {
+                                            <MudTooltip Text="A return you requested is in progress on the Returned Property worklist.">
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Color="@ReturnStateColor(prs)" Variant="Variant.Outlined"
+                                                         Icon="@Icons.Material.Filled.AssignmentReturn">
+                                                    @ReturnStateLabel(prs)
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
                                 </MudTd>
                                 <MudTd DataLabel="Issued On">@context.IssuedOn.ToString("yyyy-MM-dd")</MudTd>
                                 <MudTd DataLabel="Expires On">@(context.ExpiresOn?.ToString("yyyy-MM-dd") ?? "—")</MudTd>
@@ -137,7 +150,15 @@ else
                                                                 Disabled="@(_acceptingId == context.Id)" />
                                             </MudTooltip>
                                         }
-                                        @if (context.Status == AccountabilityStatus.Active && _canRequestReturn)
+                                        @if (context.PendingReturnStatus is not null && _canRequestReturn)
+                                        {
+                                            <MudTooltip Text="Withdraw Return Request">
+                                                <AMISIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
+                                                                Color="Color.Warning" OnClick="@(() => WithdrawReturnAsync(context))"
+                                                                Disabled="@(_withdrawingId == context.Id)" />
+                                            </MudTooltip>
+                                        }
+                                        else if (context.Status == AccountabilityStatus.Active && _canRequestReturn)
                                         {
                                             <MudTooltip Text="Request Return">
                                                 <AMISIconButton Icon="@Icons.Material.Filled.AssignmentReturn" Size="Size.Small"
@@ -284,6 +305,7 @@ else
     private bool _busy;
     private Guid? _printingId;
     private Guid? _acceptingId;
+    private Guid? _withdrawingId;
     private string? _error;
     private string? _keyword;
     private AccountabilityType? _typeFilter;
@@ -404,6 +426,39 @@ else
         var result = await dialog.Result;
         if (result is not null && !result.Canceled)
             await LoadAsync();
+    }
+
+    // Withdraw the in-flight return the user requested — without leaving My Accountability. Only offered while
+    // the request is still Pending/Inspected (the server enforces the same rule). Reloads so the row's in-flight
+    // chip clears and "Request Return" returns.
+    private async Task WithdrawReturnAsync(ArAccountabilitySummaryDto item)
+    {
+        if (item.PendingReturnReceiptId is not Guid receiptId) return;
+
+        var confirmed = await DialogService.ShowMessageBox(
+            "Withdraw Return Request",
+            $"Withdraw the pending return request for {item.DocumentNo}? The property stays issued to you.",
+            yesText: "Yes, Withdraw", cancelText: "No");
+        if (confirmed != true) return;
+
+        _withdrawingId = item.Id;
+        try
+        {
+            await ReturnedPropertyClient.CancelAsync(receiptId, null);
+            Snackbar.Add($"Return request for {item.DocumentNo} withdrawn.", Severity.Info);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            // Cross-client race (e.g. an inspector just moved it forward, or a custodian accepted it):
+            // refresh so the row reflects the current state instead of offering a Withdraw that keeps failing.
+            await LoadAsync();
+        }
+        finally
+        {
+            _withdrawingId = null;
+        }
     }
 
     // Both ICS and PAR use a single landscape "2-up" Fast Report template (two copies
@@ -591,6 +646,20 @@ else
         AccountabilityStatus.Returned => Color.Info,
         AccountabilityStatus.Cancelled => Color.Error,
         AccountabilityStatus.PendingAcceptance => Color.Warning,
+        _ => Color.Default
+    };
+
+    // In-flight return state shown as a secondary chip beside the (still Active) document status.
+    private static string ReturnStateLabel(ReturnedPropertyReceiptStatus v) => v switch
+    {
+        ReturnedPropertyReceiptStatus.Pending => "Return Pending",
+        ReturnedPropertyReceiptStatus.Inspected => "Return Inspected",
+        _ => "Return In Progress"
+    };
+    private static Color ReturnStateColor(ReturnedPropertyReceiptStatus v) => v switch
+    {
+        ReturnedPropertyReceiptStatus.Pending => Color.Warning,
+        ReturnedPropertyReceiptStatus.Inspected => Color.Info,
         _ => Color.Default
     };
 }

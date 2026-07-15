@@ -5,6 +5,7 @@
              x:DataType="vm:ProfileViewModel"
              x:Class="AMIS.Maui.Features.Profile.ProfilePage"
              Title="Profile"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <ContentPage.Resources>
@@ -77,6 +78,19 @@
                                        Margin="0,4,0,0" />
 
                 </VerticalStackLayout>
+            </Border>
+
+            <!-- ── Error banner (only when a profile load fails) ── -->
+            <Border StrokeShape="RoundRectangle 12"
+                    Stroke="Transparent"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource DangerLight}, Dark={StaticResource Gray900}}"
+                    Padding="14,10"
+                    Margin="16,0,16,16"
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullConverter}}">
+                <Label Text="{Binding ErrorMessage}"
+                       FontSize="{StaticResource RowLabelFontSize}"
+                       TextColor="{StaticResource Danger}"
+                       HorizontalTextAlignment="Center" />
             </Border>
 
             <!-- ── Section: Account Information ── -->

@@ -180,6 +180,23 @@
         && _form.Items.Any(i => i.Asset?.Category == AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory.LowValuedSemi)
         && _form.Items.Any(i => i.Asset?.Category == AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory.HighValuedSemi);
 
+    // The single SE category the in-progress ICS is committed to, used to pre-lock the "Browse Available"
+    // picker. Returns null when nothing is attached yet, when this is a PAR, or (defensively) when the
+    // form already holds both categories — in which case the inline mix alert is doing the flagging.
+    private AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory? CurrentIcsCategory()
+    {
+        if (_form.Type != AccountabilityType.SE_ICS)
+            return null;
+
+        var categories = _form.Items
+            .Where(i => i.Asset is not null)
+            .Select(i => i.Asset!.Category)
+            .Distinct()
+            .ToList();
+
+        return categories.Count == 1 ? categories[0] : null;
+    }
+
     // Fund cluster is a property of the funding transaction, not entered by hand: every asset
     // already carries its FundCluster (procurement → receiving → AssetRegistry). We derive it from
     // the attached assets. Single shared cluster ⇒ read-only auto-fill; assets spanning multiple
@@ -424,7 +441,10 @@
         var parameters = new DialogParameters<AvailableAssetsPickerDialog>
         {
             { x => x.AssetType, ExpectedType() },
-            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)SelectedAssetIds() }
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)SelectedAssetIds() },
+            // Pre-lock the picker to the ICS's current SE category so a low/high mix (COA §4.14) can't
+            // be introduced from the picker. Null when nothing is attached yet or this is a PAR.
+            { x => x.LockedCategory, CurrentIcsCategory() }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
         var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>(

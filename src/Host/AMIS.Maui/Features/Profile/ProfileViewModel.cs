@@ -18,6 +18,7 @@ public sealed partial class ProfileViewModel(
     [ObservableProperty] public partial string? Position { get; set; }
     [ObservableProperty] public partial string Initials { get; set; } = "?";
     [ObservableProperty] public partial bool IsLoading { get; set; }
+    [ObservableProperty] public partial string? ErrorMessage { get; set; }
 
     // Live build version, read from the AssemblyInformationalVersion the build stamps in
     // (e.g. "1.0.0+build.142" -> "Version 1.0.0 (build 142)").
@@ -41,25 +42,67 @@ public sealed partial class ProfileViewModel(
     public async Task LoadAsync(CancellationToken ct = default)
     {
         IsLoading = true;
+        ErrorMessage = null;
+
+        // Seed from the in-memory auth state first (no network). This guarantees the page shows
+        // the signed-in identity even when the profile API call fails — and, critically, means a
+        // failed call degrades to an error banner instead of an unhandled exception. An uncaught
+        // throw here would surface on the UI thread via ProfilePage.OnAppearing (async void) and
+        // hard-crash the Windows app, ending the Aspire process.
+        ApplyKnownIdentity();
+
         try
         {
             var profile = await apiClient.GetMyProfileAsync(ct);
             Email = profile.Email;
-            FullName = $"{profile.FirstName} {profile.LastName}".Trim();
 
-            if (authState.Employee is not null)
+            // Only let the profile name win when there's no employee record to defer to.
+            if (authState.Employee is null)
             {
-                Department = authState.Employee.Department;
-                Position = authState.Employee.Position;
-                FullName = authState.Employee.FullName;
+                FullName = $"{profile.FirstName} {profile.LastName}".Trim();
+                Initials = ComputeInitials(FullName);
             }
-
-            Initials = ComputeInitials(FullName);
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigated away mid-load — not an error.
+        }
+        catch (HttpRequestException) when (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            ErrorMessage = "You're offline. Showing saved profile details.";
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Could not refresh your profile.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Something went wrong loading your profile.";
+            System.Diagnostics.Debug.WriteLine($"[Profile] Load failed: {ex}");
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    private void ApplyKnownIdentity()
+    {
+        if (authState.Employee is { } emp)
+        {
+            FullName = emp.FullName;
+            Department = emp.Department;
+            Position = emp.Position;
+        }
+
+        if (authState.UserProfile is { } up)
+        {
+            Email = up.Email;
+            if (string.IsNullOrWhiteSpace(FullName))
+                FullName = $"{up.FirstName} {up.LastName}".Trim();
+        }
+
+        Initials = ComputeInitials(FullName);
     }
 
     private static string ComputeInitials(string fullName)

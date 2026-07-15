@@ -41,7 +41,10 @@ public sealed record ReturnedPropertyReceiptSummaryDto(
     int ItemCount,
     decimal TotalUnitCost,
     Guid AssignedInspectorEmployeeId = default,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    // The employee who raised the return. Lets the UI restrict Withdraw to the requester (the server
+    // enforces the same), mirroring how AssignedInspectorEmployeeId gates the Inspect action.
+    Guid ReturnedByEmployeeId = default);
 
 public sealed record ReturnedPropertyStatusCountDto(
     ReturnedPropertyReceiptStatus Status,

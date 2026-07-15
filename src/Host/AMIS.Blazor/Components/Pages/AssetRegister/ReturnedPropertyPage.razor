@@ -28,6 +28,20 @@
                 <!-- Status filter chips + search + primary action -->
                 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3" Spacing="2">
                     <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="flex-grow-1">
+                        @if (_canSeeAll)
+                        {
+                            <MudTooltip Text="Show only the return requests you raised, or every request across the office.">
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(_scopeMine ? Color.Primary : Color.Default)"
+                                         Variant="@(_scopeMine ? Variant.Filled : Variant.Outlined)"
+                                         OnClick="@(() => SetScopeAsync(true))">My Requests</MudChip>
+                            </MudTooltip>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(!_scopeMine ? Color.Primary : Color.Default)"
+                                     Variant="@(!_scopeMine ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => SetScopeAsync(false))">All</MudChip>
+                            <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
+                        }
                         @foreach (var (index, label) in _statusTabs)
                         {
                             <MudChip T="string" Size="Size.Small"
@@ -115,14 +129,14 @@
                                                                     Color="Color.Error" OnClick="@(() => RejectAsync(r.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canCreate)
+                                            @if (r.Status == ReturnedPropertyReceiptStatus.Pending && _canCreate && CanActAsRequester(r))
                                             {
                                                 <MudTooltip Text="Reassign Inspector">
                                                     <AMISIconButton Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
                                                                     Color="Color.Primary" OnClick="@(() => ReassignInspectorAsync(r.Id))" />
                                                 </MudTooltip>
                                             }
-                                            @if (r.Status is ReturnedPropertyReceiptStatus.Pending or ReturnedPropertyReceiptStatus.Inspected && _canCreate)
+                                            @if (r.Status is ReturnedPropertyReceiptStatus.Pending or ReturnedPropertyReceiptStatus.Inspected && _canCreate && CanActAsRequester(r))
                                             {
                                                 <MudTooltip Text="Withdraw Request">
                                                     <AMISIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
@@ -307,9 +321,31 @@
     private bool _canViewSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.View);
     private bool _canUploadSigned => UserProfileState.Permissions.Contains(AssetRegisterPermissions.SignedDocuments.Upload);
 
+    // Operations roles (inspector/custodian) may browse the whole worklist and get a Mine/All toggle;
+    // a plain requester has no toggle and is scoped to their own requests (the server enforces the same).
+    private bool _canSeeAll => _canInspect || _canAccept;
+    private bool? _scopeMineOverride;
+    private bool _scopeMine => _scopeMineOverride ?? !_canSeeAll;
+    private Guid? ScopeEmployeeId =>
+        _scopeMine && UserProfileState.EmployeeId != Guid.Empty ? UserProfileState.EmployeeId : null;
+
     // The inspection is restricted to the inspector nominated on the request (enforced server-side too).
     private bool CanInspectRow(ArReturnedPropertyReceiptSummaryDto r) =>
         UserProfileState.EmployeeId != Guid.Empty && r.AssignedInspectorEmployeeId == UserProfileState.EmployeeId;
+
+    // Withdraw and Reassign-Inspector are the requester's own actions; a custodian (Accept) may also do them
+    // for cleanup. Mirrors the server-side rule in ReturnedPropertyScope.EnsureCanActAsRequesterAsync.
+    private bool CanActAsRequester(ArReturnedPropertyReceiptSummaryDto r) =>
+        _canAccept || (UserProfileState.EmployeeId != Guid.Empty && r.ReturnedByEmployeeId == UserProfileState.EmployeeId);
+
+    private async Task SetScopeAsync(bool mine)
+    {
+        if (_scopeMine == mine) return;
+        _scopeMineOverride = mine;
+        _page = 1;
+        _detail = null;
+        await RefreshAsync();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -357,7 +393,8 @@
         try
         {
             var status = GetStatusFromTabIndex(_activeTabIndex);
-            var response = await Client.SearchAsync(_keyword, receiptType: null, status: status, page: _page, pageSize: PageSize);
+            var response = await Client.SearchAsync(_keyword, receiptType: null, status: status,
+                returnedByEmployeeId: ScopeEmployeeId, page: _page, pageSize: PageSize);
             _records = [.. response.Items];
             _totalCount = response.TotalCount;
         }
@@ -370,7 +407,7 @@
         try
         {
             _statusCounts.Clear();
-            var counts = await Client.GetStatusCountsAsync();
+            var counts = await Client.GetStatusCountsAsync(returnedByEmployeeId: ScopeEmployeeId);
             var byStatus = counts.ToDictionary(c => c.Status, c => c.Count);
             _statusCounts[1] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Pending);
             _statusCounts[2] = byStatus.GetValueOrDefault(ReturnedPropertyReceiptStatus.Inspected);

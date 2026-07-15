@@ -16,8 +16,11 @@ public sealed record EntityPickerResult<T>(IReadOnlyList<T> Items, int TotalCoun
 /// Per-row context passed to the <c>RowTemplate</c> of an <see cref="EntityPickerDialog{T}"/>.
 /// <paramref name="IsExcluded"/> is true when the row's id is in <c>ExcludeIds</c> (already picked
 /// elsewhere) — the checkbox is disabled and consumers typically render an "(already added)" hint.
+/// <paramref name="IsLocked"/> is true when the row is disabled by the dialog's <c>RowSelectable</c>
+/// rule given the current selection (e.g. a mutually-exclusive category) — consumers typically grey
+/// the row and render a short reason.
 /// </summary>
-public sealed record EntityPickerRow<T>(T Item, bool IsExcluded, bool IsSelected);
+public sealed record EntityPickerRow<T>(T Item, bool IsExcluded, bool IsSelected, bool IsLocked = false);
 
 /// <summary>How many rows the picker lets the user select before confirming.</summary>
 public enum EntityPickerSelection

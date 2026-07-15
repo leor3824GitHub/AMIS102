@@ -143,7 +143,10 @@ public sealed class InspectReturnedPropertyReceiptCommandHandler(
     }
 }
 
-public sealed class ReassignReturnedPropertyInspectorCommandHandler(AssetRegisterDbContext db)
+public sealed class ReassignReturnedPropertyInspectorCommandHandler(
+    AssetRegisterDbContext db,
+    ICurrentUser currentUser,
+    IMediator mediator)
     : ICommandHandler<ReassignReturnedPropertyInspectorCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
@@ -155,6 +158,11 @@ public sealed class ReassignReturnedPropertyInspectorCommandHandler(AssetRegiste
             .Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException($"Return request '{cmd.Id}' not found.");
+
+        // Reassigning the nominated inspector is the requester's own action (custodian override for cleanup),
+        // matching the withdraw rule. The endpoint gates on Create; this stops acting on another's request.
+        await ReturnedPropertyScope.EnsureCanActAsRequesterAsync(
+            currentUser, mediator, receipt.ReturnedBy.EmployeeId, "reassign its inspector", cancellationToken).ConfigureAwait(false);
 
         var newInspector = EmployeeRef.Create(cmd.Inspector.EmployeeId, cmd.Inspector.PrintedName, cmd.Inspector.Designation);
         receipt.ReassignInspector(newInspector);
@@ -268,7 +276,10 @@ public sealed class RejectReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
     }
 }
 
-public sealed class CancelReturnedPropertyReceiptCommandHandler(AssetRegisterDbContext db)
+public sealed class CancelReturnedPropertyReceiptCommandHandler(
+    AssetRegisterDbContext db,
+    ICurrentUser currentUser,
+    IMediator mediator)
     : ICommandHandler<CancelReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
@@ -280,6 +291,11 @@ public sealed class CancelReturnedPropertyReceiptCommandHandler(AssetRegisterDbC
             .Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.Id == cmd.Id, cancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Return request '{cmd.Id}' not found.");
+
+        // The endpoint gates on Create; this additionally stops one requester withdrawing another's request
+        // (custodian override for cleanup). Actor is resolved from identity, never the payload.
+        await ReturnedPropertyScope.EnsureCanActAsRequesterAsync(
+            currentUser, mediator, receipt.ReturnedBy.EmployeeId, "withdraw it", cancellationToken).ConfigureAwait(false);
 
         receipt.Cancel(cmd.Reason);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -302,7 +318,10 @@ public sealed class GetReturnedPropertyReceiptQueryHandler(AssetRegisterDbContex
     }
 }
 
-public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbContext db)
+public sealed class SearchReturnedPropertyReceiptsQueryHandler(
+    AssetRegisterDbContext db,
+    ICurrentUser currentUser,
+    IMediator mediator)
     : IQueryHandler<SearchReturnedPropertyReceiptsQuery, PagedResponse<ReturnedPropertyReceiptSummaryDto>>
 {
     public async ValueTask<PagedResponse<ReturnedPropertyReceiptSummaryDto>> Handle(
@@ -322,8 +341,12 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
 
         if (query.ReceiptType.HasValue) q = q.Where(r => r.ReceiptType == query.ReceiptType.Value);
         if (query.Status.HasValue)      q = q.Where(r => r.Status == query.Status.Value);
-        if (query.ReturnedByEmployeeId.HasValue && query.ReturnedByEmployeeId.Value != Guid.Empty)
-            q = q.Where(r => r.ReturnedBy.EmployeeId == query.ReturnedByEmployeeId.Value);
+        // Non-privileged callers are hard-scoped to their own requests server-side, regardless of the
+        // requester id they pass; inspectors/custodians may see all (or filter to a chosen requester).
+        var requesterFilter = await ReturnedPropertyScope
+            .ResolveRequesterFilterAsync(currentUser, mediator, query.ReturnedByEmployeeId, cancellationToken).ConfigureAwait(false);
+        if (requesterFilter is { } scopedId)
+            q = q.Where(r => r.ReturnedBy.EmployeeId == scopedId);
         if (query.FromDate.HasValue)    q = q.Where(r => r.Date >= query.FromDate.Value);
         if (query.ToDate.HasValue)      q = q.Where(r => r.Date <= query.ToDate.Value);
 
@@ -345,7 +368,8 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
                 r.Items.Sum(i => i.Snapshot.UnitCost),
                 r.AssignedInspector.EmployeeId,
                 db.SignedDocuments.Any(sd =>
-                    sd.DocumentType == AssetRegisterDocumentType.ReturnedPropertyReceipt && sd.DocumentId == r.Id)))
+                    sd.DocumentType == AssetRegisterDocumentType.ReturnedPropertyReceipt && sd.DocumentId == r.Id),
+                r.ReturnedBy.EmployeeId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReturnedPropertyReceiptSummaryDto>
@@ -359,7 +383,10 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(AssetRegisterDbCo
     }
 }
 
-public sealed class GetReturnedPropertyStatusCountsQueryHandler(AssetRegisterDbContext db)
+public sealed class GetReturnedPropertyStatusCountsQueryHandler(
+    AssetRegisterDbContext db,
+    ICurrentUser currentUser,
+    IMediator mediator)
     : IQueryHandler<GetReturnedPropertyStatusCountsQuery, IReadOnlyList<ReturnedPropertyStatusCountDto>>
 {
     public async ValueTask<IReadOnlyList<ReturnedPropertyStatusCountDto>> Handle(
@@ -368,8 +395,11 @@ public sealed class GetReturnedPropertyStatusCountsQueryHandler(AssetRegisterDbC
         ArgumentNullException.ThrowIfNull(query);
         var q = db.ReturnedPropertyReceipts.AsNoTracking().AsQueryable();
 
-        if (query.ReturnedByEmployeeId.HasValue && query.ReturnedByEmployeeId.Value != Guid.Empty)
-            q = q.Where(r => r.ReturnedBy.EmployeeId == query.ReturnedByEmployeeId.Value);
+        // Counts must match the list the caller can actually see (same server-side scoping as the search).
+        var requesterFilter = await ReturnedPropertyScope
+            .ResolveRequesterFilterAsync(currentUser, mediator, query.ReturnedByEmployeeId, cancellationToken).ConfigureAwait(false);
+        if (requesterFilter is { } scopedId)
+            q = q.Where(r => r.ReturnedBy.EmployeeId == scopedId);
         if (query.FromDate.HasValue) q = q.Where(r => r.Date >= query.FromDate.Value);
         if (query.ToDate.HasValue)   q = q.Where(r => r.Date <= query.ToDate.Value);
 

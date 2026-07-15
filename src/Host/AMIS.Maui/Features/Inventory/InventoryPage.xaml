@@ -8,6 +8,7 @@
              x:DataType="vm:InventoryViewModel"
              x:Class="AMIS.Maui.Features.Inventory.InventoryPage"
              Title="My Inventory"
+             Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource OffBlack}}">
 
     <ContentPage.Resources>

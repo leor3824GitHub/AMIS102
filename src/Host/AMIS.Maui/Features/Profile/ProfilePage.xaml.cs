@@ -21,7 +21,19 @@ public partial class ProfilePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _vm.LoadAsync();
+
+        // OnAppearing is async void: any exception that escapes here is posted to the UI
+        // SynchronizationContext with no handler and hard-crashes the app. LoadAsync already
+        // handles its own failures; this catch is a last-resort guard so a page appearance can
+        // never take the process down.
+        try
+        {
+            await _vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Profile] OnAppearing failed: {ex}");
+        }
     }
 
     private async void OnLogoutClicked(object sender, EventArgs e)

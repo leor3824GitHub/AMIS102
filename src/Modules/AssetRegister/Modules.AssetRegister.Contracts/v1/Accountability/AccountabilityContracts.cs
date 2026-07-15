@@ -70,7 +70,13 @@ public sealed record PropertyAccountabilitySummaryDto(
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
     int LineCount,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    // An outstanding (Pending/Inspected) return request against this document, if any. Lets the
+    // "My Accountability" view surface an in-flight return and offer Withdraw at the point the return
+    // was requested — instead of the document silently reading "Active" while a return is mid-flight.
+    // Null when no return is outstanding. Both are populated together by the search handler.
+    Guid? PendingReturnReceiptId = null,
+    ReturnedPropertyReceiptStatus? PendingReturnStatus = null);
 
 // ── Commands ───────────────────────────────────────────────────────────────
 

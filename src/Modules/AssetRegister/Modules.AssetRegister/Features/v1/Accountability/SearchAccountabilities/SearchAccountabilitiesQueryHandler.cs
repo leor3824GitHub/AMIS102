@@ -1,4 +1,5 @@
 using AMIS.Framework.Shared.Persistence;
+using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
 using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
@@ -36,7 +37,20 @@ public sealed class SearchAccountabilitiesQueryHandler(AssetRegisterDbContext db
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(a => new PropertyAccountabilitySummaryDto(
                 a.Id, a.DocumentNo, a.AccountabilityType, a.Status, a.IssuedOn, a.ExpiresOn, a.Lines.Count,
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PropertyAccountability && sd.DocumentId == a.Id)))
+                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PropertyAccountability && sd.DocumentId == a.Id),
+                // Latest outstanding (Pending/Inspected) return request against this document — surfaces the
+                // in-flight return on "My Accountability" so the requester can track/withdraw it there. Both
+                // subqueries share the same ordering so the id and status come from the same receipt.
+                db.ReturnedPropertyReceipts
+                    .Where(r => r.AccountabilityId == a.Id
+                        && (r.Status == ReturnedPropertyReceiptStatus.Pending || r.Status == ReturnedPropertyReceiptStatus.Inspected))
+                    .OrderByDescending(r => r.Date).ThenByDescending(r => r.CreatedOnUtc)
+                    .Select(r => (Guid?)r.Id).FirstOrDefault(),
+                db.ReturnedPropertyReceipts
+                    .Where(r => r.AccountabilityId == a.Id
+                        && (r.Status == ReturnedPropertyReceiptStatus.Pending || r.Status == ReturnedPropertyReceiptStatus.Inspected))
+                    .OrderByDescending(r => r.Date).ThenByDescending(r => r.CreatedOnUtc)
+                    .Select(r => (ReturnedPropertyReceiptStatus?)r.Status).FirstOrDefault()))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyAccountabilitySummaryDto>

@@ -25,4 +25,17 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <ContainerImageTags></ContainerImageTags>
   </PropertyGroup>
+
+  <!--
+    The parent Directory.Build.props enables <AnalysisMode>AllEnabledByDefault</AnalysisMode>,
+    which is tuned for the backend library/module projects. AMIS.Maui is an executable app
+    (<OutputType>Exe</OutputType>), so CA1515 ("type can be made internal") fires on essentially
+    every public type in the app — ~90 warnings of pure noise. CA1515 is off by default in .NET
+    for exactly this reason. Suppress it here (scoped to the MAUI project only; the backend's
+    strict gate is untouched). Making the types internal instead would be a large, risky change
+    across XAML compiled bindings, DI, and CommunityToolkit.Mvvm source generation.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1515</NoWarn>
+  </PropertyGroup>
 </Project>

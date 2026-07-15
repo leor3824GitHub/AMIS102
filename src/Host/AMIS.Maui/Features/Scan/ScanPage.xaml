@@ -7,7 +7,8 @@
              xmlns:zxingcore="clr-namespace:ZXing.Net.Maui;assembly=ZXing.Net.MAUI"
              x:DataType="vm:ScanViewModel"
              x:Class="AMIS.Maui.Features.Scan.ScanPage"
-             Title="Scan Asset">
+             Title="Scan Asset"
+             Shell.NavBarIsVisible="False">
 
     <Grid RowDefinitions="*,Auto">
 

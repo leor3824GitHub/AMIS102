@@ -129,6 +129,9 @@ public sealed record AssetRegistrySummaryDto(
     Guid Id,
     string PropertyNo,
     ArContracts.AssetType AssetType,
+    // Low/high semi-expendable classification — lets the issuance picker enforce the COA §4.14
+    // no-mix rule at selection time (see AvailableAssetsPickerDialog). PPE assets carry Category.PPE.
+    ArContracts.AssetCategory Category,
     string Description,
     decimal UnitCost,
     DateOnly AcquisitionDate,
@@ -435,7 +438,11 @@ internal sealed record ArAccountabilitySummaryDto(
     DateOnly IssuedOn,
     DateOnly? ExpiresOn,
     int LineCount,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    // Outstanding (Pending/Inspected) return request against this document, if any — drives the
+    // in-flight "Return Pending" state and inline Withdraw action on My Accountability. Null when none.
+    Guid? PendingReturnReceiptId = null,
+    ReturnedPropertyReceiptStatus? PendingReturnStatus = null);
 
 internal sealed record ArAccountabilityLineDto(
     Guid Id,
@@ -1723,7 +1730,9 @@ internal sealed record ArReturnedPropertyReceiptSummaryDto(
     int ItemCount,
     decimal TotalUnitCost,
     Guid AssignedInspectorEmployeeId = default,
-    bool HasSignedCopy = false);
+    bool HasSignedCopy = false,
+    // Requester employee id — gates the Withdraw action to the person who raised the return.
+    Guid ReturnedByEmployeeId = default);
 
 internal sealed record ArReturnedPropertyStatusCountDto(
     ArContracts.ReturnedPropertyReceiptStatus Status,
@@ -1872,7 +1881,10 @@ internal sealed class ArReturnedPropertyClient(HttpClient http) : IArReturnedPro
     public async Task<ArReturnedPropertyReceiptDto> CancelAsync(Guid id, string? reason, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelReturnedPropertyReceiptRequest(reason), ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        // Surface the server's message (e.g. the 403 "only the requester or a custodian can withdraw")
+        // instead of the opaque EnsureSuccessStatusCode text.
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArReturnedPropertyReceiptDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 

@@ -53,13 +53,17 @@
                             var id = KeySelector(context);
                             var excluded = ExcludeIds.Contains(id);
                             var selected = _selected.ContainsKey(id) || excluded;
+                            // A row is locked when a cross-row rule (RowSelectable) rejects it given the
+                            // current selection. Already-selected rows stay toggleable so they can be cleared.
+                            var locked = !excluded && !selected
+                                         && RowSelectable is not null && !RowSelectable(context, _selected.Values);
                         }
                         <MudTd>
-                            <MudCheckBox T="bool" Dense="true" Disabled="excluded"
+                            <MudCheckBox T="bool" Dense="true" Disabled="excluded || locked"
                                          Value="selected"
                                          ValueChanged="@((bool v) => Toggle(context, v))" />
                         </MudTd>
-                        @RowTemplate(new EntityPickerRow<T>(context, excluded, selected))
+                        @RowTemplate(new EntityPickerRow<T>(context, excluded, selected, locked))
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Color="Color.Secondary">@EmptyText</MudText>
@@ -106,6 +110,15 @@
 
     /// <summary>Ids already picked elsewhere — rendered checked + disabled, never selectable.</summary>
     [Parameter] public IReadOnlyCollection<Guid> ExcludeIds { get; set; } = [];
+
+    /// <summary>
+    /// Optional cross-row rule. Given a candidate row's item and the current selection, returns whether
+    /// that row may still be selected. Rows that fail render with a disabled checkbox and
+    /// <c>IsLocked=true</c> on their <see cref="EntityPickerRow{T}"/> so the RowTemplate can grey them.
+    /// Already-selected rows stay toggleable (so the user can clear back to zero and reset the rule).
+    /// Used e.g. to keep one ICS to a single semi-expendable category (COA §4.14).
+    /// </summary>
+    [Parameter] public Func<T, IReadOnlyCollection<T>, bool>? RowSelectable { get; set; }
 
     /// <summary>Optional caption shown above the search box.</summary>
     [Parameter] public RenderFragment? Caption { get; set; }
@@ -227,6 +240,9 @@
         {
             _selected.Remove(id);
         }
+
+        // A selection change can flip other rows' locked state (RowSelectable), so re-render the table.
+        StateHasChanged();
     }
 
     private async Task PrevPage() { _page--; await LoadAsync(); }

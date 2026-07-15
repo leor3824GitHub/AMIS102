@@ -7,9 +7,18 @@
                     KeySelector="a => a.Id"
                     DataProvider="LoadAsync"
                     ExcludeIds="ExcludeIds"
+                    RowSelectable="CanSelect"
                     ConfirmText="Add">
     <Caption>
         Showing <strong>Available</strong> @(AssetType == ArContracts.AssetType.SE ? "Semi-Expendable" : "PPE") assets eligible for issuance. Tick the items to add, then choose <strong>Add</strong>.
+        @if (AssetType == ArContracts.AssetType.SE && LockedCategory is not null)
+        {
+            <span>
+                This ICS already contains <strong>@CategoryLabel(LockedCategory.Value)</strong> items —
+                only <strong>@CategoryLabel(LockedCategory.Value)</strong> items may be added. Low- and high-valued
+                semi-expendable items are issued on separate ICS documents (COA 2022-004 §4.14).
+            </span>
+        }
     </Caption>
     <HeaderTemplate>
         <MudTh>Property No.</MudTh>
@@ -18,22 +27,33 @@
         <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
     </HeaderTemplate>
     <RowTemplate Context="row">
-        <MudTd>
+        <MudTd Style="@RowStyle(row)">
             <strong>@row.Item.PropertyNo</strong>
             @if (row.IsExcluded)
             {
                 <MudText Typo="Typo.caption" Color="Color.Secondary">(already added)</MudText>
             }
+            else if (row.IsLocked)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Warning">@CategoryLabel(row.Item.Category) — separate ICS</MudText>
+            }
         </MudTd>
-        <MudTd>@row.Item.Description</MudTd>
-        <MudTd>@row.Item.CurrentCondition</MudTd>
-        <MudTd Style="text-align:right">@row.Item.UnitCost.ToString("N2")</MudTd>
+        <MudTd Style="@RowStyle(row)">@row.Item.Description</MudTd>
+        <MudTd Style="@RowStyle(row)">@row.Item.CurrentCondition</MudTd>
+        <MudTd Style="@($"text-align:right;{RowStyle(row)}")">@row.Item.UnitCost.ToString("N2")</MudTd>
     </RowTemplate>
 </EntityPickerDialog>
 
 @code {
     [Parameter] public ArContracts.AssetType AssetType { get; set; }
     [Parameter] public IReadOnlyCollection<Guid> ExcludeIds { get; set; } = [];
+
+    /// <summary>
+    /// When the caller (the Issue dialog) already holds semi-expendable items of one category, the picker
+    /// opens pre-locked to that category so a mix can't be introduced. Null = no items yet, so the first
+    /// item ticked in the picker sets the category. Only meaningful for SE/ICS.
+    /// </summary>
+    [Parameter] public ArContracts.AssetCategory? LockedCategory { get; set; }
 
     private async Task<EntityPickerResult<AssetRegistrySummaryDto>> LoadAsync(EntityPickerRequest request)
     {
@@ -46,4 +66,24 @@
 
         return new EntityPickerResult<AssetRegistrySummaryDto>(result.Items, result.TotalCount);
     }
+
+    // COA 2022-004 §4.14: one ICS may not mix low- and high-valued semi-expendable items. The active
+    // category is whatever the Issue dialog already holds (LockedCategory) or, failing that, the first
+    // item ticked in this picker. Rows of the other category stay disabled until the selection clears.
+    private bool CanSelect(AssetRegistrySummaryDto item, IReadOnlyCollection<AssetRegistrySummaryDto> selected)
+    {
+        if (AssetType != ArContracts.AssetType.SE) return true;
+
+        var active = LockedCategory ?? selected.FirstOrDefault()?.Category;
+        return active is null || item.Category == active;
+    }
+
+    private static string RowStyle(EntityPickerRow<AssetRegistrySummaryDto> row) => row.IsLocked ? "opacity:0.5;" : "";
+
+    private static string CategoryLabel(ArContracts.AssetCategory category) => category switch
+    {
+        ArContracts.AssetCategory.LowValuedSemi => "low-valued",
+        ArContracts.AssetCategory.HighValuedSemi => "high-valued",
+        _ => category.ToString()
+    };
 }
