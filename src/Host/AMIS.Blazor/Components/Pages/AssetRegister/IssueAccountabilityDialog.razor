@@ -84,6 +84,15 @@
                                 OnClick="AddItem" />
             </MudStack>
 
+            @if (HasLowHighMix)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">
+                    This ICS mixes <b>low-valued</b> and <b>high-valued</b> semi-expendable items. Per COA Circular
+                    2022-004 §4.14 they must carry separate ICS control numbers — issue them on separate ICS
+                    documents. Remove one category to continue.
+                </MudAlert>
+            }
+
             @for (var i = 0; i < _form.Items.Count; i++)
             {
                 var idx = i;
@@ -143,7 +152,7 @@
     </DialogContent>
     <DialogActions>
         <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel" Disabled="_issuing">Cancel</AMISButton>
-        <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="IssueAsync" Disabled="_issuing">
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary" OnClick="IssueAsync" Disabled="@(_issuing || HasLowHighMix)">
             @if (_issuing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
             @(_form.Type == AccountabilityType.SE_ICS ? "Create ICS" : "Create PAR")
         </AMISButton>
@@ -161,6 +170,15 @@
 
     private bool _issuing;
     private readonly IssueForm _form = new();
+
+    // COA Circular 2022-004 §4.14: an ICS may not mix low-valued and high-valued semi-expendable
+    // items. Detect the mix client-side from the attached assets so the user gets immediate feedback
+    // (inline error + disabled submit) instead of a round-trip rejection. Only ICS can hit this —
+    // PPE assets never carry a low/high SE category.
+    private bool HasLowHighMix =>
+        _form.Type == AccountabilityType.SE_ICS
+        && _form.Items.Any(i => i.Asset?.Category == AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory.LowValuedSemi)
+        && _form.Items.Any(i => i.Asset?.Category == AMIS.Modules.AssetRegister.Contracts.v1.AssetCategory.HighValuedSemi);
 
     // Fund cluster is a property of the funding transaction, not entered by hand: every asset
     // already carries its FundCluster (procurement → receiving → AssetRegistry). We derive it from
@@ -459,6 +477,11 @@
         if (_form.Items.Any(i => i.Location is null))
         {
             Snackbar.Add("Select a location for every property item.", Severity.Warning);
+            return;
+        }
+        if (HasLowHighMix)
+        {
+            Snackbar.Add("An ICS cannot mix low-valued and high-valued semi-expendable items (COA Circular 2022-004 §4.14). Issue them on separate ICS documents.", Severity.Warning);
             return;
         }
 

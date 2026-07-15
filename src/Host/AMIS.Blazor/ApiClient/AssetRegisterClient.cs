@@ -36,6 +36,16 @@ file static class ArErrorReader
                 using var doc = JsonDocument.Parse(body);
                 if (doc.RootElement.ValueKind == JsonValueKind.Object)
                 {
+                    // Prefer field-level validation messages when present. For a FluentValidation
+                    // failure the ProblemDetails "detail" is only the generic "One or more validation
+                    // errors occurred." — the actual rule text (e.g. the COA §4.14 ICS mix rule) lives
+                    // in the "errors" extension, keyed by property name.
+                    if (doc.RootElement.TryGetProperty("errors", out var errors))
+                    {
+                        var messages = FlattenErrors(errors);
+                        if (messages.Count > 0)
+                            return string.Join(" ", messages);
+                    }
                     if (doc.RootElement.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
                         return detail.GetString()!;
                     if (doc.RootElement.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
@@ -48,6 +58,42 @@ file static class ArErrorReader
         catch (JsonException) { /* fall through to status text */ }
         catch (OperationCanceledException) { throw; }
         return $"Request failed ({(int)resp.StatusCode} {resp.ReasonPhrase}).";
+    }
+
+    // The "errors" extension has two shapes on the wire:
+    //   FluentValidation → object of string arrays: { "Lines": ["msg", ...], ... }
+    //   CustomException  → flat string array:        [ "msg", ... ]
+    private static List<string> FlattenErrors(System.Text.Json.JsonElement errors)
+    {
+        var messages = new List<string>();
+        switch (errors.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var prop in errors.EnumerateObject())
+                    CollectStrings(prop.Value, messages);
+                break;
+            case JsonValueKind.Array:
+                CollectStrings(errors, messages);
+                break;
+            case JsonValueKind.String:
+                CollectStrings(errors, messages);
+                break;
+        }
+        return messages;
+    }
+
+    private static void CollectStrings(System.Text.Json.JsonElement element, List<string> messages)
+    {
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+                if (item.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(item.GetString()))
+                    messages.Add(item.GetString()!);
+        }
+        else if (element.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(element.GetString()))
+        {
+            messages.Add(element.GetString()!);
+        }
     }
 }
 
@@ -550,7 +596,8 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
     public async Task<ArAccountabilityDto> IssueAsync(IssueAccountabilityRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync(Base, request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
@@ -591,21 +638,24 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
     public async Task<ArAccountabilityDto> ReturnLinesAsync(Guid id, ReturnAccountabilityLinesRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/return", request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArAccountabilityDto> CancelAsync(Guid id, string reason, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/cancel", new CancelAccountabilityRequest(reason), ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
     public async Task<ArAccountabilityDto> RenewAsync(Guid id, DateOnly newIssuedOn, DateOnly? newExpiresOn, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/renew", new RenewAccountabilityRequest(newIssuedOn, newExpiresOn), ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArAccountabilityDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 
