@@ -19,7 +19,7 @@ public sealed class EmployeeProfile : AggregateRoot<Guid>, IAuditableEntity
     public string? OfficeCode { get; private set; }
 
     public bool IsActive { get; private set; } = true;
-    public byte[] Version { get; private set; } = [];
+    // Optimistic concurrency via the Postgres system column xmin (mapped in EmployeeProfileConfiguration).
 
     public Office Office { get; private set; } = default!;
     public Department Department { get; private set; } = default!;

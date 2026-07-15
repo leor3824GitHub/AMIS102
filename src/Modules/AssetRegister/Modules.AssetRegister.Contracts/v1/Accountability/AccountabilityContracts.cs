@@ -160,6 +160,14 @@ public sealed record SearchAccountabilitiesQuery(
     int PageNumber = 1,
     int PageSize = 10) : IQuery<PagedResponse<PropertyAccountabilitySummaryDto>>;
 
+/// <summary>
+/// Active ICS/PAR accountabilities whose expiry falls on or before <c>today + WithinDays</c> — i.e. those
+/// due (or already overdue) for renewal. Ordered soonest-expiry-first so overdue documents surface at the
+/// top of the renewal worklist. Backed by the (TenantId, Status, ExpiresOn) index.
+/// </summary>
+public sealed record GetExpiringAccountabilitiesQuery(int WithinDays = 60)
+    : IQuery<IReadOnlyList<PropertyAccountabilitySummaryDto>>;
+
 // ── Employee self-service ("My Accountability") ──────────────────────────────
 // These carry NO employee id — the server resolves the accountable person from the
 // authenticated identity, so a user can only ever see their own ICS/PAR.

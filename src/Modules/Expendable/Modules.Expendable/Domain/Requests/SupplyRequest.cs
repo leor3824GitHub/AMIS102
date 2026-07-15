@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Requests;
 
@@ -51,7 +50,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public DateTimeOffset? ApprovedOnUtc { get; set; }
     public DateTimeOffset? FulfilledOnUtc { get; set; }
     public Guid? WarehouseLocationId { get; set; }
-    public byte[] Version { get; private set; } = [];
+    // Optimistic concurrency via the Postgres system column xmin (mapped in SupplyRequestConfiguration).
 
     private readonly List<SupplyRequestItem> _items = [];
     public IReadOnlyCollection<SupplyRequestItem> Items => _items.AsReadOnly();
@@ -82,12 +81,9 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             NeededByDate = neededBy,
             BusinessJustification = businessJustification,
             Status = SupplyRequestStatus.Draft,
-            Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     /// <summary>Add a supply item to the request</summary>
     public void AddItem(Guid productId, int quantity, string? notes = null)
@@ -105,9 +101,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             _items.Add(new SupplyRequestItem(productId, quantity, notes));
         }
 
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Remove an item from the request</summary>
     public void RemoveItem(Guid productId)
@@ -116,9 +110,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Cannot remove items from submitted requests.");
 
         _items.RemoveAll(x => x.ProductId == productId);
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Submit the supply request</summary>
     public void Submit()
@@ -130,9 +122,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Cannot submit request without items.");
 
         Status = SupplyRequestStatus.Submitted;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Approve the supply request, recording the issuing warehouse location</summary>
     public void Approve(string approvedBy, Dictionary<Guid, int> approvedQuantities, Guid warehouseLocationId)
@@ -155,9 +145,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         ApprovedBy = approvedBy;
         ApprovedOnUtc = DateTimeOffset.UtcNow;
         WarehouseLocationId = warehouseLocationId;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Reject the supply request</summary>
     public void Reject(string? reason = null)
@@ -167,9 +155,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Rejected;
         RejectionReason = reason;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Mark as fulfilled</summary>
     public void MarkFulfilled()
@@ -179,9 +165,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Fulfilled;
         FulfilledOnUtc = DateTimeOffset.UtcNow;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Record fulfillment with quantities and values per item, then mark as fulfilled</summary>
     public void Fulfill(Dictionary<Guid, (int Quantity, decimal Value)> fulfillmentDetails)
@@ -200,9 +184,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
         Status = SupplyRequestStatus.Fulfilled;
         FulfilledOnUtc = DateTimeOffset.UtcNow;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Cancel the request</summary>
     public void Cancel()
@@ -211,9 +193,7 @@ public class SupplyRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             throw new InvalidOperationException("Cannot cancel fulfilled or already cancelled requests.");
 
         Status = SupplyRequestStatus.Cancelled;
-        LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
-    }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;    }
 
     /// <summary>Soft delete the request</summary>
     public void SoftDelete(string deletedBy)

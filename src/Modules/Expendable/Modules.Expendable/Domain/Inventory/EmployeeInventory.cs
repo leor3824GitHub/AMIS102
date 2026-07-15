@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using AMIS.Framework.Core.Domain;
+﻿using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Inventory;
 
@@ -50,7 +49,7 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     public int TotalQuantityReceived { get; set; }
     public int TotalQuantityConsumed { get; set; }
     public int QuantityOnHand => TotalQuantityReceived - TotalQuantityConsumed;
-    public byte[] Version { get; private set; } = [];
+    // Optimistic concurrency via the Postgres system column xmin (mapped in EmployeeInventoryConfiguration).
 
     private readonly List<InventoryBatch> _batches = [];
     public IReadOnlyCollection<InventoryBatch> Batches => _batches.AsReadOnly();
@@ -72,12 +71,9 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
             ProductId = productId,
             TotalQuantityReceived = 0,
             TotalQuantityConsumed = 0,
-            Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     /// <summary>Receive inventory (adds a new batch)</summary>
     public void ReceiveInventory(int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
@@ -86,7 +82,6 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
         _batches.Add(batch);
         TotalQuantityReceived += quantity;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
     }
 
     /// <summary>Consume inventory from available employee stock</summary>
@@ -111,7 +106,6 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
 
         TotalQuantityConsumed += quantity;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
         return quantity;
     }
 

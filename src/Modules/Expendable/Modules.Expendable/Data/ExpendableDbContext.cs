@@ -11,6 +11,7 @@ using AMIS.Modules.Expendable.Domain.Products;
 using AMIS.Modules.Expendable.Domain.Requests;
 using AMIS.Modules.Expendable.Domain.Warehouse;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -71,6 +72,21 @@ public class ExpendableDbContext : BaseDbContext
                 .HasDatabaseName("IX_Products_StockNo_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
             modelBuilder.Entity<Product>().HasIndex(p => p.Article)
                 .HasDatabaseName("IX_Products_Article_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+        }
+
+        // SQLite test harness only: 'xmin' is the Postgres system-column concurrency token
+        // (ValueGeneratedOnAddOrUpdate) — Postgres emits no DDL and auto-maintains it. Under SQLite's
+        // EnsureCreated it materializes as a real NOT NULL column with no store generation, so an EF insert
+        // (which omits the token) trips a NOT NULL violation. Demote it to a plain column on SQLite so EF
+        // sends the shadow default (0) on insert. No effect on Postgres, where the Npgsql path is untouched.
+        if (Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var xmin = entityType.FindProperty("xmin");
+                if (xmin is not null)
+                    xmin.ValueGenerated = ValueGenerated.Never;
+            }
         }
     }
 }

@@ -27,7 +27,12 @@ public class EmployeeShoppingCartConfiguration : IEntityTypeConfiguration<Employ
         builder.Property(p => p.Status)
             .HasConversion<int>();
 
-        builder.Property(p => p.Version)
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry/Product) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
 
         // Items (Owned Type)

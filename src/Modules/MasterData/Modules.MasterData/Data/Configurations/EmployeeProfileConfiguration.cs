@@ -18,7 +18,13 @@ public sealed class EmployeeProfileConfiguration : IEntityTypeConfiguration<Empl
         builder.Property(x => x.LastName).HasMaxLength(128).IsRequired();
         builder.Property(x => x.WorkEmail).HasMaxLength(256);
         builder.Property(x => x.OfficeCode).HasMaxLength(8);
-        builder.Property(x => x.Version).IsConcurrencyToken();
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry/Product) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         builder.HasOne(x => x.Office)
             .WithMany()

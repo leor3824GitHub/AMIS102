@@ -1,7 +1,24 @@
 # Domain Entity Optimization Plan — Performance & UX
 
 > Prepared: 2026-07-15 · Scope: `src/Modules/**/Domain`, EF configurations, search handlers, Blazor list pages
-> Status: **Proposed** (no code changes applied yet)
+> Status: **In progress** — see the implementation log below.
+
+## Implementation Status (updated 2026-07-15)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| 1 — Product image pipeline | ✅ Done | Storage keys + thumbnail + `HasImage` projection + lazy image endpoint |
+| 2 — Concurrency → xmin | ✅ Done | Product (earlier) + ProductInventory, EmployeeInventory, SupplyRequest, EmployeeShoppingCart, EmployeeProfile. Dead `byte[] Version` dropped; 2 migrations. SQLite test harness shim added to Expendable/MasterData DbContexts (xmin → `ValueGenerated.Never` on SQLite only; no-op on Postgres). |
+| 3 — Indexes + trigram | ✅ Done | Composite + tenant-prefix + pg_trgm GIN indexes |
+| 4 — Batch archival | ⏸ Deferred | Money-path (moving-average valuation + Stock Card), weak unit-test net — schedule as its own runtime-verified pass |
+| 5 — Redundant props | ◐ Partial | Done: `ReservedValue` derived, `EmployeeInventory.LastInventoryDate` dropped, hand-rolled `Version` tokens removed (Phase 2). **Deferred (ledger pass):** `ProductInventory.ProductName/Code/WarehouseLocationName` snapshot removal, `InventoryBatch.ProductId`/`InspectionDate`, duplicate `InventoryBatch` rename. **Kept by decision:** `EmployeeProfile.OfficeCode` (cross-module read-model denormalization; removal is high-ripple, low-reward), `OutOfStock` manual status. |
+| 6a — Derive stock availability | ✅ Done | `GetProductCatalogCards` joins `ProductInventory`; `AMISProductCard` shows stock chip + disables Add-to-Cart at zero |
+| 6b — Low-stock warehouse | ✅ Done | Warehouse page low-stock view |
+| 6c — Expiring PAR/ICS | ✅ Done | `GetExpiringAccountabilitiesQuery` + `/expiring` endpoint + client + renewal-reminder banner on `AccountabilityPage` (Active, due-or-overdue within 60 days, soonest first) + 2 unit tests |
+
+**Remaining work = the inventory-ledger restructure (Phase 4 + the structural half of Phase 5).** These touch
+the moving-average valuation and Stock Card on a lightly-tested aggregate, so they are intentionally staged as
+a separate, runtime-verified change rather than bundled with the mechanical/additive work above.
 
 This plan comes from a review of the ~102 domain entity files across the 15 modules, their EF Core
 configurations, the search/query handlers that serve list pages, and the Blazor pages that render them.

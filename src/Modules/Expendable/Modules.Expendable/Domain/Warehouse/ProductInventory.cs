@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Security.Cryptography;
 using AMIS.Framework.Core.Domain;
 
 namespace AMIS.Modules.Expendable.Domain.Warehouse;
@@ -47,8 +46,8 @@ public class ProductInventory : AggregateRoot<Guid>
     // Status for lifecycle management
     public ProductInventoryStatus Status { get; private set; }  // Active, Discontinued, Archived
 
-    // Optimistic Locking
-    public byte[] Version { get; private set; } = [];
+    // Optimistic concurrency is handled by the Postgres system column xmin (mapped in
+    // ProductInventoryConfiguration), mirroring AssetRegistry — no domain-managed token field.
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
@@ -93,12 +92,9 @@ public class ProductInventory : AggregateRoot<Guid>
             QuantityIssued = 0,
             TotalValue = 0,
             Status = ProductInventoryStatus.Active,
-            Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
     }
-
-    private static byte[] NewVersion() => RandomNumberGenerator.GetBytes(8);
 
     /// <summary>Receive inspected/accepted stock into the warehouse.
     /// <paramref name="sourceReceiptId"/> is the originating receipt id (an accepted IAR's id);
@@ -125,7 +121,6 @@ public class ProductInventory : AggregateRoot<Guid>
             FirstReceiptDate = DateTimeOffset.UtcNow;
         LastReceiptDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
     }
 
     /// <summary>Reserve stock for a supply request (allocation)</summary>
@@ -141,7 +136,6 @@ public class ProductInventory : AggregateRoot<Guid>
         QuantityReserved += quantityToReserve;
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
     }
 
     /// <summary>Cancel a reservation (if supply request is rejected)</summary>
@@ -157,7 +151,6 @@ public class ProductInventory : AggregateRoot<Guid>
         QuantityAvailable += quantityToRelease;
 
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
     }
 
     /// <summary>Issue reserved stock to employee using moving-average valuation.</summary>
@@ -181,7 +174,6 @@ public class ProductInventory : AggregateRoot<Guid>
             MidpointRounding.AwayFromZero);
         LastIssueDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-        Version = NewVersion();
 
         return new IssuanceDetail
         {

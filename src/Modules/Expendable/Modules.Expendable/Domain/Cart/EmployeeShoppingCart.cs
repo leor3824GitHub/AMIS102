@@ -46,7 +46,7 @@ public class EmployeeShoppingCart : AggregateRoot<Guid>, IHasTenant, IAuditableE
     public CartStatus Status { get; set; } = CartStatus.Active;
     public DateTimeOffset? ConvertedOnUtc { get; set; }
     public Guid? ConvertedToRequestId { get; set; }
-    public byte[] Version { get; private set; } = [];
+    // Optimistic concurrency via the Postgres system column xmin (mapped in EmployeeShoppingCartConfiguration).
 
     private readonly List<CartItem> _items = [];
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();

@@ -60,7 +60,12 @@ public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInv
             .HasConversion<int>()
             .IsRequired();
 
-        builder.Property(p => p.Version)
+        // Optimistic concurrency via the Postgres system column xmin (mirrors AssetRegistry/Product) —
+        // avoids the bytea IsRowVersion() pitfall and needs no domain-managed token field.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
 
         // Batches (Owned Collection stored as JSON)

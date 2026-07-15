@@ -200,6 +200,7 @@ public class AssetRegisterModule : IModule
         Features.v1.Accountability.CancelAccountability.CancelAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.GetAccountability.GetAccountabilityEndpoint.Map(accountability);
         Features.v1.Accountability.SearchAccountabilities.SearchAccountabilitiesEndpoint.Map(accountability);
+        Features.v1.Accountability.GetExpiringAccountabilities.GetExpiringAccountabilitiesEndpoint.Map(accountability);
         // Employee self-service (My Accountability) — server-scoped to the current employee.
         Features.v1.Accountability.GetMyAccountabilities.GetMyAccountabilitiesEndpoint.Map(accountability);
         Features.v1.Accountability.GetMyAccountableAssets.GetMyAccountableAssetsEndpoint.Map(accountability);

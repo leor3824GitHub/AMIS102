@@ -21,6 +21,51 @@
 
 <!-- Filters + Results -->
 <div>
+        @if (_expiring.Count > 0)
+        {
+            <MudCard Elevation="1" Class="mb-3" Style="border-left:4px solid var(--mud-palette-warning);">
+                <MudCardContent Class="py-2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+                        <MudIcon Icon="@Icons.Material.Filled.EventBusy" Color="Color.Warning" />
+                        <MudText Typo="Typo.subtitle1">
+                            <strong>@_expiring.Count</strong> ICS / PAR due for renewal within @ExpiringWindowDays days
+                        </MudText>
+                        @if (_overdueCount > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">
+                                @_overdueCount overdue
+                            </MudChip>
+                        }
+                    </MudStack>
+                    <MudList T="string" Dense="true" Class="py-0">
+                        @foreach (var a in _expiring.Take(6))
+                        {
+                            var overdue = a.ExpiresOn.HasValue && a.ExpiresOn.Value < DateOnly.FromDateTime(DateTime.Today);
+                            <MudListItem T="string" Class="py-1" OnClick="@(() => OpenViewDialogAsync(a.Id))">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                             Color="@(a.AccountabilityType == AccountabilityType.SE_ICS ? Color.Info : Color.Secondary)">
+                                        @(a.AccountabilityType == AccountabilityType.SE_ICS ? "ICS" : "PAR")
+                                    </MudChip>
+                                    <MudText Typo="Typo.body2"><strong>@a.DocumentNo</strong></MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.caption" Color="@(overdue ? Color.Error : Color.Default)">
+                                        @(overdue ? "Overdue since " : "Expires ")@(a.ExpiresOn?.ToString("yyyy-MM-dd"))
+                                    </MudText>
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                    @if (_expiring.Count > 6)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-1">
+                            + @(_expiring.Count - 6) more — filter Status = Active and sort by Expires On to see all.
+                        </MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
+
         <MudCard Elevation="1">
             <MudCardContent>
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -165,6 +210,11 @@
     private AccountabilityType? _typeFilter;
     private AccountabilityStatus? _statusFilter;
 
+    // Renewal reminder banner: Active ICS/PAR due (or overdue) within this window.
+    private const int ExpiringWindowDays = 60;
+    private IReadOnlyList<ArAccountabilitySummaryDto> _expiring = [];
+    private int _overdueCount;
+
     [SupplyParameterFromQuery(Name = "id")]
     public Guid? QueryId { get; set; }
 
@@ -183,8 +233,26 @@
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
         // AMISDataTable auto-loads via ServerData on first render.
+        await LoadExpiringAsync();
         if (QueryId.HasValue)
             await OpenViewDialogAsync(QueryId.Value);
+    }
+
+    private async Task LoadExpiringAsync()
+    {
+        try
+        {
+            _expiring = await Client.GetExpiringAsync(ExpiringWindowDays);
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            _overdueCount = _expiring.Count(a => a.ExpiresOn.HasValue && a.ExpiresOn.Value < today);
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: the renewal banner is advisory. Keep the page usable if this call fails.
+            Snackbar.Add($"Could not load renewal reminders: {ex.Message}", Severity.Warning);
+            _expiring = [];
+            _overdueCount = 0;
+        }
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
@@ -222,6 +290,7 @@
             return;
 
         await LoadAsync();
+        await LoadExpiringAsync();
     }
 
     // ── Row actions ──────────────────────────────────────────────────────────
@@ -234,7 +303,10 @@
         var result = await dialog.Result;
         // Renew/Cancel inside the dialog mutate the record — reload the list if anything changed.
         if (result is not null && !result.Canceled && result.Data is true)
+        {
             await LoadAsync();
+            await LoadExpiringAsync();
+        }
     }
 
     private async Task OpenEditDialogAsync(Guid id)
@@ -261,6 +333,7 @@
             await Client.DeleteAsync(item.Id);
             Snackbar.Add($"{label} {item.DocumentNo} deleted.", Severity.Success);
             await LoadAsync();
+            await LoadExpiringAsync();
         }
         catch (Exception ex)
         {

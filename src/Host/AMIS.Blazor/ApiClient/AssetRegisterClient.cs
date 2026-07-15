@@ -464,6 +464,8 @@ internal sealed record AcceptAccountabilityRequest(Guid AccountabilityId, DateOn
 internal interface IArAccountabilityClient
 {
     Task<ArPagedResponse<ArAccountabilitySummaryDto>> SearchAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, Guid? receivedByEmployeeId = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    /// <summary>Active ICS/PAR documents due (or already overdue) for renewal within <paramref name="withinDays"/> days, soonest-expiry first.</summary>
+    Task<IReadOnlyList<ArAccountabilitySummaryDto>> GetExpiringAsync(int withinDays = 60, CancellationToken ct = default);
     Task<ArPagedResponse<ArAccountabilitySummaryDto>> GetMineAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     /// <summary>Per-asset view of My Accountability: the individual units currently issued to the current employee.</summary>
     Task<ArPagedResponse<AssetRegistrySummaryDto>> GetMineAssetsAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
@@ -499,6 +501,16 @@ internal sealed class ArAccountabilityClient(HttpClient http) : IArAccountabilit
         });
         var result = await http.GetFromJsonAsync<ArPagedResponse<ArAccountabilitySummaryDto>>(url, ArJsonOptions.Default, ct);
         return result ?? new ArPagedResponse<ArAccountabilitySummaryDto>([], page, pageSize, 0, 0);
+    }
+
+    public async Task<IReadOnlyList<ArAccountabilitySummaryDto>> GetExpiringAsync(int withinDays = 60, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build($"{Base}/expiring", new()
+        {
+            ["withinDays"] = withinDays.ToString(CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<IReadOnlyList<ArAccountabilitySummaryDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? [];
     }
 
     public async Task<ArPagedResponse<ArAccountabilitySummaryDto>> GetMineAsync(string? keyword = null, AccountabilityType? type = null, AccountabilityStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default)

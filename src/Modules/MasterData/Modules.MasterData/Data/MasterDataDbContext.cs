@@ -5,6 +5,7 @@ using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.MasterData.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -45,6 +46,21 @@ public class MasterDataDbContext : BaseDbContext
 
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MasterDataDbContext).Assembly);
+
+        // SQLite test harness only: 'xmin' (EmployeeProfile's concurrency token) is a Postgres system
+        // column auto-maintained by the store. Under SQLite's EnsureCreated it materializes as a real
+        // NOT NULL column with no store generation, so an EF insert that omits it trips a NOT NULL
+        // violation. Demote it to a plain column on SQLite so EF sends the shadow default (0). No effect
+        // on Postgres. (Mirrors the identical shim in ExpendableDbContext.)
+        if (Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var xmin = entityType.FindProperty("xmin");
+                if (xmin is not null)
+                    xmin.ValueGenerated = ValueGenerated.Never;
+            }
+        }
     }
 }
 
