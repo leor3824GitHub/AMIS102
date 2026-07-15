@@ -108,6 +108,63 @@
             </AMISDataTable>
         </MudTabPanel>
 
+        <!-- ===== LOW STOCK TAB ===== -->
+        <MudTabPanel Text="Low Stock" Icon="@Icons.Material.Filled.ReportProblem">
+
+            <MudPaper Class="pa-3 mb-3" Elevation="1">
+                <div class="d-flex align-center" style="gap:12px;">
+                    <MudIcon Icon="@Icons.Material.Filled.ReportProblem"
+                             Color="@(_lowStock.Count > 0 ? Color.Warning : Color.Success)" />
+                    <MudText Typo="Typo.subtitle1">
+                        @if (_lowStockLoading)
+                        {
+                            <text>Checking stock levels…</text>
+                        }
+                        else if (_lowStock.Count == 0)
+                        {
+                            <text>All active products are above their minimum stock level.</text>
+                        }
+                        else
+                        {
+                            <text><b>@_lowStock.Count</b> product@(_lowStock.Count == 1 ? "" : "s") at or below minimum stock — reorder recommended.</text>
+                        }
+                    </MudText>
+                    <MudSpacer />
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                               StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadLowStock">Refresh</MudButton>
+                </div>
+            </MudPaper>
+
+            <AMISDataTable T="LowStockProductItem" Items="_lowStock" Loading="_lowStockLoading"
+                           EmptyMessage="No products below minimum stock." RowsPerPage="15" Elevation="2">
+                <HeaderContent>
+                    <MudTh>Stock No.</MudTh>
+                    <MudTh>Article</MudTh>
+                    <MudTh>Product</MudTh>
+                    <MudTh Style="text-align:center">On Hand</MudTh>
+                    <MudTh Style="text-align:center">Minimum</MudTh>
+                    <MudTh Style="text-align:center">Suggested Reorder</MudTh>
+                    <MudTh>UoM</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Stock No.">
+                        <MudText Typo="Typo.caption" Style="font-family:monospace">@context.StockNo</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Article">@context.Article</MudTd>
+                    <MudTd DataLabel="Product">@context.Name</MudTd>
+                    <MudTd DataLabel="On Hand" Style="text-align:center">
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(context.QuantityOnHand <= 0 ? Color.Error : Color.Warning)">
+                            @context.QuantityOnHand
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Minimum" Style="text-align:center">@context.MinimumStockLevel</MudTd>
+                    <MudTd DataLabel="Suggested Reorder" Style="text-align:center">@context.ReorderQuantity</MudTd>
+                    <MudTd DataLabel="UoM">@context.UnitOfMeasure</MudTd>
+                </RowTemplate>
+            </AMISDataTable>
+        </MudTabPanel>
+
     </MudTabs>
 </div>
 
@@ -123,11 +180,33 @@
     private WarehouseOption? _invWarehouse;
     private string _invSearch = string.Empty;
 
+    // Low-stock tab
+    private List<LowStockProductItem> _lowStock = [];
+    private bool _lowStockLoading;
+
     // ===== LIFECYCLE =====
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadWarehouses();
+        await Task.WhenAll(LoadWarehouses(), LoadLowStock());
+    }
+
+    private async Task LoadLowStock()
+    {
+        try
+        {
+            _lowStockLoading = true;
+            _lowStock = (await InventoryData.GetLowStockProductsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load low-stock products: {ex.Message}", Severity.Error);
+            _lowStock = [];
+        }
+        finally
+        {
+            _lowStockLoading = false;
+        }
     }
 
     private async Task LoadWarehouses()

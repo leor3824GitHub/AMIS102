@@ -18,19 +18,21 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
-            var k = query.Keyword.ToLowerInvariant();
+            // ILIKE (case-insensitive) instead of lower(col).Contains — removes the per-row lower() call
+            // and is the predicate a pg_trgm GIN index accelerates. Matches the SearchProducts convention.
+            var pattern = $"%{query.Keyword}%";
             q = q.Where(a =>
-                a.Description.ToLower().Contains(k) ||
-                (a.SerialNo != null && a.SerialNo.ToLower().Contains(k)) ||
-                (a.Brand != null && a.Brand.ToLower().Contains(k)) ||
-                (a.Model != null && a.Model.ToLower().Contains(k)));
+                EF.Functions.ILike(a.Description, pattern) ||
+                (a.SerialNo != null && EF.Functions.ILike(a.SerialNo, pattern)) ||
+                (a.Brand != null && EF.Functions.ILike(a.Brand, pattern)) ||
+                (a.Model != null && EF.Functions.ILike(a.Model, pattern)));
         }
 
         // Serial-only filter — precise lookup used by the mobile "search by serial number" mode.
         if (!string.IsNullOrWhiteSpace(query.SerialNo))
         {
-            var serial = query.SerialNo.Trim().ToLowerInvariant();
-            q = q.Where(a => a.SerialNo != null && a.SerialNo.ToLower().Contains(serial));
+            var serialPattern = $"%{query.SerialNo.Trim()}%";
+            q = q.Where(a => a.SerialNo != null && EF.Functions.ILike(a.SerialNo, serialPattern));
         }
         if (!string.IsNullOrWhiteSpace(query.PropertyClass))
         {

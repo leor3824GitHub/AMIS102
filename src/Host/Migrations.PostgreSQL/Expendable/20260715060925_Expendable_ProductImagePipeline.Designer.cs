@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.Expendable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,16 +12,17 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 {
     [DbContext(typeof(ExpendableDbContext))]
-    partial class ExpendableDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715060925_Expendable_ProductImagePipeline")]
+    partial class Expendable_ProductImagePipeline
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("AMIS.Framework.Eventing.Inbox.InboxMessage", b =>
@@ -172,6 +174,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("LastInventoryDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
@@ -369,25 +374,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Article")
-                        .HasDatabaseName("IX_Products_Article_trgm");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Article"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Article"), new[] { "gin_trgm_ops" });
-
-                    b.HasIndex("Name")
-                        .HasDatabaseName("IX_Products_Name_trgm");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
-
                     b.HasIndex("ParentProductId");
-
-                    b.HasIndex("StockNo")
-                        .HasDatabaseName("IX_Products_StockNo_trgm");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("StockNo"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("StockNo"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("TenantId", "CategoryId");
 
@@ -621,6 +608,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 
                     b.Property<int>("QuantityReserved")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("ReservedValue")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

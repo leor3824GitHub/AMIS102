@@ -1,6 +1,7 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Modules.Expendable.Contracts.v1.Products;
 using AMIS.Modules.Expendable.Data;
+using AMIS.Modules.Expendable.Data.Services;
 using AMIS.Modules.Expendable.Domain.Products;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -11,18 +12,22 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
 {
     private readonly ExpendableDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
+    private readonly ProductImageStorage _imageStorage;
 
-    public CreateProductCommandHandler(ExpendableDbContext dbContext, ICurrentUser currentUser)
+    public CreateProductCommandHandler(ExpendableDbContext dbContext, ICurrentUser currentUser, ProductImageStorage imageStorage)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
+        _imageStorage = imageStorage;
     }
 
     public async ValueTask<ProductDto> Handle(CreateProductCommand command, CancellationToken cancellationToken)
     {
+        var tenantId = _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
+
         var stockNoInUse = await _dbContext.Products
             .IgnoreQueryFilters()
-            .AnyAsync(p => p.TenantId == (_currentUser.GetTenant() ?? string.Empty) && p.StockNo == command.StockNo, cancellationToken)
+            .AnyAsync(p => p.TenantId == tenantId && p.StockNo == command.StockNo, cancellationToken)
             .ConfigureAwait(false);
 
         if (stockNoInUse)
@@ -38,7 +43,7 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
         if (command.ParentProductId is not null)
         {
             var parent = await _dbContext.Products
-                .FirstOrDefaultAsync(p => p.Id == command.ParentProductId && p.TenantId == (_currentUser.GetTenant() ?? string.Empty), cancellationToken)
+                .FirstOrDefaultAsync(p => p.Id == command.ParentProductId && p.TenantId == tenantId, cancellationToken)
                 .ConfigureAwait(false);
 
             if (parent is null)
@@ -70,7 +75,7 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
         else
         {
             product = Product.Create(
-                _currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required"),
+                tenantId,
                 command.StockNo,
                 command.Article,
                 command.Name,
@@ -80,10 +85,19 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
                 command.MinimumStockLevel,
                 command.ReorderQuantity,
                 command.CategoryId,
-                command.SupplierId,
-                command.ImageUrl);
+                command.SupplierId);
 
             product.CreatedBy = _currentUser.GetUserId().ToString();
+        }
+
+        // Store an uploaded photo as files (full + thumbnail) and record the keys — never a base64 blob.
+        // A non-data-URL value (there is none from the create flow) is ignored.
+        var imageBytes = ProductImageDataUrl.Decode(command.ImageUrl);
+        (string ImageKey, string ThumbnailKey)? savedImage = null;
+        if (imageBytes is not null)
+        {
+            savedImage = await _imageStorage.SaveAsync(imageBytes, tenantId, cancellationToken).ConfigureAwait(false);
+            product.SetImage(savedImage.Value.ImageKey, savedImage.Value.ThumbnailKey);
         }
 
         _dbContext.Products.Add(product);
@@ -95,6 +109,10 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
         catch (DbUpdateException ex) when ((ex.InnerException?.Message?.Contains("IX_Products_TenantId_StockNo", StringComparison.OrdinalIgnoreCase) ?? false)
             || (ex.InnerException?.Message?.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ?? false))
         {
+            // Row didn't persist → don't orphan the blobs we just wrote.
+            if (savedImage is not null)
+                await _imageStorage.RemoveAsync(savedImage.Value.ImageKey, savedImage.Value.ThumbnailKey, cancellationToken).ConfigureAwait(false);
+
             throw new FluentValidation.ValidationException(
             [
                 new FluentValidation.Results.ValidationFailure(nameof(command.StockNo), "A product with this Stock No. already exists.")
@@ -104,4 +122,3 @@ public sealed class CreateProductCommandHandler : ICommandHandler<CreateProductC
         return product.ToProductDto();
     }
 }
-

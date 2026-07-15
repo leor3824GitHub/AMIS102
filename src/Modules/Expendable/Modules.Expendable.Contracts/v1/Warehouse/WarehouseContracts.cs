@@ -77,6 +77,13 @@ public sealed class GetWarehouseStockLevelsQuery : IPagedQuery, IQuery<PagedResp
 /// <summary>Unpaged list of warehouse locations that hold inventory — for bounded warehouse pickers.</summary>
 public sealed record ListWarehouseLocationsQuery : IQuery<IReadOnlyList<WarehouseLocationDto>>;
 
+/// <summary>
+/// Reorder worklist: active products whose total on-hand (across all warehouses) is at or below their
+/// configured minimum stock level. Uses <c>Product.MinimumStockLevel</c>/<c>ReorderQuantity</c> (already
+/// captured on the product) against a grouped sum over ProductInventory.
+/// </summary>
+public sealed record GetLowStockProductsQuery : IQuery<IReadOnlyList<LowStockProductDto>>;
+
 /// <summary>Inventory rows (all warehouses) for a bounded set of products — replaces "fetch every row and filter client-side".</summary>
 public sealed record GetProductInventoriesByProductsQuery(
     IReadOnlyCollection<Guid> ProductIds
@@ -85,6 +92,17 @@ public sealed record GetProductInventoriesByProductsQuery(
 // ============= DTOs =============
 
 public record WarehouseLocationDto(Guid Id, string Name);
+
+/// <summary>A product flagged for reorder: total on-hand at or below its minimum stock level.</summary>
+public record LowStockProductDto(
+    Guid ProductId,
+    string StockNo,
+    string Article,
+    string Name,
+    string UnitOfMeasure,
+    int QuantityOnHand,
+    int MinimumStockLevel,
+    int ReorderQuantity);
 
 public record ProductInventoryDto(
     Guid Id,

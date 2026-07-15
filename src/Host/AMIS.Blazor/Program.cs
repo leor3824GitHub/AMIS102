@@ -277,6 +277,7 @@ app.UseAntiforgery();
 app.MapSimpleBffAuthEndpoints();
 app.MapPdfDownloadEndpoints();
 app.MapAssetImageEndpoints();
+app.MapProductImageEndpoints();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

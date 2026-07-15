@@ -44,7 +44,7 @@ public sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purcha
 
         builder.HasIndex(x => new { x.TenantId, x.PoNumber }).IsUnique();
         builder.HasIndex(x => x.PurchaseRequestId);
-        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => new { x.TenantId, x.Status });
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

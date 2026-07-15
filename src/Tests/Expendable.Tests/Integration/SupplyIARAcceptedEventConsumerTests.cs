@@ -64,17 +64,19 @@ public sealed class SupplyIARAcceptedEventConsumerTests
 
     private static async Task<Product> SeedProductAsync(ExpendableDbContext db, string stockNo)
     {
-        // Product.Version is mapped IsRowVersion() (store-generated). SQLite has no native rowversion, so an
-        // EF insert omits the column and trips its NOT NULL constraint. Seed via raw SQL with an explicit
-        // version blob instead — this is a SQLite-test-only concern; production runs on Postgres.
+        // Product's concurrency token is the Postgres system column xmin (store-generated,
+        // ValueGeneratedOnAddOrUpdate). On Postgres it needs no DDL/value; on SQLite EnsureCreated
+        // materializes a real NOT NULL "xmin" column that an EF insert omits (it expects the store to
+        // generate it) → NOT NULL violation. Seed via raw SQL with an explicit xmin instead — this is a
+        // SQLite-test-only concern; production runs on Postgres where xmin is auto-maintained.
         var id = Guid.NewGuid();
         await db.Database.ExecuteSqlInterpolatedAsync($@"
 INSERT INTO Products
   (Id, TenantId, StockNo, Article, Name, Description, UnitPrice, UnitOfMeasure,
-   MinimumStockLevel, ReorderQuantity, Status, Version, CreatedOnUtc, IsDeleted)
+   MinimumStockLevel, ReorderQuantity, Status, xmin, CreatedOnUtc, IsDeleted)
 VALUES
   ({id}, {Tenant}, {stockNo}, 'Paper', 'Bond Paper', 'desc', 5, 'REAM',
-   1, 1, 1, randomblob(8), {DateTimeOffset.UtcNow}, 0)");
+   1, 1, 1, 0, {DateTimeOffset.UtcNow}, 0)");
 
         return await db.Products.SingleAsync(p => p.StockNo == stockNo);
     }

@@ -5,20 +5,6 @@ namespace AMIS.Modules.Expendable.Features.v1.Products.UpdateProduct;
 
 public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
 {
-    private static bool IsValidImageUrl(string url)
-    {
-        if (string.IsNullOrEmpty(url))
-            return true;
-
-        // Accept data URLs (base64 encoded images)
-        if (url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        // Accept absolute HTTP(S) URLs
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && 
-               (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
-    }
-
     public UpdateProductCommandValidator()
     {
         RuleFor(x => x.Id)
@@ -40,10 +26,11 @@ public sealed class UpdateProductCommandValidator : AbstractValidator<UpdateProd
         RuleFor(x => x.ReorderQuantity)
             .GreaterThan(0).WithMessage("Reorder quantity must be greater than zero");
 
+        // ImageUrl carries one of: a base64 data URL (new upload), null/blank (clear), or the existing
+        // storage key echoed back (no change). The handler interprets these; here we only guard the size
+        // of a base64 upload (the server re-encodes/downscales anyway).
         RuleFor(x => x.ImageUrl)
-            .MaximumLength(10_000_000).WithMessage("Image data URL exceeds maximum size")
-            .Must(url => url == null || IsValidImageUrl(url))
-            .WithMessage("Image URL must be a valid URL or data URL");
+            .MaximumLength(10_000_000).WithMessage("Image data URL exceeds maximum size");
     }
 }
 

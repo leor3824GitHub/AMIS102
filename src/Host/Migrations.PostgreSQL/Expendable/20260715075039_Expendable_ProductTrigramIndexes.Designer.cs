@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.Expendable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 {
     [DbContext(typeof(ExpendableDbContext))]
-    partial class ExpendableDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715075039_Expendable_ProductTrigramIndexes")]
+    partial class Expendable_ProductTrigramIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,6 +175,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("LastInventoryDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
@@ -621,6 +627,9 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 
                     b.Property<int>("QuantityReserved")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("ReservedValue")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

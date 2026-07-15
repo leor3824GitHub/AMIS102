@@ -50,7 +50,6 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     public int TotalQuantityReceived { get; set; }
     public int TotalQuantityConsumed { get; set; }
     public int QuantityOnHand => TotalQuantityReceived - TotalQuantityConsumed;
-    public DateTimeOffset LastInventoryDate { get; set; }
     public byte[] Version { get; private set; } = [];
 
     private readonly List<InventoryBatch> _batches = [];
@@ -73,7 +72,6 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
             ProductId = productId,
             TotalQuantityReceived = 0,
             TotalQuantityConsumed = 0,
-            LastInventoryDate = DateTimeOffset.UtcNow,
             Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
@@ -87,7 +85,6 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
         var batch = new InventoryBatch(ProductId, quantity, batchNumber, expiryDate);
         _batches.Add(batch);
         TotalQuantityReceived += quantity;
-        LastInventoryDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }
@@ -113,7 +110,6 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
         }
 
         TotalQuantityConsumed += quantity;
-        LastInventoryDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
         return quantity;

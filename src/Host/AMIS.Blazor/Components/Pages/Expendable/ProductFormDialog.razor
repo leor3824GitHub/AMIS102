@@ -99,11 +99,6 @@
                     Choose Image (Max 5MB)
                 </MudButton>
             </MudFileUpload>
-
-            <MudTextField @bind-Value="_form.ImageUrl" Label="Or Paste Image URL"
-                          Placeholder="https://example.com/image.jpg"
-                          HelperText="Or provide an absolute URL instead"
-                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -189,8 +184,10 @@
             ReorderQuantity = product.ReorderQuantity,
             CategoryId = product.CategoryId,
             SupplierId = product.SupplierId,
+            // ImageUrl holds the existing storage key — echoed back unchanged on save = "no image change".
+            // The preview renders the existing photo through the same-origin proxy (the key isn't a URL).
             ImageUrl = product.ImageUrl,
-            ImagePreview = product.ImageUrl,
+            ImagePreview = !string.IsNullOrEmpty(product.ImageUrl) ? $"/bff/product-image/{product.Id}?variant=full" : null,
             ParentProductId = product.ParentProductId,
             VariantName = product.VariantName
         };

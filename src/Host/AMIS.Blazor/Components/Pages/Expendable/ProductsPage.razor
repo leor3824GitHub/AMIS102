@@ -101,8 +101,10 @@
                     <MudTd DataLabel="Image">
                         @if (!string.IsNullOrEmpty(context.ImageUrl))
                         {
-                            <MudImage Src="@context.ImageUrl" Alt="@context.Name"
-                                     ObjectFit="ObjectFit.Cover" Width="48" Height="48" Class="rounded" />
+                            @* Lazily fetched per visible row from the same-origin proxy — the browser
+                               caches by URL and only loads on-screen thumbnails. No base64 in the payload. *@
+                            <img src="@($"/bff/product-image/{context.Id}?variant=thumb")" alt="@context.Name" loading="lazy"
+                                 width="48" height="48" style="object-fit:cover;border-radius:4px;" />
                         }
                         else
                         {

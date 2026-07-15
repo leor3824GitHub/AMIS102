@@ -17,6 +17,7 @@ using AMIS.Modules.Expendable.Features.v1.Products.DiscontinueProduct;
 using AMIS.Modules.Expendable.Features.v1.Products.MarkOutOfStock;
 using AMIS.Modules.Expendable.Features.v1.Products.DeleteProduct;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProduct;
+using AMIS.Modules.Expendable.Features.v1.Products.GetProductImage;
 using AMIS.Modules.Expendable.Features.v1.Products.GetProductCatalogCards;
 using AMIS.Modules.Expendable.Features.v1.Products.ListActiveProducts;
 using AMIS.Modules.Expendable.Features.v1.Products.SearchProducts;
@@ -52,6 +53,7 @@ using AMIS.Modules.Expendable.Features.v1.Warehouse.IssueFromProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.SearchProductInventory;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetWarehouseStockLevels;
+using AMIS.Modules.Expendable.Features.v1.Warehouse.GetLowStockProducts;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.ListWarehouseLocations;
 using AMIS.Modules.Expendable.Features.v1.Warehouse.GetProductInventoriesByProducts;
 using Mediator;
@@ -121,6 +123,9 @@ public class ExpendableModule : IModule
         // Register hosted service to initialize core database schema on app startup
         services.AddHostedService<AMIS.Modules.Expendable.Provisioning.ExpendableDbInitializerHostedService>();
 
+        // Product-photo file storage (full image + thumbnail under the protected uploads prefix).
+        services.AddScoped<Data.Services.ProductImageStorage>();
+
         // Inbound integration: land accepted Supply IAR lines into ProductInventory.
         services.AddScoped<
             AMIS.Framework.Eventing.Abstractions.IIntegrationEventHandler<
@@ -159,6 +164,7 @@ public class ExpendableModule : IModule
         MarkOutOfStockEndpoint.Map(productsGroup);
         DeleteProductEndpoint.Map(productsGroup);
         GetProductEndpoint.Map(productsGroup);
+        GetProductImageEndpoint.Map(productsGroup);
         GetProductCatalogCardsEndpoint.Map(productsGroup);
         ListActiveProductsEndpoint.Map(productsGroup);
         SearchProductsEndpoint.Map(productsGroup);
@@ -201,6 +207,7 @@ public class ExpendableModule : IModule
         GetProductInventoryEndpoint.Map(warehouseGroup);
         SearchProductInventoryEndpoint.Map(warehouseGroup);
         GetWarehouseStockLevelsEndpoint.Map(warehouseGroup);
+        GetLowStockProductsEndpoint.Map(warehouseGroup);
         ListWarehouseLocationsEndpoint.Map(warehouseGroup);
         GetProductInventoriesByProductsEndpoint.Map(warehouseGroup);
 

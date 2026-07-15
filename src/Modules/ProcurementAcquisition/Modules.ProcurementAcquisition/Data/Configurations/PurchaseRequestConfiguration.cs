@@ -47,8 +47,9 @@ public sealed class PurchaseRequestConfiguration : IEntityTypeConfiguration<Purc
             .IsConcurrencyToken();
 
         builder.HasIndex(x => new { x.TenantId, x.PrNumber }).IsUnique();
-        builder.HasIndex(x => x.Status);
-        builder.HasIndex(x => x.DepartmentId);
+        // Tenant-first composite indexes matching the list-page filter shapes (every query is tenant-scoped).
+        builder.HasIndex(x => new { x.TenantId, x.Status });
+        builder.HasIndex(x => new { x.TenantId, x.DepartmentId });
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

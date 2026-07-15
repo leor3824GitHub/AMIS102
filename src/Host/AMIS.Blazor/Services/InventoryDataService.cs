@@ -6,6 +6,17 @@ namespace AMIS.Blazor.Services;
 /// <summary>Warehouse location as returned by the unpaged warehouse-locations lookup.</summary>
 internal sealed record WarehouseLocationItem(Guid Id, string Name);
 
+/// <summary>A product on the reorder worklist (total on-hand at or below its minimum stock level).</summary>
+internal sealed record LowStockProductItem(
+    Guid ProductId,
+    string StockNo,
+    string Article,
+    string Name,
+    string UnitOfMeasure,
+    int QuantityOnHand,
+    int MinimumStockLevel,
+    int ReorderQuantity);
+
 /// <summary>
 /// Expendable reads that must not be truncated by the 100-row page-size clamp, and batch reads that
 /// replace per-row fetch loops. The paged <c>inventory/search</c> and <c>products</c> endpoints are fine
@@ -15,6 +26,8 @@ internal sealed record WarehouseLocationItem(Guid Id, string Name);
 internal interface IInventoryDataService
 {
     Task<IReadOnlyList<WarehouseLocationItem>> GetWarehouseLocationsAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<LowStockProductItem>> GetLowStockProductsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ProductInventoryDto>> GetInventoriesByProductsAsync(
         IReadOnlyCollection<Guid> productIds,
@@ -31,6 +44,15 @@ internal sealed class InventoryDataService(HttpClient httpClient) : IInventoryDa
     {
         var result = await httpClient
             .GetFromJsonAsync<List<WarehouseLocationItem>>("api/v1/expendable/warehouse/locations", cancellationToken)
+            .ConfigureAwait(false);
+
+        return result ?? [];
+    }
+
+    public async Task<IReadOnlyList<LowStockProductItem>> GetLowStockProductsAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await httpClient
+            .GetFromJsonAsync<List<LowStockProductItem>>("api/v1/expendable/warehouse/low-stock", cancellationToken)
             .ConfigureAwait(false);
 
         return result ?? [];

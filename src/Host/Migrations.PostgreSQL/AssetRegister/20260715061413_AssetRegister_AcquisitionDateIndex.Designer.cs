@@ -3,6 +3,7 @@ using System;
 using AMIS.Modules.AssetRegister.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,16 +12,17 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 {
     [DbContext(typeof(AssetRegisterDbContext))]
-    partial class AssetRegisterDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715061413_AssetRegister_AcquisitionDateIndex")]
+    partial class AssetRegister_AcquisitionDateIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Accountability.PropertyAccountability", b =>
@@ -298,18 +300,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .HasColumnName("xmin");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Description")
-                        .HasDatabaseName("IX_AssetRegistries_Description_trgm");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Description"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Description"), new[] { "gin_trgm_ops" });
-
-                    b.HasIndex("SerialNo")
-                        .HasDatabaseName("IX_AssetRegistries_SerialNo_trgm");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SerialNo"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("SerialNo"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("TenantId", "AcquisitionDate")
                         .IsDescending(false, true);

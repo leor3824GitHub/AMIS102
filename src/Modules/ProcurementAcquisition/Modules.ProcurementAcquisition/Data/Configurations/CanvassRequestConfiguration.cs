@@ -26,7 +26,7 @@ public sealed class CanvassRequestConfiguration : IEntityTypeConfiguration<Canva
 
         builder.HasIndex(x => new { x.TenantId, x.RivNumber }).IsUnique();
         builder.HasIndex(x => x.PurchaseRequestId);
-        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => new { x.TenantId, x.Status });
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

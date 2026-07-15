@@ -30,10 +30,11 @@ public class ProductInventory : AggregateRoot<Guid>
 
     // Value Tracking (for cost accounting)
     public decimal TotalValue { get; private set; }        // Moving-average inventory value
-    public decimal ReservedValue { get; private set; }     // Reserved quantity valued at moving-average cost
     public decimal AverageUnitPrice => QuantityOnHand > 0
         ? Math.Round(TotalValue / QuantityOnHand, 4)
         : 0m;
+    // Pure derivation (like AverageUnitPrice) — recomputed on read, never stored, so it can't drift.
+    public decimal ReservedValue => Math.Round(QuantityReserved * AverageUnitPrice, 2, MidpointRounding.AwayFromZero);
 
     // Purchase receipt batches retained for traceability
     public Collection<InventoryBatch> Batches { get; private set; } = new Collection<InventoryBatch>();
@@ -91,7 +92,6 @@ public class ProductInventory : AggregateRoot<Guid>
             QuantityReserved = 0,
             QuantityIssued = 0,
             TotalValue = 0,
-            ReservedValue = 0,
             Status = ProductInventoryStatus.Active,
             Version = NewVersion(),
             CreatedOnUtc = DateTimeOffset.UtcNow
@@ -120,7 +120,6 @@ public class ProductInventory : AggregateRoot<Guid>
 
         QuantityAvailable += quantityAccepted;
         TotalValue = Math.Round(TotalValue + (quantityAccepted * unitPrice), 2, MidpointRounding.AwayFromZero);
-        RecalculateReservedValue();
 
         if (FirstReceiptDate == null)
             FirstReceiptDate = DateTimeOffset.UtcNow;
@@ -141,7 +140,6 @@ public class ProductInventory : AggregateRoot<Guid>
         QuantityAvailable -= quantityToReserve;
         QuantityReserved += quantityToReserve;
 
-        RecalculateReservedValue();
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }
@@ -158,7 +156,6 @@ public class ProductInventory : AggregateRoot<Guid>
         QuantityReserved -= quantityToRelease;
         QuantityAvailable += quantityToRelease;
 
-        RecalculateReservedValue();
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
     }
@@ -182,7 +179,6 @@ public class ProductInventory : AggregateRoot<Guid>
             Math.Max(0m, TotalValue - totalIssuedValue),
             2,
             MidpointRounding.AwayFromZero);
-        RecalculateReservedValue();
         LastIssueDate = DateTimeOffset.UtcNow;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         Version = NewVersion();
@@ -207,11 +203,6 @@ public class ProductInventory : AggregateRoot<Guid>
 
         Status = ProductInventoryStatus.Discontinued;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
-    }
-
-    private void RecalculateReservedValue()
-    {
-        ReservedValue = Math.Round(QuantityReserved * AverageUnitPrice, 2, MidpointRounding.AwayFromZero);
     }
 }
 

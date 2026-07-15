@@ -53,7 +53,7 @@ public sealed class JobOrderConfiguration : IEntityTypeConfiguration<JobOrder>
 
         builder.HasIndex(x => new { x.TenantId, x.JoNumber }).IsUnique();
         builder.HasIndex(x => x.PurchaseRequestId);
-        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => new { x.TenantId, x.Status });
 
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
         builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted);

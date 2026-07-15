@@ -29,8 +29,11 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     // --- VARIANT PROPERTIES ---
     public Guid? ParentProductId { get; private set; }
     public string? VariantName { get; private set; } // e.g., "A4", "Long"
+    // Storage keys (files under the tenant-scoped protected prefix), never a base64 blob.
+    // ImageUrl = full image; ThumbnailUrl = small list thumbnail. A legacy data:…;base64 value
+    // is still decoded transparently by ProductImageStorage so pre-migration rows keep rendering.
     public string? ImageUrl { get; private set; }
-    public byte[] Version { get; private set; } = [];
+    public string? ThumbnailUrl { get; private set; }
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
@@ -50,7 +53,7 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     /// <summary>Factory method to create a new product</summary>
     public static Product Create(string tenantId, string stockNo, string article, string name, string description,
         decimal unitPrice, string unitOfMeasure, int minimumStockLevel, int reorderQuantity,
-        string? categoryId = null, string? supplierId = null, string? imageUrl = null)
+        string? categoryId = null, string? supplierId = null)
     {
         return new Product
         {
@@ -66,7 +69,6 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             ReorderQuantity = reorderQuantity,
             CategoryId = categoryId,
             SupplierId = supplierId,
-            ImageUrl = imageUrl,
             Status = ProductStatus.Active,
             CreatedOnUtc = DateTimeOffset.UtcNow
         };
@@ -86,8 +88,9 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
             Description = this.Description, // Inherit parent description
             Article = this.Article,         // Inherit parent article
             CategoryId = this.CategoryId,   // Inherit parent category
-            SupplierId = this.SupplierId,   // Inherit parent supplier
-            ImageUrl = this.ImageUrl,       // Inherit parent image
+            SupplierId = this.SupplierId,   // Note: image is NOT inherited — storage keys must not be
+            // shared across rows (clearing/replacing one variant would delete another's file). A variant
+            // starts with no photo and can have its own uploaded via the create/update image flow.
             StockNo = stockNo,
             UnitPrice = unitPrice,
             UnitOfMeasure = unitOfMeasure,
@@ -128,7 +131,7 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
 
     /// <summary>Update product details</summary>
     public void Update(string name, string description, string article, decimal unitPrice,
-        int minimumStockLevel, int reorderQuantity, string? imageUrl = null)
+        int minimumStockLevel, int reorderQuantity)
     {
         Name = name;
         Description = description;
@@ -136,10 +139,26 @@ public class Product : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
         UnitPrice = unitPrice;
         MinimumStockLevel = minimumStockLevel;
         ReorderQuantity = reorderQuantity;
-        if (imageUrl != null)
-        {
-            ImageUrl = imageUrl;
-        }
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Records the storage keys for the product's uploaded photo + thumbnail. The caller writes the
+    /// files first (via ProductImageStorage), then records the keys here.
+    /// </summary>
+    public void SetImage(string imageKey, string? thumbnailKey)
+    {
+        if (string.IsNullOrWhiteSpace(imageKey)) throw new ArgumentException("Image key is required.", nameof(imageKey));
+        ImageUrl = imageKey;
+        ThumbnailUrl = thumbnailKey;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Clears the product's photo (both the full image and thumbnail keys).</summary>
+    public void ClearImage()
+    {
+        ImageUrl = null;
+        ThumbnailUrl = null;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
     }
 

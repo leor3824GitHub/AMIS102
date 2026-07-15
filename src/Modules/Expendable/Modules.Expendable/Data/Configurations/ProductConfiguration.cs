@@ -44,13 +44,20 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsRequired();
 
         builder.Property(p => p.ImageUrl)
-            .HasMaxLength(10_000_000);  // Support base64-encoded images (up to ~7.6MB images)
+            .HasMaxLength(1024);       // storage key of the full image (files, not base64)
+        builder.Property(p => p.ThumbnailUrl)
+            .HasMaxLength(1024);       // storage key of the list thumbnail
 
         builder.Property(p => p.Status)
             .HasConversion<int>();
 
-        builder.Property(p => p.Version)
-            .IsRowVersion();
+        // Optimistic concurrency via Postgres system column xmin (mirrors AssetRegistry) —
+        // avoids the bytea IsRowVersion() pitfall that never generates a value on insert.
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         // Self-reference: a product may have a parent product and many variants
         builder.HasOne(p => p.ParentProduct)
@@ -63,6 +70,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsUnique();
 
         builder.HasIndex(p => new { p.TenantId, p.Status });
+
+        // Composite indexes for the actual SearchProducts filter/sort shapes:
+        // filters on CategoryId/SupplierId, default sort OrderBy(Name).
+        builder.HasIndex(p => new { p.TenantId, p.CategoryId });
+        builder.HasIndex(p => new { p.TenantId, p.SupplierId });
+        builder.HasIndex(p => new { p.TenantId, p.Name });
 
         // Soft Delete
         builder.Property(p => p.IsDeleted)

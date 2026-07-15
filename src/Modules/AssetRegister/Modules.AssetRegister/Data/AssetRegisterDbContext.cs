@@ -55,6 +55,18 @@ public class AssetRegisterDbContext : BaseDbContext
         ArgumentNullException.ThrowIfNull(modelBuilder);
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AssetRegisterDbContext).Assembly);
+
+        // Postgres-only: pg_trgm GIN indexes accelerate the leading-wildcard ILIKE keyword search that
+        // SearchAssets runs over these columns (a b-tree can't serve '%kw%'). Guarded by provider so the
+        // EF InMemory test provider skips the unsupported 'USING gin' DDL.
+        if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            modelBuilder.HasPostgresExtension("pg_trgm");
+            modelBuilder.Entity<AssetRegistry>().HasIndex(a => a.Description)
+                .HasDatabaseName("IX_AssetRegistries_Description_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+            modelBuilder.Entity<AssetRegistry>().HasIndex(a => a.SerialNo)
+                .HasDatabaseName("IX_AssetRegistries_SerialNo_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+        }
     }
 }
 

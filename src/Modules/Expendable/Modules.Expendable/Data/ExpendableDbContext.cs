@@ -58,6 +58,20 @@ public class ExpendableDbContext : BaseDbContext
 
         modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration(ExpendableModuleConstants.SchemaName));
         modelBuilder.ApplyConfiguration(new InboxMessageConfiguration(ExpendableModuleConstants.SchemaName));
+
+        // Postgres-only: pg_trgm GIN indexes accelerate the leading-wildcard ILIKE keyword search that
+        // SearchProducts runs over these columns (a b-tree can't serve '%kw%'). Guarded by provider so the
+        // SQLite test harness (EnsureCreated) and EF InMemory skip the unsupported 'USING gin' DDL.
+        if (Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            modelBuilder.HasPostgresExtension("pg_trgm");
+            modelBuilder.Entity<Product>().HasIndex(p => p.Name)
+                .HasDatabaseName("IX_Products_Name_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+            modelBuilder.Entity<Product>().HasIndex(p => p.StockNo)
+                .HasDatabaseName("IX_Products_StockNo_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+            modelBuilder.Entity<Product>().HasIndex(p => p.Article)
+                .HasDatabaseName("IX_Products_Article_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+        }
     }
 }
 

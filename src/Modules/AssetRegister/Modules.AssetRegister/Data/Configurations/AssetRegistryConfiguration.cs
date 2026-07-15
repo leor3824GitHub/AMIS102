@@ -54,6 +54,10 @@ internal sealed class AssetRegistryConfiguration : IEntityTypeConfiguration<Asse
         builder.HasIndex(x => new { x.TenantId, x.CurrentCustodianId });
         builder.HasIndex(x => new { x.TenantId, x.AssetType });
         builder.HasIndex(x => new { x.TenantId, x.PropertyClass });
+        // SearchAssets sorts OrderByDescending(AcquisitionDate) on every page — index it descending
+        // (tenant-first) so the default asset-register listing is a flat index scan as rows grow.
+        builder.HasIndex(x => new { x.TenantId, x.AcquisitionDate })
+            .IsDescending(false, true);
     }
 }
 

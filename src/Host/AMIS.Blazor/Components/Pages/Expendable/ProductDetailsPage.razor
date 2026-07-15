@@ -40,7 +40,8 @@
             <MudGrid>
                 <!-- Image -->
                 <MudItem xs="12" md="5">
-                    <MudImage Src="@(_product.ImageUrl ?? PlaceholderImage)"
+                    @* Full image streamed through the same-origin proxy (no base64 over the circuit). *@
+                    <MudImage Src="@(!string.IsNullOrEmpty(_product.ImageUrl) ? $"/bff/product-image/{_product.Id}" : PlaceholderImage)"
                               Alt="@_product.Name"
                               ObjectFit="ObjectFit.Cover"
                               Style="width:100%; aspect-ratio:1/1; border-radius:8px;" />

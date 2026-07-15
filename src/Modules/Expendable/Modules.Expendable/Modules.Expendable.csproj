@@ -16,6 +16,7 @@
 	<ItemGroup>
 		<PackageReference Include="Mediator.Abstractions" />
 		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="SixLabors.ImageSharp" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,6 +27,7 @@
 		<ProjectReference Include="..\..\..\BuildingBlocks\Caching\Caching.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Eventing\Eventing.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
+		<ProjectReference Include="..\..\..\BuildingBlocks\Storage\Storage.csproj" />
 		<ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
 		<ProjectReference Include="..\Modules.Expendable.Contracts\Modules.Expendable.Contracts.csproj" />
 		<ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />

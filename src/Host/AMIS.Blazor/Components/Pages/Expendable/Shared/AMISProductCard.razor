@@ -2,7 +2,8 @@
 @using AMIS.Blazor.ApiClient
 
 <MudCard Class="amis-product-card d-flex flex-column h-100" Elevation="1">
-    <MudCardMedia Image="@(Product.ImageUrl ?? PlaceholderImage)" Height="140" />
+    @* Photo is streamed lazily through the same-origin proxy (thumbnail size); no base64 in the payload. *@
+    <MudCardMedia Image="@(!string.IsNullOrEmpty(Product.ImageUrl) ? $"/bff/product-image/{Product.Id}?variant=thumb" : PlaceholderImage)" Height="140" />
     <MudCardContent Class="pa-2 flex-grow-1 d-flex flex-column">
         <div class="amis-product-name" title="@Product.Name">@Product.Name</div>
         <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-1">@Product.StockNo</MudText>
