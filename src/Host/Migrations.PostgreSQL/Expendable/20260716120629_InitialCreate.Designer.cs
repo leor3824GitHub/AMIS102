@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AMIS.Playground.Migrations.PostgreSQL.Migrations.Expendable
+namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 {
     [DbContext(typeof(ExpendableDbContext))]
-    [Migration("20260716074921_Expendable_DropInventorySnapshotColumns")]
-    partial class Expendable_DropInventorySnapshotColumns
+    [Migration("20260716120629_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -690,7 +690,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Migrations.Expendable
 
             modelBuilder.Entity("AMIS.Modules.Expendable.Domain.Inventory.EmployeeInventory", b =>
                 {
-                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Inventory.InventoryBatch", "Batches", b1 =>
+                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Inventory.EmployeeStockBatch", "Batches", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
@@ -779,42 +779,40 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Migrations.Expendable
 
             modelBuilder.Entity("AMIS.Modules.Expendable.Domain.Warehouse.ProductInventory", b =>
                 {
-                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Warehouse.InventoryBatch", "Batches", b1 =>
+                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Warehouse.WarehouseReceiptBatch", "Batches", b1 =>
                         {
-                            b1.Property<Guid>("ProductInventoryId");
+                            b1.Property<Guid>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid");
 
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd();
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
 
-                            b1.Property<DateTimeOffset?>("FirstIssueDate");
+                            b1.Property<Guid>("ProductInventoryId")
+                                .HasColumnType("uuid");
 
-                            b1.Property<DateTimeOffset?>("InspectionDate");
+                            b1.Property<Guid>("PurchaseId")
+                                .HasColumnType("uuid");
 
-                            b1.Property<Guid>("ProductId");
+                            b1.Property<int>("QuantityAvailable")
+                                .HasColumnType("integer");
 
-                            b1.Property<Guid>("PurchaseId");
-
-                            b1.Property<int>("QuantityAvailable");
-
-                            b1.Property<int>("QuantityIssued");
-
-                            b1.Property<DateTimeOffset>("ReceivedDate");
+                            b1.Property<DateTimeOffset>("ReceivedDate")
+                                .HasColumnType("timestamp with time zone");
 
                             b1.Property<string>("SourceReference")
-                                .HasMaxLength(64);
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
 
                             b1.Property<decimal>("UnitPrice")
-                                .HasPrecision(18, 2);
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)");
 
-                            b1.Property<int>("Version");
+                            b1.HasKey("Id");
 
-                            b1.HasKey("ProductInventoryId", "__synthesizedOrdinal");
+                            b1.HasIndex("ProductInventoryId");
 
-                            b1.ToTable("ProductInventory", "expendable");
-
-                            b1
-                                .ToJson("Batches")
-                                .HasColumnType("jsonb");
+                            b1.ToTable("ProductInventoryBatches", "expendable");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductInventoryId");

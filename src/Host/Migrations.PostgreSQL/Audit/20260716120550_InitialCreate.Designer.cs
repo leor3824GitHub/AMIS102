@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.Audit
 {
     [DbContext(typeof(AuditDbContext))]
-    [Migration("20260715124519_InitialCreate")]
+    [Migration("20260716120550_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementPlanning
 {
     [DbContext(typeof(ProcurementPlanningDbContext))]
-    [Migration("20260715124717_InitialCreate")]
+    [Migration("20260716120746_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

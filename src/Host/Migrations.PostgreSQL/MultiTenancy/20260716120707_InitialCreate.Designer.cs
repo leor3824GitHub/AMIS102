@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.MultiTenancy
 {
     [DbContext(typeof(TenantDbContext))]
-    [Migration("20260715124638_InitialCreate")]
+    [Migration("20260716120707_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

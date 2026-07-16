@@ -687,7 +687,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 
             modelBuilder.Entity("AMIS.Modules.Expendable.Domain.Inventory.EmployeeInventory", b =>
                 {
-                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Inventory.InventoryBatch", "Batches", b1 =>
+                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Inventory.EmployeeStockBatch", "Batches", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
@@ -776,17 +776,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 
             modelBuilder.Entity("AMIS.Modules.Expendable.Domain.Warehouse.ProductInventory", b =>
                 {
-                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Warehouse.InventoryBatch", "Batches", b1 =>
+                    b.OwnsMany("AMIS.Modules.Expendable.Domain.Warehouse.WarehouseReceiptBatch", "Batches", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
                                 .HasColumnType("uuid");
-
-                            b1.Property<DateTimeOffset?>("FirstIssueDate")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<DateTimeOffset?>("InspectionDate")
-                                .HasColumnType("timestamp with time zone");
 
                             b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
@@ -800,9 +794,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                             b1.Property<int>("QuantityAvailable")
                                 .HasColumnType("integer");
 
-                            b1.Property<int>("QuantityIssued")
-                                .HasColumnType("integer");
-
                             b1.Property<DateTimeOffset>("ReceivedDate")
                                 .HasColumnType("timestamp with time zone");
 
@@ -813,9 +804,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                             b1.Property<decimal>("UnitPrice")
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)");
-
-                            b1.Property<int>("Version")
-                                .HasColumnType("integer");
 
                             b1.HasKey("Id");
 

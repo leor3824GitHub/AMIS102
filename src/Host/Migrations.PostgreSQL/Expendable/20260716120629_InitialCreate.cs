@@ -134,10 +134,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     WarehouseLocationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    WarehouseLocationName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     QuantityAvailable = table.Column<int>(type: "integer", nullable: false),
                     QuantityReserved = table.Column<int>(type: "integer", nullable: false),
                     QuantityIssued = table.Column<int>(type: "integer", nullable: false),
@@ -153,8 +150,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                     DeletedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedBy = table.Column<string>(type: "text", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
-                    Batches = table.Column<string>(type: "jsonb", nullable: true)
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -287,6 +283,32 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ProductInventoryBatches",
+                schema: "expendable",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    QuantityAvailable = table.Column<int>(type: "integer", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    SourceReference = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    ReceivedDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ProductInventoryId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductInventoryBatches", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductInventoryBatches_ProductInventory_ProductInventoryId",
+                        column: x => x.ProductInventoryId,
+                        principalSchema: "expendable",
+                        principalTable: "ProductInventory",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_EmployeeInventory_TenantId_EmployeeId_ProductId",
                 schema: "expendable",
@@ -354,6 +376,12 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 schema: "expendable",
                 table: "ProductInventory",
                 columns: new[] { "TenantId", "WarehouseLocationId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductInventoryBatches_ProductInventoryId",
+                schema: "expendable",
+                table: "ProductInventoryBatches",
+                column: "ProductInventoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductRatings_TenantId_ProductId",
@@ -479,7 +507,7 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 schema: "expendable");
 
             migrationBuilder.DropTable(
-                name: "ProductInventory",
+                name: "ProductInventoryBatches",
                 schema: "expendable");
 
             migrationBuilder.DropTable(
@@ -496,6 +524,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 
             migrationBuilder.DropTable(
                 name: "EmployeeInventory",
+                schema: "expendable");
+
+            migrationBuilder.DropTable(
+                name: "ProductInventory",
                 schema: "expendable");
         }
     }
