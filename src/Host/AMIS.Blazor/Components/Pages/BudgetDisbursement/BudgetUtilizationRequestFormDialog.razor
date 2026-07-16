@@ -1,11 +1,9 @@
 ﻿@using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests
-@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders
 @using AMIS.Blazor.ApiClient
 @inject IBudgetUtilizationRequestClient Client
 @inject IPurchaseOrderClient PurchaseOrderClient
 @inject IPurchaseRequestClient PurchaseRequestClient
-@inject IFundClusterClient FundClusterClient
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -25,14 +23,8 @@
                              ResetValueOnEmptyText="true"
                              Dense="true" Margin="Margin.Dense" />
             <MudDatePicker @bind-Date="_form.BurDateNullable" Label="BUR Date" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
-            <MudSelect @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" T="string"
-                       Required="true" Dense="true" Margin="Margin.Dense" Clearable="true"
-                       HelperText="Select the applicable fund cluster.">
-                @foreach (var c in _fundClusters)
-                {
-                    <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
-                }
-            </MudSelect>
+            <FundClusterSelect @ref="_clusterSelect" @bind-Value="_form.FundCluster" Required="true"
+                               HelperText="Select the applicable fund cluster." />
             <MudDivider Class="my-1" />
             <MudText Typo="Typo.subtitle2">Budget Classification</MudText>
             @* Stores the standard allotment-class code (PS/MOOE/FE/CO); the full label is shown to the user. *@
@@ -66,26 +58,8 @@
 
     private readonly BurForm _form = new();
     private PurchaseOrderSummaryDto? _selectedPurchaseOrder;
-    private List<FundClusterDto> _fundClusters = [];
+    private FundClusterSelect? _clusterSelect;
     private bool _busy;
-
-    protected override async Task OnInitializedAsync() => await LoadFundClustersAsync();
-
-    private async Task LoadFundClustersAsync()
-    {
-        try
-        {
-            var response = await FundClusterClient.SearchAsync(pageSize: 200);
-            _fundClusters = response?.Items?
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.Code, StringComparer.Ordinal)
-                .ToList() ?? [];
-        }
-        catch
-        {
-            _fundClusters = [];
-        }
-    }
 
     private async Task<IEnumerable<PurchaseOrderSummaryDto>> SearchPurchaseOrders(string value, CancellationToken ct)
     {
@@ -128,8 +102,8 @@
                 var poDetail = await PurchaseOrderClient.GetAsync(po.Id);
                 if (poDetail is not null)
                 {
-                    if (string.IsNullOrWhiteSpace(_form.FundCluster) && !string.IsNullOrWhiteSpace(poDetail.FundCluster)
-                        && _fundClusters.Any(c => string.Equals(c.Code, poDetail.FundCluster, StringComparison.OrdinalIgnoreCase)))
+                    if (string.IsNullOrWhiteSpace(_form.FundCluster)
+                        && _clusterSelect is not null && _clusterSelect.ContainsCode(poDetail.FundCluster))
                         _form.FundCluster = poDetail.FundCluster;
 
                     if (string.IsNullOrWhiteSpace(_form.ResponsibilityCenter))

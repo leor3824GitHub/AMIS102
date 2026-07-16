@@ -165,7 +165,7 @@
     {
         if (!_canCreate) return;
 
-        var parameters = new DialogParameters { ["Clusters"] = _clusters };
+        var parameters = new DialogParameters();
         var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Medium };
         var dialog = await DialogService.ShowAsync<FundingSourceCodeFormDialog>("Create Funding Source Code", parameters, options);
         var result = await dialog.Result;
@@ -177,7 +177,7 @@
 
     private async Task OpenEditDialog(FundingSourceCodeDto item)
     {
-        var parameters = new DialogParameters { ["Existing"] = item, ["Clusters"] = _clusters };
+        var parameters = new DialogParameters { ["Existing"] = item };
         var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Medium };
         var dialog = await DialogService.ShowAsync<FundingSourceCodeFormDialog>($"Edit {item.Code}", parameters, options);
         var result = await dialog.Result;

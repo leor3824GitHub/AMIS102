@@ -1,0 +1,77 @@
+@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
+@using AMIS.Blazor.ApiClient
+@inject IFundClusterClient FundClusterClient
+
+@* Single source of truth for picking a COA fund cluster (master-data codes "01".."07").
+   Renders a compact MudSelect over the active clusters, or a read-only "Code — Name" field when
+   the value is inherited/derived (e.g. DV from BUR, issuance docs from their assets) so the user
+   can see but not diverge from the upstream funding data. *@
+@if (ReadOnly)
+{
+    <MudTextField Value="@DisplayFor(Value)" Label="@Label" Variant="Variant.Outlined"
+                  ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                  HelperText="@HelperText" />
+}
+else
+{
+    <MudSelect T="string" Value="@Value" ValueChanged="OnValueChangedAsync" Label="@Label"
+               Variant="Variant.Outlined" Required="@Required" Dense="true" Margin="Margin.Dense"
+               Clearable="@Clearable" Disabled="@Disabled" HelperText="@HelperText">
+        @foreach (var c in _fundClusters)
+        {
+            <MudSelectItem T="string" Value="@c.Code">@c.Code — @c.Name</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@code {
+    private List<FundClusterDto> _fundClusters = [];
+
+    /// <summary>The selected cluster code (e.g. "01"). Supports @bind-Value.</summary>
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string Label { get; set; } = "Fund Cluster";
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public bool Clearable { get; set; } = true;
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>When true the value is inherited/derived upstream: render it read-only as "Code — Name".</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public string? HelperText { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await FundClusterClient.SearchAsync(pageSize: 200);
+            _fundClusters = response?.Items?
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Code, StringComparer.Ordinal)
+                .ToList() ?? [];
+        }
+        catch
+        {
+            // The select degrades to an empty list; callers keep their own required-field checks.
+            _fundClusters = [];
+        }
+    }
+
+    private Task OnValueChangedAsync(string? value) => ValueChanged.InvokeAsync(value);
+
+    /// <summary>
+    /// True when the code maps to a loaded, active cluster. Callers use this (via @ref) to decide
+    /// whether an upstream value (e.g. a PO's stored cluster) can be adopted into the select —
+    /// an unknown/legacy code would otherwise leave the select showing a value with no matching item.
+    /// </summary>
+    public bool ContainsCode(string? code) =>
+        !string.IsNullOrWhiteSpace(code)
+        && _fundClusters.Any(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase));
+
+    // "Code — Name" for read-only display; falls back to the raw code when the cluster isn't in the
+    // loaded list (e.g. it was deactivated after the source document was created).
+    private string DisplayFor(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return string.Empty;
+        var match = _fundClusters.FirstOrDefault(c => string.Equals(c.Code, code, StringComparison.OrdinalIgnoreCase));
+        return match is null ? code : $"{match.Code} — {match.Name}";
+    }
+}

@@ -1,8 +1,6 @@
 @using AMIS.Blazor.ApiClient
-@using AMIS.Modules.MasterData.Contracts.v1.FundClusters
 @using PhysicalCountScope = AMIS.Modules.AssetRegister.Contracts.v1.PhysicalCountScope
 @inject IArPhysicalCountClient Client
-@inject IFundClusterClient FundClusterClient
 @inject ISnackbar Snackbar
 @inject IUserProfileState UserProfileState
 
@@ -18,14 +16,8 @@
                 <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.PPEOnly">PPE (RPCPPE)</MudSelectItem>
                 <MudSelectItem T="PhysicalCountScope" Value="@PhysicalCountScope.Both">All Assets</MudSelectItem>
             </MudSelect>
-            <MudSelect @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" T="string"
-                       Required="true" Dense="true" Margin="Margin.Dense" Disabled="_loadingClusters"
-                       HelperText="@(_loadingClusters ? "Loading fund clusters..." : null)">
-                @foreach (var fc in _fundClusters)
-                {
-                    <MudSelectItem T="string" Value="@fc.Code">@($"{fc.Code} - {fc.Name}")</MudSelectItem>
-                }
-            </MudSelect>
+            <FundClusterSelect @bind-Value="_form.FundCluster" Required="true"
+                               HelperText="The count session covers assets under this fund cluster." />
             <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At Date" Variant="Variant.Outlined"
                            DateFormat="MM/dd/yyyy" Required="true" Dense="true" Margin="Margin.Dense" />
             <MudDatePicker @bind-Date="_form.StartedOnNullable" Label="Started On" Variant="Variant.Outlined"
@@ -53,35 +45,13 @@
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
 
     private bool _busy;
-    private bool _loadingClusters = true;
-    private List<FundClusterDto> _fundClusters = [];
     private readonly StartFormModel _form = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            var response = await FundClusterClient.SearchAsync(pageSize: 200);
-            _fundClusters = response?.Items?
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.Code)
-                .ToList() ?? [];
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to load fund clusters: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _loadingClusters = false;
-        }
-    }
 
     private sealed class StartFormModel
     {
         public string Code { get; set; } = "";
         public PhysicalCountScope Scope { get; set; }
-        public string FundCluster { get; set; } = "";
+        public string? FundCluster { get; set; }
         public DateTime? AsAtNullable { get; set; }
         public DateTime? StartedOnNullable { get; set; }
         public string? OfficeOrderNo { get; set; }
@@ -117,7 +87,7 @@
             var req = new StartPhysicalCountRequest(
                 _form.Code.Trim(),
                 _form.Scope,
-                _form.FundCluster,
+                _form.FundCluster!,
                 DateOnly.FromDateTime(_form.AsAtNullable.Value),
                 DateOnly.FromDateTime(_form.StartedOnNullable.Value),
                 conductedBy,

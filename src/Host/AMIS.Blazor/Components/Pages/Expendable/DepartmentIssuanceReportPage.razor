@@ -282,8 +282,8 @@ else if (!_loading)
         _reportData = [];
         try
         {
-            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var from = _filterFrom.ToUtcDateBoundary();
+            var to = _filterTo.ToUtcDateBoundary();
 
             // Reports need the whole dataset — one unpaged call instead of looping pages.
             _reportData = await ReportsClient.GetDepartmentIssuanceReportAllAsync(
@@ -377,8 +377,8 @@ else if (!_loading)
 
         try
         {
-            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var from = _filterFrom.ToUtcDateBoundary();
+            var to = _filterTo.ToUtcDateBoundary();
 
             var bytes = await ReportsClient.GenerateDepartmentIssuancePdfAsync(
                 departmentId: _selectedDepartmentId?.ToString(),

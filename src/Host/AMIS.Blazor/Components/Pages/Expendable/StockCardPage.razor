@@ -15,38 +15,36 @@
 
 <div>
     <MudPaper Class="pa-4 mb-4" Elevation="1">
-        <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-            <MudItem xs="12" sm="8">
-                <MudAutocomplete T="ProductDto"
-                                 Label="Select Product"
-                                 Value="_selectedProduct"
-                                 ValueChanged="OnProductSelected"
-                                 SearchFunc="SearchProductsAsync"
-                                 ToStringFunc="@(p => p == null ? string.Empty : $"{p.StockNo} — {p.Name}")"
-                                 CoerceValue="true"
-                                 Clearable="true"
-                                 Placeholder="Type to search products..."
-                                 Variant="Variant.Outlined"
-                                 Dense="true"
-                                 Margin="Margin.Dense"
-                                 MinCharacters="1"
-                                 ResetValueOnEmptyText="true" />
-            </MudItem>
-            <MudItem xs="12" sm="4">
-                <MudStack Row="true" Spacing="2">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
-                               StartIcon="@Icons.Material.Filled.Download"
-                               Disabled="_loading || _stockCard is null">
-                        Export CSV
-                    </MudButton>
-                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
-                               StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                               Disabled="_loading || _stockCard is null">
-                        View PDF
-                    </MudButton>
-                </MudStack>
-            </MudItem>
-        </MudGrid>
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudAutocomplete T="ProductDto"
+                             Label="Select Product"
+                             Value="_selectedProduct"
+                             ValueChanged="OnProductSelected"
+                             SearchFunc="SearchProductsAsync"
+                             ToStringFunc="@(p => p == null ? string.Empty : $"{p.StockNo} — {p.Name}")"
+                             CoerceValue="true"
+                             Clearable="true"
+                             Placeholder="Type to search products..."
+                             Variant="Variant.Outlined"
+                             Dense="true"
+                             Margin="Margin.Dense"
+                             MinCharacters="1"
+                             ResetValueOnEmptyText="true"
+                             Style="width: 420px;" />
+            <MudSpacer />
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" OnClick="ExportCsvAsync"
+                           StartIcon="@Icons.Material.Filled.Download"
+                           Disabled="_loading || _stockCard is null">
+                    Export CSV
+                </MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" OnClick="DownloadQuestPdfAsync"
+                           StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                           Disabled="_loading || _stockCard is null">
+                    View PDF
+                </MudButton>
+            </MudStack>
+        </MudStack>
     </MudPaper>
 
     @if (_loading)

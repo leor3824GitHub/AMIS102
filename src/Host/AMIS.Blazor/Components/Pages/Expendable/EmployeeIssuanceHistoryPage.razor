@@ -234,8 +234,8 @@
                 return new TableData<EmployeeIssuanceDto> { Items = [], TotalItems = 0 };
             }
 
-            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var from = _filterFrom.ToUtcDateBoundary();
+            var to = _filterTo.ToUtcDateBoundary();
 
             var result = await ReportsClient.GetEmployeeIssuanceHistoryAsync(
                 employeeId: _selectedEmployee?.Id.ToString(),
@@ -351,8 +351,8 @@
                 return;
             }
 
-            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var from = _filterFrom.ToUtcDateBoundary();
+            var to = _filterTo.ToUtcDateBoundary();
 
             // Export needs the whole dataset — one unpaged call instead of looping pages.
             var items = await ReportsClient.GetEmployeeIssuanceHistoryAllAsync(
@@ -447,8 +447,8 @@
         _loading = true;
         try
         {
-            var from = _filterFrom.HasValue ? new DateTimeOffset(_filterFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-            var to = _filterTo.HasValue ? new DateTimeOffset(_filterTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var from = _filterFrom.ToUtcDateBoundary();
+            var to = _filterTo.ToUtcDateBoundary();
             var bytes = await ReportsClient.GenerateEmployeeIssuancePdfAsync(
                 employeeId: _selectedEmployee?.Id.ToString(),
                 from: from,

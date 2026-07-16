@@ -501,8 +501,8 @@ else
 
         try
         {
-            var from = _historyFrom.HasValue ? new DateTimeOffset(_historyFrom.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
-            var to = _historyTo.HasValue ? new DateTimeOffset(_historyTo.Value, TimeSpan.Zero) : (DateTimeOffset?)null;
+            var from = _historyFrom.ToUtcDateBoundary();
+            var to = _historyTo.ToUtcDateBoundary();
 
             var result = await ReportsClient.GetEmployeeIssuanceHistoryAsync(
                 employeeId: _identityUserId,
