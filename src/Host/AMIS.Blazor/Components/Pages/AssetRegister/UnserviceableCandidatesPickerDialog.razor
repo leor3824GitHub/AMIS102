@@ -1,0 +1,51 @@
+@using AMIS.Blazor.ApiClient
+@using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1
+@inject IAssetRegistryClient AssetClient
+
+@* Multi-select picker of assets currently Available but flagged Unserviceable — the candidates for an
+   IIRUSP/IIRUP. Returns the ticked List<AssetRegistrySummaryDto>. AssetType is fixed to the report's
+   type (SE for IIRUSP, PPE for IIRUP); already-added items are passed as ExcludeIds. *@
+<EntityPickerDialog T="AssetRegistrySummaryDto"
+                    KeySelector="a => a.Id"
+                    DataProvider="LoadAsync"
+                    ExcludeIds="ExcludeIds"
+                    SelectionMode="EntityPickerSelection.Multiple"
+                    ConfirmText="Add"
+                    ConfirmColor="Color.Primary"
+                    EmptyText="No Available assets are flagged Unserviceable for this report type.">
+    <Caption>
+        Assets returned and inspected as <strong>Unserviceable</strong> that are back in the Available pool.
+        Tick the ones to add to this report, then choose <strong>Add</strong>.
+    </Caption>
+    <HeaderTemplate>
+        <MudTh>Property No.</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
+    </HeaderTemplate>
+    <RowTemplate Context="row">
+        <MudTd><strong>@row.Item.PropertyNo</strong></MudTd>
+        <MudTd>@row.Item.Description</MudTd>
+        <MudTd Style="text-align:right">@row.Item.UnitCost.ToString("N2")</MudTd>
+    </RowTemplate>
+</EntityPickerDialog>
+
+@code {
+    /// <summary>SE for IIRUSP, PPE for IIRUP — restricts candidates to the report's asset type.</summary>
+    [Parameter, EditorRequired] public ArContracts.AssetType AssetType { get; set; }
+
+    /// <summary>Asset ids already on the report — rendered checked + disabled so they can't be re-added.</summary>
+    [Parameter] public IReadOnlyCollection<Guid> ExcludeIds { get; set; } = [];
+
+    private async Task<EntityPickerResult<AssetRegistrySummaryDto>> LoadAsync(EntityPickerRequest request)
+    {
+        var result = await AssetClient.SearchAsync(
+            keyword: request.Keyword,
+            assetType: AssetType,
+            lifecycleState: ArContracts.LifecycleState.Available,
+            page: request.Page,
+            pageSize: request.PageSize,
+            currentCondition: ArContracts.AssetCondition.Unserviceable);
+
+        return new EntityPickerResult<AssetRegistrySummaryDto>(result.Items, result.TotalCount);
+    }
+}

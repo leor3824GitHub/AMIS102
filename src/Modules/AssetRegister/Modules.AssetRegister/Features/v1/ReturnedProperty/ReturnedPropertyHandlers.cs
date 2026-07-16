@@ -174,7 +174,8 @@ public sealed class ReassignReturnedPropertyInspectorCommandHandler(
 
 public sealed class AcceptReturnedPropertyReceiptCommandHandler(
     AssetRegisterDbContext db,
-    Domain.Services.ICountFreezeGuard freezeGuard)
+    Domain.Services.ICountFreezeGuard freezeGuard,
+    Domain.Services.IUnserviceableReportNumberGenerator unserviceableNumbers)
     : ICommandHandler<AcceptReturnedPropertyReceiptCommand, ReturnedPropertyReceiptDto>
 {
     public async ValueTask<ReturnedPropertyReceiptDto> Handle(
@@ -209,12 +210,23 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
             throw new InvalidOperationException(
                 "One or more items are no longer Active on the accountability (they may have been returned through another document). Reject this request and raise a new one.");
 
-        // Flip assets back to Available at their inspected condition.
+        // Load the assets we're about to move.
         var assetIds = lines.Select(l => l.AssetRegistryId).ToList();
         var assets = await db.AssetRegistries
             .Where(a => assetIds.Contains(a.Id))
             .ToDictionaryAsync(a => a.Id, cancellationToken).ConfigureAwait(false);
         await freezeGuard.EnsureMovementAllowedAsync(assets.Values.ToList(), cancellationToken).ConfigureAwait(false);
+
+        var receivedBy = EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
+
+        // Queue anything the inspector assessed as Unserviceable into a Draft IIRUSP/IIRUP so the
+        // custodian doesn't have to hunt for it afterwards (mirrors the manual candidate picker).
+        // Runs before any asset mutation so the number generator's counter allocation is the only
+        // thing flushed early. NOTE: assets are NOT flipped to the Unserviceable lifecycle here —
+        // that happens only when the custodian submits the report.
+        await QueueUnserviceableCandidatesAsync(receipt, lines, assets, conditionByLine, receivedBy, cancellationToken).ConfigureAwait(false);
+
+        // Flip assets back to Available at their inspected condition.
         foreach (var line in lines)
         {
             if (assets.TryGetValue(line.AssetRegistryId, out var asset))
@@ -231,11 +243,61 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
 
         // Assign the official receipt number and capture the receiver.
         var receiptNo = await GenerateReceiptNoAsync(receipt.ReceiptType, receipt.Date.Year, cancellationToken).ConfigureAwait(false);
-        var receivedBy = EmployeeRef.Create(cmd.ReceivedBy.EmployeeId, cmd.ReceivedBy.PrintedName, cmd.ReceivedBy.Designation);
         receipt.Accept(receiptNo, receivedBy);
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ReturnedPropertyMapper.ToDto(receipt);
+    }
+
+    /// <summary>
+    /// Adds every returned item the inspector flagged Unserviceable to a Draft unserviceable property
+    /// report (IIRUSP for RRSP/SE, IIRUP for RRP/PPE). Appends to the newest open Draft of that type
+    /// — a rolling worklist — or opens a new one seeded from the first candidate asset and the
+    /// receiving custodian. Items already present are skipped, so accepting is idempotent against the
+    /// draft. Does not submit the report or change asset lifecycle; the custodian reviews and submits.
+    /// </summary>
+    private async Task QueueUnserviceableCandidatesAsync(
+        Domain.ReturnedProperty.ReturnedPropertyReceipt receipt,
+        List<Domain.Accountability.PropertyAccountabilityLine> lines,
+        Dictionary<Guid, Domain.Assets.AssetRegistry> assets,
+        Dictionary<Guid, AssetCondition> conditionByLine,
+        EmployeeRef receivedBy,
+        CancellationToken cancellationToken)
+    {
+        var unserviceableLines = lines
+            .Where(l => conditionByLine.TryGetValue(l.Id, out var c) && c == AssetCondition.Unserviceable)
+            .ToList();
+        if (unserviceableLines.Count == 0)
+            return;
+
+        var reportType = receipt.ReceiptType == ReturnedPropertyReceiptType.RRSP
+            ? UnserviceableReportType.IIRUSP
+            : UnserviceableReportType.IIRUP;
+
+        var draft = await db.UnserviceablePropertyReports
+            .Include(r => r.Items)
+            .Where(r => r.ReportType == reportType && r.Status == UnserviceableReportStatus.Draft)
+            .OrderByDescending(r => r.CreatedOnUtc)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+
+        if (draft is null)
+        {
+            var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+            var reportNo = await unserviceableNumbers.NextAsync(reportType, receipt.Date, cancellationToken).ConfigureAwait(false);
+            var seedAsset = assets[unserviceableLines[0].AssetRegistryId];
+            draft = Domain.Unserviceable.UnserviceablePropertyReport.CreateDraft(
+                tenantId, reportNo, reportType, seedAsset.FundCluster, station: string.Empty, receipt.Date, receivedBy);
+            db.UnserviceablePropertyReports.Add(draft);
+        }
+
+        foreach (var line in unserviceableLines)
+        {
+            if (!assets.TryGetValue(line.AssetRegistryId, out var asset))
+                continue;
+            if (draft.Items.Any(i => i.AssetRegistryId == asset.Id))
+                continue; // already queued (e.g. added manually) — don't duplicate
+            draft.AddItem(asset, $"Auto-queued from {receipt.ReceiptType} return of {receipt.AccountabilityDocumentNo}.");
+        }
     }
 
     private async Task<string> GenerateReceiptNoAsync(ReturnedPropertyReceiptType type, int year, CancellationToken cancellationToken)

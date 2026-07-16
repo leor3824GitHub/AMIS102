@@ -199,7 +199,7 @@ internal sealed record UpdateAssetImageRequest(Guid AssetRegistryId, string? Ima
 
 internal interface IAssetRegistryClient
 {
-    Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, ArContracts.AssetCondition? currentCondition = null, CancellationToken ct = default);
     Task<AssetRegistryDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<AssetRegistryDto?> GetByPropertyNoAsync(string propertyNo, CancellationToken ct = default);
     Task<AssetRegistryDto> RegisterAsync(RegisterAssetRequest request, CancellationToken ct = default);
@@ -216,13 +216,14 @@ internal sealed class AssetRegistryClient(HttpClient http) : IAssetRegistryClien
 {
     private const string Base = "api/v1/asset-register/assets";
 
-    public async Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    public async Task<ArPagedResponse<AssetRegistrySummaryDto>> SearchAsync(string? keyword = null, ArContracts.AssetType? assetType = null, LifecycleState? lifecycleState = null, int page = 1, int pageSize = 20, ArContracts.AssetCondition? currentCondition = null, CancellationToken ct = default)
     {
         var url = ArUrlBuilder.Build(Base, new()
         {
             ["keyword"] = keyword,
             ["assetType"] = assetType?.ToString(),
             ["lifecycleState"] = lifecycleState?.ToString(),
+            ["currentCondition"] = currentCondition?.ToString(),
             ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
         });

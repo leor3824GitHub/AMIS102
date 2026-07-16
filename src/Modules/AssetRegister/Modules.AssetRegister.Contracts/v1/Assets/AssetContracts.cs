@@ -171,7 +171,10 @@ public sealed record SearchAssetsQuery(
     bool IncludeTransferredOut = false,
     int PageNumber = 1,
     int PageSize = 10,
-    string? PropertyClass = null) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
+    string? PropertyClass = null,
+    // Filter by the asset's current physical condition (e.g. Unserviceable) — backs the "pull
+    // returned-as-unserviceable candidates into an IIRUSP/IIRUP" worklist. Null = any condition.
+    AssetCondition? CurrentCondition = null) : IQuery<PagedResponse<AssetRegistrySummaryDto>>;
 
 /// <summary>
 /// Self-service per-asset view backing the "By Asset" tab of My Accountability: the individual

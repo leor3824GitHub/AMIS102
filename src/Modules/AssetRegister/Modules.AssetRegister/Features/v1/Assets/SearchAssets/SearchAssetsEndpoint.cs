@@ -29,6 +29,7 @@ public static class SearchAssetsEndpoint
         bool includeTransferredOut = false,
         int pageNumber = 1,
         int pageSize = 10,
+        AssetCondition? currentCondition = null,
         CancellationToken ct = default)
     {
         var result = await mediator.Send(new SearchAssetsQuery(
@@ -39,7 +40,8 @@ public static class SearchAssetsEndpoint
             CurrentCustodianId: currentCustodianId,
             IncludeTransferredOut: includeTransferredOut,
             PageNumber: pageNumber,
-            PageSize: pageSize), ct);
+            PageSize: pageSize,
+            CurrentCondition: currentCondition), ct);
         return TypedResults.Ok(result);
     }
 }
