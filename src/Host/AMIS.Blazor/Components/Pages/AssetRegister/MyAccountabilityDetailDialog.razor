@@ -83,7 +83,7 @@
                 </MudGrid>
 
                 <MudText Typo="Typo.subtitle2">Line Items</MudText>
-                <MudTable Items="_selected.Lines" Dense="true" Striped="true">
+                <MudTable Items="_selected.Lines" Dense="true" Striped="true" RowClassFunc="LineRowClass">
                     <HeaderContent>
                         <MudTh>Property No.</MudTh>
                         <MudTh>Description</MudTh>
@@ -129,6 +129,15 @@
         <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Close">Close</AMISButton>
     </DialogActions>
 </MudDialog>
+
+@* Returned line items are de-emphasized — settled, no longer an active accountability.
+   Semi-transparent neutral gray so it reads clearly over the striped rows in both light and dark themes. *@
+<style>
+    .ar-line-returned td {
+        background-color: rgba(120, 130, 140, 0.28) !important;
+        color: var(--mud-palette-text-secondary) !important;
+    }
+</style>
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
@@ -280,6 +289,10 @@
     }
 
     private void Close() => MudDialog.Close(DialogResult.Ok(_changed));
+
+    // Gray out fully-returned lines so the eye lands on what is still outstanding.
+    private static string LineRowClass(ArAccountabilityLineDto line, int _)
+        => line.LineStatus == AccountabilityLineStatus.Returned ? "ar-line-returned" : string.Empty;
 
     private static string FormatStatus(AccountabilityStatus v) => v switch
     {

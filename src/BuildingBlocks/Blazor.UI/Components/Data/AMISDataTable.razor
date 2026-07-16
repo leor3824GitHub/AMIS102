@@ -13,6 +13,7 @@
           Bordered="false"
           Striped="false"
           Loading="@Loading"
+          Elevation="@Elevation"
           RowsPerPage="@RowsPerPage"
           Breakpoint="@Breakpoint"
           Class="@Class"
@@ -99,6 +100,9 @@
     [Parameter] public Breakpoint Breakpoint { get; set; } = Breakpoint.Xs;
 
     [Parameter] public bool Loading { get; set; }
+
+    /// <summary>Material elevation (shadow depth) of the table surface. Defaults to <c>1</c>, matching MudTable's default.</summary>
+    [Parameter] public int Elevation { get; set; } = 1;
     [Parameter] public int RowsPerPage { get; set; } = 15;
     [Parameter] public int[] PageSizeOptions { get; set; } = [15, 25, 50];
     [Parameter] public int SkeletonRows { get; set; } = 6;

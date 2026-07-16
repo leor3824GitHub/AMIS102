@@ -26,8 +26,10 @@ internal sealed class ExpendableDbInitializer(
         try
         {
             await context.Database.ExecuteSqlRawAsync("CREATE EXTENSION IF NOT EXISTS pgcrypto;", cancellationToken).ConfigureAwait(false);
-            // Backfill empty/null Version bytes for every concurrency-token column so EF WHERE checks always match.
+            // Backfill empty/null Version bytes for every bytea row-version column so EF WHERE checks always match.
             // Discover tables dynamically so the list never drifts as entities are added/removed.
+            // Constrain to bytea columns: an unrelated integer column literally named "Version" (e.g. a stray
+            // ProductInventoryBatches column) would otherwise fail casting the '\x' bytea literal to integer.
             await context.Database.ExecuteSqlRawAsync(
                 """
                 DO $$
@@ -35,7 +37,7 @@ internal sealed class ExpendableDbInitializer(
                 BEGIN
                     FOR r IN
                         SELECT table_name FROM information_schema.columns
-                        WHERE table_schema = 'expendable' AND column_name = 'Version'
+                        WHERE table_schema = 'expendable' AND column_name = 'Version' AND data_type = 'bytea'
                     LOOP
                         EXECUTE format('UPDATE expendable.%I SET "Version" = gen_random_bytes(8) WHERE "Version" IS NULL OR "Version" = ''\x'';', r.table_name);
                         EXECUTE format('ALTER TABLE expendable.%I ALTER COLUMN "Version" SET DEFAULT gen_random_bytes(8);', r.table_name);

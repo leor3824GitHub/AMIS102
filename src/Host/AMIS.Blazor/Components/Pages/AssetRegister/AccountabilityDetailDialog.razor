@@ -154,10 +154,11 @@
     </DialogActions>
 </MudDialog>
 
-@* Returned line items are de-emphasized — settled, no longer an active accountability. *@
+@* Returned line items are de-emphasized — settled, no longer an active accountability.
+   Semi-transparent neutral gray so it reads clearly over the striped rows in both light and dark themes. *@
 <style>
     .ar-line-returned td {
-        background-color: var(--mud-palette-background-grey) !important;
+        background-color: rgba(120, 130, 140, 0.28) !important;
         color: var(--mud-palette-text-secondary) !important;
     }
 </style>
@@ -351,6 +352,10 @@
     }
 
     private void Close() => MudDialog.Close(DialogResult.Ok(_changed));
+
+    // Gray out fully-returned lines so the eye lands on what is still outstanding.
+    private static string LineRowClass(ArAccountabilityLineDto line, int _)
+        => line.LineStatus == AccountabilityLineStatus.Returned ? "ar-line-returned" : string.Empty;
 
     private static string FormatStatus(AccountabilityStatus v) => v switch
     {
