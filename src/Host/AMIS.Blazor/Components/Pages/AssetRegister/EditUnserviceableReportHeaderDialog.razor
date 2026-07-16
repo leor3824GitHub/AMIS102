@@ -1,0 +1,93 @@
+@using AMIS.Blazor.ApiClient
+@inject IArUnserviceableReportClient Client
+@inject ISnackbar Snackbar
+
+@* Edits a Draft IIRUSP/IIRUP report's header. ReportType is immutable, so it isn't shown.
+   Header fields are passed in as scalars (not the internal report DTO) to keep this public
+   component free of CS0053 inconsistent-accessibility. Returns the updated report DTO. *@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2" Style="min-width: 420px;">
+            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
+            <MudTextField @bind-Value="_form.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
+            <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
+            <MudTextField @bind-Value="_form.AccountableOfficerName" Label="Accountable Officer (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
+            <MudTextField @bind-Value="_form.AccountableOfficerDesignation" Label="Designation" Variant="Variant.Outlined" MaxLength="100" />
+            <AMISButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                        OnClick="SaveAsync" Disabled="_busy">
+                Save Changes
+            </AMISButton>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter, EditorRequired] public Guid ReportId { get; set; }
+    [Parameter] public string FundCluster { get; set; } = "";
+    [Parameter] public string Station { get; set; } = "";
+    [Parameter] public DateOnly AsAt { get; set; }
+    [Parameter] public string AccountableOfficerName { get; set; } = "";
+    [Parameter] public string? AccountableOfficerDesignation { get; set; }
+
+    private bool _busy;
+    private readonly EditFormModel _form = new();
+
+    private sealed class EditFormModel
+    {
+        public string FundCluster { get; set; } = "";
+        public string Station { get; set; } = "";
+        public DateTime? AsAtNullable { get; set; }
+        public string AccountableOfficerName { get; set; } = "";
+        public string? AccountableOfficerDesignation { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        _form.FundCluster = FundCluster;
+        _form.Station = Station;
+        _form.AsAtNullable = AsAt == default ? null : AsAt.ToDateTime(TimeOnly.MinValue);
+        _form.AccountableOfficerName = AccountableOfficerName;
+        _form.AccountableOfficerDesignation = AccountableOfficerDesignation;
+    }
+
+    private void Cancel() => Dialog.Cancel();
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.FundCluster) ||
+            string.IsNullOrWhiteSpace(_form.Station) ||
+            string.IsNullOrWhiteSpace(_form.AccountableOfficerName) ||
+            !_form.AsAtNullable.HasValue)
+        {
+            Snackbar.Add("All required fields must be filled.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var req = new UpdateUnserviceableReportHeaderRequest(
+                _form.FundCluster.Trim(),
+                _form.Station.Trim(),
+                DateOnly.FromDateTime(_form.AsAtNullable.Value),
+                new ArEmployeeRefDto(Guid.Empty, _form.AccountableOfficerName.Trim(), _form.AccountableOfficerDesignation));
+
+            var updated = await Client.UpdateHeaderAsync(ReportId, req);
+            Snackbar.Add("Header updated.", Severity.Success);
+            Dialog.Close(DialogResult.Ok(updated));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -30,6 +30,22 @@ public sealed class AddUnserviceableReportItemCommandValidator
     }
 }
 
+public sealed class UpdateUnserviceableReportHeaderCommandValidator
+    : AbstractValidator<UpdateUnserviceableReportHeaderCommand>
+{
+    public UpdateUnserviceableReportHeaderCommandValidator()
+    {
+        RuleFor(x => x.ReportId).NotEmpty();
+        RuleFor(x => x.FundCluster).NotEmpty().MaximumLength(64);
+        RuleFor(x => x.Station).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.AsAt).NotEqual(default(DateOnly));
+        RuleFor(x => x.AccountableOfficer).NotNull();
+        RuleFor(x => x.AccountableOfficer.PrintedName)
+            .NotEmpty()
+            .When(x => x.AccountableOfficer is not null);
+    }
+}
+
 public sealed class SubmitUnserviceableReportCommandValidator
     : AbstractValidator<SubmitUnserviceableReportCommand>
 {

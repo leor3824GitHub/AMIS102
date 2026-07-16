@@ -59,6 +59,21 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
         };
     }
 
+    /// <summary>Edits the report's header while it is still <see cref="UnserviceableReportStatus.Draft"/>.
+    /// ReportType is intentionally immutable — it binds the number series and the SE/PPE form.</summary>
+    public void UpdateHeader(string fundCluster, string station, DateOnly asAt, EmployeeRef accountableOfficer)
+    {
+        ArgumentNullException.ThrowIfNull(accountableOfficer);
+        if (Status != UnserviceableReportStatus.Draft)
+            throw new InvalidOperationException("Only Draft reports may have their header edited.");
+
+        FundCluster = fundCluster;
+        Station = station;
+        AsAt = asAt;
+        AccountableOfficer = accountableOfficer;
+        LastModifiedOnUtc = DateTimeOffset.UtcNow;
+    }
+
     public void AddItem(AssetRegistry asset, string? remarks)
     {
         ArgumentNullException.ThrowIfNull(asset);

@@ -136,6 +136,13 @@
                         </MudStack>
                     </CardHeaderContent>
                     <CardHeaderActions>
+                        @if (_selected.Status == UnserviceableReportStatus.Draft && _canFile)
+                        {
+                            <MudTooltip Text="Edit report header (fund cluster, station, as-at, accountable officer)">
+                                <AMISIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                Color="Color.Primary" OnClick="OpenEditHeaderAsync" />
+                            </MudTooltip>
+                        }
                         <AMISIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                         OnClick="@(() => _selected = null)" />
                     </CardHeaderActions>
@@ -368,6 +375,29 @@
             _addItemRemarks = null;
             _submitApprovedByName = null;
             _submitApprovedByDesignation = null;
+            await LoadAsync();
+        }
+    }
+
+    private async Task OpenEditHeaderAsync()
+    {
+        if (_selected is null) return;
+
+        var parameters = new DialogParameters<EditUnserviceableReportHeaderDialog>
+        {
+            { x => x.ReportId, _selected.Id },
+            { x => x.FundCluster, _selected.FundCluster },
+            { x => x.Station, _selected.Station },
+            { x => x.AsAt, _selected.AsAt },
+            { x => x.AccountableOfficerName, _selected.AccountableOfficer.PrintedName },
+            { x => x.AccountableOfficerDesignation, _selected.AccountableOfficer.Designation }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<EditUnserviceableReportHeaderDialog>("Edit Report Header", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: ArUnserviceableReportDto updated })
+        {
+            _selected = updated;
             await LoadAsync();
         }
     }

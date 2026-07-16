@@ -27,21 +27,23 @@ public static class UnserviceableEndpoints
 
         endpoints.MapPost("/{id:guid}/items", async (
                 Guid id, AddUnserviceableReportItemCommand cmd, IMediator mediator, CancellationToken ct) =>
-            {
-                if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
-                return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
-            })
+                TypedResults.Ok(await mediator.Send(cmd with { ReportId = id }, ct)))
             .WithModuleName<AddUnserviceableReportItemCommand>()
             .WithSummary("Add an item to a draft unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterPermissions.Unserviceable.File);
 
+        endpoints.MapPut("/{id:guid}", async (
+                Guid id, UpdateUnserviceableReportHeaderCommand cmd, IMediator mediator, CancellationToken ct) =>
+                TypedResults.Ok(await mediator.Send(cmd with { ReportId = id }, ct)))
+            .WithModuleName<UpdateUnserviceableReportHeaderCommand>()
+            .WithSummary("Edit a draft unserviceable report's header (fund cluster, station, as-at, accountable officer)")
+            .Produces<UnserviceablePropertyReportDto>()
+            .RequirePermission(AssetRegisterPermissions.Unserviceable.File);
+
         endpoints.MapPost("/{id:guid}/submit", async (
                 Guid id, SubmitUnserviceableReportCommand cmd, IMediator mediator, CancellationToken ct) =>
-            {
-                if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
-                return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
-            })
+                TypedResults.Ok(await mediator.Send(cmd with { ReportId = id }, ct)))
             .WithModuleName<SubmitUnserviceableReportCommand>()
             .WithSummary("Submit a draft unserviceable report")
             .Produces<UnserviceablePropertyReportDto>()
@@ -49,10 +51,7 @@ public static class UnserviceableEndpoints
 
         endpoints.MapPost("/{id:guid}/inspection", async (
                 Guid id, RecordUnserviceableInspectionCommand cmd, IMediator mediator, CancellationToken ct) =>
-            {
-                if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
-                return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
-            })
+                TypedResults.Ok(await mediator.Send(cmd with { ReportId = id }, ct)))
             .WithModuleName<RecordUnserviceableInspectionCommand>()
             .WithSummary("Record inspection decisions per item")
             .Produces<UnserviceablePropertyReportDto>()
@@ -60,10 +59,7 @@ public static class UnserviceableEndpoints
 
         endpoints.MapPost("/{id:guid}/disposal", async (
                 Guid id, RecordUnserviceableDisposalCommand cmd, IMediator mediator, CancellationToken ct) =>
-            {
-                if (id != cmd.ReportId) return TypedResults.BadRequest("Route id and body id must match.");
-                return (IResult)TypedResults.Ok(await mediator.Send(cmd, ct));
-            })
+                TypedResults.Ok(await mediator.Send(cmd with { ReportId = id }, ct)))
             .WithModuleName<RecordUnserviceableDisposalCommand>()
             .WithSummary("Record disposal records â€” flips assets to Disposed")
             .Produces<UnserviceablePropertyReportDto>()

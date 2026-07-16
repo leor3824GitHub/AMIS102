@@ -61,6 +61,14 @@ public sealed record AddUnserviceableReportItemCommand(
     Guid AssetRegistryId,
     string? Remarks) : ICommand<UnserviceablePropertyReportDto>;
 
+/// <summary>Edits a Draft report's header fields. ReportType is immutable and not editable here.</summary>
+public sealed record UpdateUnserviceableReportHeaderCommand(
+    Guid ReportId,
+    string FundCluster,
+    string Station,
+    DateOnly AsAt,
+    EmployeeRefDto AccountableOfficer) : ICommand<UnserviceablePropertyReportDto>;
+
 public sealed record SubmitUnserviceableReportCommand(
     Guid ReportId,
     EmployeeRefDto ApprovedBy) : ICommand<UnserviceablePropertyReportDto>;

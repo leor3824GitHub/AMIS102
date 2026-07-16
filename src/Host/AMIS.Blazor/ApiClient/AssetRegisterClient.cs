@@ -1332,12 +1332,19 @@ internal sealed record AddUnserviceableReportItemRequest(Guid AssetRegistryId, s
 
 internal sealed record SubmitUnserviceableReportRequest(ArEmployeeRefDto ApprovedBy);
 
+internal sealed record UpdateUnserviceableReportHeaderRequest(
+    string FundCluster,
+    string Station,
+    DateOnly AsAt,
+    ArEmployeeRefDto AccountableOfficer);
+
 internal interface IArUnserviceableReportClient
 {
     Task<ArPagedResponse<ArUnserviceableReportSummaryDto>> SearchAsync(string? keyword = null, UnserviceableReportType? reportType = null, UnserviceableReportStatus? status = null, int page = 1, int pageSize = 20, CancellationToken ct = default);
     Task<ArUnserviceableReportDto?> GetAsync(Guid id, CancellationToken ct = default);
     Task<ArUnserviceableReportDto> CreateDraftAsync(CreateUnserviceableReportRequest request, CancellationToken ct = default);
     Task<ArUnserviceableReportDto> AddItemAsync(Guid id, AddUnserviceableReportItemRequest request, CancellationToken ct = default);
+    Task<ArUnserviceableReportDto> UpdateHeaderAsync(Guid id, UpdateUnserviceableReportHeaderRequest request, CancellationToken ct = default);
     Task<ArUnserviceableReportDto> SubmitAsync(Guid id, SubmitUnserviceableReportRequest request, CancellationToken ct = default);
 }
 
@@ -1372,7 +1379,16 @@ internal sealed class ArUnserviceableReportClient(HttpClient http) : IArUnservic
     public async Task<ArUnserviceableReportDto> AddItemAsync(Guid id, AddUnserviceableReportItemRequest request, CancellationToken ct = default)
     {
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/items", request, ArJsonOptions.Default, ct);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<ArUnserviceableReportDto> UpdateHeaderAsync(Guid id, UpdateUnserviceableReportHeaderRequest request, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsJsonAsync($"{Base}/{id}", request, ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<ArUnserviceableReportDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 

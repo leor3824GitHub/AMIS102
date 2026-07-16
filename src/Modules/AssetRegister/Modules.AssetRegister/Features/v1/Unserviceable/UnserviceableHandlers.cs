@@ -50,6 +50,26 @@ public sealed class AddUnserviceableReportItemCommandHandler(AssetRegisterDbCont
     }
 }
 
+public sealed class UpdateUnserviceableReportHeaderCommandHandler(AssetRegisterDbContext db)
+    : ICommandHandler<UpdateUnserviceableReportHeaderCommand, UnserviceablePropertyReportDto>
+{
+    public async ValueTask<UnserviceablePropertyReportDto> Handle(
+        UpdateUnserviceableReportHeaderCommand cmd, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(cmd);
+        var report = await db.UnserviceablePropertyReports.Include(r => r.Items)
+            .FirstOrDefaultAsync(r => r.Id == cmd.ReportId, cancellationToken).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException($"Unserviceable report '{cmd.ReportId}' not found.");
+
+        var officer = EmployeeRef.Create(
+            cmd.AccountableOfficer.EmployeeId, cmd.AccountableOfficer.PrintedName, cmd.AccountableOfficer.Designation);
+        report.UpdateHeader(cmd.FundCluster, cmd.Station, cmd.AsAt, officer);
+
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return UnserviceableMapper.ToDto(report);
+    }
+}
+
 public sealed class SubmitUnserviceableReportCommandHandler(AssetRegisterDbContext db, ICountFreezeGuard freezeGuard)
     : ICommandHandler<SubmitUnserviceableReportCommand, UnserviceablePropertyReportDto>
 {
