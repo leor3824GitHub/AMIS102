@@ -124,6 +124,9 @@ public class AssetRegisterModule : IModule
         services.AddScoped<DepreciationPostingService>();
         services.AddScoped<DepreciationRecurringJob>();
 
+        // Weekly ICS/PAR renewal digest — pure read model, drops a "renewal due" notification per accountable person.
+        services.AddScoped<AccountabilityRenewalDigestJob>();
+
         // Inbound integration consumer (Phase 3f) — materializes accepted IAR lines.
         services.AddScoped<IIntegrationEventHandler<AssetIARAcceptedEvent>, AssetIARAcceptedEventConsumer>();
 
@@ -332,6 +335,13 @@ public class AssetRegisterModule : IModule
                 "asset-register-monthly-depreciation",
                 Job.FromExpression<DepreciationRecurringJob>(j => j.RunAsync(CancellationToken.None)),
                 Cron.Monthly(),
+                new RecurringJobOptions());
+
+            // Weekly: notify each accountable person of their ICS/PAR due for renewal within 60 days (overdue included).
+            jobManager.AddOrUpdate(
+                "asset-register-weekly-renewal-digest",
+                Job.FromExpression<AccountabilityRenewalDigestJob>(j => j.RunAsync(CancellationToken.None)),
+                Cron.Weekly(),
                 new RecurringJobOptions());
         }
         catch (Exception ex)
