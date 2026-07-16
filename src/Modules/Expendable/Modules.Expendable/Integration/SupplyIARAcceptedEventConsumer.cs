@@ -47,7 +47,6 @@ internal sealed class SupplyIARAcceptedEventConsumer(
         }
 
         var warehouseId = ExpendableModuleConstants.DefaultSupplyLocation.Id;
-        var warehouseName = ExpendableModuleConstants.DefaultSupplyLocation.Name;
 
         var received = 0;
         var skipped = 0;
@@ -95,8 +94,7 @@ internal sealed class SupplyIARAcceptedEventConsumer(
 
             if (inventory is null)
             {
-                inventory = ProductInventory.Create(
-                    tenantId, product.Id, product.StockNo, product.Name, warehouseId, warehouseName);
+                inventory = ProductInventory.Create(tenantId, product.Id, warehouseId);
                 db.ProductInventories.Add(inventory);
             }
 

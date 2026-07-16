@@ -12,14 +12,12 @@ public class ProductInventory : AggregateRoot<Guid>
 {
     public string TenantId { get; private set; } = default!;
 
-    // Product Identity
+    // Product Identity — the product's code/name are NOT snapshotted here; readers join Product so the
+    // warehouse always shows the live name (no rename drift). See WarehouseMapper.
     public Guid ProductId { get; private set; }
-    public string? ProductCode { get; private set; }
-    public string? ProductName { get; private set; }
 
-    // Warehouse Location (Multi-warehouse support)
-    public Guid WarehouseLocationId { get; private set; }  // e.g., "Central Warehouse", "Branch Office", "Supply Room"
-    public string? WarehouseLocationName { get; private set; }
+    // Warehouse Location (id only; the display name resolves via ExpendableModuleConstants.ResolveWarehouseName)
+    public Guid WarehouseLocationId { get; private set; }
 
     // Stock Quantities
     public int QuantityAvailable { get; private set; }     // Ready to issue (not reserved/not issued)
@@ -66,15 +64,10 @@ public class ProductInventory : AggregateRoot<Guid>
     public static ProductInventory Create(
         string tenantId,
         Guid productId,
-        string productCode,
-        string productName,
-        Guid warehouseLocationId,
-        string warehouseLocationName)
+        Guid warehouseLocationId)
     {
-        if (string.IsNullOrWhiteSpace(productCode))
-            throw new ArgumentException("Product code is required");
-        if (string.IsNullOrWhiteSpace(productName))
-            throw new ArgumentException("Product name is required");
+        if (productId == Guid.Empty)
+            throw new ArgumentException("Product ID is required");
         if (warehouseLocationId == Guid.Empty)
             throw new ArgumentException("Warehouse location ID is required");
 
@@ -83,10 +76,7 @@ public class ProductInventory : AggregateRoot<Guid>
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             ProductId = productId,
-            ProductCode = productCode,
-            ProductName = productName,
             WarehouseLocationId = warehouseLocationId,
-            WarehouseLocationName = warehouseLocationName,
             QuantityAvailable = 0,
             QuantityReserved = 0,
             QuantityIssued = 0,
@@ -201,6 +191,10 @@ public class ProductInventory : AggregateRoot<Guid>
 /// <summary>Receipt batch: Tracks items from a specific purchase at a specific price</summary>
 public class InventoryBatch
 {
+    /// <summary>Stable identity — the primary key now that batches live in their own relational table
+    /// (<c>ProductInventoryBatches</c>) instead of a JSON-owned collection.</summary>
+    public Guid Id { get; private set; }
+
     public Guid PurchaseId { get; private set; }
     public Guid ProductId { get; private set; }
 
@@ -241,6 +235,7 @@ public class InventoryBatch
 
         return new InventoryBatch
         {
+            Id = Guid.NewGuid(),
             PurchaseId = purchaseId,
             ProductId = productId,
             QuantityAvailable = quantity,

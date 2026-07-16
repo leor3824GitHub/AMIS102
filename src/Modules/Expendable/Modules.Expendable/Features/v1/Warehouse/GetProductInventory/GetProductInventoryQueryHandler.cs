@@ -31,7 +31,16 @@ public sealed class GetProductInventoryQueryHandler : IQueryHandler<GetProductIn
 
         if (inventory == null) return null;
 
-        var dto = inventory.ToProductInventoryDto();
+        // Product code/name are joined live (no longer snapshotted on the inventory row).
+        var product = await _dbContext.Products.AsNoTracking()
+            .Where(p => p.Id == inventory.ProductId)
+            .Select(p => new { p.StockNo, p.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var dto = inventory.ToProductInventoryDto(
+            product?.StockNo ?? string.Empty,
+            product?.Name ?? string.Empty,
+            ExpendableModuleConstants.ResolveWarehouseName(inventory.WarehouseLocationId));
         await _cache.SetItemAsync(cacheKey, dto, TimeSpan.FromHours(1), cancellationToken);
 
         return dto;

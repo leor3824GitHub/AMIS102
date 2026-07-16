@@ -5,14 +5,20 @@ namespace AMIS.Modules.Expendable.Features.v1.Warehouse;
 
 internal static class WarehouseMapper
 {
-    internal static ProductInventoryDto ToProductInventoryDto(this ProductInventory inventory) =>
+    /// <summary>
+    /// Maps an inventory row to its DTO. Product code/name and the warehouse name are supplied by the caller
+    /// (joined from <c>Product</c> / resolved from the location constant) — they are no longer denormalized
+    /// onto <see cref="ProductInventory"/>, so the DTO always reflects the live product name (no rename drift).
+    /// </summary>
+    internal static ProductInventoryDto ToProductInventoryDto(
+        this ProductInventory inventory, string productCode, string productName, string warehouseName) =>
         new(
             inventory.Id,
             inventory.ProductId,
-            inventory.ProductCode ?? string.Empty,
-            inventory.ProductName ?? string.Empty,
+            productCode,
+            productName,
             inventory.WarehouseLocationId,
-            inventory.WarehouseLocationName ?? string.Empty,
+            warehouseName,
             inventory.QuantityAvailable,
             inventory.QuantityReserved,
             inventory.QuantityOnHand,

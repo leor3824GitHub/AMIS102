@@ -3,17 +3,20 @@ using System;
 using AMIS.Modules.Expendable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
+namespace AMIS.Playground.Migrations.PostgreSQL.Migrations.Expendable
 {
     [DbContext(typeof(ExpendableDbContext))]
-    partial class ExpendableDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716075303_Expendable_ProductInventoryBatchesToTable")]
+    partial class Expendable_ProductInventoryBatchesToTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

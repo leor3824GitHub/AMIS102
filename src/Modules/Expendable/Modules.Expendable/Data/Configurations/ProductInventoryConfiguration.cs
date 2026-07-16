@@ -28,19 +28,7 @@ public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInv
         builder.Property(p => p.ProductId)
             .IsRequired();
 
-        builder.Property(p => p.ProductCode)
-            .HasMaxLength(50)
-            .IsRequired();
-
-        builder.Property(p => p.ProductName)
-            .HasMaxLength(200)
-            .IsRequired();
-
         builder.Property(p => p.WarehouseLocationId)
-            .IsRequired();
-
-        builder.Property(p => p.WarehouseLocationName)
-            .HasMaxLength(200)
             .IsRequired();
 
         builder.Property(p => p.QuantityAvailable)
@@ -68,18 +56,24 @@ public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInv
             .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
 
-        // Batches (Owned Collection stored as JSON)
+        // Batches — receipt records in a relational child table (was a JSON-owned collection). Promoting them
+        // off the JSON column ends the whole-document rewrite on every reserve/issue/cancel and lets the Stock
+        // Card read receipts via a join instead of deserializing an ever-growing blob. As an owned collection
+        // it is still auto-loaded with the aggregate and lives under the owner's tenant + soft-delete scope.
         builder.OwnsMany(p => p.Batches, ob =>
         {
-            ob.ToJson("Batches");
+            ob.ToTable("ProductInventoryBatches", ExpendableModuleConstants.SchemaName);
+            ob.WithOwner().HasForeignKey("ProductInventoryId");
+            ob.HasKey(x => x.Id);   // explicit Guid PK (domain-assigned) — avoids the implicit int shadow key
             ob.Property(x => x.PurchaseId).IsRequired();
             ob.Property(x => x.ProductId).IsRequired();
             ob.Property(x => x.UnitPrice).HasPrecision(18, 2);
             ob.Property(x => x.QuantityAvailable).IsRequired();
             ob.Property(x => x.QuantityIssued).IsRequired();
-            ob.Property(x => x.SourceReference).HasMaxLength(64);  // IAR number for Stock Card (JSON blob)
+            ob.Property(x => x.SourceReference).HasMaxLength(64);  // IAR number shown as the Stock Card reference
             ob.Property(x => x.ReceivedDate).IsRequired();
             ob.Property(x => x.Version).IsRequired();
+            ob.HasIndex("ProductInventoryId");  // batch lookups by parent (Stock Card)
         });
 
         // Indexes

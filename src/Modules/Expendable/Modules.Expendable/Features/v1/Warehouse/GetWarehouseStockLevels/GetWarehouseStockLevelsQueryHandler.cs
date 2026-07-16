@@ -18,12 +18,30 @@ public sealed class GetWarehouseStockLevelsQueryHandler : IQueryHandler<GetWareh
 
     public async ValueTask<PagedResponse<ProductInventoryDto>> Handle(GetWarehouseStockLevelsQuery query, CancellationToken cancellationToken)
     {
-        var inventories = _dbContext.ProductInventories.AsNoTracking()
-            .Where(pi => pi.WarehouseLocationId == query.WarehouseLocationId)
-            .OrderBy(pi => pi.ProductCode);
+        // Product code/name are joined live (no longer snapshotted). LEFT JOIN keeps a row visible even if its
+        // product was soft-deleted, preserving the old always-show-the-row behaviour.
+        var rows =
+            from pi in _dbContext.ProductInventories.AsNoTracking()
+            where pi.WarehouseLocationId == query.WarehouseLocationId
+            join p in _dbContext.Products.AsNoTracking() on pi.ProductId equals p.Id into pg
+            from p in pg.DefaultIfEmpty()
+            orderby (p != null ? p.StockNo : "")
+            select new { Inventory = pi, StockNo = p != null ? p.StockNo : "", Name = p != null ? p.Name : "" };
 
-        var projected = inventories.Select(i => i.ToProductInventoryDto());
-        return await projected.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
+        var paged = await rows.ToPagedResponseAsync(query, cancellationToken).ConfigureAwait(false);
+        var items = paged.Items
+            .Select(x => x.Inventory.ToProductInventoryDto(
+                x.StockNo, x.Name, ExpendableModuleConstants.ResolveWarehouseName(x.Inventory.WarehouseLocationId)))
+            .ToList();
+
+        return new PagedResponse<ProductInventoryDto>
+        {
+            Items = items,
+            PageNumber = paged.PageNumber,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages
+        };
     }
 }
 

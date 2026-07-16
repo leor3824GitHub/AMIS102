@@ -17,6 +17,15 @@ public static class ExpendableModuleConstants
         public const string Name = "Central Supply Room";
     }
 
+    /// <summary>
+    /// Resolves a warehouse-location id to its display name. The system is single-storeroom, so this maps the
+    /// one well-known id to <see cref="DefaultSupplyLocation.Name"/> (empty for any unknown id). This is the
+    /// single seam to extend when locations become a managed lookup — replacing the removed
+    /// <c>ProductInventory.WarehouseLocationName</c> snapshot column.
+    /// </summary>
+    public static string ResolveWarehouseName(Guid warehouseLocationId) =>
+        warehouseLocationId == DefaultSupplyLocation.Id ? DefaultSupplyLocation.Name : string.Empty;
+
     /// <summary>Feature flag constants for Expendable module</summary>
     public static class Features
     {

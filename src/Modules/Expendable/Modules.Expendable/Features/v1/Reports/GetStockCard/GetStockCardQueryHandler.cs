@@ -48,11 +48,12 @@ public sealed class GetStockCardQueryHandler : IQueryHandler<GetStockCardQuery, 
             .ToList();
 
         // --- ISSUANCES: fulfilled supply request items for this product ---
-        // Load all fulfilled requests, then filter in memory (Items is a JSON-owned collection)
+        // Load all fulfilled requests, then filter in memory (Items is a JSON-owned collection). No DB-side
+        // ordering: every issuance row is merged into `transactions` and re-sorted by Date below, so ordering
+        // here is redundant work (and an ORDER BY on DateTimeOffset isn't SQL-translatable on every provider).
         var fulfilledRequests = await _dbContext.SupplyRequests
             .AsNoTracking()
             .Where(r => r.Status == SupplyRequestStatus.Fulfilled)
-            .OrderBy(r => r.LastModifiedOnUtc)
             .ToListAsync(cancellationToken);
 
         // Keep only those that issued this product

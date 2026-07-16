@@ -11,11 +11,19 @@ public sealed class ListWarehouseLocationsQueryHandler(ExpendableDbContext dbCon
     public async ValueTask<IReadOnlyList<WarehouseLocationDto>> Handle(
         ListWarehouseLocationsQuery query,
         CancellationToken cancellationToken)
-        => await dbContext.ProductInventories.AsNoTracking()
+    {
+        // Location name is no longer snapshotted on the inventory row — pull the distinct ids that hold stock
+        // and resolve each name from the location constant (single-storeroom today).
+        var ids = await dbContext.ProductInventories.AsNoTracking()
             .Where(pi => pi.WarehouseLocationId != Guid.Empty)
-            .Select(pi => new WarehouseLocationDto(pi.WarehouseLocationId, pi.WarehouseLocationName))
+            .Select(pi => pi.WarehouseLocationId)
             .Distinct()
-            .OrderBy(w => w.Name)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        return ids
+            .Select(id => new WarehouseLocationDto(id, ExpendableModuleConstants.ResolveWarehouseName(id)))
+            .OrderBy(w => w.Name, StringComparer.Ordinal)
+            .ToList();
+    }
 }

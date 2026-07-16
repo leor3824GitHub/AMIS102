@@ -65,7 +65,7 @@ VALUES
 
     private static async Task SeedInventoryAsync(ExpendableDbContext db, Guid productId, int onHand)
     {
-        var inv = ProductInventory.Create(Tenant, productId, "CODE", "Name", Guid.NewGuid(), "WH");
+        var inv = ProductInventory.Create(Tenant, productId, Guid.NewGuid());
         if (onHand > 0)
             inv.ReceiveFromPurchase(Guid.NewGuid(), productId, onHand, 5m);
         db.ProductInventories.Add(inv);
