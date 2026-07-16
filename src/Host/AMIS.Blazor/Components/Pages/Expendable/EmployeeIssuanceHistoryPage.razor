@@ -21,7 +21,7 @@
     <MudCard Class="mb-4">
         <MudCardContent>
             <MudGrid Spacing="2" AlignItems="AlignItems.Center">
-                <MudItem xs="12" sm="4">
+                <MudItem xs="12" sm="6">
                     <MudAutocomplete T="EmployeeReferenceDto"
                                      Value="_selectedEmployee"
                                      ValueChanged="OnEmployeeChanged"
@@ -45,31 +45,27 @@
                                    Margin="Margin.Dense"
                                    DateFormat="yyyy-MM-dd" Clearable="true" />
                 </MudItem>
-                <MudItem xs="12" sm="2">
-                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
-                               OnClick="OnFilterClicked">
-                        Filter
-                    </MudButton>
-                </MudItem>
-                <MudItem xs="12" sm="2">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
-                               OnClick="OnClearFiltersClicked">
-                        Clear
-                    </MudButton>
-                </MudItem>
-                <MudItem xs="12" sm="2">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Download"
-                               OnClick="ExportCsvAsync">
-                        Export CSV
-                    </MudButton>
-                </MudItem>
-                <MudItem xs="12" sm="2">
-                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                               OnClick="DownloadQuestPdfAsync">
-                        View PDF
-                    </MudButton>
+                <MudItem xs="12">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="OnFilterClicked">
+                            Filter
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Default"
+                                   OnClick="OnClearFiltersClicked">
+                            Clear
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Download"
+                                   OnClick="ExportCsvAsync">
+                            Export CSV
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error"
+                                   StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                                   OnClick="DownloadQuestPdfAsync">
+                            View PDF
+                        </MudButton>
+                    </MudStack>
                 </MudItem>
             </MudGrid>
         </MudCardContent>
