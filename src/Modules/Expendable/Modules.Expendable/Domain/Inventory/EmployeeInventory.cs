@@ -3,7 +3,7 @@
 namespace AMIS.Modules.Expendable.Domain.Inventory;
 
 /// <summary>Inventory batch for receipt traceability</summary>
-public class InventoryBatch
+public class EmployeeStockBatch
 {
     public Guid Id { get; set; }
     public Guid ProductId { get; set; }
@@ -14,11 +14,11 @@ public class InventoryBatch
     public string? BatchNumber { get; set; }
     public DateTimeOffset? ExpiryDate { get; set; }
 
-    private InventoryBatch()
+    private EmployeeStockBatch()
     {
     }
 
-    public InventoryBatch(Guid productId, int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
+    public EmployeeStockBatch(Guid productId, int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
     {
         Id = Guid.NewGuid();
         ProductId = productId;
@@ -51,8 +51,8 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     public int QuantityOnHand => TotalQuantityReceived - TotalQuantityConsumed;
     // Optimistic concurrency via the Postgres system column xmin (mapped in EmployeeInventoryConfiguration).
 
-    private readonly List<InventoryBatch> _batches = [];
-    public IReadOnlyCollection<InventoryBatch> Batches => _batches.AsReadOnly();
+    private readonly List<EmployeeStockBatch> _batches = [];
+    public IReadOnlyCollection<EmployeeStockBatch> Batches => _batches.AsReadOnly();
 
     // IAuditableEntity
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
@@ -78,7 +78,7 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     /// <summary>Receive inventory (adds a new batch)</summary>
     public void ReceiveInventory(int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
     {
-        var batch = new InventoryBatch(ProductId, quantity, batchNumber, expiryDate);
+        var batch = new EmployeeStockBatch(ProductId, quantity, batchNumber, expiryDate);
         _batches.Add(batch);
         TotalQuantityReceived += quantity;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
@@ -110,11 +110,11 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     }
 
     /// <summary>Get available batches for consumption</summary>
-    public IEnumerable<InventoryBatch> GetAvailableBatches() =>
+    public IEnumerable<EmployeeStockBatch> GetAvailableBatches() =>
         _batches.Where(b => b.QuantityAvailable > 0 && !b.IsExpired);
 
     /// <summary>Get expired batches</summary>
-    public IEnumerable<InventoryBatch> GetExpiredBatches() =>
+    public IEnumerable<EmployeeStockBatch> GetExpiredBatches() =>
         _batches.Where(b => b.IsExpired);
 }
 

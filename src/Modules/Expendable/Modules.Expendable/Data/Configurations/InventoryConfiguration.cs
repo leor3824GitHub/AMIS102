@@ -32,10 +32,11 @@ public class EmployeeInventoryConfiguration : IEntityTypeConfiguration<EmployeeI
             .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
 
-        // Batches (Owned Type)
+        // Batches (Owned Type). Table name pinned to its historical value ("InventoryBatches") so renaming the
+        // CLR type EmployeeStockBatch (was InventoryBatch) needs no table-rename migration.
         builder.OwnsMany(p => p.Batches, ob =>
         {
-            ob.ToTable($"{nameof(InventoryBatch)}es", ExpendableModuleConstants.SchemaName);
+            ob.ToTable("InventoryBatches", ExpendableModuleConstants.SchemaName);
             ob.HasKey(x => x.Id);
             ob.Property(x => x.BatchNumber).HasMaxLength(50);
         });

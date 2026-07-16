@@ -90,7 +90,7 @@
                 }
 
                 <MudText Typo="Typo.subtitle2">Line Items</MudText>
-                <MudTable Items="_selected.Lines" Dense="true" Striped="true">
+                <MudTable Items="_selected.Lines" Dense="true" Striped="true" RowClassFunc="LineRowClass">
                     <HeaderContent>
                         <MudTh>Property No.</MudTh>
                         <MudTh>Description</MudTh>
@@ -153,6 +153,14 @@
         <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Close">Close</AMISButton>
     </DialogActions>
 </MudDialog>
+
+@* Returned line items are de-emphasized — settled, no longer an active accountability. *@
+<style>
+    .ar-line-returned td {
+        background-color: var(--mud-palette-background-grey) !important;
+        color: var(--mud-palette-text-secondary) !important;
+    }
+</style>
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;

@@ -34,7 +34,7 @@ public class ProductInventory : AggregateRoot<Guid>
     public decimal ReservedValue => Math.Round(QuantityReserved * AverageUnitPrice, 2, MidpointRounding.AwayFromZero);
 
     // Purchase receipt batches retained for traceability
-    public Collection<InventoryBatch> Batches { get; private set; } = new Collection<InventoryBatch>();
+    public Collection<WarehouseReceiptBatch> Batches { get; private set; } = new Collection<WarehouseReceiptBatch>();
 
     // System Dates
     public DateTimeOffset? FirstReceiptDate { get; private set; }
@@ -101,7 +101,7 @@ public class ProductInventory : AggregateRoot<Guid>
         if (unitPrice < 0)
             throw new ArgumentException("Unit price cannot be negative");
 
-        var batch = InventoryBatch.Create(sourceReceiptId, productId, quantityAccepted, unitPrice, sourceReference);
+        var batch = WarehouseReceiptBatch.Create(sourceReceiptId, productId, quantityAccepted, unitPrice, sourceReference);
         Batches.Add(batch);
 
         QuantityAvailable += quantityAccepted;
@@ -188,40 +188,33 @@ public class ProductInventory : AggregateRoot<Guid>
     }
 }
 
-/// <summary>Receipt batch: Tracks items from a specific purchase at a specific price</summary>
-public class InventoryBatch
+/// <summary>
+/// Receipt batch: a single accepted purchase receipt at a specific price. Under the moving-average model these
+/// are never drawn down individually (issuance draws against the aggregate's <see cref="ProductInventory.TotalValue"/>),
+/// so this is an append-only receipt-ledger row living in its own table (<c>ProductInventoryBatches</c>).
+/// </summary>
+public class WarehouseReceiptBatch
 {
-    /// <summary>Stable identity — the primary key now that batches live in their own relational table
-    /// (<c>ProductInventoryBatches</c>) instead of a JSON-owned collection.</summary>
+    /// <summary>Stable identity — the primary key of the <c>ProductInventoryBatches</c> table.</summary>
     public Guid Id { get; private set; }
 
     public Guid PurchaseId { get; private set; }
     public Guid ProductId { get; private set; }
 
-    // Quantities
-    public int QuantityAvailable { get; private set; }     // Total received from this batch
-    public int QuantityIssued { get; private set; }        // Issued so far from this batch
-    public int QuantityRemaining => QuantityAvailable - QuantityIssued;
+    /// <summary>Quantity received in this batch.</summary>
+    public int QuantityAvailable { get; private set; }
 
-    // Pricing
     public decimal UnitPrice { get; private set; }
-    public decimal TotalValue => QuantityRemaining * UnitPrice;
 
     /// <summary>Human-readable source document number for this receipt (e.g. the IAR number). Shown as the
     /// Reference on the Stock Card. Null for legacy batches received before this field existed.</summary>
     public string? SourceReference { get; private set; }
 
-    // Dates
     public DateTimeOffset ReceivedDate { get; private set; }
-    public DateTimeOffset? InspectionDate { get; private set; }
-    public DateTimeOffset? FirstIssueDate { get; private set; }
 
-    // Optimistic locking for concurrency control
-    public int Version { get; private set; }
+    private WarehouseReceiptBatch() { }
 
-    private InventoryBatch() { }
-
-    public static InventoryBatch Create(
+    public static WarehouseReceiptBatch Create(
         Guid purchaseId,
         Guid productId,
         int quantity,
@@ -233,34 +226,16 @@ public class InventoryBatch
         if (unitPrice < 0)
             throw new ArgumentException("Unit price cannot be negative");
 
-        return new InventoryBatch
+        return new WarehouseReceiptBatch
         {
             Id = Guid.NewGuid(),
             PurchaseId = purchaseId,
             ProductId = productId,
             QuantityAvailable = quantity,
-            QuantityIssued = 0,
             UnitPrice = unitPrice,
             SourceReference = string.IsNullOrWhiteSpace(sourceReference) ? null : sourceReference.Trim(),
             ReceivedDate = DateTimeOffset.UtcNow,
-            InspectionDate = DateTimeOffset.UtcNow,
-            Version = 1
         };
-    }
-
-    public void MarkIssued(int quantityIssued)
-    {
-        if (quantityIssued <= 0)
-            throw new ArgumentException("Quantity must be greater than 0");
-        if (QuantityRemaining < quantityIssued)
-            throw new InvalidOperationException(
-                $"Cannot issue {quantityIssued}. Only {QuantityRemaining} available from batch");
-
-        QuantityIssued += quantityIssued;
-        Version++;  // Increment for optimistic locking
-
-        if (FirstIssueDate == null)
-            FirstIssueDate = DateTimeOffset.UtcNow;
     }
 }
 

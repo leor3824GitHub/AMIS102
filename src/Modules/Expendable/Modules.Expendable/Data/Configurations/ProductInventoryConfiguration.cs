@@ -69,10 +69,8 @@ public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInv
             ob.Property(x => x.ProductId).IsRequired();
             ob.Property(x => x.UnitPrice).HasPrecision(18, 2);
             ob.Property(x => x.QuantityAvailable).IsRequired();
-            ob.Property(x => x.QuantityIssued).IsRequired();
             ob.Property(x => x.SourceReference).HasMaxLength(64);  // IAR number shown as the Stock Card reference
             ob.Property(x => x.ReceivedDate).IsRequired();
-            ob.Property(x => x.Version).IsRequired();
             ob.HasIndex("ProductInventoryId");  // batch lookups by parent (Stock Card)
         });
 
