@@ -1,8 +1,13 @@
 # Plan — Inline the signed copy onto its parent document aggregate
 
-> Status: **Approved, in progress.** Supersedes the earlier "mirror `NumberSequence` into BuildingBlocks"
+> Status: **Implemented.** Supersedes the earlier "mirror `NumberSequence` into BuildingBlocks"
 > approach (a shared `SignedDocument` *entity* + table per module). Addresses ENTITY-CATALOG.md
 > refactoring observation #1.
+>
+> Build: 0 errors / no new warnings. Tests: all pass (incl. Architecture.Tests). 3 delta migrations added
+> (`*_InlineSignedCopy`). **Remaining:** end-to-end runtime check of the `x.SignedCopy != null` Search
+> translation on PostgreSQL (module unit tests use the EF InMemory provider, which does not translate to
+> SQL). Fallback if EF ever won't translate the bare null check: `x.SignedCopy!.Sha256 != null`.
 
 ## Why the approach changed
 
