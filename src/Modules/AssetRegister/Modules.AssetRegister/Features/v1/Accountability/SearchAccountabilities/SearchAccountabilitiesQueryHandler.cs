@@ -37,7 +37,7 @@ public sealed class SearchAccountabilitiesQueryHandler(AssetRegisterDbContext db
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(a => new PropertyAccountabilitySummaryDto(
                 a.Id, a.DocumentNo, a.AccountabilityType, a.Status, a.IssuedOn, a.ExpiresOn, a.Lines.Count,
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PropertyAccountability && sd.DocumentId == a.Id),
+                a.SignedCopy != null,
                 // Latest outstanding (Pending/Inspected) return request against this document — surfaces the
                 // in-flight return on "My Accountability" so the requester can track/withdraw it there. Both
                 // subqueries share the same ordering so the id and status come from the same receipt.

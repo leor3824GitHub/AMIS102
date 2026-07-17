@@ -1,3 +1,4 @@
+using AMIS.Framework.Persistence.SignedDocuments;
 using AMIS.Modules.AssetRegister.Domain.Accountability;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,8 @@ internal sealed class PropertyAccountabilityConfiguration : IEntityTypeConfigura
         ArgumentNullException.ThrowIfNull(builder);
         builder.ToTable("PropertyAccountabilities", AssetRegisterModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);

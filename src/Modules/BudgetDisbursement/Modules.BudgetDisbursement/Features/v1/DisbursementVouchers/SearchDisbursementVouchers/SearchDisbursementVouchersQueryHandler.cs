@@ -45,8 +45,7 @@ public sealed class SearchDisbursementVouchersQueryHandler(
                 x.Payee,
                 x.Amount,
                 x.Status,
-                dbContext.SignedDocuments.Any(s =>
-                    s.DocumentType == BudgetDisbursementDocumentType.DisbursementVoucher && s.DocumentId == x.Id)))
+                x.SignedCopy != null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

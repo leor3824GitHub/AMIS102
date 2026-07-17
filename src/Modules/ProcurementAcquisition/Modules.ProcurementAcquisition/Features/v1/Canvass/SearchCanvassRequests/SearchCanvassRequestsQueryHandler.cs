@@ -66,8 +66,7 @@ public sealed class SearchCanvassRequestsQueryHandler(ProcurementDbContext dbCon
                     .Where(p => p.CanvassRequestId == x.Id && p.Status != PurchaseOrderStatus.Cancelled)
                     .Select(p => p.PoNumber)
                     .FirstOrDefault(),
-                dbContext.SignedDocuments.Any(sd =>
-                    sd.DocumentType == ProcurementDocumentType.AbstractOfCanvass && sd.DocumentId == x.Id),
+                x.SignedCopy != null,
                 dbContext.PurchaseOrders.Count(p => p.CanvassRequestId == x.Id && p.Status != PurchaseOrderStatus.Cancelled)))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);

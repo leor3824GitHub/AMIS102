@@ -1610,78 +1610,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
-            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.SignedDocuments.SignedDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DocumentType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(260)
-                        .HasColumnType("character varying(260)");
-
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Sha256")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("StorageKey")
-                        .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<Guid?>("UploadedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UploadedByName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset>("UploadedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "DocumentType", "DocumentId")
-                        .IsUnique();
-
-                    b.ToTable("SignedDocuments", "asset_register");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
-                });
-
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1880,11 +1808,51 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyAccountabilityId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("PropertyAccountabilityId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("PropertyAccountabilityId");
+
+                            b1.ToTable("PropertyAccountabilities", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PropertyAccountabilityId");
+                        });
+
                     b.Navigation("IssuedBy")
                         .IsRequired();
 
                     b.Navigation("ReceivedBy")
                         .IsRequired();
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Accountability.PropertyAccountabilityLine", b =>
@@ -2178,6 +2146,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PhysicalCountSessionId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("PhysicalCountSessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("PhysicalCountSessionId");
+
+                            b1.ToTable("PhysicalCountSessions", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PhysicalCountSessionId");
+                        });
+
                     b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "WitnessedBy", b1 =>
                         {
                             b1.Property<Guid>("PhysicalCountSessionId")
@@ -2209,6 +2215,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("ConductedBy");
+
+                    b.Navigation("SignedCopy");
 
                     b.Navigation("WitnessedBy");
                 });
@@ -2366,10 +2374,50 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyIncidentReportId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("PropertyIncidentReportId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("PropertyIncidentReportId");
+
+                            b1.ToTable("PropertyIncidentReports", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PropertyIncidentReportId");
+                        });
+
                     b.Navigation("AccountableOfficer")
                         .IsRequired();
 
                     b.Navigation("NotedBy");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Issuance.PropertyIssuanceReport", b =>
@@ -2458,6 +2506,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("PropertyIssuanceReportId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("PropertyIssuanceReportId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("PropertyIssuanceReportId");
+
+                            b1.ToTable("PropertyIssuanceReports", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PropertyIssuanceReportId");
+                        });
+
                     b.Navigation("ApprovedBy")
                         .IsRequired();
 
@@ -2466,6 +2552,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Navigation("IssuedTo")
                         .IsRequired();
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Issuance.PropertyIssuanceReportLine", b =>
@@ -2629,10 +2717,50 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("ReceivingReportId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("ReceivingReportId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ReceivingReportId");
+
+                            b1.ToTable("ReceivingReports", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReceivingReportId");
+                        });
+
                     b.Navigation("NotedBy");
 
                     b.Navigation("ReceivedBy")
                         .IsRequired();
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Receiving.ReceivingReportItem", b =>
@@ -2758,6 +2886,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("ReturnedPropertyReceiptId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("ReturnedPropertyReceiptId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("ReturnedPropertyReceiptId");
+
+                            b1.ToTable("ReturnedPropertyReceipts", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReturnedPropertyReceiptId");
+                        });
+
                     b.Navigation("AssignedInspector")
                         .IsRequired();
 
@@ -2767,6 +2933,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
 
                     b.Navigation("ReturnedBy")
                         .IsRequired();
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceiptItem", b =>
@@ -3045,6 +3213,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                                 .HasForeignKey("UnserviceablePropertyReportId");
                         });
 
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("UnserviceablePropertyReportId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("UnserviceablePropertyReportId");
+
+                            b1.ToTable("UnserviceablePropertyReports", "asset_register");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UnserviceablePropertyReportId");
+                        });
+
                     b.OwnsOne("AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects.EmployeeRef", "WitnessedBy", b1 =>
                         {
                             b1.Property<Guid>("UnserviceablePropertyReportId")
@@ -3079,6 +3285,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("InspectedBy");
+
+                    b.Navigation("SignedCopy");
 
                     b.Navigation("WitnessedBy");
                 });

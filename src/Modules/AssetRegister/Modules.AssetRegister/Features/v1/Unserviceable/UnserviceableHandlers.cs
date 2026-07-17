@@ -209,7 +209,7 @@ public sealed class SearchUnserviceableReportsQueryHandler(AssetRegisterDbContex
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new UnserviceablePropertyReportSummaryDto(
                 r.Id, r.ReportNo, r.ReportType, r.Status, r.AsAt, r.Items.Count,
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.UnserviceableReport && sd.DocumentId == r.Id)))
+                r.SignedCopy != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new AMIS.Framework.Shared.Persistence.PagedResponse<UnserviceablePropertyReportSummaryDto>

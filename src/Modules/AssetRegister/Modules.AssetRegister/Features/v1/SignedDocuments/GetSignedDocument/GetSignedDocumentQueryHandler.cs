@@ -2,7 +2,6 @@ using AMIS.Modules.AssetRegister.Contracts.v1.SignedDocuments;
 using AMIS.Modules.AssetRegister.Data;
 using AMIS.Modules.AssetRegister.Features.v1.SignedDocuments.UploadSignedDocument;
 using Mediator;
-using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.AssetRegister.Features.v1.SignedDocuments.GetSignedDocument;
 
@@ -12,11 +11,8 @@ public sealed class GetSignedDocumentQueryHandler(AssetRegisterDbContext db)
     public async ValueTask<SignedDocumentDto?> Handle(GetSignedDocumentQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
-        var row = await db.SignedDocuments
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.DocumentType == query.DocumentType && x.DocumentId == query.DocumentId, cancellationToken)
-            .ConfigureAwait(false);
 
-        return row is null ? null : UploadSignedDocumentCommandHandler.ToDto(row);
+        var copy = await SignedCopyLocator.FindAsync(db, query.DocumentType, query.DocumentId, cancellationToken).ConfigureAwait(false);
+        return copy is null ? null : UploadSignedDocumentCommandHandler.ToDto(query.DocumentType, query.DocumentId, copy);
     }
 }

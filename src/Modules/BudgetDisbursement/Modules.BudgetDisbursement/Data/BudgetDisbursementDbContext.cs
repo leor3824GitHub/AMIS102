@@ -18,7 +18,6 @@ public class BudgetDisbursementDbContext : BaseDbContext
 {
     public DbSet<DisbursementVoucher> DisbursementVouchers => Set<DisbursementVoucher>();
     public DbSet<BudgetUtilizationRequest> BudgetUtilizationRequests => Set<BudgetUtilizationRequest>();
-    public DbSet<Domain.SignedDocuments.SignedDocument> SignedDocuments => Set<Domain.SignedDocuments.SignedDocument>();
     public DbSet<BudgetDisbursementModuleSettings> BudgetDisbursementSettings => Set<BudgetDisbursementModuleSettings>();
 
     // Shared monotonic document-number counters (DV/BUR) — one table, keyed by SequenceKey. Global (not

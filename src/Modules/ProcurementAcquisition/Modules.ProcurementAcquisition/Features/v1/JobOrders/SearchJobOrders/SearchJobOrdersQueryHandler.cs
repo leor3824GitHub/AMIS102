@@ -58,8 +58,7 @@ public sealed class SearchJobOrdersQueryHandler(ProcurementDbContext dbContext)
                 x.Status,
                 x.LineItems.Sum(li => li.Quantity * li.UnitCost),
                 x.CreatedOnUtc,
-                dbContext.SignedDocuments.Any(sd =>
-                    sd.DocumentType == ProcurementDocumentType.JobOrder && sd.DocumentId == x.Id)))
+                x.SignedCopy != null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

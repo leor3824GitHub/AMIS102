@@ -36,7 +36,7 @@ public sealed class SearchPhysicalCountSessionsQueryHandler(AssetRegisterDbConte
             .Select(s => new PhysicalCountSessionSummaryDto(
                 s.Id, s.Code, s.Scope, s.Status, s.AsAt, s.StartedOn, s.ClosedOn, s.Entries.Count,
                 s.OfficeOrderNo, s.FrozenOnUtc,
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PhysicalCountReport && sd.DocumentId == s.Id),
+                s.SignedCopy != null,
                 s.FundCluster,
                 s.Entries.Count(e => e.Condition != PhysicalCountCondition.Missing && e.Condition != PhysicalCountCondition.FoundAtStation),
                 s.Entries.Count(e => e.Condition == PhysicalCountCondition.Missing),

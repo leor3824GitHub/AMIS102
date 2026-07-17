@@ -1,3 +1,4 @@
+using AMIS.Framework.Persistence.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,8 @@ internal sealed class InspectionAcceptanceReportConfiguration : IEntityTypeConfi
     {
         builder.ToTable("InspectionAcceptanceReports", ProcurementAcquisitionModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);

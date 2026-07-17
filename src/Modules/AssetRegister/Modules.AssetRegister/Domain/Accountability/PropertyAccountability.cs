@@ -6,7 +6,7 @@ using AMIS.Modules.AssetRegister.Domain.Events;
 
 namespace AMIS.Modules.AssetRegister.Domain.Accountability;
 
-public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
+public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IAuditableEntity, ISignedCopyHolder
 {
     public string TenantId { get; private set; } = default!;
 
@@ -32,6 +32,12 @@ public sealed class PropertyAccountability : AggregateRoot<Guid>, IHasTenant, IA
 
     private readonly List<PropertyAccountabilityLine> _lines = [];
     public IReadOnlyCollection<PropertyAccountabilityLine> Lines => _lines.AsReadOnly();
+
+    /// <summary>The uploaded wet-signed copy of this document of record; null until one is uploaded.</summary>
+    public SignedCopy? SignedCopy { get; private set; }
+
+    /// <summary>Attaches or replaces the signed copy (one current copy per document).</summary>
+    public void SetSignedCopy(SignedCopy copy) => SignedCopy = copy;
 
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }

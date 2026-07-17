@@ -4,7 +4,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 
 namespace AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
 
-public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
+public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, IAuditableEntity, ISignedCopyHolder
 {
     public string TenantId { get; private set; } = default!;
 
@@ -38,6 +38,12 @@ public sealed class ReturnedPropertyReceipt : AggregateRoot<Guid>, IHasTenant, I
 
     private readonly List<ReturnedPropertyReceiptItem> _items = [];
     public IReadOnlyCollection<ReturnedPropertyReceiptItem> Items => _items.AsReadOnly();
+
+    /// <summary>The uploaded wet-signed copy of this document of record; null until one is uploaded.</summary>
+    public SignedCopy? SignedCopy { get; private set; }
+
+    /// <summary>Attaches or replaces the signed copy (one current copy per document).</summary>
+    public void SetSignedCopy(SignedCopy copy) => SignedCopy = copy;
 
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }

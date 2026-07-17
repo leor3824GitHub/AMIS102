@@ -1,15 +1,13 @@
-﻿using System.Net;
-using System.Security.Cryptography;
+using System.Net;
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Domain;
 using AMIS.Framework.Core.Exceptions;
-using AMIS.Framework.Shared.Storage;
-using AMIS.Framework.Storage;
 using AMIS.Framework.Storage.Services;
+using AMIS.Framework.Storage.SignedDocuments;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.SignedDocuments;
 using AMIS.Modules.BudgetDisbursement.Data;
-using AMIS.Modules.BudgetDisbursement.Domain.SignedDocuments;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,49 +26,17 @@ public sealed class UploadSignedDocumentCommandHandler(
             throw new CustomException("Uploaded file is empty.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
 
         // The signed copy may only be attached once the document has reached its terminal signed state.
-        await EnsureDocumentSignedAsync(command.DocumentType, command.DocumentId, cancellationToken).ConfigureAwait(false);
-
-        var sha256 = Convert.ToHexString(SHA256.HashData(command.Content)).ToLowerInvariant();
+        // Loaded tracked so the inlined SignedCopy is persisted with the aggregate on SaveChanges.
+        var holder = await LoadSignableDocumentAsync(command.DocumentType, command.DocumentId, cancellationToken).ConfigureAwait(false);
 
         var tenantId = currentUser.GetTenant() ?? dbContext.TenantInfo?.Identifier ?? string.Empty;
+        var oldKey = holder.SignedCopy?.StorageKey;
 
-        var uploadRequest = new FileUploadRequest
-        {
-            FileName = command.FileName,
-            ContentType = command.ContentType,
-            Data = [.. command.Content]
-        };
-        // Confidential wet-signed copy → uploads/protected/{tenant}/{docType}; a subtree the web pipeline
-        // never serves as static files (reachable only via the authenticated download endpoint).
-        var storageKey = await storageService
-            .UploadAsync<SignedDocument>(
-                uploadRequest, FileType.Pdf, StoragePaths.Protected(tenantId, command.DocumentType.ToString()), cancellationToken)
-            .ConfigureAwait(false);
+        var copy = await SignedCopyStore.BuildAsync(
+            storageService, tenantId, command.DocumentType.ToString(), command.Content,
+            command.FileName, currentUser.Name, cancellationToken).ConfigureAwait(false);
 
-        var uploaderId = currentUser.GetUserId();
-        var uploaderName = currentUser.Name;
-
-        var existing = await dbContext.SignedDocuments
-            .FirstOrDefaultAsync(x => x.DocumentType == command.DocumentType && x.DocumentId == command.DocumentId, cancellationToken)
-            .ConfigureAwait(false);
-
-        string? oldKey = null;
-        SignedDocument entity;
-        if (existing is null)
-        {
-            entity = SignedDocument.Create(
-                tenantId, command.DocumentType, command.DocumentId, storageKey, sha256,
-                command.FileName, command.ContentType, command.Content.LongLength, uploaderId, uploaderName);
-            entity.CreatedBy = uploaderId.ToString();
-            dbContext.SignedDocuments.Add(entity);
-        }
-        else
-        {
-            oldKey = existing.StorageKey;
-            existing.Replace(storageKey, sha256, command.FileName, command.ContentType, command.Content.LongLength, uploaderId, uploaderName);
-            existing.LastModifiedBy = uploaderId.ToString();
-            entity = existing;
-        }
+        holder.SetSignedCopy(copy);
 
         try
         {
@@ -78,46 +44,45 @@ public sealed class UploadSignedDocumentCommandHandler(
         }
         catch
         {
-            // The row didn't persist (e.g. a concurrent first-upload losing the unique-index race) —
-            // don't leave the blob we just uploaded orphaned in storage.
-            try { await storageService.RemoveAsync(storageKey, cancellationToken).ConfigureAwait(false); }
+            // The row didn't persist — don't leave the blob we just uploaded orphaned in storage.
+            try { await storageService.RemoveAsync(copy.StorageKey, cancellationToken).ConfigureAwait(false); }
             catch (Exception) { /* best effort */ }
             throw;
         }
 
         // Best-effort cleanup of the replaced blob (after the row commit succeeded).
-        if (oldKey is not null && !string.Equals(oldKey, storageKey, StringComparison.Ordinal))
+        if (oldKey is not null && !string.Equals(oldKey, copy.StorageKey, StringComparison.Ordinal))
         {
             try { await storageService.RemoveAsync(oldKey, cancellationToken).ConfigureAwait(false); }
             catch (Exception) { /* orphaned blob is harmless; the row is correct */ }
         }
 
-        return ToDto(entity);
+        return ToDto(command.DocumentType, command.DocumentId, copy);
     }
 
-    private async ValueTask EnsureDocumentSignedAsync(BudgetDisbursementDocumentType type, Guid id, CancellationToken ct)
+    private async ValueTask<ISignedCopyHolder> LoadSignableDocumentAsync(BudgetDisbursementDocumentType type, Guid id, CancellationToken ct)
     {
         switch (type)
         {
             case BudgetDisbursementDocumentType.DisbursementVoucher:
-                var dv = await dbContext.DisbursementVouchers.AsNoTracking()
+                var dv = await dbContext.DisbursementVouchers
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Disbursement voucher '{id}' not found.");
                 // Signed once approved; remains a signed record through payment.
                 if (dv.Status is not (DisbursementVoucherStatus.Approved or DisbursementVoucherStatus.Paid))
                     throw new CustomException("A signed copy can only be uploaded once the disbursement voucher is Approved.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return dv;
 
             case BudgetDisbursementDocumentType.BudgetUtilizationRequest:
-                var bur = await dbContext.BudgetUtilizationRequests.AsNoTracking()
+                var bur = await dbContext.BudgetUtilizationRequests
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Budget utilization record '{id}' not found.");
                 // Signed once the budget officer obligates it; remains a signed record once utilized by a DV.
                 if (bur.Status is not (BudgetUtilizationRequestStatus.Obligated or BudgetUtilizationRequestStatus.Utilized))
                     throw new CustomException("A signed copy can only be uploaded once the budget utilization record is Obligated.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return bur;
 
             default:
                 throw new CustomException($"Unsupported document type '{type}'.",
@@ -125,6 +90,6 @@ public sealed class UploadSignedDocumentCommandHandler(
         }
     }
 
-    internal static SignedDocumentDto ToDto(SignedDocument d) => new(
-        d.DocumentType, d.DocumentId, d.FileName, d.ContentType, d.FileSizeBytes, d.Sha256, d.UploadedByName, d.UploadedOnUtc);
+    internal static SignedDocumentDto ToDto(BudgetDisbursementDocumentType type, Guid documentId, SignedCopy copy) => new(
+        type, documentId, copy.FileName, "application/pdf", copy.FileSizeBytes, copy.Sha256, copy.UploadedByName, copy.UploadedOnUtc);
 }

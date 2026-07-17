@@ -1,5 +1,4 @@
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
-using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports;
 using Mediator;
@@ -31,10 +30,7 @@ public sealed class GetInspectionAcceptanceReportQueryHandler(
             .ResolveEmployeeNamesAsync(iar.InspectedById, iar.ReceivedById, mediator, cancellationToken)
             .ConfigureAwait(false);
 
-        var hasSignedCopy = await dbContext.SignedDocuments
-            .AsNoTracking()
-            .AnyAsync(sd => sd.DocumentType == ProcurementDocumentType.InspectionAcceptanceReport && sd.DocumentId == iar.Id, cancellationToken)
-            .ConfigureAwait(false);
+        var hasSignedCopy = iar.SignedCopy != null;
 
         return InspectionAcceptanceReportMapper.ToDto(iar, poNumber, inspectorName, custodianName, hasSignedCopy);
     }

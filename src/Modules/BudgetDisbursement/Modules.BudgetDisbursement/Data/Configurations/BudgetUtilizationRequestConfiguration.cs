@@ -1,4 +1,5 @@
-﻿using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
+﻿using AMIS.Framework.Persistence.SignedDocuments;
+using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests;
 using AMIS.Modules.BudgetDisbursement.Domain.BudgetUtilizationRequests;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,8 @@ public sealed class BudgetUtilizationRequestConfiguration : IEntityTypeConfigura
     {
         builder.ToTable("BudgetUtilizationRequests", BudgetDisbursementModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();

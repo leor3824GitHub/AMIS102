@@ -37,7 +37,7 @@ public sealed class SearchReceivingReportsQueryHandler(AssetRegisterDbContext db
                 r.Id, r.DocumentKind, r.ReportNo, r.Date, r.ReceivedFrom, r.ReceiptType,
                 r.Items.Count,
                 r.Items.Sum(i => i.Quantity * i.UnitCost),
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.ReceivingReport && sd.DocumentId == r.Id)))
+                r.SignedCopy != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<ReceivingReportSummaryDto>

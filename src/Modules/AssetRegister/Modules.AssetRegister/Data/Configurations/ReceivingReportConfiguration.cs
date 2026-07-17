@@ -1,3 +1,4 @@
+using AMIS.Framework.Persistence.SignedDocuments;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,8 @@ internal sealed class ReceivingReportConfiguration : IEntityTypeConfiguration<Re
         ArgumentNullException.ThrowIfNull(builder);
         builder.ToTable("ReceivingReports", AssetRegisterModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);

@@ -1,3 +1,4 @@
+using AMIS.Framework.Persistence.SignedDocuments;
 using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,8 @@ internal sealed class ReturnedPropertyReceiptConfiguration : IEntityTypeConfigur
         ArgumentNullException.ThrowIfNull(builder);
         builder.ToTable("ReturnedPropertyReceipts", AssetRegisterModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);

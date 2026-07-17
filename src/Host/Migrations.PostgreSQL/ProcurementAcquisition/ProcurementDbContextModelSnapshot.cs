@@ -863,89 +863,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
-            modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.SignedDocuments.SignedDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DocumentType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(260)
-                        .HasColumnType("character varying(260)");
-
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Sha256")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("StorageKey")
-                        .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid?>("UploadedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UploadedByName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset>("UploadedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "DocumentType", "DocumentId")
-                        .IsUnique();
-
-                    b.ToTable("SignedDocuments", "procurement");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
-                });
-
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassQuotation", b =>
                 {
                     b.HasOne("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequest", null)
@@ -953,6 +870,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         .HasForeignKey("CanvassRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("CanvassQuotationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("CanvassQuotationId");
+
+                            b1.ToTable("CanvassQuotations", "procurement");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CanvassQuotationId");
+                        });
 
                     b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassQuotationLineItem", "LineItems", b1 =>
                         {
@@ -992,6 +947,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         });
 
                     b.Navigation("LineItems");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequest", b =>
@@ -1020,6 +977,44 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                             b1
                                 .ToJson("AwardSignatories")
                                 .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CanvassRequestId");
+                        });
+
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("CanvassRequestId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("CanvassRequestId");
+
+                            b1.ToTable("CanvassRequests", "procurement");
 
                             b1.WithOwner()
                                 .HasForeignKey("CanvassRequestId");
@@ -1075,10 +1070,50 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                     b.Navigation("AwardSignatories");
 
                     b.Navigation("LineItems");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports.InspectionAcceptanceReport", b =>
                 {
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("InspectionAcceptanceReportId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("InspectionAcceptanceReportId");
+
+                            b1.ToTable("InspectionAcceptanceReports", "procurement");
+
+                            b1.WithOwner()
+                                .HasForeignKey("InspectionAcceptanceReportId");
+                        });
+
                     b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports.InspectionAcceptanceReportLineItem", "LineItems", b1 =>
                         {
                             b1.Property<Guid>("InspectionAcceptanceReportId");
@@ -1148,10 +1183,50 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         });
 
                     b.Navigation("LineItems");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.JobOrders.JobOrder", b =>
                 {
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("JobOrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("JobOrderId");
+
+                            b1.ToTable("JobOrders", "procurement");
+
+                            b1.WithOwner()
+                                .HasForeignKey("JobOrderId");
+                        });
+
                     b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.JobOrders.JobOrderLineItem", "LineItems", b1 =>
                         {
                             b1.Property<Guid>("JobOrderId");
@@ -1187,10 +1262,50 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         });
 
                     b.Navigation("LineItems");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders.PurchaseOrder", b =>
                 {
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("PurchaseOrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("PurchaseOrderId");
+
+                            b1.ToTable("PurchaseOrders", "procurement");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PurchaseOrderId");
+                        });
+
                     b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders.PurchaseOrderLineItem", "LineItems", b1 =>
                         {
                             b1.Property<Guid>("PurchaseOrderId");
@@ -1232,10 +1347,50 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         });
 
                     b.Navigation("LineItems");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests.PurchaseRequest", b =>
                 {
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("PurchaseRequestId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("PurchaseRequestId");
+
+                            b1.ToTable("PurchaseRequests", "procurement");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PurchaseRequestId");
+                        });
+
                     b.OwnsMany("AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests.PurchaseRequestLineItem", "LineItems", b1 =>
                         {
                             b1.Property<Guid>("PurchaseRequestId");
@@ -1280,6 +1435,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.ProcurementAcquisition
                         });
 
                     b.Navigation("LineItems");
+
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.ProcurementAcquisition.Domain.Canvass.CanvassRequest", b =>

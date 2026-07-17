@@ -1,153 +1,104 @@
-# Plan — De-duplicate the triplicated `SignedDocument`
+# Plan — Inline the signed copy onto its parent document aggregate
 
-> Status: **Approved, not yet implemented.** Addresses ENTITY-CATALOG.md refactoring observation #1.
-> Mirrors the already-completed `NumberSequence` consolidation (observation #2).
+> Status: **Approved, in progress.** Supersedes the earlier "mirror `NumberSequence` into BuildingBlocks"
+> approach (a shared `SignedDocument` *entity* + table per module). Addresses ENTITY-CATALOG.md
+> refactoring observation #1.
 
-## Context
+## Why the approach changed
 
-`SignedDocument` (the uploaded wet-signed PDF scan of a document of record) is copy-pasted
-across **three modules** — AssetRegister, ProcurementAcquisition, BudgetDisbursement. Each module
-carries its own: the aggregate entity, the EF configuration, a `DbSet`, a `SignedDocumentContracts.cs`
-(enum + DTOs + command + queries), a 3-endpoint vertical slice (Upload / Get-metadata / Download),
-and a Blazor API client.
+The earlier plan proposed collapsing the triplicated `SignedDocument` **entity** into BuildingBlocks,
+mirroring the completed `NumberSequence` consolidation. That analogy is wrong:
 
-The three copies are near-identical. The *only* genuinely per-module concerns are:
-1. the `DocumentType` **enum** (AssetRegister 7 values, Procurement 6, Budget 2 — disjoint), and
-2. the **"is this document in a signable state?"** check, which reads each module's own domain
-   entities (`EnsureDocumentSignedAsync`).
+- **`NumberSequence` is an infrastructure primitive** — a bounded set of counter rows, mutated in place
+  (`++LastSerial`), zero business meaning. It belongs in the framework kernel.
+- **`SignedDocument` is growing *domain* data** — a document of record with legal weight, one row per
+  signed document, scaling with business volume. A growing domain aggregate does not belong in the kernel.
 
-Everything else — SHA-256 hashing, storage upload to `uploads/protected/{tenant}/{docType}`,
-orphan-blob rollback, replace-then-cleanup, download + integrity re-verify, the DTO shape, the
-unique index `(TenantId, DocumentType, DocumentId)`, the route/permission shape — is duplicated
-mechanically. The three copies have also **drifted**: AssetRegister lacks soft-delete and uses
-`TenantId(50)`; Procurement/Budget have soft-delete and `TenantId(64)`.
+The unique index `(TenantId, DocumentType, DocumentId)` + `Replace`-on-re-upload proves the signed copy is
+a **strictly 1:1 attribute of its parent document with no independent lifecycle** (confirmed permanent: one
+current copy per document; re-upload replaces; no history/versioning). The DDD-correct model is therefore
+an **owned value object on the parent aggregate — not a separate entity at all.**
 
-**Goal:** collapse the shared entity, EF config, and mechanical upload/get/download logic into
-BuildingBlocks (one copy), leaving each module only its enum, its signable-state check, and its
-routes/permissions.
+### What inlining removes
+
+| Today (separate `SignedDocument` entity, ×3) | Inlined `SignedCopy` value object |
+| --- | --- |
+| Polymorphic FK `DocumentType + DocumentId`, no DB constraint (a smell) | Strongly-typed ownership on the parent row |
+| `HasSignedCopy` via correlated `EXISTS` subquery (18 handlers) | Plain `x.SignedCopy != null` on the same row |
+| 3 near-identical tables + entities + configs + DbSets | **No signed-doc table at all** |
+| Query-filter-collision constraint (named vs anonymous soft-delete filter) | **Gone** — owned VOs carry no query filter |
+| Soft-delete drift (AssetRegister none; Proc/Budget yes) | **Gone** — the copy rides the parent row |
+| **Public API surface** | **Unchanged** — routes, commands, queries, DTOs, permissions, Blazor clients |
+
+Dev data is disposable, so migration is trivial — drop the 3 `SignedDocuments` tables, add owned-VO columns
+to the parent tables.
 
 ## Decisions (locked with the user)
 
-- **Scope:** share the **entity + EF config + mechanical upload/get/download logic**. Module slices
-  shrink to enum↔int mapping + the signable-state delegate + routes/permissions.
-- **Soft-delete:** **standardize ON** for all three. The shared entity carries **plain**
-  `IsDeleted` / `DeletedOnUtc` / `DeletedBy` props (NOT `ISoftDeletable`) + a domain `SoftDelete(...)`
-  method. AssetRegister gains 3 nullable columns (non-destructive). No delete endpoint exists today;
-  this is for consistency + legal-hold safety.
-- **`DocumentType` stored as `int`** on the shared entity (the DB column is already `integer` in all
-  three) — the shared type cannot reference three module enums. Each module keeps its enum in its
-  Contracts project and casts `(int)`/`(TEnum)` at the feature boundary.
-- **One `SignedDocuments` table per module schema** (asset_register / procurement / budgetdisbursement),
-  *not* a single cross-module table — preserves module DB isolation, mirrors `NumberSequence`.
+- **Model:** one `SignedCopy` **value object** (a single grouped property per entity, not flat fields),
+  inlined as an EF **owned type** on each parent aggregate. Nullable — sparse until uploaded; re-upload replaces it.
+- **VO home:** shared `BuildingBlocks/Core/Domain/SignedCopy.cs` — a value object (immutable, no identity,
+  no table) in the shared kernel is textbook (like `Money`), and is *not* the growing-aggregate coupling the
+  old plan created. Aggregates that carry one implement `ISignedCopyHolder` (Core).
+- **VO fields (6):** `StorageKey`, `Sha256`, `FileName`, `FileSizeBytes`, `UploadedByName?`, `UploadedOnUtc`.
+  - Dropped **`UploadedById`** (dead — never read/shown/queried; acting user is on the parent's audit).
+  - Dropped **`ContentType`** (provably constant — validators enforce PDF-only via `.pdf` + `%PDF` magic
+    bytes; not shown in any dialog; download serves the literal `"application/pdf"`). The `SignedDocumentDto`
+    / `SignedDocumentFileDto` keep their `ContentType` field (API unchanged), populated with the constant.
+- **Mechanics de-duplicated once** via a stateless static `SignedCopyStore` in `BuildingBlocks/Storage`
+  (mirrors `SequenceAllocator`; no DI). No `Persistence → Storage` reference needed.
+- **IAR gap preserved:** `ProcurementDocumentType.InspectionAcceptanceReport` has no upload path today (the
+  upload `switch` has no arm for it → throws); its read-side flag is effectively always-false. The refactor
+  keeps this — IAR's aggregate gets a `SignedCopy` property that simply stays null. Closing the gap is an
+  optional separate follow-up.
+- **Public API unchanged:** per-module enum, `UploadSignedDocumentCommand`, `GetSignedDocumentQuery`,
+  `DownloadSignedDocumentQuery`, DTOs, `/signed-documents` routes, permissions, and all 3 Blazor `ApiClient`
+  files stay. The enum now only *dispatches to the right aggregate* inside the handler; it is never stored.
 
-## Critical constraint — query-filter collision (do not get this wrong)
+## Parent-aggregate mapping (15 document types)
 
-`BaseDbContext.OnModelCreating` calls `AppendGlobalQueryFilter<ISoftDeletable>(s => !s.IsDeleted)`
-— an **anonymous** filter applied to any `ISoftDeletable` entity. On a `.IsMultiTenant()` entity that
-collides with Finbuckle's **named** tenant filter and throws at model build
-(*"Both anonymous and named query filters cannot be applied simultaneously"* — see
-`.claude/rules/persistence.md`). This is exactly why today's Procurement/Budget `SignedDocument`
-**does not implement `ISoftDeletable`** and instead uses a **named** `HasQueryFilter("SoftDelete", …)`.
+Each match is `x.Id == DocumentId` on the listed DbSet, **except RFQ** whose `DocumentId` is a
+`CanvassQuotation.Id` (its own aggregate/table) — so the RFQ `SignedCopy` lives on `CanvassQuotation`, not
+`CanvassRequest`.
 
-➡️ The shared entity **must not implement `ISoftDeletable`**. The shared EF config applies the
-**named** `builder.HasQueryFilter("SoftDelete", x => !x.IsDeleted)` alongside `.IsMultiTenant()`.
+- **AssetRegister:** ReturnedPropertyReceipt→`ReturnedPropertyReceipt`, PropertyAccountability→`PropertyAccountability`,
+  IssuanceReport→`PropertyIssuanceReport`, ReceivingReport→`ReceivingReport`,
+  UnserviceableReport→`UnserviceablePropertyReport`, IncidentReport→`PropertyIncidentReport`,
+  PhysicalCountReport→`PhysicalCountSession`. *(No soft-delete on these.)*
+- **Procurement:** PurchaseRequest→`PurchaseRequest`, PurchaseOrder→`PurchaseOrder`,
+  AbstractOfCanvass→`CanvassRequest`, RequestForQuotation→**`CanvassQuotation`**, JobOrder→`JobOrder`,
+  InspectionAcceptanceReport→`InspectionAcceptanceReport` *(stays null — IAR gap)*.
+- **BudgetDisbursement:** DisbursementVoucher→`DisbursementVoucher`, BudgetUtilizationRequest→`BudgetUtilizationRequest`.
 
-## Approach
+## Implementation
 
-### 1. Shared entity — `BuildingBlocks/Core/Domain/SignedDocument.cs`
-New file, sibling of `NumberSequence.cs`.
-- `public sealed class SignedDocument : AggregateRoot<Guid>, IHasTenant, IAuditableEntity`
-- Props mirror the current entity but `DocumentType` becomes **`int`**; add plain soft-delete props
-  (`IsDeleted` default-false, `DeletedOnUtc?`, `DeletedBy?`) with `private set`.
-- `Create(...)` / `Replace(...)` (as the current AssetRegister entity, but `int documentType`), plus
-  `SoftDelete(string deletedBy)`.
-
-### 2. Shared EF config — `BuildingBlocks/Persistence/SignedDocuments/SignedDocumentConfiguration.cs`
-New `ModelBuilder` extension `ConfigureSignedDocuments(this ModelBuilder, string schema)`, modeled on
-`NumberSequenceConfiguration.cs`. Sets `ToTable("SignedDocuments", schema).IsMultiTenant()`,
-`TenantId(64)`, the column lengths (StorageKey 1024, Sha256 64, FileName 260, ContentType 128,
-UploadedByName 200), the unique index `(TenantId, DocumentType, DocumentId)`, `IsDeleted` default
-false, and the **named** `HasQueryFilter("SoftDelete", x => !x.IsDeleted)`. Because the entity lives
-in the framework assembly it is **not** picked up by `ApplyConfigurationsFromAssembly` — each module
-calls this extension explicitly (same mechanism as `ConfigureNumberSequences`).
-
-### 3. Shared mechanics — `BuildingBlocks/Persistence/SignedDocuments/SignedDocumentStore.cs`
-New **static** helper (mirrors the static `SequenceAllocator.cs` — **no DI registration**). Callers
-pass their own dependencies:
-- `UploadAsync(BaseDbContext db, IStorageService storage, ICurrentUser currentUser, int documentType, Guid documentId, byte[] content, string fileName, string contentType, string? uploadedByNameOverride, CancellationToken ct)` → `SignedDocument`.
-  Does: hash, tenant resolution (`currentUser.GetTenant() ?? db.TenantInfo?.Identifier ?? ""`),
-  `storage.UploadAsync<SignedDocument>(…, StoragePaths.Protected(tenant, documentType-as-string), …)`,
-  find-existing-by-`(DocumentType, DocumentId)` → `Create` or `Replace`, `SaveChangesAsync` with
-  orphan-rollback on failure + best-effort old-blob cleanup on success — lifted verbatim from
-  the AssetRegister `UploadSignedDocumentCommandHandler`.
-- `GetAsync(BaseDbContext db, int documentType, Guid documentId, CancellationToken ct)` → `SignedDocument?` (AsNoTracking).
-- `DownloadAsync(BaseDbContext db, IStorageService storage, ILogger logger, int documentType, Guid documentId, CancellationToken ct)` → `SignedDocumentFile?` (small record `Content/ContentType/FileName`), with the SHA-256 integrity re-verify from the AssetRegister `DownloadSignedDocumentQueryHandler`.
-
-**Structural change:** add a `ProjectReference` from `Persistence` → `Storage` (currently siblings;
-Storage does not reference Persistence, so this stays acyclic). Needed for `IStorageService` /
-`StoragePaths` / `FileUploadRequest`. `ICurrentUser` (Core) and `BaseDbContext` (Persistence) are
-already visible.
-
-> Note — sanctioned **BuildingBlocks** change (`.claude/rules/buildingblocks-protection.md`): user
-> approved this scope; adds mirror the existing `NumberSequence` precedent.
-
-### 4. Per-module rewiring (×3: AssetRegister, ProcurementAcquisition, BudgetDisbursement)
-For each module:
-- **Delete** `Domain/SignedDocuments/SignedDocument.cs` and `Data/Configurations/SignedDocumentConfiguration.cs`.
-- **DbContext**: point the `DbSet<SignedDocument>` `using` at `AMIS.Framework.Core.Domain`; add
-  `modelBuilder.ConfigureSignedDocuments(<Module>ModuleConstants.SchemaName);` in `OnModelCreating`.
-- **Upload handler**: keep the module-local `EnsureDocumentSignedAsync(...)` switch; replace the
-  mechanical body with a single `SignedDocumentStore.UploadAsync(db, storageService, currentUser,
-  (int)command.DocumentType, …, uploadedByNameOverride, ct)` call, then map the returned entity to the
-  module DTO (`(ModuleEnum)entity.DocumentType`). Procurement passes its `SignatoryResolver` result as
-  `uploadedByNameOverride`; the other two pass `null` (defaults to `currentUser.Name` inside the store).
-- **Get / Download handlers**: delegate to `SignedDocumentStore.GetAsync` / `.DownloadAsync` and map
-  to the module DTO / `SignedDocumentFileDto`.
-- **Contracts, endpoints, permissions, routes, Blazor clients: unchanged** — the enum, DTOs,
-  commands/queries, `/signed-documents` routes and `View`/`Upload` permissions all stay per-module, so
-  the public API and the three Blazor `ApiClient` files are untouched.
-- **Read-side consumers (~17 handlers)** that filter `db.SignedDocuments.Where/Any(x => x.DocumentType == SomeEnum.X …)`
-  must become `x.DocumentType == (int)SomeEnum.X` (EF translates the cast fine).
-  Find all with: `grep -rn "\.DocumentType ==" src/Modules` (covers Search*/Get* handlers across all 3 modules).
-
-### 5. Migrations — one per context (do **not** delete snapshots)
-Per the migrations-discovery quirk (each context is found only via its existing snapshot), add a
-**delta** migration per context — never squash:
-```
-dotnet ef migrations add SharedSignedDocument \
-  --project src/Host/Migrations.PostgreSQL --context AssetRegisterDbContext --output-dir AssetRegister
-```
-(repeat for `ProcurementDbContext` → `ProcurementAcquisition`, `BudgetDisbursementDbContext` → `BudgetDisbursement`).
-- **AssetRegister**: real delta — alter `TenantId` 50→64, add `IsDeleted`/`DeletedOnUtc`/`DeletedBy`.
-- **Procurement / Budget**: SQL should be a no-op (schema already matches); the migration mainly re-syncs
-  the snapshot's moved CLR type. **Inspect each generated migration** and confirm empty/annotation-only
-  `Up`/`Down` before keeping.
-
-### 6. Tests
-- Update namespace in `src/Tests/ProcurementAcquisition.Tests/Domain/SignedDocumentDomainTests.cs`
-  to the shared `AMIS.Framework.Core.Domain.SignedDocument` (and adapt `int documentType`). Consider
-  moving it to a framework/Generic test project since the type is now shared.
-- Validator tests are unaffected (validators stay per-module).
-
-## Files at a glance
-- **New:** `Core/Domain/SignedDocument.cs`, `Persistence/SignedDocuments/SignedDocumentConfiguration.cs`,
-  `Persistence/SignedDocuments/SignedDocumentStore.cs`.
-- **Deleted (×3):** each module's `Domain/SignedDocuments/SignedDocument.cs` + `Data/Configurations/SignedDocumentConfiguration.cs`.
-- **Edited:** `Persistence.csproj` (+Storage ref); 3 DbContexts; 3 Upload + 3 Get + 3 Download handlers;
-  ~17 read-side query handlers; 3 new migrations; ProcAcq domain test.
-- **Untouched:** all `*Contracts` (enums/DTOs/commands/queries), all endpoints/permissions/routes,
-  all 3 Blazor `ApiClient` files.
+1. **`Core/Domain/SignedCopy.cs`** (record, 6 fields) + **`Core/Domain/ISignedCopyHolder.cs`**
+   (`SignedCopy? SignedCopy { get; }` + `void SetSignedCopy(SignedCopy)`).
+2. **`Storage/SignedDocuments/SignedCopyStore.cs`** (static): `BuildAsync` (hash + upload → `SignedCopy`) and
+   `DownloadAsync` (fetch + SHA-256 re-verify → `SignedCopyFile`).
+3. **`Persistence/SignedDocuments/SignedCopyConfigurationExtensions.cs`**: `ConfigureSignedCopy(x => x.SignedCopy)`
+   optional-owned-type mapping (columns `SignedCopy_*`; StorageKey 1024 / Sha256 64 / FileName 260 /
+   UploadedByName 200), reused by all 15 configs.
+4. **15 parent aggregates:** add `public SignedCopy? SignedCopy { get; private set; }` +
+   `SetSignedCopy(...)`, implement `ISignedCopyHolder`; each EF config calls `ConfigureSignedCopy`.
+5. **3 upload handlers:** load the parent **tracked** (the existing signable-state `switch`), `SetSignedCopy`
+   with `SignedCopyStore.BuildAsync`, save with orphan-blob rollback + old-blob cleanup.
+6. **3 get + 3 download handlers:** resolve the parent's `SignedCopy` by (type, id); Get → DTO (404 if null),
+   Download → `SignedCopyStore.DownloadAsync`.
+7. **18 read-side handlers:** `db.SignedDocuments.Any(sd => sd.DocumentType == E.X && sd.DocumentId == x.Id)`
+   → `x.SignedCopy != null` (fallback `x.SignedCopy!.Sha256 != null` if EF won't translate the bare null check).
+8. **Delete** the 3 `SignedDocument` entities + configs + DbSet lines.
+9. **3 delta migrations** (one per context; do not squash; `--startup-project src/Host/AMIS.Api`): drop the
+   `SignedDocuments` table, add `SignedCopy_*` columns to the parent tables.
+10. **Tests:** retarget `SignedDocumentDomainTests` to the `SignedCopy` VO; drop the `UploadedById` assertion.
 
 ## Verification
-1. `dotnet build src/AMIS.Framework.slnx` — must be **0 warnings** (also proves no query-filter-collision
-   at model build for all three `.IsMultiTenant()` + named-filter contexts).
-2. `dotnet test src/AMIS.Framework.slnx` — all pass (incl. Architecture.Tests for module-boundary rules).
-3. Duplicate-endpoint-name guard (api-conventions.md): `grep -rh "\.WithName(" src/Modules …` shows no
-   new collisions (endpoint names unchanged, so this should stay clean).
-4. Apply migrations (`dotnet ef database update` per context) against a dev DB; confirm AssetRegister
-   gains the 3 columns + widened `TenantId`, and Procurement/Budget apply cleanly with no data loss.
-5. End-to-end per module (run via Aspire / `/run`): for one document type in each module —
-   **upload** a signed PDF (verify it lands under `uploads/protected/{tenant}/{docType}/…` and the row
-   persists), **get** metadata, **download** (verify the integrity check passes), then **re-upload**
-   (verify replace works and the old blob is cleaned up). Confirm a Search list still shows the
-   "has signed copy" flag (proves the `(int)` read-side cast works).
+
+1. `dotnet build src/AMIS.Framework.slnx` — 0 warnings.
+2. `dotnet test src/AMIS.Framework.slnx` — all pass (incl. Architecture.Tests; a shared VO in Core is allowed).
+3. Apply the 3 migrations against a dev DB; confirm the 3 `SignedDocuments` tables are gone and the parent
+   tables gained `SignedCopy_*` columns.
+4. End-to-end per module (Aspire / `/run`): for one document type each — upload a signed PDF (lands under
+   `uploads/protected/{tenant}/{docType}/…`, `SignedCopy` persists on the parent row), get metadata,
+   download (integrity check passes), re-upload (replaces the VO, old blob cleaned up). Confirm a Search list
+   still shows the "has signed copy" flag (proves `x.SignedCopy != null` translates).

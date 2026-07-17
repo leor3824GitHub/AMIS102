@@ -1,3 +1,4 @@
+using AMIS.Framework.Persistence.SignedDocuments;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
 using AMIS.Modules.ProcurementAcquisition.Domain.JobOrders;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,8 @@ public sealed class JobOrderConfiguration : IEntityTypeConfiguration<JobOrder>
     {
         builder.ToTable("JobOrders", ProcurementAcquisitionModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).HasMaxLength(64).IsRequired();

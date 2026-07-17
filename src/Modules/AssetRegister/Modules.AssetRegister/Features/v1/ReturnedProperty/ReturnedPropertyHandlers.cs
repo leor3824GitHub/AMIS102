@@ -429,8 +429,7 @@ public sealed class SearchReturnedPropertyReceiptsQueryHandler(
                 r.Items.Count,
                 r.Items.Sum(i => i.Snapshot.UnitCost),
                 r.AssignedInspector.EmployeeId,
-                db.SignedDocuments.Any(sd =>
-                    sd.DocumentType == AssetRegisterDocumentType.ReturnedPropertyReceipt && sd.DocumentId == r.Id),
+                r.SignedCopy != null,
                 r.ReturnedBy.EmployeeId))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 

@@ -1,17 +1,15 @@
 using System.Net;
-using System.Security.Cryptography;
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Domain;
 using AMIS.Framework.Core.Exceptions;
-using AMIS.Framework.Shared.Storage;
-using AMIS.Framework.Storage;
 using AMIS.Framework.Storage.Services;
+using AMIS.Framework.Storage.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Data;
-using AMIS.Modules.ProcurementAcquisition.Domain.SignedDocuments;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -32,49 +30,19 @@ public sealed class UploadSignedDocumentCommandHandler(
             throw new CustomException("Uploaded file is empty.", Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
 
         // The signed copy may only be attached once the document has reached its terminal signed state.
-        await EnsureDocumentSignedAsync(command.DocumentType, command.DocumentId, cancellationToken).ConfigureAwait(false);
-
-        var sha256 = Convert.ToHexString(SHA256.HashData(command.Content)).ToLowerInvariant();
+        // Loaded tracked so the inlined SignedCopy is persisted with the aggregate on SaveChanges.
+        var holder = await LoadSignableDocumentAsync(command.DocumentType, command.DocumentId, cancellationToken).ConfigureAwait(false);
 
         var tenantId = currentUser.GetTenant() ?? dbContext.TenantInfo?.Identifier ?? string.Empty;
-
-        var uploadRequest = new FileUploadRequest
-        {
-            FileName = command.FileName,
-            ContentType = command.ContentType,
-            Data = [.. command.Content]
-        };
-        // Confidential wet-signed copy → uploads/protected/{tenant}/{docType}; a subtree the web pipeline
-        // never serves as static files (reachable only via the authenticated download endpoint).
-        var storageKey = await storageService
-            .UploadAsync<SignedDocument>(
-                uploadRequest, FileType.Pdf, StoragePaths.Protected(tenantId, command.DocumentType.ToString()), cancellationToken)
-            .ConfigureAwait(false);
+        var oldKey = holder.SignedCopy?.StorageKey;
 
         var uploader = await SignatoryResolver.ResolveSignatoryAsync(currentUser, mediator, cancellationToken).ConfigureAwait(false);
-        var uploaderId = currentUser.GetUserId();
 
-        var existing = await dbContext.SignedDocuments
-            .FirstOrDefaultAsync(x => x.DocumentType == command.DocumentType && x.DocumentId == command.DocumentId, cancellationToken)
-            .ConfigureAwait(false);
+        var copy = await SignedCopyStore.BuildAsync(
+            storageService, tenantId, command.DocumentType.ToString(), command.Content,
+            command.FileName, uploader.Name, cancellationToken).ConfigureAwait(false);
 
-        string? oldKey = null;
-        SignedDocument entity;
-        if (existing is null)
-        {
-            entity = SignedDocument.Create(
-                tenantId, command.DocumentType, command.DocumentId, storageKey, sha256,
-                command.FileName, command.ContentType, command.Content.LongLength, uploaderId, uploader.Name);
-            entity.CreatedBy = uploaderId.ToString();
-            dbContext.SignedDocuments.Add(entity);
-        }
-        else
-        {
-            oldKey = existing.StorageKey;
-            existing.Replace(storageKey, sha256, command.FileName, command.ContentType, command.Content.LongLength, uploaderId, uploader.Name);
-            existing.LastModifiedBy = uploaderId.ToString();
-            entity = existing;
-        }
+        holder.SetSignedCopy(copy);
 
         try
         {
@@ -82,71 +50,70 @@ public sealed class UploadSignedDocumentCommandHandler(
         }
         catch
         {
-            // The row didn't persist (e.g. a concurrent first-upload losing the unique-index race) —
-            // don't leave the blob we just uploaded orphaned in storage.
-            try { await storageService.RemoveAsync(storageKey, cancellationToken).ConfigureAwait(false); }
+            // The row didn't persist — don't leave the blob we just uploaded orphaned in storage.
+            try { await storageService.RemoveAsync(copy.StorageKey, cancellationToken).ConfigureAwait(false); }
             catch (Exception) { /* best effort */ }
             throw;
         }
 
         // Best-effort cleanup of the replaced blob (after the row commit succeeded).
-        if (oldKey is not null && !string.Equals(oldKey, storageKey, StringComparison.Ordinal))
+        if (oldKey is not null && !string.Equals(oldKey, copy.StorageKey, StringComparison.Ordinal))
         {
             try { await storageService.RemoveAsync(oldKey, cancellationToken).ConfigureAwait(false); }
             catch (Exception) { /* orphaned blob is harmless; the row is correct */ }
         }
 
-        return ToDto(entity);
+        return ToDto(command.DocumentType, command.DocumentId, copy);
     }
 
-    private async ValueTask EnsureDocumentSignedAsync(ProcurementDocumentType type, Guid id, CancellationToken ct)
+    private async ValueTask<ISignedCopyHolder> LoadSignableDocumentAsync(ProcurementDocumentType type, Guid id, CancellationToken ct)
     {
         switch (type)
         {
             case ProcurementDocumentType.PurchaseRequest:
-                var pr = await dbContext.PurchaseRequests.AsNoTracking()
+                var pr = await dbContext.PurchaseRequests
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Purchase request '{id}' not found.");
                 // Signed at approval; remains a signed record through Completed.
                 if (pr.Status is not (PurchaseRequestStatus.Approved or PurchaseRequestStatus.Completed))
                     throw new CustomException("A signed copy can only be uploaded once the purchase request is Approved.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return pr;
 
             case ProcurementDocumentType.PurchaseOrder:
-                var po = await dbContext.PurchaseOrders.AsNoTracking()
+                var po = await dbContext.PurchaseOrders
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Purchase order '{id}' not found.");
                 // Signed at issue; remains a signed record while deliveries are recorded (Partially/Fulfilled).
                 if (po.Status is not (PurchaseOrderStatus.Issued or PurchaseOrderStatus.PartiallyDelivered or PurchaseOrderStatus.Fulfilled))
                     throw new CustomException("A signed copy can only be uploaded once the purchase order is Issued.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return po;
 
             case ProcurementDocumentType.JobOrder:
-                var jo = await dbContext.JobOrders.AsNoTracking()
+                var jo = await dbContext.JobOrders
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Job order '{id}' not found.");
                 // Signed at issue; remains a signed record through inspection and acceptance.
                 if (jo.Status is not (JobOrderStatus.Issued or JobOrderStatus.Inspected or JobOrderStatus.Completed))
                     throw new CustomException("A signed copy can only be uploaded once the job order is Issued.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return jo;
 
             case ProcurementDocumentType.AbstractOfCanvass:
-                var canvass = await dbContext.CanvassRequests.AsNoTracking()
+                var canvass = await dbContext.CanvassRequests
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Canvass request '{id}' not found.");
                 if (canvass.Status != CanvassRequestStatus.Awarded)
                     throw new CustomException("A signed copy can only be uploaded for an Awarded canvass.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return canvass;
 
             case ProcurementDocumentType.RequestForQuotation:
-                // The RFQ is the supplier's own wet-signed quotation document — it exists the moment the
-                // quotation is recorded, so it may be attached at any non-cancelled canvass stage (unlike the
-                // Abstract of Canvass, which summarises all quotations and is only signed once awarded).
-                var quotation = await dbContext.CanvassQuotations.AsNoTracking()
+                // The RFQ is the supplier's own wet-signed quotation document — the SignedCopy lives on the
+                // CanvassQuotation. It may be attached at any non-cancelled canvass stage (unlike the Abstract
+                // of Canvass, which summarises all quotations and is only signed once awarded).
+                var quotation = await dbContext.CanvassQuotations
                     .FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false)
                     ?? throw new NotFoundException($"Canvass quotation '{id}' not found.");
                 var parentCanvass = await dbContext.CanvassRequests.AsNoTracking()
@@ -155,7 +122,7 @@ public sealed class UploadSignedDocumentCommandHandler(
                 if (parentCanvass.Status == CanvassRequestStatus.Cancelled)
                     throw new CustomException("A signed RFQ cannot be uploaded for a cancelled canvass.",
                         Enumerable.Empty<string>(), HttpStatusCode.BadRequest);
-                break;
+                return quotation;
 
             default:
                 throw new CustomException($"Unsupported document type '{type}'.",
@@ -163,6 +130,6 @@ public sealed class UploadSignedDocumentCommandHandler(
         }
     }
 
-    internal static SignedDocumentDto ToDto(SignedDocument d) => new(
-        d.DocumentType, d.DocumentId, d.FileName, d.ContentType, d.FileSizeBytes, d.Sha256, d.UploadedByName, d.UploadedOnUtc);
+    internal static SignedDocumentDto ToDto(ProcurementDocumentType type, Guid documentId, SignedCopy copy) => new(
+        type, documentId, copy.FileName, "application/pdf", copy.FileSizeBytes, copy.Sha256, copy.UploadedByName, copy.UploadedOnUtc);
 }

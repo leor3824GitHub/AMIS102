@@ -371,91 +371,89 @@ namespace AMIS.Playground.Migrations.PostgreSQL.BudgetDisbursement
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
 
-            modelBuilder.Entity("AMIS.Modules.BudgetDisbursement.Domain.SignedDocuments.SignedDocument", b =>
+            modelBuilder.Entity("AMIS.Modules.BudgetDisbursement.Domain.BudgetUtilizationRequests.BudgetUtilizationRequest", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("BudgetUtilizationRequestId")
+                                .HasColumnType("uuid");
 
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
 
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
 
-                    b.Property<DateTimeOffset>("CreatedOnUtc")
-                        .HasColumnType("timestamp with time zone");
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
 
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
 
-                    b.Property<DateTimeOffset?>("DeletedOnUtc")
-                        .HasColumnType("timestamp with time zone");
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
 
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("DocumentType")
-                        .HasColumnType("integer");
+                            b1.HasKey("BudgetUtilizationRequestId");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(260)
-                        .HasColumnType("character varying(260)");
+                            b1.ToTable("BudgetUtilizationRequests", "budgetdisbursement");
 
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint");
+                            b1.WithOwner()
+                                .HasForeignKey("BudgetUtilizationRequestId");
+                        });
 
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Sha256")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("StorageKey")
-                        .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<string>("TenantId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid?>("UploadedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UploadedByName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset>("UploadedOnUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "DocumentType", "DocumentId")
-                        .IsUnique();
-
-                    b.ToTable("SignedDocuments", "budgetdisbursement");
-
-                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                    b.Navigation("SignedCopy");
                 });
 
             modelBuilder.Entity("AMIS.Modules.BudgetDisbursement.Domain.DisbursementVouchers.DisbursementVoucher", b =>
                 {
+                    b.OwnsOne("AMIS.Framework.Core.Domain.SignedCopy", "SignedCopy", b1 =>
+                        {
+                            b1.Property<Guid>("DisbursementVoucherId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(260)
+                                .HasColumnType("character varying(260)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Sha256")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)");
+
+                            b1.Property<string>("StorageKey")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("character varying(1024)");
+
+                            b1.Property<string>("UploadedByName")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("DisbursementVoucherId");
+
+                            b1.ToTable("DisbursementVouchers", "budgetdisbursement");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DisbursementVoucherId");
+                        });
+
                     b.OwnsMany("AMIS.Modules.BudgetDisbursement.Domain.DisbursementVouchers.DvDeduction", "Deductions", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -489,6 +487,8 @@ namespace AMIS.Playground.Migrations.PostgreSQL.BudgetDisbursement
                         });
 
                     b.Navigation("Deductions");
+
+                    b.Navigation("SignedCopy");
                 });
 #pragma warning restore 612, 618
         }

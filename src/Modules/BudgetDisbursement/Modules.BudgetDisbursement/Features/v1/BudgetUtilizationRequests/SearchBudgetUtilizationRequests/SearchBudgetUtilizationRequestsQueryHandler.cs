@@ -47,8 +47,7 @@ public sealed class SearchBudgetUtilizationRequestsQueryHandler(
                 x.AllotmentClass,
                 x.Amount,
                 x.Status,
-                dbContext.SignedDocuments.Any(s =>
-                    s.DocumentType == BudgetDisbursementDocumentType.BudgetUtilizationRequest && s.DocumentId == x.Id)))
+                x.SignedCopy != null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

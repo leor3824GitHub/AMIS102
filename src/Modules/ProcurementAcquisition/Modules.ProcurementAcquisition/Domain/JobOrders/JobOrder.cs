@@ -47,7 +47,7 @@ public sealed class JobOrderLineItem
 /// acceptance on the JO itself rather than feeding an Inspection &amp; Acceptance Report. A JO may originate
 /// from a Purchase Request (<see cref="PurchaseRequestId"/> set) or stand alone.
 /// </summary>
-public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
+public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity, ISignedCopyHolder
 {
     public string TenantId { get; private set; } = default!;
     public string JoNumber { get; private set; } = default!;
@@ -119,6 +119,12 @@ public sealed class JobOrder : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
     public decimal TotalAmount => _lineItems.Sum(x => x.Amount);
 
     // IAuditableEntity
+    /// <summary>The uploaded wet-signed copy of this document of record; null until one is uploaded.</summary>
+    public SignedCopy? SignedCopy { get; private set; }
+
+    /// <summary>Attaches or replaces the signed copy (one current copy per document).</summary>
+    public void SetSignedCopy(SignedCopy copy) => SignedCopy = copy;
+
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }

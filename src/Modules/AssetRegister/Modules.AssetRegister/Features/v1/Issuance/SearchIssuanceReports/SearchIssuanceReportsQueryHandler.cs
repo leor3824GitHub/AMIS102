@@ -36,7 +36,7 @@ public sealed class SearchIssuanceReportsQueryHandler(AssetRegisterDbContext db)
             .Select(r => new PropertyIssuanceReportSummaryDto(
                 r.Id, r.ReportNo, r.ReportType, r.Nature, r.Date,
                 r.Lines.Count, r.Lines.Sum(l => l.SnapshotAmount),
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.IssuanceReport && sd.DocumentId == r.Id)))
+                r.SignedCopy != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyIssuanceReportSummaryDto>

@@ -32,7 +32,7 @@ public sealed class GetExpiringAccountabilitiesQueryHandler(AssetRegisterDbConte
             .Take(MaxResults)
             .Select(a => new PropertyAccountabilitySummaryDto(
                 a.Id, a.DocumentNo, a.AccountabilityType, a.Status, a.IssuedOn, a.ExpiresOn, a.Lines.Count,
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.PropertyAccountability && sd.DocumentId == a.Id)))
+                a.SignedCopy != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return items;

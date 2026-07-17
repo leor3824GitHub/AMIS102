@@ -34,7 +34,7 @@ public sealed class SearchIncidentReportsQueryHandler(AssetRegisterDbContext db)
             .Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(r => new PropertyIncidentReportSummaryDto(
                 r.Id, r.IncidentNo, r.IncidentType, r.Status, r.IncidentDate, r.Items.Count,
-                db.SignedDocuments.Any(sd => sd.DocumentType == AssetRegisterDocumentType.IncidentReport && sd.DocumentId == r.Id)))
+                r.SignedCopy != null))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return new PagedResponse<PropertyIncidentReportSummaryDto>

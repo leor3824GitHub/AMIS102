@@ -1,3 +1,4 @@
+using AMIS.Framework.Persistence.SignedDocuments;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Domain.Counting;
 using Finbuckle.MultiTenant.EntityFrameworkCore.Extensions;
@@ -13,6 +14,8 @@ internal sealed class PhysicalCountSessionConfiguration : IEntityTypeConfigurati
         ArgumentNullException.ThrowIfNull(builder);
         builder.ToTable("PhysicalCountSessions", AssetRegisterModuleConstants.SchemaName)
             .IsMultiTenant();
+
+        builder.ConfigureSignedCopy(x => x.SignedCopy);
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TenantId).IsRequired().HasMaxLength(50);

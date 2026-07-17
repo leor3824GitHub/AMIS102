@@ -82,7 +82,7 @@ public sealed class PurchaseRequestLineItem
     }
 }
 
-public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity
+public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditableEntity, ISignedCopyHolder
 {
     public string TenantId { get; private set; } = default!;
     public string PrNumber { get; private set; } = default!;
@@ -133,6 +133,12 @@ public sealed class PurchaseRequest : AggregateRoot<Guid>, IHasTenant, IAuditabl
     public IReadOnlyList<PurchaseRequestLineItem> LineItems => _lineItems.AsReadOnly();
 
     // IAuditableEntity
+    /// <summary>The uploaded wet-signed copy of this document of record; null until one is uploaded.</summary>
+    public SignedCopy? SignedCopy { get; private set; }
+
+    /// <summary>Attaches or replaces the signed copy (one current copy per document).</summary>
+    public void SetSignedCopy(SignedCopy copy) => SignedCopy = copy;
+
     public DateTimeOffset CreatedOnUtc { get; set; } = DateTimeOffset.UtcNow;
     public string? CreatedBy { get; set; }
     public DateTimeOffset? LastModifiedOnUtc { get; set; }
