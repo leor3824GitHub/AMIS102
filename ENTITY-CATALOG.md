@@ -997,9 +997,15 @@ PR → Canvass → PO/JO → IAR chain, plus per-fiscal-year number sequences an
 
 **PurchaseRequestLineItemData** — parameter-object record struct.
 
-### PrNumberSequence
-- `BaseEntity<Guid>`, `IHasTenant` · xmin · key (TenantId, Year)
-- Props: TenantId, Year, LastSerial. Methods: `Create(tenantId, year)`, `NextSerial()`.
+### NumberSequence (shared document-number counter)
+- **Framework entity** — `AMIS.Framework.Core.Domain.NumberSequence` (BuildingBlocks/Core). `BaseEntity<Guid>`, `IHasTenant` · xmin · key (TenantId, SequenceKey, Year, Month). Props: TenantId, SequenceKey, Year, Month, LastSerial. Methods: `Create(...)`, `NextSerial()`.
+- One `procurement.NumberSequences` table (mapped `multiTenant: true`) replaces the former per-document counters. Rows are discriminated by `SequenceKey`:
+  - `PR` — key (TenantId, Year); Month 0 (year-only; the formatted PR number carries the month cosmetically).
+  - `PO` — key (TenantId, Year, Month); serial resets monthly.
+  - `JO` — key (TenantId, Year, Month); serial resets monthly.
+  - `RIV` — key (TenantId, Year); Month 0.
+  - `IAR` — key (TenantId, Year); Month 0.
+- Allocation is shared: `AMIS.Framework.Persistence.Sequencing.SequenceAllocator` (`ReserveNextSerialAsync` / `AllocateAsync` / `GetOrCreateRowAsync`) increments under xmin optimistic concurrency with bounded retry (5 attempts) on `DbUpdateConcurrencyException` or Postgres 23505. Mapped via `modelBuilder.ConfigureNumberSequences(schema, multiTenant)`. AssetRegister keeps its own `PropertyCodeCounter` + `CounterAllocator` (not migrated).
 
 ### PurchaseOrder (aggregate) + PurchaseOrderLineItem (child) + PurchaseOrderLineItemData (record)
 - `AggregateRoot<Guid>`, `IHasTenant`, `IAuditableEntity`, `ISoftDeletable` · private ctor
@@ -1029,9 +1035,8 @@ PR → Canvass → PO/JO → IAR chain, plus per-fiscal-year number sequences an
 
 **PurchaseOrderLineItem** (child; private ctor): ItemNo, StockNumber?, Unit, Description, Quantity, UnitCost, Amount (computed), CatalogItemId?. Methods: `Create(...)`, `Update(...)`.
 
-### PoNumberSequence
-- `BaseEntity<Guid>`, `IHasTenant` · xmin · key (TenantId, Year, Month)
-- Props: TenantId, Year, Month, LastSerial. Methods: `Create(...)`, `NextSerial()`.
+### PoNumberSequence → merged
+- Merged into the shared **NumberSequence** (SequenceKey `PO`, key TenantId+Year+Month).
 
 ### CanvassRequest (aggregate) + CanvassRequestLineItem (child) + CanvassAwardSignatory (child) + CanvassRequestLineItemData (record)
 - `AggregateRoot<Guid>`, `IHasTenant`, `IAuditableEntity`, `ISoftDeletable` · private ctor
@@ -1074,8 +1079,8 @@ PR → Canvass → PO/JO → IAR chain, plus per-fiscal-year number sequences an
 
 **CanvassQuotationLineItem** (child; private ctor): ItemNo, PrItemNo, Description, Unit, Quantity, UnitPrice, Total (computed). Method: `Create(...)`.
 
-### RivNumberSequence
-- `BaseEntity<Guid>`, `IHasTenant` · xmin · key (TenantId, Year). Props: TenantId, Year, LastSerial. Methods: `Create(...)`, `NextSerial()`.
+### RivNumberSequence → merged
+- Merged into the shared **NumberSequence** (SequenceKey `RIV`, key TenantId+Year).
 
 ### InspectionAcceptanceReport (aggregate) + InspectionAcceptanceReportLineItem (child)
 - IAR. `AggregateRoot<Guid>`, `IHasTenant`, `IAuditableEntity`, `ISoftDeletable` · private ctor
@@ -1103,8 +1108,8 @@ PR → Canvass → PO/JO → IAR chain, plus per-fiscal-year number sequences an
 
 **InspectionAcceptanceReportLineItem** (child; private ctor): ItemNo, Description, TechnicalSpecifications?, Brand?, Model?, SerialNo?, PropertyClassHint?, Unit, Quantity, UnitCost, Amount (computed), InspectionRemarks?, StockPropertyNo?, StockNumber?, CatalogItemId?, UacsObjectCode?, InspectionResult (LineInspectionResult, default Pending), InspectedOnUtc?, InspectedById?. Methods (internal): `Create(...)`, `RecordInspection(...)`, `AssignPropertyNo(...)`, `Renumber(...)`, `CloneAsSingleUnit(...)`, `SetQuantity(...)`.
 
-### IarNumberSequence
-- `BaseEntity<Guid>`, `IHasTenant` · xmin · key (TenantId, Year). Props: TenantId, Year, LastSerial. Methods: `Create(...)`, `NextSerial()`.
+### IarNumberSequence → merged
+- Merged into the shared **NumberSequence** (SequenceKey `IAR`, key TenantId+Year).
 
 ### JobOrder (aggregate) + JobOrderLineItem (child) + JobOrderLineItemData (record)
 - Works (renovation/repair/fabrication) — PO-like flow with inspection & acceptance on the JO itself. `AggregateRoot<Guid>`, `IHasTenant`, `IAuditableEntity`, `ISoftDeletable` · private ctor
@@ -1133,8 +1138,8 @@ PR → Canvass → PO/JO → IAR chain, plus per-fiscal-year number sequences an
 
 **JobOrderLineItem** (child; private ctor): ItemNo, Unit?, Description, Quantity, UnitCost, Amount (computed). Method: `Create(...)`.
 
-### JoNumberSequence
-- `BaseEntity<Guid>`, `IHasTenant` · xmin · key (TenantId, Year, Month). Props: TenantId, Year, Month, LastSerial. Methods: `Create(...)`, `NextSerial()`.
+### JoNumberSequence → merged
+- Merged into the shared **NumberSequence** (SequenceKey `JO`, key TenantId+Year+Month).
 
 ### SignedDocument (ProcurementAcquisition)
 - Same shape as AssetRegister `SignedDocument`; `DocumentType` = `ProcurementDocumentType` (PR/PO/AoC). `AggregateRoot<Guid>`, `IHasTenant`, `IAuditableEntity`, `ISoftDeletable`. Methods: `Create(...)`, `Replace(...)`.
@@ -1165,9 +1170,8 @@ BUR → DV disbursement flow, deductions, per-year number sequences, module sett
 | Remarks | string? | |
 - Methods: `Create(...)`, `Obligate()`, `Utilize(dvId, dvNumber)`, `Release()`, `Cancel(remarks)`, `SoftDelete(by)`
 
-### BurNumberSequence
-- `BaseEntity<Guid>` (**not** IHasTenant — keyed by year only, global) · xmin
-- Props: Year, LastSerial. Methods: `Create(year, lastSerial=0)`, `NextSerial()`.
+### BurNumberSequence → merged
+- Merged into the shared **NumberSequence** (see ProcurementAcquisition §5). Budget maps `budgetdisbursement.NumberSequences` with `multiTenant: false` — DV/BUR are global year-only series, so rows store `TenantId = ""` and Month 0. SequenceKey `BUR`. On a missing counter row the create handler seeds `LastSerial` from the highest issued BUR number (seed-from-max preserved).
 
 ### DisbursementVoucher (aggregate) + DvDeduction (child)
 - `AggregateRoot<Guid>`, `IHasTenant`, `IAuditableEntity` · `byte[] Version` · soft-delete getter-only + `SoftDelete` · private ctor
@@ -1196,8 +1200,8 @@ BUR → DV disbursement flow, deductions, per-year number sequences, module sett
 
 **DvDeduction** (owned child; private ctor): Id, Name, Type (`DvDeductionType` — Percentage/Fixed), Value. Methods: `Create(name, type, value)`, `ComputeAmount(grossAmount)`.
 
-### DvNumberSequence
-- `BaseEntity<Guid>` (**not** IHasTenant — year-keyed, global) · xmin. Props: Year, LastSerial. Methods: `Create(year, lastSerial=0)`, `NextSerial()`.
+### DvNumberSequence → merged
+- Merged into the shared **NumberSequence** (SequenceKey `DV`, global year-only — `TenantId ""`, Month 0; `multiTenant: false`). Seed-from-max preserved.
 
 ### BudgetDisbursementModuleSettings
 - Plain class (**no base**), one row per tenant · all props `{ get; set; }`
@@ -1553,7 +1557,7 @@ Props: Value (string, upper-cased, ≤32 chars). `Create/Parse/TryParse`, `ToStr
 A few cross-cutting patterns worth a decision before you start moving columns:
 
 1. **`SignedDocument` is triplicated** (AssetRegister, ProcurementAcquisition, BudgetDisbursement) with identical structure — only the `DocumentType` enum differs. Candidate for a shared owned/base type or a single cross-module table with a discriminator.
-2. **Number-sequence entities** (`PrNumberSequence`, `PoNumberSequence`, `JoNumberSequence`, `RivNumberSequence`, `IarNumberSequence`, `BurNumberSequence`, `DvNumberSequence`, `PropertyCodeCounter`, `PPERRFormSeries`, `PPEIRFormSeries`) all implement the same "increment last serial under optimistic concurrency" pattern with slightly different keys (year vs. year+month vs. year+month+counterKey; tenant vs. global). Candidate for a unified sequence table.
+2. **Number-sequence entities** — ✅ **DONE for ProcurementAcquisition + BudgetDisbursement.** The seven monotonic counters (`PrNumberSequence`, `PoNumberSequence`, `JoNumberSequence`, `RivNumberSequence`, `IarNumberSequence`, `BurNumberSequence`, `DvNumberSequence`) are unified into the shared `AMIS.Framework.Core.Domain.NumberSequence` (one `NumberSequences` table per module, discriminated by `SequenceKey`), with allocation consolidated in `AMIS.Framework.Persistence.Sequencing.SequenceAllocator`. See the **NumberSequence** entry in §5. Still separate on purpose: AssetRegister's `PropertyCodeCounter` + `CounterAllocator` (already generalized, left as the reference implementation), and `PPERRFormSeries` / `PPEIRFormSeries` — those are **not** counters but physical pre-numbered accountable-form batches (fixed serial range, one-active lifecycle) and were deliberately excluded.
 3. **Signatory triplets** — `OrganizationProfile` inlines 6 × (Id, Name, Designation); many documents inline "Name + Designation" pairs and `EmployeeRef` (Id, PrintedName, Designation). Decide between the owned-value-object approach (`EmployeeRef`) and the inlined-columns approach and apply consistently.
 4. **Snapshot-on-write duplication** is intentional and pervasive (`AssetSnapshot` on every accountability/issuance/incident/return/count line; `AppLineItem` copying `PpmpItem`; PR→PO→IAR line copies). These are deliberate denormalizations for faithful reprints — don't normalize these away without preserving the freeze semantics.
 5. **Free-text FKs in Expendable `Product`** — `CategoryId` / `SupplierId` are `string?` and `UnitOfMeasure` is free text, unlike the Guid-keyed MasterData entities. Inconsistent with the rest of the system.
