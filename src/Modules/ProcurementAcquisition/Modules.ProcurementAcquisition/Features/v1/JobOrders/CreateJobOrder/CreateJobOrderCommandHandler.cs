@@ -1,12 +1,12 @@
 using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.JobOrders;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,64 +40,41 @@ public sealed class CreateJobOrderCommandHandler(
         // Allocate the JO number from a per-(tenant, year, month) counter guarded by xmin optimistic
         // concurrency, retrying on conflict — same race-safe pattern as PO/PR/IAR.
         var now = DateTime.UtcNow;
-        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
-        {
-            var sequence = await dbContext.JoNumberSequences
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(
-                    x => x.TenantId == tenantId && x.Year == now.Year && x.Month == now.Month,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            if (sequence is null)
+        var jo = await SequenceAllocator.AllocateAsync(
+            dbContext, tenantId, sequenceKey: "JO", now.Year, now.Month,
+            buildAndTrack: serial =>
             {
-                sequence = JoNumberSequence.Create(tenantId, now.Year, now.Month);
-                dbContext.JoNumberSequences.Add(sequence);
-            }
+                var joNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D3}";
 
-            var serial = sequence.NextSerial();
-            var joNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D3}";
+                var jo = JobOrder.Create(
+                    tenantId,
+                    joNumber,
+                    command.PurchaseRequestId,
+                    command.JobRequestNo,
+                    command.RequisitioningOffice,
+                    command.SupplierId,
+                    command.SupplierName,
+                    command.SupplierAddress,
+                    command.SupplierTin,
+                    command.ModeOfProcurement,
+                    command.PlaceOfDelivery,
+                    command.DateOfDelivery,
+                    command.DeliveryTerm,
+                    command.PaymentTerm,
+                    command.FundCluster,
+                    command.OursBursNumber,
+                    command.InspectorId,
+                    inspectorName,
+                    inspectorDesignation,
+                    lineItems);
 
-            var jo = JobOrder.Create(
-                tenantId,
-                joNumber,
-                command.PurchaseRequestId,
-                command.JobRequestNo,
-                command.RequisitioningOffice,
-                command.SupplierId,
-                command.SupplierName,
-                command.SupplierAddress,
-                command.SupplierTin,
-                command.ModeOfProcurement,
-                command.PlaceOfDelivery,
-                command.DateOfDelivery,
-                command.DeliveryTerm,
-                command.PaymentTerm,
-                command.FundCluster,
-                command.OursBursNumber,
-                command.InspectorId,
-                inspectorName,
-                inspectorDesignation,
-                lineItems);
+                jo.CreatedBy = currentUser.GetUserId().ToString();
+                dbContext.JobOrders.Add(jo);
+                return jo;
+            },
+            cancellationToken).ConfigureAwait(false);
 
-            jo.CreatedBy = currentUser.GetUserId().ToString();
-            dbContext.JobOrders.Add(jo);
-
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return MapToDto(jo);
-            }
-            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
-            {
-                // Counter row advanced (xmin) or the generated number collided with an existing JO (unique
-                // violation) between our read and save. Drop tracked state and retry with the latest value.
-                dbContext.ChangeTracker.Clear();
-            }
-        }
-
-        throw new CustomException("Failed to allocate a unique JO number. Please try again.",
-            Enumerable.Empty<string>(), HttpStatusCode.Conflict);
+        return MapToDto(jo);
     }
 
     private async Task EnsureNoDuplicateAsync(CreateJobOrderCommand command, CancellationToken ct)

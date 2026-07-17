@@ -1,10 +1,10 @@
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseRequests;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
-using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseRequests.CreatePurchaseRequest;
 
@@ -25,60 +25,42 @@ public sealed class CreatePurchaseRequestCommandHandler(
             .ResolveSignatoryAsync(currentUser, mediator, cancellationToken)
             .ConfigureAwait(false);
 
-        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
-        {
-            var sequence = await dbContext.PrNumberSequences
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Year == now.Year, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (sequence is null)
+        // Allocate the PR number from a per-(tenant, year) counter guarded by xmin optimistic concurrency,
+        // retrying on conflict. The formatted number carries the month cosmetically; the serial is year-scoped.
+        var pr = await SequenceAllocator.AllocateAsync(
+            dbContext, tenantId, sequenceKey: "PR", now.Year, month: 0,
+            buildAndTrack: serial =>
             {
-                sequence = PrNumberSequence.Create(tenantId, now.Year);
-                dbContext.PrNumberSequences.Add(sequence);
-            }
+                var prNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D4}";
 
-            var serial = sequence.NextSerial();
-            var prNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D4}";
+                var lineItems = command.LineItems.Select(li =>
+                    new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
 
-            var lineItems = command.LineItems.Select(li =>
-                new PurchaseRequestLineItemData(li.Quantity, li.UnitOfIssue, li.ItemDescription, li.EstimatedUnitCost, li.CatalogItemId, li.UacsObjectCode, li.StockNumber));
+                var pr = PurchaseRequest.Create(
+                    tenantId,
+                    prNumber,
+                    command.DepartmentId,
+                    command.ResponsibilityCenterCode,
+                    command.Purpose,
+                    command.PrType,
+                    command.Justification,
+                    requester.Name,
+                    command.SaiNumber,
+                    command.SaiDate,
+                    command.AlobsNumber,
+                    command.AlobsDate,
+                    lineItems,
+                    requestedById: requesterId,
+                    requestedByDesignation: requester.Designation,
+                    category: command.Category);
 
-            var pr = PurchaseRequest.Create(
-                tenantId,
-                prNumber,
-                command.DepartmentId,
-                command.ResponsibilityCenterCode,
-                command.Purpose,
-                command.PrType,
-                command.Justification,
-                requester.Name,
-                command.SaiNumber,
-                command.SaiDate,
-                command.AlobsNumber,
-                command.AlobsDate,
-                lineItems,
-                requestedById: requesterId,
-                requestedByDesignation: requester.Designation,
-                category: command.Category);
+                pr.CreatedBy = currentUser.GetUserId().ToString();
+                dbContext.PurchaseRequests.Add(pr);
+                return pr;
+            },
+            cancellationToken).ConfigureAwait(false);
 
-            pr.CreatedBy = currentUser.GetUserId().ToString();
-            dbContext.PurchaseRequests.Add(pr);
-
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return MapToDto(pr);
-            }
-            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
-            {
-                // Counter row advanced (xmin) or the generated number collided (unique violation) between our
-                // read and save. Clear tracked entities and retry with the latest sequence value.
-                dbContext.ChangeTracker.Clear();
-            }
-        }
-
-        throw new InvalidOperationException("Failed to allocate a unique PR number. Please try again.");
+        return MapToDto(pr);
     }
 
     private string GetRequiredTenantId() =>

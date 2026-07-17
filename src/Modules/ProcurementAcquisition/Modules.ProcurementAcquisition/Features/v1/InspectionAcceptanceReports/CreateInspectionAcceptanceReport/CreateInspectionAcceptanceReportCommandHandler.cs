@@ -1,11 +1,11 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.InspectionAcceptanceReports;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,59 +35,40 @@ public sealed class CreateInspectionAcceptanceReportCommandHandler(
                 "Only Issued or Partially Delivered purchase orders can be received.",
                 [], System.Net.HttpStatusCode.BadRequest);
 
-        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
-        {
-            var year = DateTime.UtcNow.Year;
-
-            var sequence = await dbContext.IarNumberSequences
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Year == year, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (sequence is null)
+        // Allocate the IAR number from a per-(tenant, year) counter guarded by xmin optimistic concurrency,
+        // retrying on conflict — same race-safe pattern as PR/PO.
+        var year = DateTime.UtcNow.Year;
+        var iar = await SequenceAllocator.AllocateAsync(
+            dbContext, tenantId, sequenceKey: "IAR", year, month: 0,
+            buildAndTrack: serial =>
             {
-                sequence = IarNumberSequence.Create(tenantId, year);
-                dbContext.IarNumberSequences.Add(sequence);
-            }
+                var iarNumber = $"IAR-{year}-{serial:0000}";
 
-            var serial = sequence.NextSerial();
-            var iarNumber = $"IAR-{year}-{serial:0000}";
+                var iar = InspectionAcceptanceReport.Create(
+                    tenantId,
+                    iarNumber,
+                    command.PurchaseOrderId,
+                    po.SupplierId,
+                    po.SupplierName,
+                    command.InspectedById,
+                    command.ReceivedById,
+                    command.DeliveryReceiptNo,
+                    command.DeliveryDate,
+                    command.Remarks,
+                    command.LineItems,
+                    po.Category);
 
-            var iar = InspectionAcceptanceReport.Create(
-                tenantId,
-                iarNumber,
-                command.PurchaseOrderId,
-                po.SupplierId,
-                po.SupplierName,
-                command.InspectedById,
-                command.ReceivedById,
-                command.DeliveryReceiptNo,
-                command.DeliveryDate,
-                command.Remarks,
-                command.LineItems,
-                po.Category);
+                iar.CreatedBy = currentUser.GetUserId().ToString();
+                dbContext.InspectionAcceptanceReports.Add(iar);
+                return iar;
+            },
+            cancellationToken).ConfigureAwait(false);
 
-            iar.CreatedBy = currentUser.GetUserId().ToString();
-            dbContext.InspectionAcceptanceReports.Add(iar);
+        var (inspectorName, custodianName) = await InspectionAcceptanceReportMapper
+            .ResolveEmployeeNamesAsync(iar.InspectedById, iar.ReceivedById, mediator, cancellationToken)
+            .ConfigureAwait(false);
 
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-                var (inspectorName, custodianName) = await InspectionAcceptanceReportMapper
-                    .ResolveEmployeeNamesAsync(iar.InspectedById, iar.ReceivedById, mediator, cancellationToken)
-                    .ConfigureAwait(false);
-
-                return InspectionAcceptanceReportMapper.ToDto(iar, po.PoNumber, inspectorName, custodianName);
-            }
-            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
-            {
-                // Counter row advanced (xmin) or the generated number collided (unique violation). Retry.
-                dbContext.ChangeTracker.Clear();
-            }
-        }
-
-        throw new CustomException("Failed to allocate a unique IAR number. Please try again.", [], System.Net.HttpStatusCode.Conflict);
+        return InspectionAcceptanceReportMapper.ToDto(iar, po.PoNumber, inspectorName, custodianName);
     }
 
     private string GetRequiredTenantId() =>

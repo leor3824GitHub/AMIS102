@@ -1,10 +1,10 @@
 using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,61 +38,38 @@ public sealed class CreatePurchaseOrderCommandHandler(
         // "max(PoNumber) + 1" scan, which could mint duplicate numbers (or fail the unique index) when two
         // POs were created concurrently.
         var now = DateTime.UtcNow;
-        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
-        {
-            var sequence = await dbContext.PoNumberSequences
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(
-                    x => x.TenantId == tenantId && x.Year == now.Year && x.Month == now.Month,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            if (sequence is null)
+        var po = await SequenceAllocator.AllocateAsync(
+            dbContext, tenantId, sequenceKey: "PO", now.Year, now.Month,
+            buildAndTrack: serial =>
             {
-                sequence = PoNumberSequence.Create(tenantId, now.Year, now.Month);
-                dbContext.PoNumberSequences.Add(sequence);
-            }
+                var poNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D3}";
 
-            var serial = sequence.NextSerial();
-            var poNumber = $"{now.Year:D4}-{now.Month:D2}-{serial:D3}";
+                var po = PurchaseOrder.Create(
+                    tenantId,
+                    poNumber,
+                    command.PurchaseRequestId,
+                    command.CanvassRequestId,
+                    command.SupplierId,
+                    command.SupplierName,
+                    command.SupplierAddress,
+                    command.SupplierTin,
+                    command.ModeOfProcurement,
+                    command.PlaceOfDelivery,
+                    command.DateOfDelivery,
+                    command.DeliveryTerm,
+                    command.PaymentTerm,
+                    command.FundCluster,
+                    command.OursBursNumber,
+                    lineItems,
+                    category);
 
-            var po = PurchaseOrder.Create(
-                tenantId,
-                poNumber,
-                command.PurchaseRequestId,
-                command.CanvassRequestId,
-                command.SupplierId,
-                command.SupplierName,
-                command.SupplierAddress,
-                command.SupplierTin,
-                command.ModeOfProcurement,
-                command.PlaceOfDelivery,
-                command.DateOfDelivery,
-                command.DeliveryTerm,
-                command.PaymentTerm,
-                command.FundCluster,
-                command.OursBursNumber,
-                lineItems,
-                category);
+                po.CreatedBy = currentUser.GetUserId().ToString();
+                dbContext.PurchaseOrders.Add(po);
+                return po;
+            },
+            cancellationToken).ConfigureAwait(false);
 
-            po.CreatedBy = currentUser.GetUserId().ToString();
-            dbContext.PurchaseOrders.Add(po);
-
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                return MapToDto(po);
-            }
-            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
-            {
-                // Counter row advanced (xmin) or the generated number collided with an existing PO (unique
-                // violation) between our read and save. Drop tracked state and retry with the latest value.
-                dbContext.ChangeTracker.Clear();
-            }
-        }
-
-        throw new CustomException("Failed to allocate a unique PO number. Please try again.",
-            Enumerable.Empty<string>(), HttpStatusCode.Conflict);
+        return MapToDto(po);
     }
 
     private async Task EnsureNoDuplicateAsync(CreatePurchaseOrderCommand command, CancellationToken ct)

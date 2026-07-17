@@ -87,6 +87,49 @@ public sealed class CreateDisbursementVoucherCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_TwoVouchersDifferentPos_GetSequentialNumbers()
+    {
+        // Two DVs raised in sequence draw from the shared NumberSequences counter (SequenceKey "DV"),
+        // so the second continues from the first — proving the unified allocator hands out sequential numbers.
+        using var ctx = new BudgetDisbursementTestContext(Tenant);
+        var year = DateOnly.FromDateTime(DateTime.UtcNow).Year;
+        var po1 = Guid.NewGuid();
+        var po2 = Guid.NewGuid();
+        var bur1 = await SeedBur(ctx.Db, po1, obligate: true, burNumber: "BUR-2026-00001");
+        var bur2 = await SeedBur(ctx.Db, po2, obligate: true, burNumber: "BUR-2026-00002");
+
+        var id1 = await CreateHandler(ctx.Db, PurchaseOrder(po1, PurchaseOrderStatus.Issued))
+            .Handle(Command(bur1), CancellationToken.None);
+        var id2 = await CreateHandler(ctx.Db, PurchaseOrder(po2, PurchaseOrderStatus.Issued))
+            .Handle(Command(bur2), CancellationToken.None);
+
+        (await ctx.Db.DisbursementVouchers.FindAsync(id1))!.DvNumber.ShouldBe($"DV-{year}-00001");
+        (await ctx.Db.DisbursementVouchers.FindAsync(id2))!.DvNumber.ShouldBe($"DV-{year}-00002");
+    }
+
+    [Fact]
+    public async Task Handle_NoCounterRowButVouchersExist_SeedsFromHighestIssued()
+    {
+        // A voucher already issued this year but NO NumberSequences row (fresh year, or the counter table was
+        // reset while vouchers remained). Allocation must seed from the highest issued number, never re-issue it.
+        using var ctx = new BudgetDisbursementTestContext(Tenant);
+        var year = DateOnly.FromDateTime(DateTime.UtcNow).Year;
+
+        var priorDv = DisbursementVoucher.Create(
+            Tenant, $"DV-{year}-00042", Guid.NewGuid(), "PO-prior", Guid.NewGuid(), "BUR-prior",
+            DateOnly.FromDateTime(DateTime.UtcNow), "101", "Prior Payee", null, null, "Prior", 1000m, "Check", null);
+        ctx.Db.DisbursementVouchers.Add(priorDv);
+        await ctx.Db.SaveChangesAsync();
+
+        var poId = Guid.NewGuid();
+        var bur = await SeedBur(ctx.Db, poId, obligate: true, burNumber: "BUR-2026-00099");
+        var id = await CreateHandler(ctx.Db, PurchaseOrder(poId, PurchaseOrderStatus.Issued))
+            .Handle(Command(bur), CancellationToken.None);
+
+        (await ctx.Db.DisbursementVouchers.FindAsync(id))!.DvNumber.ShouldBe($"DV-{year}-00043");
+    }
+
+    [Fact]
     public async Task Handle_SecondVoucherForSamePo_IsRejected()
     {
         using var ctx = new BudgetDisbursementTestContext(Tenant);

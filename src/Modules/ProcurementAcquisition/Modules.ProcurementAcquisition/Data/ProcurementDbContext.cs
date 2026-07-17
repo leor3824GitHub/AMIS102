@@ -1,6 +1,8 @@
 using Finbuckle.MultiTenant.Abstractions;
+using AMIS.Framework.Core.Domain;
 using AMIS.Framework.Persistence;
 using AMIS.Framework.Persistence.Context;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementAcquisition.Domain.InspectionAcceptanceReports;
@@ -18,17 +20,15 @@ namespace AMIS.Modules.ProcurementAcquisition.Data;
 public class ProcurementDbContext : BaseDbContext
 {
     public DbSet<PurchaseRequest> PurchaseRequests => Set<PurchaseRequest>();
-    public DbSet<PrNumberSequence> PrNumberSequences => Set<PrNumberSequence>();
     public DbSet<CanvassRequest> CanvassRequests => Set<CanvassRequest>();
-    public DbSet<RivNumberSequence> RivNumberSequences => Set<RivNumberSequence>();
     public DbSet<CanvassQuotation> CanvassQuotations => Set<CanvassQuotation>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
-    public DbSet<PoNumberSequence> PoNumberSequences => Set<PoNumberSequence>();
     public DbSet<JobOrder> JobOrders => Set<JobOrder>();
-    public DbSet<JoNumberSequence> JoNumberSequences => Set<JoNumberSequence>();
     public DbSet<InspectionAcceptanceReport> InspectionAcceptanceReports => Set<InspectionAcceptanceReport>();
-    public DbSet<IarNumberSequence> IarNumberSequences => Set<IarNumberSequence>();
     public DbSet<SignedDocument> SignedDocuments => Set<SignedDocument>();
+
+    // Shared monotonic document-number counters (PR/PO/JO/RIV/IAR) — one table, keyed by SequenceKey.
+    public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
 
     public ProcurementDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,
@@ -47,6 +47,9 @@ public class ProcurementDbContext : BaseDbContext
 
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProcurementDbContext).Assembly);
+
+        // NumberSequence lives in the framework assembly, so it isn't picked up by the assembly scan above.
+        modelBuilder.ConfigureNumberSequences(ProcurementAcquisitionModuleConstants.SchemaName, multiTenant: true);
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests;
 using AMIS.Modules.BudgetDisbursement.Data;
 using AMIS.Modules.BudgetDisbursement.Domain.BudgetUtilizationRequests;
@@ -25,36 +26,15 @@ public sealed class CreateBudgetUtilizationRequestCommandHandler(
         _ = await mediator.Send(new GetPurchaseOrderQuery(command.PurchaseOrderId), cancellationToken).ConfigureAwait(false)
             ?? throw new CustomException("Purchase order not found.", [], HttpStatusCode.NotFound);
 
-        // Atomic number allocation: increment a per-year counter row guarded by xmin, retrying on conflict.
-        for (var attempt = 0; attempt < BudgetDisbursementSequenceAllocation.MaxAttempts; attempt++)
+        // Atomic number allocation: increment a per-year counter row (global — TenantId "") guarded by xmin,
+        // retrying on conflict.
+        var year = command.BurDate.Year;
+        for (var attempt = 0; attempt < SequenceAllocator.MaxAttempts; attempt++)
         {
-            var year = command.BurDate.Year;
+            var serial = await SequenceAllocator.ReserveNextSerialAsync(
+                dbContext, tenantId: string.Empty, sequenceKey: "BUR", year, month: 0, cancellationToken,
+                seedFactory: SeedFromIssuedAsync).ConfigureAwait(false);
 
-            var sequence = await dbContext.BurNumberSequences
-                .FirstOrDefaultAsync(x => x.Year == year, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (sequence is null)
-            {
-                // No counter row for this year yet (fresh year, or the table was reset while records
-                // remained). Seed it from the highest BUR number already issued — including soft-deleted
-                // rows, which the global unique index still enforces — so we never re-issue an existing one.
-                var prefix = $"BUR-{year}-";
-                var issuedNumbers = await dbContext.BudgetUtilizationRequests
-                    .IgnoreQueryFilters()
-                    .Where(b => b.BurNumber.StartsWith(prefix))
-                    .Select(b => b.BurNumber)
-                    .ToListAsync(cancellationToken)
-                    .ConfigureAwait(false);
-                var lastSerial = issuedNumbers.Count == 0
-                    ? 0
-                    : issuedNumbers.Max(BudgetDisbursementSequenceAllocation.ParseSerial);
-
-                sequence = BurNumberSequence.Create(year, lastSerial);
-                dbContext.BurNumberSequences.Add(sequence);
-            }
-
-            var serial = sequence.NextSerial();
             var burNumber = $"BUR-{year}-{serial:00000}";
 
             var bur = BudgetUtilizationRequest.Create(
@@ -80,13 +60,27 @@ public sealed class CreateBudgetUtilizationRequestCommandHandler(
                 logger.LogInformation("Created budget utilization record {BurNumber} for PO {PoNumber}", burNumber, command.PurchaseOrderNumber);
                 return bur.Id;
             }
-            catch (DbUpdateException ex) when (BudgetDisbursementSequenceAllocation.IsRetryableAllocationConflict(ex))
+            catch (DbUpdateException ex) when (SequenceAllocator.IsRetryableAllocationConflict(ex))
             {
                 dbContext.ChangeTracker.Clear();
             }
         }
 
         throw new CustomException("Failed to allocate a unique BUR number. Please try again.", [], HttpStatusCode.Conflict);
+
+        // Seeds a first-created counter row from the highest BUR number already issued this year — including
+        // soft-deleted rows, which the global unique index still enforces — so allocation never re-issues one.
+        async Task<int> SeedFromIssuedAsync()
+        {
+            var prefix = $"BUR-{year}-";
+            var issuedNumbers = await dbContext.BudgetUtilizationRequests
+                .IgnoreQueryFilters()
+                .Where(b => b.BurNumber.StartsWith(prefix))
+                .Select(b => b.BurNumber)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            return issuedNumbers.Count == 0 ? 0 : issuedNumbers.Max(BudgetDocumentNumber.ParseSerial);
+        }
     }
 }
 

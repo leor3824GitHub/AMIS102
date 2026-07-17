@@ -1,12 +1,12 @@
 using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.Canvass;
 using AMIS.Modules.ProcurementAcquisition.Contracts.v1.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Data;
 using AMIS.Modules.ProcurementAcquisition.Domain.PurchaseOrders;
 using AMIS.Modules.ProcurementAcquisition.Features.v1.PurchaseOrders.CreatePurchaseOrder;
-using AMIS.Modules.ProcurementAcquisition.Features.v1.Shared;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -98,20 +98,12 @@ public sealed class CreatePurchaseOrdersFromCanvassCommandHandler(
 
         // Allocate every PO number from the same per-(tenant, year, month) counter inside one retry loop, then
         // persist all POs in a single SaveChanges — same xmin-guarded pattern as the single-PO create path.
-        for (var attempt = 0; attempt < SequenceAllocation.MaxAttempts; attempt++)
+        // The row is loaded once per attempt and advanced once per PO (batch allocation off a single row).
+        for (var attempt = 0; attempt < SequenceAllocator.MaxAttempts; attempt++)
         {
-            var sequence = await dbContext.PoNumberSequences
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(
-                    x => x.TenantId == tenantId && x.Year == now.Year && x.Month == now.Month,
-                    cancellationToken)
+            var sequence = await SequenceAllocator
+                .GetOrCreateRowAsync(dbContext, tenantId, sequenceKey: "PO", now.Year, now.Month, cancellationToken)
                 .ConfigureAwait(false);
-
-            if (sequence is null)
-            {
-                sequence = PoNumberSequence.Create(tenantId, now.Year, now.Month);
-                dbContext.PoNumberSequences.Add(sequence);
-            }
 
             var created = new List<PurchaseOrder>(pending.Count);
             foreach (var p in pending)
@@ -148,7 +140,7 @@ public sealed class CreatePurchaseOrdersFromCanvassCommandHandler(
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                 return created.Select(CreatePurchaseOrderCommandHandler.MapToDto).ToList();
             }
-            catch (DbUpdateException ex) when (SequenceAllocation.IsRetryableAllocationConflict(ex))
+            catch (DbUpdateException ex) when (SequenceAllocator.IsRetryableAllocationConflict(ex))
             {
                 // Counter row advanced (xmin) or a generated number collided between read and save. Drop tracked
                 // state and retry the whole batch with the latest serial.

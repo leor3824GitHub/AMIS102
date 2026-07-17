@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Framework.Persistence.Sequencing;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.BudgetUtilizationRequests;
 using AMIS.Modules.BudgetDisbursement.Contracts.v1.DisbursementVouchers;
 using AMIS.Modules.BudgetDisbursement.Data;
@@ -58,38 +59,16 @@ public sealed class CreateDisbursementVoucherCommandHandler(
                 "A disbursement voucher already exists for this purchase order.",
                 [], HttpStatusCode.BadRequest);
 
-        // Atomic number allocation: increment a per-year counter row guarded by xmin, retrying if a
-        // concurrent create advanced the counter or collided on the unique DvNumber index. The BUR is
-        // utilized in the same transaction so it can never be left Obligated with an orphaned voucher.
-        for (var attempt = 0; attempt < BudgetDisbursementSequenceAllocation.MaxAttempts; attempt++)
+        // Atomic number allocation: increment a per-year counter row (global — TenantId "") guarded by xmin,
+        // retrying if a concurrent create advanced the counter or collided on the unique DvNumber index. The
+        // BUR is utilized in the same transaction so it can never be left Obligated with an orphaned voucher.
+        var year = command.DvDate.Year;
+        for (var attempt = 0; attempt < SequenceAllocator.MaxAttempts; attempt++)
         {
-            var year = command.DvDate.Year;
+            var serial = await SequenceAllocator.ReserveNextSerialAsync(
+                dbContext, tenantId: string.Empty, sequenceKey: "DV", year, month: 0, cancellationToken,
+                seedFactory: SeedFromIssuedAsync).ConfigureAwait(false);
 
-            var sequence = await dbContext.DvNumberSequences
-                .FirstOrDefaultAsync(x => x.Year == year, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (sequence is null)
-            {
-                // No counter row for this year yet (fresh year, or the table was reset while vouchers
-                // remained). Seed it from the highest DV number already issued — including soft-deleted
-                // rows, which the global unique index still enforces — so we never re-issue an existing one.
-                var prefix = $"DV-{year}-";
-                var issuedNumbers = await dbContext.DisbursementVouchers
-                    .IgnoreQueryFilters()
-                    .Where(d => d.DvNumber.StartsWith(prefix))
-                    .Select(d => d.DvNumber)
-                    .ToListAsync(cancellationToken)
-                    .ConfigureAwait(false);
-                var lastSerial = issuedNumbers.Count == 0
-                    ? 0
-                    : issuedNumbers.Max(BudgetDisbursementSequenceAllocation.ParseSerial);
-
-                sequence = DvNumberSequence.Create(year, lastSerial);
-                dbContext.DvNumberSequences.Add(sequence);
-            }
-
-            var serial = sequence.NextSerial();
             var dvNumber = $"DV-{year}-{serial:00000}";
 
             var dv = DisbursementVoucher.Create(
@@ -123,7 +102,7 @@ public sealed class CreateDisbursementVoucherCommandHandler(
                     dvNumber, bur.BurNumber, bur.PurchaseOrderNumber);
                 return dv.Id;
             }
-            catch (DbUpdateException ex) when (BudgetDisbursementSequenceAllocation.IsRetryableAllocationConflict(ex))
+            catch (DbUpdateException ex) when (SequenceAllocator.IsRetryableAllocationConflict(ex))
             {
                 dbContext.ChangeTracker.Clear();
 
@@ -135,5 +114,19 @@ public sealed class CreateDisbursementVoucherCommandHandler(
         }
 
         throw new CustomException("Failed to allocate a unique DV number. Please try again.", [], HttpStatusCode.Conflict);
+
+        // Seeds a first-created counter row from the highest DV number already issued this year — including
+        // soft-deleted rows, which the global unique index still enforces — so allocation never re-issues one.
+        async Task<int> SeedFromIssuedAsync()
+        {
+            var prefix = $"DV-{year}-";
+            var issuedNumbers = await dbContext.DisbursementVouchers
+                .IgnoreQueryFilters()
+                .Where(d => d.DvNumber.StartsWith(prefix))
+                .Select(d => d.DvNumber)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            return issuedNumbers.Count == 0 ? 0 : issuedNumbers.Max(BudgetDocumentNumber.ParseSerial);
+        }
     }
 }
