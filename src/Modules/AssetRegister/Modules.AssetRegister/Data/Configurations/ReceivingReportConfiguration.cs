@@ -58,6 +58,7 @@ internal sealed class ReceivingReportItemConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.PropertyNo).IsRequired().HasMaxLength(64);
         builder.Property(x => x.Description).IsRequired().HasMaxLength(500);
         builder.Property(x => x.UnitCost).HasPrecision(18, 2);
+        builder.Property(x => x.AccumulatedDepreciation).HasPrecision(18, 2);
         builder.Property(x => x.SerialNo).HasMaxLength(200);
         builder.Property(x => x.Brand).HasMaxLength(200);
         builder.Property(x => x.Model).HasMaxLength(200);

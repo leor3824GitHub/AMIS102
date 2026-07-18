@@ -14,7 +14,7 @@ public partial class App : Application
         _tokenStorage = tokenStorage;
 
         WeakReferenceMessenger.Default.Register<SessionExpiredMessage>(this, (_, _) =>
-            MainThread.BeginInvokeOnMainThread(() => MainPage = new NavigationPage(ResolvePage<LoginPage>())));
+            MainThread.BeginInvokeOnMainThread(() => SetRootPage(new NavigationPage(ResolvePage<LoginPage>()))));
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -32,7 +32,7 @@ public partial class App : Application
         var accessToken = await _tokenStorage.GetAccessTokenAsync();
         if (accessToken is null)
         {
-            MainPage = new NavigationPage(ResolvePage<LoginPage>());
+            SetRootPage(new NavigationPage(ResolvePage<LoginPage>()));
             return;
         }
 
@@ -44,16 +44,33 @@ public partial class App : Application
         // stack, expired token mid-refresh) and leave Home greeting "there" with empty counts.
         if (authState.Restore())
         {
-            MainPage = new AppShell();
+            SetRootPage(new AppShell());
             _ = RefreshIdentityInBackgroundAsync();   // freshen best-effort; never blocks the shell
             return;
         }
 
         // No cached identity yet (first resume after installing this change, or a cleared cache):
         // fetch it once before deciding. On a hard rejection the token is cleared → go to login.
-        MainPage = await TryRehydrateSessionAsync()
+        SetRootPage(await TryRehydrateSessionAsync()
             ? new AppShell()
-            : new NavigationPage(ResolvePage<LoginPage>());
+            : new NavigationPage(ResolvePage<LoginPage>()));
+    }
+
+    /// <summary>
+    /// Swaps the root page of the single application window. Replaces the deprecated
+    /// <c>Application.MainPage</c> setter; this app creates exactly one window (see
+    /// <see cref="CreateWindow"/>), so window 0 is always the one to update.
+    /// </summary>
+    public void SetRootPage(Page page)
+    {
+        if (Windows.Count > 0)
+        {
+            Windows[0].Page = page;
+            return;
+        }
+
+        // Should be unreachable — OnStart and SessionExpired both run after the window is attached.
+        System.Diagnostics.Debug.WriteLine("[App] SetRootPage called before a window existed; ignoring.");
     }
 
     /// <summary>

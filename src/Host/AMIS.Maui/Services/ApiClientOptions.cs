@@ -2,7 +2,7 @@ namespace AMIS.Maui.Services;
 
 public sealed class ApiClientOptions
 {
-    // Preferences key for the last-used tenant. Not a secret — tokens stay in secure storage;
+    // Preferences key for the last-used tenant. Not a secret — tokens stay in secure storage, and
     // the tenant id only scopes the `tenant` header and pre-fills the login form.
     public const string TenantPreferenceKey = "tenant_id";
 

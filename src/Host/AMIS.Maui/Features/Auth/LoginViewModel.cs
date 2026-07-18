@@ -46,7 +46,7 @@ public sealed partial class LoginViewModel(
             // Persist only after a successful login so a typo never poisons the next session resume.
             Preferences.Default.Set(ApiClientOptions.TenantPreferenceKey, apiOptions.TenantId);
 
-            Application.Current!.MainPage = new AppShell();
+            ((App)Application.Current!).SetRootPage(new AppShell());
         }
         catch (HttpRequestException)
         {

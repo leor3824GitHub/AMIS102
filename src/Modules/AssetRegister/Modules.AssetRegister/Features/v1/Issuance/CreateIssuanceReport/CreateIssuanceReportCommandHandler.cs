@@ -3,6 +3,8 @@ using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
 using AMIS.Modules.AssetRegister.Data;
+using AMIS.Modules.AssetRegister.Data.Services;
+using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Issuance;
 using AMIS.Modules.AssetRegister.Domain.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
@@ -15,6 +17,7 @@ public sealed class CreateIssuanceReportCommandHandler(
     AssetRegisterDbContext db,
     IIssuanceReportNumberGenerator numbers,
     ICountFreezeGuard freezeGuard,
+    AssetTransferProjector projector,
     IMediator mediator)
     : ICommandHandler<CreateIssuanceReportCommand, PropertyIssuanceReportDto>
 {
@@ -93,9 +96,94 @@ public sealed class CreateIssuanceReportCommandHandler(
         report.MarkIssued();
 
         db.PropertyIssuanceReports.Add(report);
+
+        // Inter-agency transfer: the outbound offer is written in the SAME SaveChanges as the report, so the
+        // sender's books and the offer can never disagree. Delivery into the receiving tenant is a separate
+        // transaction (Finbuckle forbids saving another tenant's rows here), driven off this row by
+        // AssetTransferProjectionJob — the offer row is its own outbox.
+        if (!string.IsNullOrWhiteSpace(cmd.DestinationTenantId))
+        {
+            var offer = await BuildTransferOfferAsync(
+                cmd.DestinationTenantId, tenantId, org, report, assets, cancellationToken).ConfigureAwait(false);
+            db.AssetTransferOffers.Add(offer);
+        }
+
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         await db.Entry(report).Collection(r => r.Lines).LoadAsync(cancellationToken).ConfigureAwait(false);
         return IssuanceMapper.ToDto(report);
     }
+
+    /// <summary>
+    /// Snapshots the assets being transferred onto an outbound offer.
+    /// <para>
+    /// Book values come from <see cref="AssetRegistry"/>, not from the issuance report lines. The registry is
+    /// the system of record — the depreciation engine posts to it monthly — whereas a line's
+    /// <c>AccumulatedDepreciation</c> is an Accounting-entered figure for the printed form that is still null
+    /// at post time. Carrying the asset's own <c>DepreciatedThrough</c> alongside the amount is what lets the
+    /// receiving agency resume the schedule instead of replaying it from the original acquisition date.
+    /// </para>
+    /// </summary>
+    private async Task<Domain.Transfers.AssetTransferOffer> BuildTransferOfferAsync(
+        string destinationTenantId,
+        string tenantId,
+        OrganizationProfileDto org,
+        PropertyIssuanceReport report,
+        IReadOnlyCollection<AssetRegistry> assets,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTransferNature(report.Nature))
+            throw new CustomException(
+                $"A destination agency may only be set on a transfer issuance (nature Transfer to C.O./R.O./P.O.). " +
+                $"This report's nature is '{report.Nature}'.",
+                [], System.Net.HttpStatusCode.UnprocessableEntity);
+
+        if (report.ReportType != IssuanceReportType.PPEIR)
+            throw new CustomException(
+                "Linked inter-agency transfers are currently supported for PPE (PPEIR → PPERR) only. " +
+                "Post the SMIR without a destination agency and have the receiving agency key its SMRR.",
+                [], System.Net.HttpStatusCode.UnprocessableEntity);
+
+        // Never take a tenant id from the client on trust — it must exist and be active in the registry.
+        var destination = await projector
+            .ResolveActiveTenantAsync(destinationTenantId, cancellationToken).ConfigureAwait(false)
+            ?? throw new CustomException(
+                $"Destination agency '{destinationTenantId}' is unknown or deactivated.",
+                [], System.Net.HttpStatusCode.UnprocessableEntity);
+
+        if (string.Equals(destination.Identifier, tenantId, StringComparison.OrdinalIgnoreCase))
+            throw new CustomException(
+                "An agency cannot transfer property to itself.", [], System.Net.HttpStatusCode.UnprocessableEntity);
+
+        var offer = Domain.Transfers.AssetTransferOffer.CreateOutbound(
+            tenantId,
+            Guid.NewGuid(),
+            org.Name,
+            destination.Identifier,
+            destination.Name ?? destination.Identifier,
+            report.Id,
+            report.ReportNo,
+            report.ReportType);
+
+        foreach (var asset in assets)
+        {
+            offer.AddLine(
+                asset.PropertyNo.Value,
+                asset.Description,
+                asset.SerialNo,
+                asset.Brand,
+                asset.Model,
+                asset.UnitCost,
+                asset.AcquisitionDate,
+                asset.AccumulatedDepreciation,
+                asset.DepreciatedThrough,
+                asset.CarryingAmount,
+                asset.UacsObjectCode);
+        }
+
+        return offer;
+    }
+
+    private static bool IsTransferNature(IssuanceNature nature) =>
+        nature is IssuanceNature.TransferCO or IssuanceNature.TransferRO or IssuanceNature.TransferPO;
 }

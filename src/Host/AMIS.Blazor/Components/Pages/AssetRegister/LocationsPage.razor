@@ -7,30 +7,29 @@
 @inject ILocationClient LocationClient
 @inject IUserProfileState UserProfileState
 
-<AMISPageHeader Title="Locations" Description="Manage locations where assets are placed and kept">
-    <ActionContent>
-        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%; max-width: 560px;">
-            <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search locations..."
-                          DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await LoadAsync())"
-                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
-            <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync" Disabled="_isLoading">
-                Search
-            </AMISButton>
-            @if (_canCreate)
-            {
-                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
-                            StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
-                    New
-                </AMISButton>
-            }
-        </MudStack>
-    </ActionContent>
-</AMISPageHeader>
+<AMISPageHeader Title="Locations" Description="Manage locations where assets are placed and kept" />
 
 <div class="mt-4">
     <MudCard Class="AMIS-card">
         <MudCardContent>
-            <MudText Typo="Typo.h6" Class="mb-3">Locations List</MudText>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mb-3">
+                <MudText Typo="Typo.h6">Locations List</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchKeyword" Label="Search" Placeholder="Search locations..."
+                              DebounceInterval="300" OnDebounceIntervalElapsed="@(async () => await LoadAsync())"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                              Style="width: 260px;" />
+                <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadAsync" Disabled="_isLoading">
+                    Search
+                </AMISButton>
+                @if (_canCreate)
+                {
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Secondary"
+                                StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                        New
+                    </AMISButton>
+                }
+            </MudStack>
 
             <AMISDataTable T="LocationModel" Items="_locations" Loading="_isLoading" RowsPerPage="10"
                            EmptyMessage="No locations yet."

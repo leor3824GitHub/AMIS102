@@ -15,4 +15,10 @@ public enum NotificationType
 
     /// <summary>Weekly digest: one or more of the recipient's Active ICS/PAR are due for renewal soon (or overdue).</summary>
     AccountabilityRenewalDue = 4,
+
+    /// <summary>Another agency has offered property to this one; it is waiting in Incoming Transfers.</summary>
+    TransferOfferReceived = 5,
+
+    /// <summary>The receiving agency accepted or rejected a transfer this agency offered.</summary>
+    TransferOfferAnswered = 6,
 }

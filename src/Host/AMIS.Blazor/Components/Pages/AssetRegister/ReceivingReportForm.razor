@@ -1,5 +1,6 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Modules.AssetRegister.Contracts.v1.Catalog
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
 @using AMIS.Modules.MasterData.Contracts.v1.CapitalizationThresholds
 @using Microsoft.AspNetCore.Components.Authorization
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
@@ -25,6 +26,15 @@
         </MudCardHeader>
     }
     <MudCardContent>
+        @if (PrefillFromOffer is { } prefill)
+        {
+            <MudAlert Severity="Severity.Success" Dense="true" Class="mb-3" Icon="@Icons.Material.Outlined.CompareArrows">
+                Prefilled from <strong>@prefill.FromAgencyName</strong>'s transfer @prefill.SourceIssuanceReportNo
+                (@prefill.Lines.Count item(s)). Their accumulated depreciation and original acquisition dates
+                carry over automatically. You still assign your own <strong>property numbers</strong> and
+                <strong>catalog items</strong> on each line below.
+            </MudAlert>
+        }
         @if (DocumentKind == ReceivingDocumentKind.PPERR)
         {
             @if (_activeSeries is not null && !_activeSeries.IsExhausted)
@@ -343,6 +353,14 @@
     /// <summary>When hosted inside a dialog, suppress the form's own card header/elevation so the dialog supplies the chrome.</summary>
     [Parameter] public bool Embedded { get; set; }
 
+    /// <summary>
+    /// Seeds the ad-hoc lines from an incoming inter-agency transfer offer, so the receiving agency does not
+    /// re-key the sender's data (the transcription errors this feature exists to remove). Everything the
+    /// receiving agency owns is deliberately left blank: property numbers come from its own accountable form
+    /// series, and the catalog item is its own mapping decision.
+    /// </summary>
+    [Parameter] public AssetTransferOfferDto? PrefillFromOffer { get; set; }
+
     private sealed record SupplierInfo(string Name, string? Address);
 
     private DateTime? _date = DateTime.Today;
@@ -421,6 +439,43 @@
         }
 
         await ThresholdState.EnsureLoadedAsync();
+
+        ApplyTransferOfferPrefill();
+    }
+
+    /// <summary>
+    /// Fills the header and one ad-hoc line per offer line. Runs after the normal init so it wins over the
+    /// defaults. PropertyNo and the catalog item stay empty on purpose — those are the receiving agency's to
+    /// assign, and the form already blocks saving until they are filled.
+    /// </summary>
+    private void ApplyTransferOfferPrefill()
+    {
+        if (PrefillFromOffer is not { } offer) return;
+
+        _receiptType = ReceiptType.Transfer;
+        _receivedFrom = offer.FromAgencyName;
+
+        _adhocLines.Clear();
+        foreach (var line in offer.Lines.OrderBy(l => l.ItemNo))
+        {
+            _adhocLines.Add(new AdhocLine
+            {
+                Description = line.Description,
+                UnitCost = line.UnitCost,
+                SerialNo = line.SerialNo,
+                Brand = line.Brand,
+                Model = line.Model,
+                SourcePropertyNo = line.SourcePropertyNo,
+                SourceDocumentRef = offer.SourceIssuanceReportNo,
+                OriginalAcquisitionDate = line.OriginalAcquisitionDate.ToDateTime(TimeOnly.MinValue),
+                // The two that make the receiving agency continue the schedule instead of restarting it.
+                AccumulatedDepreciation = line.AccumulatedDepreciation,
+                DepreciationCurrentThrough = line.DepreciationCurrentThrough
+            });
+        }
+
+        if (_adhocLines.Count == 0)
+            _adhocLines.Add(new AdhocLine());
     }
 
     private string LineMismatchMessage(decimal unitCost)
@@ -606,7 +661,9 @@
                 SourceAgencyName: _receivedFrom,
                 SourcePropertyNo: l.SourcePropertyNo,
                 SourceDocumentRef: l.SourceDocumentRef,
-                OriginalAcquisitionDate: DateOnly.FromDateTime(l.OriginalAcquisitionDate!.Value))).ToList();
+                OriginalAcquisitionDate: DateOnly.FromDateTime(l.OriginalAcquisitionDate!.Value),
+                AccumulatedDepreciation: l.AccumulatedDepreciation,
+                DepreciationCurrentThrough: l.DepreciationCurrentThrough)).ToList();
         }
 
         _busy = true;
@@ -699,5 +756,11 @@
         public string? SerialNo { get; set; }
         public string? Brand { get; set; }
         public string? Model { get; set; }
+
+        // Carried from a linked transfer offer. Both travel together or not at all: the amount without the
+        // period would leave the registered asset's depreciation cursor null, and the posting service would
+        // replay the whole schedule from the original acquisition date.
+        public decimal? AccumulatedDepreciation { get; set; }
+        public DateOnly? DepreciationCurrentThrough { get; set; }
     }
 }

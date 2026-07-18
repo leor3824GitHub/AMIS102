@@ -1,4 +1,5 @@
 @using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
 @using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
 
 <MudDialog>
@@ -6,6 +7,7 @@
         <ReceivingReportForm DocumentKind="DocumentKind"
                              Title="@Title"
                              Embedded="true"
+                             PrefillFromOffer="PrefillFromOffer"
                              OnCreated="HandleCreated"
                              OnCancel="HandleCancel" />
     </DialogContent>
@@ -16,6 +18,9 @@
 
     [Parameter] public ReceivingDocumentKind DocumentKind { get; set; }
     [Parameter] public string Title { get; set; } = "Create Receiving Report";
+
+    /// <summary>Set when the form is opened from an incoming inter-agency transfer offer.</summary>
+    [Parameter] public AssetTransferOfferDto? PrefillFromOffer { get; set; }
 
     private void HandleCreated(ArReceivingReportDto created) => Dialog.Close(DialogResult.Ok(created));
 

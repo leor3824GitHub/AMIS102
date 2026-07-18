@@ -1239,6 +1239,10 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("AccumulatedDepreciation")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<DateOnly>("AcquisitionDate")
                         .HasColumnType("date");
 
@@ -1606,6 +1610,186 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                     b.HasIndex("ReceiptId");
 
                     b.ToTable("ReturnedPropertyReceiptItems", "asset_register");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Transfers.AssetTransferOffer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FromAgencyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FromTenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("IssuanceReportType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("OfferProjectedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReceivingReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReceivingReportNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RejectedReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("RespondedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ResponseProjectedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SourceIssuanceReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceIssuanceReportNo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ToAgencyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ToTenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CorrelationId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Direction", "Status");
+
+                    b.ToTable("AssetTransferOffers", "asset_register");
+
+                    b.HasAnnotation("Finbuckle:MultiTenant", true);
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Transfers.AssetTransferOfferLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AccumulatedDepreciation")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CatalogUacsCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateOnly?>("DepreciationCurrentThrough")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("ItemNo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("NetBookValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("OriginalAcquisitionDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SerialNo")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SourcePropertyNo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId");
+
+                    b.ToTable("AssetTransferOfferLines", "asset_register");
 
                     b.HasAnnotation("Finbuckle:MultiTenant", true);
                 });
@@ -3032,6 +3216,15 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Transfers.AssetTransferOfferLine", b =>
+                {
+                    b.HasOne("AMIS.Modules.AssetRegister.Domain.Transfers.AssetTransferOffer", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyItem", b =>
                 {
                     b.HasOne("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyReport", null)
@@ -3319,6 +3512,11 @@ namespace AMIS.Playground.Migrations.PostgreSQL.AssetRegister
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.ReturnedProperty.ReturnedPropertyReceipt", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Transfers.AssetTransferOffer", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("AMIS.Modules.AssetRegister.Domain.Unserviceable.UnserviceablePropertyReport", b =>

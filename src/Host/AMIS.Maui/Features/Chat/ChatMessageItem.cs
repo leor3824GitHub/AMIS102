@@ -1,3 +1,4 @@
+using System.Globalization;
 using AMIS.Maui.Services;
 
 namespace AMIS.Maui.Features.Chat;
@@ -17,7 +18,8 @@ public sealed class ChatMessageItem
         IsDeleted = dto.IsDeleted;
         IsPinned = dto.IsPinned && !dto.IsDeleted;
         Edited = dto.EditedOnUtc is not null && !dto.IsDeleted;
-        TimeDisplay = dto.CreatedOnUtc.ToLocalTime().ToString("MMM d, h:mm tt");
+        // Chat timestamps are shown to the operator, so format in their culture (not invariant).
+        TimeDisplay = dto.CreatedOnUtc.ToLocalTime().ToString("MMM d, h:mm tt", CultureInfo.CurrentCulture);
     }
 
     public Guid Id { get; }

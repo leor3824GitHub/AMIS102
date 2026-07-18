@@ -9,7 +9,7 @@ public sealed record UserProfileDto(string Id, string Email, string? FirstName, 
 public sealed record MyEmployeeDto(Guid EmployeeId, string FullName, string? Department, string? Position);
 
 /// <summary>
-/// A list row that can lazily display an asset photo. <see cref="AssetImageSourceConverter"/> binds to
+/// A list row that can lazily display an asset photo. <see cref="Converters.AssetImageSourceConverter"/> binds to
 /// the whole row and reads these two members, so one converter serves ICS/PAR detail lines and the
 /// physical-count checklist alike. <c>HasImage</c> false → the row shows its placeholder tile and never
 /// fires an image request.

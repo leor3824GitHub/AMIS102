@@ -53,29 +53,31 @@ public static class MauiProgram
             builder.Configuration.AddConfiguration(config);
         }
 
+        // S1075: the literal is a local-dev fallback used only when no Api section is configured.
+        // Every real deployment supplies Api:BaseUrl through configuration.
+#pragma warning disable S1075
         var apiOptions = builder.Configuration
             .GetSection("Api")
             .Get<ApiClientOptions>() ?? new ApiClientOptions { BaseUrl = "http://localhost:5030" };
+#pragma warning restore S1075
 
-        if (OperatingSystem.IsAndroid())
+        // Android cannot reach host loopback via localhost. Physical devices need the host's
+        // LAN IP (Api:AndroidHost); emulators fall back to 10.0.2.2 when AndroidHost is empty.
+        if (OperatingSystem.IsAndroid() &&
+            Uri.TryCreate(apiOptions.BaseUrl, UriKind.Absolute, out var uri) &&
+            (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+             uri.Host == "127.0.0.1"))
         {
-            // Android cannot reach host loopback via localhost. Physical devices need the host's
-            // LAN IP (Api:AndroidHost); emulators fall back to 10.0.2.2 when AndroidHost is empty.
-            if (Uri.TryCreate(apiOptions.BaseUrl, UriKind.Absolute, out var uri) &&
-                (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
-                 uri.Host == "127.0.0.1"))
+            var androidHost = string.IsNullOrWhiteSpace(apiOptions.AndroidHost)
+                ? "10.0.2.2"
+                : apiOptions.AndroidHost;
+
+            var uriBuilder = new UriBuilder(uri)
             {
-                var androidHost = string.IsNullOrWhiteSpace(apiOptions.AndroidHost)
-                    ? "10.0.2.2"
-                    : apiOptions.AndroidHost;
+                Host = androidHost
+            };
 
-                var uriBuilder = new UriBuilder(uri)
-                {
-                    Host = androidHost
-                };
-
-                apiOptions.BaseUrl = uriBuilder.Uri.ToString().TrimEnd('/');
-            }
+            apiOptions.BaseUrl = uriBuilder.Uri.ToString().TrimEnd('/');
         }
 
         // Restore the last-used tenant: App.OnStart resumes a session from stored tokens without
@@ -92,16 +94,22 @@ public static class MauiProgram
         builder.Services.AddSingleton<ChatHubService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 
+        // S1481: consumed only by the DEBUG+ANDROID block below, so it reads as unused on other targets.
+#pragma warning disable S1481
         var apiClientBuilder = builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
             client.BaseAddress = new Uri(apiOptions.BaseUrl))
             .AddHttpMessageHandler<AuthenticatedHttpHandler>();
+#pragma warning restore S1481
 
 #if DEBUG && ANDROID
-        // Android emulator does not trust the .NET HTTPS dev cert. Allow self-signed only in Debug.
+        // Android emulator does not trust the .NET HTTPS dev cert. Allow self-signed only in Debug —
+        // this block is compiled out of Release, so shipped builds validate certificates normally.
+#pragma warning disable S4830
         apiClientBuilder.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             ServerCertificateCustomValidationCallback = (_, _, _, _) => true
         });
+#pragma warning restore S4830
 #endif
 
         builder.Services.AddTransient<IPhysicalCountSyncService, PhysicalCountSyncService>();

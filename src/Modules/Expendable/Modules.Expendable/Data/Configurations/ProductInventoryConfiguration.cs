@@ -66,7 +66,6 @@ public class ProductInventoryConfiguration : IEntityTypeConfiguration<ProductInv
             ob.WithOwner().HasForeignKey("ProductInventoryId");
             ob.HasKey(x => x.Id);   // explicit Guid PK (domain-assigned) — avoids the implicit int shadow key
             ob.Property(x => x.PurchaseId).IsRequired();
-            ob.Property(x => x.ProductId).IsRequired();
             ob.Property(x => x.UnitPrice).HasPrecision(18, 2);
             ob.Property(x => x.QuantityAvailable).IsRequired();
             ob.Property(x => x.SourceReference).HasMaxLength(64);  // IAR number shown as the Stock Card reference

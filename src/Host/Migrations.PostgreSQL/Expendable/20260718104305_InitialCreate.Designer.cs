@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
 {
     [DbContext(typeof(ExpendableDbContext))]
-    [Migration("20260716120629_InitialCreate")]
+    [Migration("20260718104305_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -706,9 +706,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                             b1.Property<DateTimeOffset?>("ExpiryDate")
                                 .HasColumnType("timestamp with time zone");
 
-                            b1.Property<Guid>("ProductId")
-                                .HasColumnType("uuid");
-
                             b1.Property<int>("QuantityConsumed")
                                 .HasColumnType("integer");
 
@@ -783,9 +780,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
 
                             b1.Property<Guid>("ProductInventoryId")

@@ -12,6 +12,7 @@ using AMIS.Modules.AssetRegister.Domain.Issuance;
 using AMIS.Modules.AssetRegister.Domain.Locations;
 using AMIS.Modules.AssetRegister.Domain.Receiving;
 using AMIS.Modules.AssetRegister.Domain.ReturnedProperty;
+using AMIS.Modules.AssetRegister.Domain.Transfers;
 using AMIS.Modules.AssetRegister.Domain.Unserviceable;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -36,6 +37,7 @@ public class AssetRegisterDbContext : BaseDbContext
     public DbSet<PPERRFormSeries> PPERRFormSeries => Set<PPERRFormSeries>();
     public DbSet<ReturnedPropertyReceipt> ReturnedPropertyReceipts => Set<ReturnedPropertyReceipt>();
     public DbSet<Location> Locations => Set<Location>();
+    public DbSet<AssetTransferOffer> AssetTransferOffers => Set<AssetTransferOffer>();
 
     public AssetRegisterDbContext(
         IMultiTenantContextAccessor<AppTenantInfo> multiTenantContextAccessor,

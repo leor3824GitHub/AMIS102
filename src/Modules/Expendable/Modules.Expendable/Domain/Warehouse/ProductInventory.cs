@@ -88,10 +88,10 @@ public class ProductInventory : AggregateRoot<Guid>
 
     /// <summary>Receive inspected/accepted stock into the warehouse.
     /// <paramref name="sourceReceiptId"/> is the originating receipt id (an accepted IAR's id);
-    /// <paramref name="sourceReference"/> is its human-readable document number (e.g. IAR number) for the Stock Card.</summary>
+    /// <paramref name="sourceReference"/> is its human-readable document number (e.g. IAR number) for the Stock Card.
+    /// The product is implicit — this aggregate is already scoped to one product at one warehouse.</summary>
     public void ReceiveFromPurchase(
         Guid sourceReceiptId,
-        Guid productId,
         int quantityAccepted,
         decimal unitPrice,
         string? sourceReference = null)
@@ -101,7 +101,7 @@ public class ProductInventory : AggregateRoot<Guid>
         if (unitPrice < 0)
             throw new ArgumentException("Unit price cannot be negative");
 
-        var batch = WarehouseReceiptBatch.Create(sourceReceiptId, productId, quantityAccepted, unitPrice, sourceReference);
+        var batch = WarehouseReceiptBatch.Create(sourceReceiptId, quantityAccepted, unitPrice, sourceReference);
         Batches.Add(batch);
 
         QuantityAvailable += quantityAccepted;
@@ -199,7 +199,6 @@ public class WarehouseReceiptBatch
     public Guid Id { get; private set; }
 
     public Guid PurchaseId { get; private set; }
-    public Guid ProductId { get; private set; }
 
     /// <summary>Quantity received in this batch.</summary>
     public int QuantityAvailable { get; private set; }
@@ -216,7 +215,6 @@ public class WarehouseReceiptBatch
 
     public static WarehouseReceiptBatch Create(
         Guid purchaseId,
-        Guid productId,
         int quantity,
         decimal unitPrice,
         string? sourceReference = null)
@@ -230,7 +228,6 @@ public class WarehouseReceiptBatch
         {
             Id = Guid.NewGuid(),
             PurchaseId = purchaseId,
-            ProductId = productId,
             QuantityAvailable = quantity,
             UnitPrice = unitPrice,
             SourceReference = string.IsNullOrWhiteSpace(sourceReference) ? null : sourceReference.Trim(),

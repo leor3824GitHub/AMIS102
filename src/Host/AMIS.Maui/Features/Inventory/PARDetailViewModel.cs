@@ -47,7 +47,7 @@ public sealed partial class PARDetailViewModel(IApiClient apiClient, IFeedbackSe
     {
         if (!Guid.TryParse(Id, out var guid) || !CanAccept) return;
 
-        var confirmed = await Shell.Current.DisplayAlert(
+        var confirmed = await Shell.Current.DisplayAlertAsync(
             "Accept PAR",
             $"Accept accountability for {Detail?.PARNo}? This confirms you have received the listed property.",
             "Accept", "Cancel");
@@ -62,7 +62,10 @@ public sealed partial class PARDetailViewModel(IApiClient apiClient, IFeedbackSe
             await feedback.ShowToastAsync("PAR accepted — now active.");
             Detail = await apiClient.GetPARByIdAsync(guid, ct);
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // Superseded or navigated away — nothing to report.
+        }
         catch (HttpRequestException)
         {
             ErrorMessage = "Could not accept the PAR. Check your connection and try again.";

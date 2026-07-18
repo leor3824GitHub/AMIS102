@@ -98,7 +98,7 @@ internal sealed class SupplyIARAcceptedEventConsumer(
                 db.ProductInventories.Add(inventory);
             }
 
-            inventory.ReceiveFromPurchase(@event.IARId, product.Id, quantity, line.UnitCost, @event.IarNumber);
+            inventory.ReceiveFromPurchase(@event.IARId, quantity, line.UnitCost, @event.IarNumber);
             touchedProductIds.Add(product.Id);
             received++;
         }

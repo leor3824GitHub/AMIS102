@@ -68,6 +68,13 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
 
     private AssetRegistry() { }
 
+    /// <summary>
+    /// Registers a newly booked asset. For an ordinary purchase both depreciation parameters are left at
+    /// their defaults and the asset starts undepreciated. For property received by inter-agency transfer or
+    /// donation, pass the sending agency's <paramref name="accumulatedDepreciation"/> together with
+    /// <paramref name="depreciationCurrentThrough"/> (the last period that amount covers) so the receiving
+    /// agency continues the schedule instead of restarting it at full cost.
+    /// </summary>
     public static AssetRegistry Register(
         string tenantId,
         PropertyItemCatalog catalog,
@@ -82,7 +89,9 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
         DateOnly acquisitionDate,
         decimal unitCost,
         Guid? sourceIARId,
-        Guid? sourcePurchaseOrderId)
+        Guid? sourcePurchaseOrderId,
+        decimal accumulatedDepreciation = 0m,
+        DateOnly? depreciationCurrentThrough = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(propertyNo);
@@ -91,6 +100,10 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
             throw new InvalidOperationException("UnitCost must be greater than zero.");
         if (string.IsNullOrWhiteSpace(catalog.UacsObjectCode))
             throw new InvalidOperationException("Catalog item must carry a UacsObjectCode before an asset can be registered against it.");
+        if (accumulatedDepreciation < 0m)
+            throw new InvalidOperationException("Carried-over accumulated depreciation cannot be negative.");
+        if (accumulatedDepreciation > 0m && assetType != AssetType.PPE)
+            throw new InvalidOperationException("Only PPE assets may carry accumulated depreciation; SE is expensed on issue.");
 
         // Depreciation policy is inherited from the catalog (residual % defaults to COA's 5%).
         // Depreciation starts the month after acquisition. SE never depreciates.
@@ -100,6 +113,23 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
         var depreciationStart = assetType == AssetType.PPE
             ? new DateOnly(acquisitionDate.Year, acquisitionDate.Month, 1).AddMonths(1)
             : acquisitionDate;
+
+        if (accumulatedDepreciation > unitCost - residualValue)
+            throw new InvalidOperationException(
+                "Carried-over accumulated depreciation cannot exceed the asset's depreciable amount (cost less residual value).");
+
+        // Depreciation continuity on an inter-agency transfer/donation (COA GAM §V.B): the receiving
+        // agency inherits BOTH the accumulated depreciation and the cursor that says how much of the
+        // schedule it covers. Seeding the amount without the cursor would leave DepreciatedThrough null,
+        // and DepreciationPostingService would then replay every month from DepreciationStartDate —
+        // double-charging the years the sending agency already booked. The two must move together.
+        var depreciatedThrough = accumulatedDepreciation > 0m && depreciationCurrentThrough is not null
+            ? new DateOnly(depreciationCurrentThrough.Value.Year, depreciationCurrentThrough.Value.Month, 1)
+            : (DateOnly?)null;
+
+        if (depreciatedThrough is not null && depreciatedThrough.Value < depreciationStart)
+            throw new InvalidOperationException(
+                "Depreciation cannot already be current through a period earlier than the depreciation start date.");
 
         var registry = new AssetRegistry
         {
@@ -120,12 +150,12 @@ public sealed class AssetRegistry : AggregateRoot<Guid>, IHasTenant, IAuditableE
             AcquisitionDate = acquisitionDate,
             UnitCost = unitCost,
             EstimatedUsefulLifeYears = catalog.EstimatedUsefulLifeYears,
-            AccumulatedDepreciation = 0m,
+            AccumulatedDepreciation = accumulatedDepreciation,
             AccumulatedImpairmentLosses = 0m,
             ResidualValue = residualValue,
             DepreciationMethod = catalog.DepreciationMethod,
             DepreciationStartDate = depreciationStart,
-            DepreciatedThrough = null,
+            DepreciatedThrough = depreciatedThrough,
             LifecycleState = LifecycleState.Available,
             CurrentCondition = AssetCondition.InGoodCondition,
             SourceIARId = sourceIARId,

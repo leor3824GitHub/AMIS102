@@ -53,7 +53,11 @@ public sealed record CreateIssuanceReportCommand(
     EmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
     string? Remarks,
-    IReadOnlyList<Guid> AssetRegistryIds) : ICommand<PropertyIssuanceReportDto>;
+    IReadOnlyList<Guid> AssetRegistryIds,
+    // Set to raise a linked inter-agency transfer offer alongside this report: the receiving tenant gets an
+    // "Incoming Transfers" entry it can accept (posting its OWN PPERR on its own form series) or reject.
+    // Only valid on a Transfer* nature. Null keeps the legacy behaviour — an unlinked, re-keyed handshake.
+    string? DestinationTenantId = null) : ICommand<PropertyIssuanceReportDto>;
 
 public sealed record LineDepreciationDto(
     Guid LineId,

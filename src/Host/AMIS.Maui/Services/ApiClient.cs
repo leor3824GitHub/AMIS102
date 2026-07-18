@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -36,8 +37,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         var result = await httpClient.GetFromJsonAsync<ArPaged<ArAccountabilitySummary>>(
             "api/v1/asset-register/accountability/mine?type=SE_ICS&pageNumber=1&pageSize=200", ct);
         return result?.Items?.Select(a => new ICSSummaryDto(
-            a.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), a.Status,
-            a.ExpiresOn?.ToString("yyyy-MM-dd"), a.LineCount)).ToList() ?? [];
+            a.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), a.Status,
+            a.ExpiresOn?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), a.LineCount)).ToList() ?? [];
     }
 
     public async Task<ICSDetailDto> GetICSByIdAsync(Guid id, CancellationToken ct = default)
@@ -45,13 +46,13 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         var a = await httpClient.GetFromJsonAsync<ArAccountabilityDetail>(
             $"api/v1/asset-register/accountability/mine/{id}", ct);
         return new ICSDetailDto(
-            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), a.Status,
-            a.ExpiresOn?.ToString("yyyy-MM-dd"), a.FundCluster,
+            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), a.Status,
+            a.ExpiresOn?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), a.FundCluster,
             a.Lines.Select(l => new ICSItemDto(
                 l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
                 l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
                 l.Snapshot.EstimatedUsefulLifeYears,
-                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"),
+                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 l.AssetRegistryId, l.HasImage)).ToList());
     }
 
@@ -60,7 +61,7 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         var result = await httpClient.GetFromJsonAsync<ArPaged<ArAccountabilitySummary>>(
             "api/v1/asset-register/accountability/mine?type=PPE_PAR&pageNumber=1&pageSize=200", ct);
         return result?.Items?.Select(a => new PARSummaryDto(
-            a.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), "PPE", a.LineCount)).ToList() ?? [];
+            a.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), "PPE", a.LineCount)).ToList() ?? [];
     }
 
     public async Task<PARDetailDto> GetPARByIdAsync(Guid id, CancellationToken ct = default)
@@ -68,12 +69,12 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         var a = await httpClient.GetFromJsonAsync<ArAccountabilityDetail>(
             $"api/v1/asset-register/accountability/mine/{id}", ct);
         return new PARDetailDto(
-            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd"), "PPE", a.Status, a.FundCluster,
+            a!.Id, a.DocumentNo, a.IssuedOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), "PPE", a.Status, a.FundCluster,
             a.Lines.Select(l => new PARItemDto(
                 l.Id, l.Snapshot.PropertyNo, l.Snapshot.Description,
                 l.Snapshot.AssetType, l.Snapshot.Unit, l.Snapshot.UnitCost,
                 l.IssuedQty, l.Snapshot.EstimatedUsefulLifeYears,
-                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd"),
+                l.Snapshot.AcquisitionDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 l.AssetRegistryId, l.HasImage)).ToList());
     }
 
@@ -189,6 +190,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
 
     public async Task RecordPhysicalCountEntryAsync(Guid sessionId, RecordCountEntryRequest request, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         var body = new
         {
             SessionId = sessionId,
@@ -208,6 +211,8 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
 
     public async Task<AddFoundAtStationResult> AddFoundAtStationEntryAsync(Guid sessionId, AddFoundAtStationRequest request, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         var body = new
         {
             SessionId = sessionId,
@@ -257,9 +262,9 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
 
             if (doc.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
             {
-                foreach (var prop in errors.EnumerateObject())
-                    if (prop.Value.ValueKind == JsonValueKind.Array && prop.Value.GetArrayLength() > 0)
-                        return prop.Value[0].GetString();
+                foreach (var value in errors.EnumerateObject().Select(prop => prop.Value))
+                    if (value.ValueKind == JsonValueKind.Array && value.GetArrayLength() > 0)
+                        return value[0].GetString();
             }
             if (doc.RootElement.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
                 return detail.GetString();
@@ -307,8 +312,6 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
         "FoundAtStation" => "FoundAtStation",
         _ => "Found"
     };
-
-    private sealed record PagedResult<T>(List<T> Data, int TotalCount);
 
     private sealed record ArCountSummary(
         Guid Id, string Code, string Scope, string Status, DateOnly AsAt,

@@ -1,0 +1,39 @@
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Decline the transfer of @Offer.Lines.Count item(s) from <b>@Offer.FromAgencyName</b>
+            (@Offer.SourceIssuanceReportNo)? Nothing is booked onto your registry.
+        </MudText>
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+            The sending agency is notified with your reason. Their assets remain transferred out on their books —
+            bringing them back is a separate document on their side.
+        </MudAlert>
+        <AMISTextField @bind-Value="_reason" Label="Reason" Lines="3" Variant="Variant.Outlined"
+                       Immediate="true" AutoFocus="true"
+                       HelperText="Required — tell the sending agency why this transfer is being declined." />
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Error" OnClick="Submit"
+                    Disabled="@(string.IsNullOrWhiteSpace(_reason))">
+            Reject Transfer
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public AssetTransferOfferDto Offer { get; set; } = default!;
+
+    private string? _reason;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_reason)) return;
+        MudDialog.Close(DialogResult.Ok(_reason.Trim()));
+    }
+}

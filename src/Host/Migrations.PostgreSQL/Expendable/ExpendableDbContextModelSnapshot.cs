@@ -703,9 +703,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                             b1.Property<DateTimeOffset?>("ExpiryDate")
                                 .HasColumnType("timestamp with time zone");
 
-                            b1.Property<Guid>("ProductId")
-                                .HasColumnType("uuid");
-
                             b1.Property<int>("QuantityConsumed")
                                 .HasColumnType("integer");
 
@@ -780,9 +777,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid");
 
                             b1.Property<Guid>("ProductInventoryId")

@@ -8,6 +8,7 @@ using AMIS.Modules.AssetRegister.Contracts.v1.Catalog;
 using AMIS.Modules.AssetRegister.Contracts.v1.Depreciation;
 using AMIS.Modules.AssetRegister.Contracts.v1.Reports;
 using AMIS.Modules.AssetRegister.Contracts.v1.Repairs;
+using AMIS.Modules.AssetRegister.Contracts.v1.Transfers;
 using ArContracts = AMIS.Modules.AssetRegister.Contracts.v1;
 
 namespace AMIS.Blazor.ApiClient;
@@ -1114,7 +1115,8 @@ internal sealed record CreateIssuanceReportRequest(
     ArEmployeeRefDto IssuedTo,
     string IssuedToOfficeAddress,
     string? Remarks,
-    IReadOnlyList<Guid> AssetRegistryIds);
+    IReadOnlyList<Guid> AssetRegistryIds,
+    string? DestinationTenantId = null);
 
 internal sealed record ArPPEIRFormSeriesDto(
     Guid Id,
@@ -1459,7 +1461,11 @@ public sealed record CreateReceivingReportItemRequest(
     string? SourceAgencyName = null,
     string? SourcePropertyNo = null,
     string? SourceDocumentRef = null,
-    DateOnly? OriginalAcquisitionDate = null);
+    DateOnly? OriginalAcquisitionDate = null,
+    // Depreciation continuity on a transfer/donation (COA GAM §V.B). Both must travel together — the amount
+    // alone would leave the asset's cursor null and the posting service would replay the whole schedule.
+    decimal? AccumulatedDepreciation = null,
+    DateOnly? DepreciationCurrentThrough = null);
 
 // Mirror of ProcurementAcquisition's AcceptedIARLineItemDto — kept here so the
 // Blazor receiving form can stay in the AssetRegister client namespace.
@@ -2004,6 +2010,71 @@ internal sealed class ArRepairClient(HttpClient http) : IArRepairClient
         var resp = await http.PostAsJsonAsync($"{Base}/{id}/accept", request, ArJsonOptions.Default, ct);
         if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
         return (await resp.Content.ReadFromJsonAsync<PropertyRepairDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+}
+
+// ── Inter-agency transfer offers ───────────────────────────────────────────
+
+public sealed record ArAcceptTransferOfferRequest(Guid ReceivingReportId);
+
+public sealed record ArRejectTransferOfferRequest(string Reason);
+
+public interface IArTransferOfferClient
+{
+    Task<ArPagedResponse<AssetTransferOfferSummaryDto>> SearchAsync(
+        TransferOfferDirection? direction = null, TransferOfferStatus? status = null, string? keyword = null,
+        int page = 1, int pageSize = 20, CancellationToken ct = default);
+    Task<AssetTransferOfferDto?> GetAsync(Guid id, CancellationToken ct = default);
+    Task<AssetTransferOfferDto> AcceptAsync(Guid id, Guid receivingReportId, CancellationToken ct = default);
+    Task<AssetTransferOfferDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
+    /// <summary>Active agencies this tenant may offer property to (identifier + display name only).</summary>
+    Task<IReadOnlyList<TransferDestinationDto>> GetDestinationsAsync(CancellationToken ct = default);
+}
+
+public sealed class ArTransferOfferClient(HttpClient http) : IArTransferOfferClient
+{
+    private const string Base = "api/v1/asset-register/transfers";
+
+    public async Task<ArPagedResponse<AssetTransferOfferSummaryDto>> SearchAsync(
+        TransferOfferDirection? direction = null, TransferOfferStatus? status = null, string? keyword = null,
+        int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var url = ArUrlBuilder.Build(Base, new()
+        {
+            ["direction"] = direction?.ToString(),
+            ["status"] = status?.ToString(),
+            ["keyword"] = keyword,
+            ["pageNumber"] = page.ToString(CultureInfo.InvariantCulture),
+            ["pageSize"] = pageSize.ToString(CultureInfo.InvariantCulture),
+        });
+        var result = await http.GetFromJsonAsync<ArPagedResponse<AssetTransferOfferSummaryDto>>(url, ArJsonOptions.Default, ct);
+        return result ?? new ArPagedResponse<AssetTransferOfferSummaryDto>([], page, pageSize, 0, 0);
+    }
+
+    public Task<AssetTransferOfferDto?> GetAsync(Guid id, CancellationToken ct = default) =>
+        http.GetFromJsonAsync<AssetTransferOfferDto>($"{Base}/{id}", ArJsonOptions.Default, ct);
+
+    public async Task<IReadOnlyList<TransferDestinationDto>> GetDestinationsAsync(CancellationToken ct = default)
+    {
+        var result = await http.GetFromJsonAsync<List<TransferDestinationDto>>(
+            $"{Base}/destinations", ArJsonOptions.Default, ct);
+        return result ?? [];
+    }
+
+    public async Task<AssetTransferOfferDto> AcceptAsync(Guid id, Guid receivingReportId, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsJsonAsync(
+            $"{Base}/{id}/accept", new ArAcceptTransferOfferRequest(receivingReportId), ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<AssetTransferOfferDto>(ArJsonOptions.Default, cancellationToken: ct))!;
+    }
+
+    public async Task<AssetTransferOfferDto> RejectAsync(Guid id, string reason, CancellationToken ct = default)
+    {
+        var resp = await http.PutAsJsonAsync(
+            $"{Base}/{id}/reject", new ArRejectTransferOfferRequest(reason), ArJsonOptions.Default, ct);
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+        return (await resp.Content.ReadFromJsonAsync<AssetTransferOfferDto>(ArJsonOptions.Default, cancellationToken: ct))!;
     }
 }
 

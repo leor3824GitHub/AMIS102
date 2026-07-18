@@ -84,7 +84,7 @@ public sealed class ProductInventorySnapshotJoinTests
     private static async Task SeedInventoryAsync(ExpendableDbContext db, Guid productId)
     {
         var inv = ProductInventory.Create(Tenant, productId, ExpendableModuleConstants.DefaultSupplyLocation.Id);
-        inv.ReceiveFromPurchase(Guid.NewGuid(), productId, 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
         db.ProductInventories.Add(inv);
         await db.SaveChangesAsync();
     }

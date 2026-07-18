@@ -1,0 +1,155 @@
+@using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
+@using ReceivingDocumentKind = AMIS.Modules.AssetRegister.Contracts.v1.ReceivingDocumentKind
+@using ReceiptType = AMIS.Modules.AssetRegister.Contracts.v1.ReceiptType
+@inject IArTransferOfferClient TransferClient
+@inject IArReceivingReportClient ReceivingClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            Accepting books <b>@Offer.Lines.Count item(s)</b> from <b>@Offer.FromAgencyName</b>
+            (@Offer.SourceIssuanceReportNo) onto your registry.
+        </MudText>
+
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+            A PPERR on your own form series records the receipt. Create one prefilled from this offer — you
+            only assign your property numbers and catalog items — or link a PPERR you already posted. Either
+            way the sender's accumulated depreciation and original acquisition dates carry over.
+        </MudAlert>
+
+        <AMISButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4"
+                    StartIcon="@Icons.Material.Outlined.NoteAdd" OnClick="CreatePrefilledPperrAsync"
+                    Disabled="_submitting">
+            Create PPERR prefilled from this offer
+        </AMISButton>
+
+        <MudDivider Class="mb-3" />
+
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Or link a PPERR you already posted</MudText>
+
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_candidates.Count == 0)
+        {
+            <MudAlert Severity="Severity.Normal" Dense="true">
+                No unlinked transfer-type PPERR found. Use the button above to create one.
+            </MudAlert>
+        }
+        else
+        {
+            <AMISSelect T="Guid?" Label="Receiving Report (PPERR)" @bind-Value="_selectedReportId"
+                        Variant="Variant.Outlined"
+                        HelperText="The PPERR you posted against this incoming transfer.">
+                @foreach (var r in _candidates)
+                {
+                    <MudSelectItem T="Guid?" Value="@r.Id">
+                        @r.ReportNo — @r.Date.ToString("MM/dd/yyyy") — @r.ReceivedFrom (@r.ItemCount items)
+                    </MudSelectItem>
+                }
+            </AMISSelect>
+        }
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</AMISButton>
+        <AMISButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit"
+                    Disabled="@(_selectedReportId is null || _submitting)">
+            Link &amp; Accept
+        </AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public AssetTransferOfferDto Offer { get; set; } = default!;
+
+    private List<ArReceivingReportSummaryDto> _candidates = [];
+    private Guid? _selectedReportId;
+    private bool _loading = true;
+    private bool _submitting;
+
+    protected override Task OnInitializedAsync() => ReloadCandidatesAsync();
+
+    private async Task ReloadCandidatesAsync()
+    {
+        _loading = true;
+        try
+        {
+            // Transfer-type PPERRs are the only sensible candidates to link against an inter-agency offer.
+            var resp = await ReceivingClient.SearchAsync(
+                documentKind: ReceivingDocumentKind.PPERR,
+                receiptType: ReceiptType.Transfer,
+                page: 1, pageSize: 100);
+            _candidates = resp.Items.ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Could not load receiving reports: {ex.Message}", Severity.Error);
+        }
+        finally { _loading = false; }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    /// <summary>
+    /// Opens the ordinary PPERR form seeded from this offer, then links whatever it posts. The report is
+    /// still created by the normal receiving flow — its own form series, signatories, and capitalization
+    /// threshold — so nothing here forges a document on the receiving agency's books.
+    /// </summary>
+    private async Task CreatePrefilledPperrAsync()
+    {
+        var parameters = new DialogParameters<ReceivingReportFormDialog>
+        {
+            { x => x.DocumentKind, ReceivingDocumentKind.PPERR },
+            { x => x.Title, $"Receive Transfer from {Offer.FromAgencyName}" },
+            { x => x.PrefillFromOffer, Offer }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ReceivingReportFormDialog>(
+            $"Receive Transfer from {Offer.FromAgencyName}", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not { Canceled: false, Data: ArReceivingReportDto created }) return;
+
+        _submitting = true;
+        try
+        {
+            var updated = await TransferClient.AcceptAsync(Offer.Id, created.Id);
+            Snackbar.Add($"Posted {created.ReportNo} and accepted the transfer.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(updated));
+        }
+        catch (Exception ex)
+        {
+            // The PPERR exists either way — only the link failed, and it can be made from the picker below.
+            Snackbar.Add(
+                $"{created.ReportNo} was posted, but linking it to the offer failed: {ex.Message}. " +
+                "Select it below to finish accepting.",
+                Severity.Warning);
+            await ReloadCandidatesAsync();
+            _selectedReportId = created.Id;
+        }
+        finally { _submitting = false; }
+    }
+
+    private async Task Submit()
+    {
+        if (_selectedReportId is not { } reportId) return;
+
+        _submitting = true;
+        try
+        {
+            var updated = await TransferClient.AcceptAsync(Offer.Id, reportId);
+            MudDialog.Close(DialogResult.Ok(updated));
+        }
+        catch (Exception ex)
+        {
+            // The server rejects a report already linked to another offer, and any illegal state transition.
+            Snackbar.Add($"Accept failed: {ex.Message}", Severity.Error);
+        }
+        finally { _submitting = false; }
+    }
+}

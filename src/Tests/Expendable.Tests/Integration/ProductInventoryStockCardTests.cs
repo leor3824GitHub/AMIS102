@@ -28,8 +28,8 @@ public sealed class ProductInventoryStockCardTests
         var productId = await SeedProductAsync(ctx.Db, "SN-SC", "Bond Paper", "REAM");
 
         var inventory = ProductInventory.Create(Tenant, productId, Guid.NewGuid());
-        inventory.ReceiveFromPurchase(Guid.NewGuid(), productId, 10, 5m, "IAR-SC1");
-        inventory.ReceiveFromPurchase(Guid.NewGuid(), productId, 10, 7m, "IAR-SC2");
+        inventory.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m, "IAR-SC1");
+        inventory.ReceiveFromPurchase(Guid.NewGuid(), 10, 7m, "IAR-SC2");
         ctx.Db.ProductInventories.Add(inventory);
         await ctx.Db.SaveChangesAsync();
 

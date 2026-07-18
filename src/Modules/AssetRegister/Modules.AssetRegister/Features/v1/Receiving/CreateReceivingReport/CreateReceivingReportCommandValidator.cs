@@ -31,6 +31,27 @@ public sealed class CreateReceivingReportCommandValidator : AbstractValidator<Cr
             item.RuleFor(i => i.SourcePropertyNo).MaximumLength(64);
             item.RuleFor(i => i.SourceDocumentRef).MaximumLength(200);
 
+            item.RuleFor(i => i.AccumulatedDepreciation)
+                .GreaterThanOrEqualTo(0m).When(i => i.AccumulatedDepreciation.HasValue)
+                .WithMessage("Carried-over accumulated depreciation cannot be negative.");
+            item.RuleFor(i => i.AccumulatedDepreciation)
+                .LessThanOrEqualTo(i => i.UnitCost).When(i => i.AccumulatedDepreciation.HasValue)
+                .WithMessage("Carried-over accumulated depreciation cannot exceed the line's unit cost.");
+
+            // The carried amount and the period it covers must travel together. With the amount alone the
+            // receiving agency's DepreciatedThrough stays null and the posting service replays the schedule
+            // from the original acquisition date, double-charging the years the source agency already booked.
+            item.RuleFor(i => i.DepreciationCurrentThrough)
+                .NotNull()
+                .When(i => i.AccumulatedDepreciation is > 0m)
+                .WithMessage("DepreciationCurrentThrough is required when AccumulatedDepreciation is supplied — " +
+                             "it is the last period the carried amount covers.");
+            item.RuleFor(i => i.OriginalAcquisitionDate)
+                .NotNull()
+                .When(i => i.AccumulatedDepreciation is > 0m)
+                .WithMessage("OriginalAcquisitionDate is required when carrying accumulated depreciation — " +
+                             "the receiving agency continues the source agency's timeline.");
+
             // Either the line came from an internal Accepted IAR, OR it must declare its external source.
             item.RuleFor(i => i.SourceAgencyName)
                 .NotEmpty()

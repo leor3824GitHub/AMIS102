@@ -8,7 +8,12 @@ namespace AMIS.Maui.Controls;
 /// pulse while attached. Opacity-only animation keeps it cheap on low-end Android; the loop is
 /// cancelled on unload so it never runs off-screen.
 /// </summary>
+// CA1001: _cts is owned by the Loaded/Unloaded pair below — OnUnloaded cancels, disposes and nulls it,
+// so the token source never outlives the view. MAUI never disposes a ContentView, so implementing
+// IDisposable here would add plumbing that nothing calls.
+#pragma warning disable CA1001
 public partial class SkeletonView : ContentView
+#pragma warning restore CA1001
 {
     private CancellationTokenSource? _cts;
 
@@ -29,7 +34,7 @@ public partial class SkeletonView : ContentView
         set => SetValue(RowCountProperty, value);
     }
 
-    private Color BarColor =>
+    private static Color BarColor =>
         Application.Current?.RequestedTheme == AppTheme.Dark
             ? Color.FromArgb("#404040")   // Gray600
             : Color.FromArgb("#E1E1E1");  // Gray100
@@ -97,8 +102,12 @@ public partial class SkeletonView : ContentView
             BuildRows();
         }
 
-        _cts?.Cancel();
-        _cts?.Dispose();
+        if (_cts is not null)
+        {
+            await _cts.CancelAsync();
+            _cts.Dispose();
+        }
+
         _cts = new CancellationTokenSource();
         await PulseAsync(_cts.Token);
     }

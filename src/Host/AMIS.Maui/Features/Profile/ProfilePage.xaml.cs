@@ -46,7 +46,7 @@ public partial class ProfilePage : ContentPage
               "Signing out will permanently discard them. Sign out anyway?"
             : "You'll need to log in again, and cached inventory will be cleared. Sign out now?";
 
-        var confirmed = await DisplayAlert("Sign Out", message, "Sign Out", "Cancel");
+        var confirmed = await DisplayAlertAsync("Sign Out", message, "Sign Out", "Cancel");
 
         if (confirmed)
             await _vm.LogoutAsync();

@@ -50,13 +50,17 @@ public sealed class ChatHubService : IAsyncDisposable
                 {
                     options.AccessTokenProvider = async () => await _tokenStorage.GetAccessTokenAsync();
 #if DEBUG
-                    // Dev only: emulators/simulators don't trust the .NET HTTPS dev cert.
+                    // Dev only: emulators/simulators don't trust the .NET HTTPS dev cert. The whole
+                    // block is compiled out of Release, so shipped builds validate certificates
+                    // normally — CA5359/S4830 are reporting the Debug-only path.
+#pragma warning disable CA5359, S4830
                     options.HttpMessageHandlerFactory = _ => new HttpClientHandler
                     {
                         ServerCertificateCustomValidationCallback = (_, _, _, _) => true
                     };
                     options.WebSocketConfiguration = ws =>
                         ws.RemoteCertificateValidationCallback = (_, _, _, _) => true;
+#pragma warning restore CA5359, S4830
 #endif
                 })
                 .WithAutomaticReconnect()

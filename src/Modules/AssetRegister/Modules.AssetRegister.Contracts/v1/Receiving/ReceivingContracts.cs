@@ -22,7 +22,8 @@ public sealed record ReceivingReportItemDto(
     string? SourceAgencyName = null,
     string? SourcePropertyNo = null,
     string? SourceDocumentRef = null,
-    DateOnly? OriginalAcquisitionDate = null);
+    DateOnly? OriginalAcquisitionDate = null,
+    decimal? AccumulatedDepreciation = null);
 
 public sealed record ReceivingReportDto(
     Guid Id,
@@ -78,7 +79,12 @@ public sealed record CreateReceivingReportItemRequest(
     string? SourceAgencyName = null,
     string? SourcePropertyNo = null,
     string? SourceDocumentRef = null,
-    DateOnly? OriginalAcquisitionDate = null);
+    DateOnly? OriginalAcquisitionDate = null,
+    // Accumulated depreciation already booked by the source agency, as of DepreciationCurrentThrough.
+    // Both must be supplied together to carry the schedule forward; supplying the amount without the
+    // period is rejected, because the receiving agency would otherwise replay the whole schedule.
+    decimal? AccumulatedDepreciation = null,
+    DateOnly? DepreciationCurrentThrough = null);
 
 /// <summary>
 /// Creates a Receiving Report (PPERR or SMRR) and materializes one AssetRegistry row

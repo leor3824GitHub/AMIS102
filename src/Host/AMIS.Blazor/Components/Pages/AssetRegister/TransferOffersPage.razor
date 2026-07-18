@@ -1,0 +1,238 @@
+@page "/asset-register/transfers"
+@implements IDisposable
+@using AMIS.Blazor.ApiClient
+@using AMIS.Framework.Blazor.UI.Components.Data
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
+@inject IArTransferOfferClient Client
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IUserProfileState UserProfileState
+
+<AMISPageHeader Title="Inter-Agency Transfers"
+                Description="Property offered to this agency by another, and property this agency has offered out. Accepting an incoming transfer books the assets onto your own registry under your own property numbers.">
+</AMISPageHeader>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudTextField @bind-Value="_keyword" Label="Report No. / Agency" Variant="Variant.Outlined"
+                                  Dense="true" Margin="Margin.Dense"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  OnKeyDown="OnSearchKeyDown" Immediate="false" Style="flex:1;" />
+                    <AMISButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                StartIcon="@Icons.Material.Outlined.Search" OnClick="ReloadAsync" Disabled="_busy">
+                        Search
+                    </AMISButton>
+                </MudStack>
+
+                <MudTabs Elevation="0" Class="mt-2" ActivePanelIndexChanged="OnTabChangedAsync" Rounded="true" Border="false">
+                    <MudTabPanel Text="Incoming" Icon="@Icons.Material.Outlined.CallReceived" />
+                    <MudTabPanel Text="Outgoing" Icon="@Icons.Material.Outlined.CallMade" />
+                </MudTabs>
+
+                <AMISEnumChips TEnum="TransferOfferStatus" Value="_statusFilter" ValueChanged="OnStatusChangedAsync"
+                               Label="Status" Class="mt-3" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudCard Elevation="1">
+            <MudCardContent>
+                <AMISDataTable T="AssetTransferOfferSummaryDto"
+                               @ref="_table"
+                               ServerData="LoadAsync"
+                               RowsPerPage="20"
+                               EmptyMessage="@(_incoming ? "No incoming transfers" : "No outgoing transfers")"
+                               EmptyDescription="@(_incoming
+                                   ? "When another agency posts a transfer to you, it appears here for review."
+                                   : "Set a destination agency on a PPEIR to offer property to another agency.")">
+                    <HeaderContent>
+                        <MudTh>@(_incoming ? "From Agency" : "To Agency")</MudTh>
+                        <MudTh>Source Document</MudTh>
+                        <MudTh>Offered</MudTh>
+                        <MudTh>Items</MudTh>
+                        <MudTh Style="text-align:right">Net Book Value</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Agency">
+                            <b>@(_incoming ? context.FromAgencyName : context.ToAgencyName)</b>
+                        </MudTd>
+                        <MudTd DataLabel="Source Document">@context.SourceIssuanceReportNo</MudTd>
+                        <MudTd DataLabel="Offered">@context.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy")</MudTd>
+                        <MudTd DataLabel="Items">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.LineCount items</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Net Book Value" Style="text-align:right">
+                            @context.TotalNetBookValue.ToString("N2")
+                        </MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">
+                                @context.Status
+                            </MudChip>
+                            @if (context.Status == TransferOfferStatus.Accepted
+                                 && !string.IsNullOrWhiteSpace(context.ReceivingReportNo))
+                            {
+                                <MudText Typo="Typo.caption" Class="text-muted d-block">
+                                    @context.ReceivingReportNo
+                                </MudText>
+                            }
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Justify="Justify.FlexEnd">
+                                <AMISIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small"
+                                                Color="Color.Primary" Title="View"
+                                                OnClick="@(() => ViewAsync(context.Id))" />
+                                @if (_incoming && context.Status == TransferOfferStatus.Sent && _canAccept)
+                                {
+                                    <AMISIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                    Color="Color.Success" Title="Accept — book onto your registry"
+                                                    OnClick="@(() => AcceptAsync(context))" />
+                                }
+                                @if (_incoming && context.Status == TransferOfferStatus.Sent && _canReject)
+                                {
+                                    <AMISIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                                    Color="Color.Error" Title="Reject"
+                                                    OnClick="@(() => RejectAsync(context))" />
+                                }
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </AMISDataTable>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private AMISDataTable<AssetTransferOfferSummaryDto>? _table;
+    private string? _keyword;
+    private TransferOfferStatus? _statusFilter;
+    private bool _incoming = true;
+    private bool _busy;
+
+    private bool _canAccept => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Transfers.Accept);
+    private bool _canReject => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Transfers.Reject);
+
+    protected override void OnInitialized() => UserProfileState.OnProfileChanged += OnProfileChanged;
+
+    private void OnProfileChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+
+    private async Task<TableData<AssetTransferOfferSummaryDto>> LoadAsync(TableState state, CancellationToken ct)
+    {
+        _busy = true;
+        try
+        {
+            var direction = _incoming ? TransferOfferDirection.Inbound : TransferOfferDirection.Outbound;
+            var resp = await Client.SearchAsync(
+                direction, _statusFilter, _keyword,
+                page: state.Page + 1, pageSize: state.PageSize, ct: ct);
+            return new TableData<AssetTransferOfferSummaryDto>
+            {
+                Items = resp.Items,
+                TotalItems = resp.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load transfers: {ex.Message}", Severity.Error);
+            return new TableData<AssetTransferOfferSummaryDto> { Items = [], TotalItems = 0 };
+        }
+        finally { _busy = false; }
+    }
+
+    private Task ReloadAsync() => _table?.ReloadServerData() ?? Task.CompletedTask;
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await ReloadAsync();
+    }
+
+    private async Task OnTabChangedAsync(int index)
+    {
+        _incoming = index == 0;
+        await ReloadAsync();
+    }
+
+    private async Task OnStatusChangedAsync(TransferOfferStatus? value)
+    {
+        _statusFilter = value;
+        await ReloadAsync();
+    }
+
+    private async Task ViewAsync(Guid id)
+    {
+        try
+        {
+            var detail = await Client.GetAsync(id);
+            if (detail is null) { Snackbar.Add("Transfer offer not found.", Severity.Warning); return; }
+            var parameters = new DialogParameters<TransferOfferDetailDialog> { { x => x.Offer, detail } };
+            var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+            await DialogService.ShowAsync<TransferOfferDetailDialog>("Transfer Offer", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error);
+        }
+    }
+
+    // Accepting links the offer to the PPERR the user has already posted on their own form series.
+    // The receiving report is deliberately not created here: property numbers, signatories, and the
+    // capitalization threshold are the receiving agency's to decide.
+    private async Task AcceptAsync(AssetTransferOfferSummaryDto offer)
+    {
+        var detail = await Client.GetAsync(offer.Id);
+        if (detail is null) { Snackbar.Add("Transfer offer not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<AcceptTransferOfferDialog> { { x => x.Offer, detail } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AcceptTransferOfferDialog>("Accept Transfer", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            Snackbar.Add("Transfer accepted. The sending agency will be notified.", Severity.Success);
+            await ReloadAsync();
+        }
+    }
+
+    private async Task RejectAsync(AssetTransferOfferSummaryDto offer)
+    {
+        var detail = await Client.GetAsync(offer.Id);
+        if (detail is null) { Snackbar.Add("Transfer offer not found.", Severity.Warning); return; }
+
+        var parameters = new DialogParameters<RejectTransferOfferDialog> { { x => x.Offer, detail } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<RejectTransferOfferDialog>("Reject Transfer", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not { Canceled: false, Data: string reason }) return;
+
+        try
+        {
+            await Client.RejectAsync(offer.Id, reason);
+            Snackbar.Add("Transfer rejected. The sending agency will be notified.", Severity.Success);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Reject failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static Color StatusColor(TransferOfferStatus status) => status switch
+    {
+        TransferOfferStatus.Sent => Color.Warning,
+        TransferOfferStatus.Accepted => Color.Success,
+        TransferOfferStatus.Rejected => Color.Error,
+        TransferOfferStatus.Cancelled => Color.Default,
+        _ => Color.Default
+    };
+}

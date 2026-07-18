@@ -3,7 +3,11 @@ using SQLite;
 
 namespace AMIS.Maui.Data;
 
+// CA1001: registered as a DI singleton, so _lock and the SQLite connection live for the whole process
+// and are reclaimed at exit. Making this IDisposable would imply a teardown point that does not exist.
+#pragma warning disable CA1001
 public sealed class LocalDb
+#pragma warning restore CA1001
 {
     private SQLiteAsyncConnection? _connection;
     private readonly SemaphoreSlim _lock = new(1, 1);

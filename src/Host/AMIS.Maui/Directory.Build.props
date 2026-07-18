@@ -35,7 +35,43 @@
     strict gate is untouched). Making the types internal instead would be a large, risky change
     across XAML compiled bindings, DI, and CommunityToolkit.Mvvm source generation.
   -->
+  <!--
+    The parent Directory.Build.props sets <AnalysisMode>AllEnabledByDefault</AnalysisMode>, which is
+    tuned for the backend's *library* projects. AMIS.Maui is a leaf executable with no public API
+    surface for anyone to consume, so the whole API-design rule family fires on code that is by
+    definition internal to the app. Drop to Recommended here (scoped to MAUI only — the backend's
+    strict gate is untouched) and suppress the remaining rules that are actively wrong for this
+    project rather than merely noisy:
+
+      CA1515  Type can be made internal. Fires on ~90 types in an Exe; off by default in .NET for
+              exactly this reason. Making them internal would break XAML compiled bindings, DI, and
+              CommunityToolkit.Mvvm source generation.
+      CA1812  Internal type never instantiated. The private records in ApiClient that mirror backend
+              JSON shapes are constructed by System.Text.Json via reflection, which the analyzer
+              cannot see. (A source-generated JsonSerializerContext would fix this properly and is
+              also the right answer for release trimming — tracked separately.)
+      CA1002  Expose List<T> as Collection<T>. The offenders are JSON deserialization targets;
+              System.Text.Json cannot populate a Collection<T> constructor parameter.
+      CA1054/
+      CA1056  Expose URI parameters/properties as System.Uri. These are ImageUrl strings handed
+              straight to MAUI's ImageSource.FromUri and to string interpolation in request paths.
+      CA1003  Use generic EventHandler<T>. Fires on MAUI/CommunityToolkit event signatures we do
+              not control.
+      CA1716  Identifier conflicts with a reserved language keyword. Only relevant for
+              cross-language library consumers.
+  -->
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CA1515</NoWarn>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <NoWarn>$(NoWarn);CA1515;CA1812;CA1002;CA1054;CA1056;CA1003;CA1716</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    S101 (pascal-case type names) fires on ICSSummaryDto / PARDetailDto / etc. ICS, PAR and PPE are
+    the names of the actual COA property forms these DTOs model. Renaming them to IcsSummaryDto would
+    break the deliberate 1:1 correspondence with the domain and with the AssetRegister contracts they
+    mirror, so the rule is off for this project.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);S101</NoWarn>
   </PropertyGroup>
 </Project>

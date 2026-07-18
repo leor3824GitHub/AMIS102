@@ -63,7 +63,8 @@ public sealed class CreateReceivingReportCommandHandler(
                 line.AcquisitionDate, quantity: 1, line.UnitCost,
                 line.SerialNo, line.Brand, line.Model,
                 line.UacsObjectCode ?? catalog.UacsObjectCode,
-                line.SourceAgencyName, line.SourcePropertyNo, line.SourceDocumentRef, line.OriginalAcquisitionDate);
+                line.SourceAgencyName, line.SourcePropertyNo, line.SourceDocumentRef, line.OriginalAcquisitionDate,
+                line.AccumulatedDepreciation);
 
             // For donations/transfers the receiving agency carries the original timeline (COA GAM —
             // depreciation continuity), so AssetRegistry's AcquisitionDate is the OriginalAcquisitionDate
@@ -75,7 +76,9 @@ public sealed class CreateReceivingReportCommandHandler(
                 tenantId, catalog, assetType, category, propertyNo,
                 line.Description, line.SerialNo, line.Brand, line.Model,
                 fundCluster, assetAcquisitionDate, line.UnitCost,
-                sourceIARId: line.SourceIARId, sourcePurchaseOrderId: null);
+                sourceIARId: line.SourceIARId, sourcePurchaseOrderId: null,
+                accumulatedDepreciation: line.AccumulatedDepreciation ?? 0m,
+                depreciationCurrentThrough: line.DepreciationCurrentThrough);
             db.AssetRegistries.Add(asset);
         }
 

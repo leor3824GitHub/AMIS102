@@ -40,7 +40,7 @@ public sealed class ProductInventoryValuationTests
     {
         var inv = NewInventory();
 
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), quantityAccepted: 10, unitPrice: 5m, sourceReference: "IAR-0001");
+        inv.ReceiveFromPurchase(Guid.NewGuid(), quantityAccepted: 10, unitPrice: 5m, sourceReference: "IAR-0001");
 
         inv.QuantityAvailable.ShouldBe(10);
         inv.QuantityOnHand.ShouldBe(10);
@@ -59,8 +59,8 @@ public sealed class ProductInventoryValuationTests
     {
         var inv = NewInventory();
 
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 7m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 7m);
 
         inv.QuantityAvailable.ShouldBe(20);
         inv.TotalValue.ShouldBe(120m);
@@ -73,10 +73,10 @@ public sealed class ProductInventoryValuationTests
     {
         var inv = NewInventory();
 
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
         var firstReceipt = inv.FirstReceiptDate;
 
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 5, 7m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 5, 7m);
 
         inv.FirstReceiptDate.ShouldBe(firstReceipt);              // pinned
         inv.LastReceiptDate!.Value.ShouldBeGreaterThanOrEqualTo(firstReceipt!.Value);
@@ -88,14 +88,14 @@ public sealed class ProductInventoryValuationTests
     public void ReceiveFromPurchase_NonPositiveQuantity_Throws(int qty)
     {
         var inv = NewInventory();
-        Should.Throw<ArgumentException>(() => inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), qty, 5m));
+        Should.Throw<ArgumentException>(() => inv.ReceiveFromPurchase(Guid.NewGuid(), qty, 5m));
     }
 
     [Fact]
     public void ReceiveFromPurchase_NegativeUnitPrice_Throws()
     {
         var inv = NewInventory();
-        Should.Throw<ArgumentException>(() => inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, -1m));
+        Should.Throw<ArgumentException>(() => inv.ReceiveFromPurchase(Guid.NewGuid(), 10, -1m));
     }
 
     // ── Reservation lifecycle ────────────────────────────────────────────────────────────────
@@ -104,8 +104,8 @@ public sealed class ProductInventoryValuationTests
     public void ReserveForAllocation_MovesAvailableToReserved_AndReservedValueTracksAverage()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 7m);   // avg 6
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 7m);   // avg 6
 
         inv.ReserveForAllocation(5);
 
@@ -121,7 +121,7 @@ public sealed class ProductInventoryValuationTests
     public void CancelReservation_ReturnsReservedToAvailable()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
         inv.ReserveForAllocation(6);
 
         inv.CancelReservation(4);
@@ -134,7 +134,7 @@ public sealed class ProductInventoryValuationTests
     public void ReserveForAllocation_MoreThanAvailable_Throws()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
 
         Should.Throw<InvalidOperationException>(() => inv.ReserveForAllocation(11));
     }
@@ -143,7 +143,7 @@ public sealed class ProductInventoryValuationTests
     public void CancelReservation_MoreThanReserved_Throws()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
         inv.ReserveForAllocation(3);
 
         Should.Throw<InvalidOperationException>(() => inv.CancelReservation(4));
@@ -155,8 +155,8 @@ public sealed class ProductInventoryValuationTests
     public void IssueReservedStock_DrawsDownAtAverageCost_AndReturnsIssuanceDetail()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 7m);   // total 120, avg 6
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 7m);   // total 120, avg 6
         inv.ReserveForAllocation(5);
 
         var detail = inv.IssueReservedStock(5);
@@ -178,7 +178,7 @@ public sealed class ProductInventoryValuationTests
     public void IssueReservedStock_MoreThanReserved_Throws()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
         inv.ReserveForAllocation(3);
 
         Should.Throw<InvalidOperationException>(() => inv.IssueReservedStock(4));
@@ -188,7 +188,7 @@ public sealed class ProductInventoryValuationTests
     public void TotalValue_NeverGoesNegative_OnRoundingDrawDown()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 3, 0.01m);   // total 0.03
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 3, 0.01m);   // total 0.03
         inv.ReserveForAllocation(3);
 
         inv.IssueReservedStock(3);
@@ -204,7 +204,7 @@ public sealed class ProductInventoryValuationTests
     public void Discontinue_WithStockRemaining_Throws()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
 
         Should.Throw<InvalidOperationException>(() => inv.Discontinue());
     }
@@ -213,7 +213,7 @@ public sealed class ProductInventoryValuationTests
     public void Discontinue_WhenEmpty_SetsDiscontinued()
     {
         var inv = NewInventory();
-        inv.ReceiveFromPurchase(Guid.NewGuid(), Guid.NewGuid(), 10, 5m);
+        inv.ReceiveFromPurchase(Guid.NewGuid(), 10, 5m);
         inv.ReserveForAllocation(10);
         inv.IssueReservedStock(10);
 

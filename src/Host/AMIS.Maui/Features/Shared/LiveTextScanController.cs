@@ -6,7 +6,11 @@ namespace AMIS.Maui.Features.Shared;
 // frames on a cadence, and hands each to a processing delegate. Lifted out of the Scan page so both
 // Scan and Count share one implementation. The page still owns the ZXing barcode reader and decides
 // when to pause/resume it — one camera at a time.
+// CA1001: teardown is the explicit Stop() below, which pages call from OnDisappearing — it cancels and
+// disposes _cts and tears down _camera. IDisposable would be a second, redundant teardown path.
+#pragma warning disable CA1001
 public sealed class LiveTextScanController
+#pragma warning restore CA1001
 {
     // Cadence between live OCR frames. The loop is serial (next capture waits for the previous
     // capture + OCR), so this is added idle time on top of that — keeps CPU/battery in check.

@@ -35,13 +35,17 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
     private CancellationTokenSource? _searchCts;
 
     // Pre-fill hooks: navigation params arrive after construction; mirror them into form fields.
+    // Shell only ever drives the setters (via [QueryProperty]); the getters read back the field each
+    // one feeds, so these behave as real properties rather than write-only sinks.
     public string Desc
     {
+        get => Description;
         set { if (!string.IsNullOrWhiteSpace(value)) Description = value; }
     }
 
     public string UnitCost
     {
+        get => UnitCostText;
         set
         {
             if (!string.IsNullOrWhiteSpace(value) &&
@@ -73,7 +77,7 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
 
     private async Task SearchCatalogAsync(string keyword)
     {
-        _searchCts?.Cancel();
+        if (_searchCts is not null) await _searchCts.CancelAsync();
         var cts = new CancellationTokenSource();
         _searchCts = cts;
 
@@ -98,7 +102,10 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
             ShowNoResults = results.Count == 0;
             ErrorMessage = null;
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // Superseded or navigated away — nothing to report.
+        }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[FoundAtStation] catalog search failed: {ex}");
@@ -115,12 +122,9 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
         ShowNoResults = false;
         ErrorMessage = null;
 
-        if (item is not null)
-        {
-            // Reduce typing: adopt the catalog description when the operator hasn't entered one.
-            if (string.IsNullOrWhiteSpace(Description))
-                Description = item.Description;
-        }
+        // Reduce typing: adopt the catalog description when the operator hasn't entered one.
+        if (item is not null && string.IsNullOrWhiteSpace(Description))
+            Description = item.Description;
     }
 
     [RelayCommand]
@@ -197,11 +201,18 @@ public sealed partial class PhysicalCountFoundAtStationViewModel : ObservableObj
                     break;
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // Superseded or navigated away — nothing to report.
+        }
+        // CA1031: deliberate catch-all. An escaping exception from a RelayCommand re-throws on the
+        // UI thread and hard-crashes the Windows app; the operator keeps their unsaved form instead.
+#pragma warning disable CA1031
         catch (Exception ex)
         {
             ErrorMessage = $"Could not save: {ex.Message}";
         }
+#pragma warning restore CA1031
         finally
         {
             IsLoading = false;

@@ -28,7 +28,7 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
 
     // Condition options for the confirm sheet → AssetRegister PhysicalCountCondition values.
     private static readonly string[] ConditionApiValues = ["InGoodCondition", "NeedingRepair", "Unserviceable"];
-    public string[] Conditions => ["In Good Condition", "Needing Repair", "Unserviceable"];
+    public string[] Conditions { get; } = ["In Good Condition", "Needing Repair", "Unserviceable"];
 
     [ObservableProperty] public partial string SessionId { get; set; } = "";
     [ObservableProperty] public partial string SessionNo { get; set; } = "";
@@ -84,7 +84,7 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
         _apiClient = apiClient;
         _syncService = syncService;
         _feedback = feedback;
-        // The shared capture base reports serial-search / camera / OCR failures via ErrorMessage;
+        // The shared capture base reports serial-search / camera / OCR failures via ErrorMessage, so
         // surface those in the on-screen feedback banner too (the page only binds StatusMessage).
         PropertyChanged += (_, e) =>
         {
@@ -259,10 +259,15 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
         {
             SetStatus("Error", "Couldn't check the registry. Verify your connection and try again.");
         }
+        // CA1031: deliberate catch-all. An escaping exception from a RelayCommand re-throws on the
+        // UI thread and hard-crashes the Windows app, so the scan loop degrades to a status message
+        // instead. Nothing is swallowed silently — the operator always sees the failure.
+#pragma warning disable CA1031
         catch (Exception)
         {
             SetStatus("Error", "Something went wrong. Please try again.");
         }
+#pragma warning restore CA1031
         finally
         {
             _isResolving = false;
@@ -317,11 +322,18 @@ public sealed partial class PhysicalCountScanViewModel : PropertyCaptureViewMode
                     break;
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // Superseded or navigated away — nothing to report.
+        }
+        // CA1031: deliberate catch-all — see ProcessPropertyNoAsync. The confirm sheet stays open
+        // so the operator can retry rather than losing the scanned item to a crash.
+#pragma warning disable CA1031
         catch (Exception)
         {
             SetStatus("Error", "Couldn't add the item. Please try again.");
         }
+#pragma warning restore CA1031
         finally
         {
             IsSaving = false;

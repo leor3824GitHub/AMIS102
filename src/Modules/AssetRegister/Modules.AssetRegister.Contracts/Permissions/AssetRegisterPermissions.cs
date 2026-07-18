@@ -101,6 +101,18 @@ public static class AssetRegisterPermissions
         public const string Upload = "Permissions.AssetRegister.SignedDocuments.Upload";
     }
 
+    /// <summary>
+    /// Inter-agency property transfer offers. <c>Offer</c> is the sending side (raised with the PPEIR);
+    /// <c>Accept</c>/<c>Reject</c> are the receiving side.
+    /// </summary>
+    public static class Transfers
+    {
+        public const string View   = "Permissions.AssetRegister.Transfers.View";
+        public const string Offer  = "Permissions.AssetRegister.Transfers.Offer";
+        public const string Accept = "Permissions.AssetRegister.Transfers.Accept";
+        public const string Reject = "Permissions.AssetRegister.Transfers.Reject";
+    }
+
     public static class Locations
     {
         public const string View   = "Permissions.AssetRegister.Locations.View";

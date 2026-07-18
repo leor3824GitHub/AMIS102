@@ -101,13 +101,15 @@ public sealed class ReceivingReport : AggregateRoot<Guid>, IHasTenant, IAuditabl
         string? sourceAgencyName = null,
         string? sourcePropertyNo = null,
         string? sourceDocumentRef = null,
-        DateOnly? originalAcquisitionDate = null)
+        DateOnly? originalAcquisitionDate = null,
+        decimal? accumulatedDepreciation = null)
     {
         var item = ReceivingReportItem.Create(
             TenantId, Id, catalogItemId, reference, propertyNo, description,
             acquisitionDate, quantity, unitCost,
             serialNo, brand, model, uacsObjectCode,
-            sourceAgencyName, sourcePropertyNo, sourceDocumentRef, originalAcquisitionDate);
+            sourceAgencyName, sourcePropertyNo, sourceDocumentRef, originalAcquisitionDate,
+            accumulatedDepreciation);
         _items.Add(item);
         LastModifiedOnUtc = DateTimeOffset.UtcNow;
         return item;

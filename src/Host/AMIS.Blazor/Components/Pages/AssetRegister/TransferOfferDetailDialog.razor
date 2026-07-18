@@ -1,0 +1,109 @@
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">From Agency</MudText>
+                <MudText Typo="Typo.body1"><b>@Offer.FromAgencyName</b></MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.subtitle2">To Agency</MudText>
+                <MudText Typo="Typo.body1"><b>@Offer.ToAgencyName</b></MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Source Document</MudText>
+                <MudText Typo="Typo.body1">@Offer.SourceIssuanceReportNo</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Offered</MudText>
+                <MudText Typo="Typo.body1">@Offer.CreatedOnUtc.ToLocalTime().ToString("MM/dd/yyyy")</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Status</MudText>
+                <MudText Typo="Typo.body1">@Offer.Status</MudText>
+            </MudItem>
+            <MudItem xs="6" md="3">
+                <MudText Typo="Typo.subtitle2">Receiving Report</MudText>
+                <MudText Typo="Typo.body1">@(Offer.ReceivingReportNo ?? "—")</MudText>
+            </MudItem>
+
+            @if (!string.IsNullOrWhiteSpace(Offer.RejectedReason))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Error" Dense="true">
+                        Rejected: @Offer.RejectedReason
+                    </MudAlert>
+                </MudItem>
+            }
+
+            <MudItem xs="12">
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.subtitle1">Items</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">
+                    Book values as recorded by the sending agency. On acceptance the accumulated depreciation and
+                    original acquisition date carry over, so the schedule continues rather than restarting at full cost.
+                </MudText>
+                <div style="overflow-x:auto;">
+                    <MudSimpleTable Dense="true" Hover="true" Class="mt-2">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Source Property No.</th>
+                                <th>Description</th>
+                                <th>Serial / Brand / Model</th>
+                                <th>Acquired</th>
+                                <th class="text-right">Unit Cost</th>
+                                <th class="text-right">Accum. Depr.</th>
+                                <th>Depr. Through</th>
+                                <th class="text-right">Net Book Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in Offer.Lines)
+                            {
+                                <tr>
+                                    <td>@line.ItemNo</td>
+                                    <td><b>@line.SourcePropertyNo</b></td>
+                                    <td>@line.Description</td>
+                                    <td>@DescribeIdentity(line)</td>
+                                    <td>@line.OriginalAcquisitionDate.ToString("MM/dd/yyyy")</td>
+                                    <td class="text-right">@line.UnitCost.ToString("N2")</td>
+                                    <td class="text-right">@line.AccumulatedDepreciation.ToString("N2")</td>
+                                    <td>@(line.DepreciationCurrentThrough?.ToString("MM/yyyy") ?? "—")</td>
+                                    <td class="text-right">@line.NetBookValue.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5"><b>Total</b></td>
+                                <td class="text-right"><b>@Offer.TotalUnitCost.ToString("N2")</b></td>
+                                <td colspan="2"></td>
+                                <td class="text-right"><b>@Offer.TotalNetBookValue.ToString("N2")</b></td>
+                            </tr>
+                        </tfoot>
+                    </MudSimpleTable>
+                </div>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <AMISButton Variant="Variant.Text" Color="Color.Default" OnClick="Close">Close</AMISButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public AssetTransferOfferDto Offer { get; set; } = default!;
+
+    private void Close() => MudDialog.Close();
+
+    private static string DescribeIdentity(AssetTransferOfferLineDto line)
+    {
+        var parts = new[] { line.SerialNo, line.Brand, line.Model }
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .ToList();
+        return parts.Count == 0 ? "—" : string.Join(" / ", parts);
+    }
+}

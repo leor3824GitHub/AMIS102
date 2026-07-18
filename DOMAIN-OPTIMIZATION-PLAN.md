@@ -20,12 +20,15 @@
 
 | # | Item | Type | Notes |
 |---|------|------|-------|
-| G1 | `WarehouseReceiptBatch.ProductId` & `EmployeeStockBatch.ProductId` still present | **Genuine gap** | Plan flagged these as redundant (owner aggregate already carries `ProductId`). Small, low-risk to drop. |
-| G2 | `ProductStatus.OutOfStock` manual status + `EmployeeProfile.OfficeCode` still present | **Kept by decision** | OutOfStock kept as an admin override alongside derived availability; OfficeCode is a cross-module read-model denormalization (removal is high-ripple, low-reward). Not defects. |
+| ~~G1~~ | ~~`WarehouseReceiptBatch.ProductId` & `EmployeeStockBatch.ProductId`~~ | ✅ **Done** | Both dropped (owner aggregate already carries `ProductId`; no consumer read them). The now-redundant `productId` parameter was also removed from `ProductInventory.ReceiveFromPurchase` and the `EmployeeStockBatch` ctor, and callers updated. Expendable `InitialCreate` re-squashed — neither `ProductInventoryBatches` nor `InventoryBatches` carries a `ProductId` column. |
+| G2a | `EmployeeProfile.OfficeCode` | ❌ **Finding retracted — not redundant** | The plan called this a denormalized copy of `Office.Code`. **That was wrong.** `Office` carries *both* `Code` **and** its own `OfficeCode`; `EmployeeProfile.OfficeCode` is a distinct *owner-office* scoping code (`SetOwnerOfficeCode`, `maxLength(8)`, indexed) that feeds property-number generation (the `00B` segment in `2026-NFA-00B-07-DSK-001`). Nothing to remove. |
+| G2b | `ProductStatus.OutOfStock` manual status | ⚠️ **Product decision — a "phantom control"** | Not a redundancy problem: purchasability is driven entirely by the inventory join (`QuantityAvailable > 0` → `IsInStock`), so the manual flag **cannot** make the UI misreport stock. But it also **doesn't gate ordering** — a product marked Out of Stock with 500 on hand still shows "Bal: 500" with Add-to-Cart enabled. Its only effect is keeping the product visible alongside `Active` in the catalog filter. Either **honor it** (`IsInStock = QuantityAvailable > 0 && Status != OutOfStock`) or **remove** the enum value + command/handler/endpoint/permission/UI. Honoring it is the cheaper, likely-correct answer. |
 | G3 | 11 MasterData **reference** entities still on `byte[] Version` + `IsConcurrencyToken()` (Category, Department, FundCluster, FundingSourceCode, ModeOfProcurement, Office, OrganizationProfile, Position, ReportSignatory, Supplier, UnitOfMeasure) | **Consistency follow-up** | Out of Phase 2's original named scope (transactional aggregates + EmployeeProfile). These are low-contention reference tables; converting to xmin is cleanup, not a bug fix. |
 | G4 | `PurchaseRequest.PrDate` duplicates `CreatedOnUtc`'s date | **Candidate only** | Plan required deciding the business rule first (real user-set document date vs. derive). Not actioned. |
 
-**Bottom line:** every phase is delivered; only G1 (a minor redundant field) is an outright gap. G2 are deliberate keeps, G3 is an optional consistency sweep, G4 needs a product decision.
+**Bottom line:** every phase is delivered and **no outright gaps remain** (G1 closed 2026-07-18). G2 are
+deliberate keeps, G3 is an optional consistency sweep (11 low-contention MasterData reference entities),
+and G4 needs a product decision before any code change.
 
 This plan comes from a review of the ~102 domain entity files across the 15 modules, their EF Core
 configurations, the search/query handlers that serve list pages, and the Blazor pages that render them.

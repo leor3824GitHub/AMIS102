@@ -47,6 +47,14 @@ public sealed class ReceivingReportItem : IHasTenant
     /// </summary>
     public DateOnly? OriginalAcquisitionDate { get; private set; }
 
+    /// <summary>
+    /// Accumulated depreciation already booked by the source agency at the date of transfer. Carried onto
+    /// the materialized <c>AssetRegistry</c> row so the receiving agency continues the depreciation schedule
+    /// rather than restarting it at full cost (COA GAM §V.B). Null for purchases and for donations where the
+    /// source figure is unknown — the asset is then registered undepreciated.
+    /// </summary>
+    public decimal? AccumulatedDepreciation { get; private set; }
+
     private ReceivingReportItem() { }
 
     internal static ReceivingReportItem Create(
@@ -66,7 +74,8 @@ public sealed class ReceivingReportItem : IHasTenant
         string? sourceAgencyName = null,
         string? sourcePropertyNo = null,
         string? sourceDocumentRef = null,
-        DateOnly? originalAcquisitionDate = null)
+        DateOnly? originalAcquisitionDate = null,
+        decimal? accumulatedDepreciation = null)
     {
         if (string.IsNullOrWhiteSpace(description))
             throw new InvalidOperationException("Item description is required.");
@@ -76,6 +85,10 @@ public sealed class ReceivingReportItem : IHasTenant
             throw new InvalidOperationException("Item quantity must be greater than zero.");
         if (unitCost <= 0)
             throw new InvalidOperationException("Item unit cost must be greater than zero.");
+        if (accumulatedDepreciation is < 0m)
+            throw new InvalidOperationException("Item accumulated depreciation cannot be negative.");
+        if (accumulatedDepreciation > unitCost)
+            throw new InvalidOperationException("Item accumulated depreciation cannot exceed its unit cost.");
 
         return new ReceivingReportItem
         {
@@ -96,7 +109,8 @@ public sealed class ReceivingReportItem : IHasTenant
             SourceAgencyName = string.IsNullOrWhiteSpace(sourceAgencyName) ? null : sourceAgencyName.Trim(),
             SourcePropertyNo = string.IsNullOrWhiteSpace(sourcePropertyNo) ? null : sourcePropertyNo.Trim(),
             SourceDocumentRef = string.IsNullOrWhiteSpace(sourceDocumentRef) ? null : sourceDocumentRef.Trim(),
-            OriginalAcquisitionDate = originalAcquisitionDate
+            OriginalAcquisitionDate = originalAcquisitionDate,
+            AccumulatedDepreciation = accumulatedDepreciation
         };
     }
 }

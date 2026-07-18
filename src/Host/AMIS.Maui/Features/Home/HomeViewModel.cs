@@ -174,8 +174,12 @@ public sealed partial class HomeViewModel(
         await Shell.Current.GoToAsync($"{nameof(PhysicalCountScanPage)}?SessionId={s.Id}");
     }
 
+    // CA1822: navigation-only command that happens not to read instance state. Making it static would
+    // change the shape the MVVM source generator emits and break the `_vm.OpenRecentCommand` call sites.
+#pragma warning disable CA1822
     [RelayCommand]
     private async Task OpenRecentAsync(RecentItem? item)
+#pragma warning restore CA1822
     {
         if (item is null) return;
         await Shell.Current.GoToAsync($"{item.Route}?Id={item.Id}");

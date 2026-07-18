@@ -1,7 +1,10 @@
 @using AMIS.Blazor.ApiClient
+@using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Modules.AssetRegister.Contracts.v1.Transfers
 @using IssuanceReportType = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceReportType
 @using IssuanceNature = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceNature
 @inject IArIssuanceReportClient Client
+@inject IArTransferOfferClient TransferClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
@@ -46,6 +49,21 @@
                     </MudAlert>
                 </MudItem>
             }
+            @if (IsTransferNature(_form.Nature) && _canOffer)
+            {
+                <MudItem xs="12">
+                    <MudSelect @bind-Value="_form.DestinationTenantId" Label="Destination Agency (linked transfer)"
+                               Variant="Variant.Outlined" T="string?" Clearable="true"
+                               Dense="true" Margin="Margin.Dense"
+                               HelperText="Optional. Pick an agency on AMIS to send them a linked transfer offer they can accept — carrying the book values across, with no re-keying. Leave blank for the manual paper handshake.">
+                        @foreach (var d in _destinations)
+                        {
+                            <MudSelectItem T="string?" Value="@d.TenantId">@d.AgencyName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            }
+
             <!-- Office address (full width) -->
             <MudItem xs="12">
                 <MudTextField @bind-Value="_form.IssuedToOfficeAddress" Label="Issued To — Office/Address" Variant="Variant.Outlined"
@@ -162,6 +180,10 @@
     private readonly CreateFormModel _form = new();
     private ArPPEIRFormSeriesDto? _activeSeries;
 
+    private IReadOnlyList<TransferDestinationDto> _destinations = [];
+
+    private bool _canOffer => UserProfileState.Permissions.Contains(AssetRegisterPermissions.Transfers.Offer);
+
     // The PPEIR number comes from the active pre-numbered accountable form series — shown
     // here before saving. When no active series exists the warning alert above guides setup.
     private string NextPpeirNumber =>
@@ -173,11 +195,19 @@
     {
         try { _activeSeries = await Client.GetActiveSeriesAsync(); }
         catch { /* non-critical — the warning alert covers the no-series case */ }
+
+        // Only fetched for users who may actually offer a transfer; the endpoint is gated the same way.
+        if (_canOffer)
+        {
+            try { _destinations = await TransferClient.GetDestinationsAsync(); }
+            catch { /* non-critical — the picker stays empty and the manual handshake still works */ }
+        }
     }
 
     private sealed class CreateFormModel
     {
         public IssuanceNature Nature { get; set; }
+        public string? DestinationTenantId { get; set; }
         public string FundCluster { get; set; } = "";
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public string IssuedToName { get; set; } = "";
@@ -186,6 +216,9 @@
         public string? Remarks { get; set; }
         public List<AssetRegistrySummaryDto> SelectedAssets { get; set; } = [];
     }
+
+    private static bool IsTransferNature(IssuanceNature nature) =>
+        nature is IssuanceNature.TransferCO or IssuanceNature.TransferRO or IssuanceNature.TransferPO;
 
     private void Cancel() => Dialog.Cancel();
 
@@ -251,7 +284,9 @@
                 new ArEmployeeRefDto(Guid.Empty, _form.IssuedToName.Trim(), _form.IssuedToDesignation),
                 _form.IssuedToOfficeAddress.Trim(),
                 _form.Remarks?.Trim(),
-                _form.SelectedAssets.Select(a => a.Id).ToList());
+                _form.SelectedAssets.Select(a => a.Id).ToList(),
+                // Only meaningful on a Transfer* nature; the server rejects it otherwise.
+                IsTransferNature(_form.Nature) ? _form.DestinationTenantId : null);
 
             var created = await Client.CreateAsync(req);
             Snackbar.Add($"PPEIR {created.ReportNo} created. Assets transferred out.", Severity.Success);

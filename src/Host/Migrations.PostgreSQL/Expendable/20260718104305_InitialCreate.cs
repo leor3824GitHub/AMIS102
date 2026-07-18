@@ -263,7 +263,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     QuantityReceived = table.Column<int>(type: "integer", nullable: false),
                     QuantityConsumed = table.Column<int>(type: "integer", nullable: false),
                     ReceivedOnUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -290,7 +289,6 @@ namespace AMIS.Playground.Migrations.PostgreSQL.Expendable
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     QuantityAvailable = table.Column<int>(type: "integer", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     SourceReference = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),

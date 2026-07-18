@@ -86,6 +86,12 @@ public class AssetRegisterModule : IModule
         new("View Signed Document Copies",   "View",   "AssetRegister.SignedDocuments", IsBasic: true),
         new("Upload Signed Document Copies", "Upload", "AssetRegister.SignedDocuments"),
 
+        // Inter-agency property transfers (PPEIR out → PPERR in, linked by a transfer offer).
+        new("View Transfer Offers",   "View",   "AssetRegister.Transfers", IsBasic: true),
+        new("Offer Transfers",        "Offer",  "AssetRegister.Transfers"),
+        new("Accept Transfer Offers", "Accept", "AssetRegister.Transfers"),
+        new("Reject Transfer Offers", "Reject", "AssetRegister.Transfers"),
+
         new("View Locations",   "View",   "AssetRegister.Locations", IsBasic: true),
         new("Create Locations", "Create", "AssetRegister.Locations"),
         new("Update Locations", "Update", "AssetRegister.Locations"),
@@ -123,6 +129,10 @@ public class AssetRegisterModule : IModule
         // PPE depreciation engine (COA GAM straight-line) + monthly recurring job.
         services.AddScoped<DepreciationPostingService>();
         services.AddScoped<DepreciationRecurringJob>();
+
+        // Inter-agency transfers: the only cross-tenant seam in this module, plus the job that drains it.
+        services.AddScoped<AssetTransferProjector>();
+        services.AddScoped<AssetTransferProjectionJob>();
 
         // Weekly ICS/PAR renewal digest — pure read model, drops a "renewal due" notification per accountable person.
         services.AddScoped<AccountabilityRenewalDigestJob>();
@@ -279,6 +289,14 @@ public class AssetRegisterModule : IModule
         Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.Map(ppErrSeries);
         Features.v1.Receiving.ActivatePPERRFormSeries.ActivatePPERRFormSeriesEndpoint.MapDeactivate(ppErrSeries);
 
+        // Inter-agency transfer offers — the receiving side of a linked PPEIR → PPERR handshake
+        var transfers = moduleGroup.MapGroup("/transfers");
+        Features.v1.Transfers.SearchTransferOffers.SearchTransferOffersEndpoint.Map(transfers);
+        Features.v1.Transfers.GetTransferDestinations.GetTransferDestinationsEndpoint.Map(transfers);
+        Features.v1.Transfers.GetTransferOffer.GetTransferOfferEndpoint.Map(transfers);
+        Features.v1.Transfers.AcceptTransferOffer.AcceptTransferOfferEndpoint.Map(transfers);
+        Features.v1.Transfers.RejectTransferOffer.RejectTransferOfferEndpoint.Map(transfers);
+
         // Returned property receipts (RRSP / RRP)
         var returnedProperty = moduleGroup.MapGroup("/returned-property");
         Features.v1.ReturnedProperty.ReturnedPropertyEndpoints.MapReturnedPropertyEndpoints(returnedProperty);
@@ -335,6 +353,15 @@ public class AssetRegisterModule : IModule
                 "asset-register-monthly-depreciation",
                 Job.FromExpression<DepreciationRecurringJob>(j => j.RunAsync(CancellationToken.None)),
                 Cron.Monthly(),
+                new RecurringJobOptions());
+
+            // Every 15 minutes: deliver pending inter-agency transfer offers into receiving tenants and
+            // carry accept/reject responses back. The offer row is its own outbox, so this is the retry
+            // loop that makes the two-tenant dual write at-least-once.
+            jobManager.AddOrUpdate(
+                "asset-register-transfer-projection",
+                Job.FromExpression<AssetTransferProjectionJob>(j => j.RunAsync(CancellationToken.None)),
+                "*/15 * * * *",
                 new RecurringJobOptions());
 
             // Weekly: notify each accountable person of their ICS/PAR due for renewal within 60 days (overdue included).

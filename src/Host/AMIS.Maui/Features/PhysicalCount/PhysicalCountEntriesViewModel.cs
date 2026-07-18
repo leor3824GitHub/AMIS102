@@ -43,7 +43,7 @@ public sealed partial class PhysicalCountEntriesViewModel : ObservableObject
 
     [ObservableProperty] public partial ObservableCollection<EntryGroup> FilteredEntries { get; set; } = [];
 
-    public string[] FilterOptions => ["All", "Found", "Missing", "@Station", "Queued"];
+    public string[] FilterOptions { get; } = ["All", "Found", "Missing", "@Station", "Queued"];
 
     // Page title reflects the active breakdown so a tapped-through view reads "Found", "Missing", etc.
     public string HeaderTitle => SelectedFilter switch

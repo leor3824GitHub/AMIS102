@@ -6,7 +6,7 @@ namespace AMIS.Modules.Expendable.Domain.Inventory;
 public class EmployeeStockBatch
 {
     public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
+    // The product is implicit — the owning EmployeeInventory is already scoped to one employee + product.
     public int QuantityReceived { get; set; }
     public int QuantityConsumed { get; set; }
     public int QuantityAvailable => QuantityReceived - QuantityConsumed;
@@ -18,10 +18,9 @@ public class EmployeeStockBatch
     {
     }
 
-    public EmployeeStockBatch(Guid productId, int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
+    public EmployeeStockBatch(int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
     {
         Id = Guid.NewGuid();
-        ProductId = productId;
         QuantityReceived = quantity;
         QuantityConsumed = 0;
         ReceivedOnUtc = DateTimeOffset.UtcNow;
@@ -78,7 +77,7 @@ public class EmployeeInventory : AggregateRoot<Guid>, IHasTenant, IAuditableEnti
     /// <summary>Receive inventory (adds a new batch)</summary>
     public void ReceiveInventory(int quantity, string? batchNumber = null, DateTimeOffset? expiryDate = null)
     {
-        var batch = new EmployeeStockBatch(ProductId, quantity, batchNumber, expiryDate);
+        var batch = new EmployeeStockBatch(quantity, batchNumber, expiryDate);
         _batches.Add(batch);
         TotalQuantityReceived += quantity;
         LastModifiedOnUtc = DateTimeOffset.UtcNow;

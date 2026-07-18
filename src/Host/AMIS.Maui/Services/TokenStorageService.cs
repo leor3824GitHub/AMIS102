@@ -93,7 +93,12 @@ public sealed class TokenStorageService : ITokenStorageService
             if (File.Exists(path))
                 File.Delete(path);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Best-effort cleanup: the token file is already unreadable/absent from the caller's
+            // point of view, and a failure to delete it must never block sign-out.
+            System.Diagnostics.Debug.WriteLine($"[TokenStorage] Could not delete '{key}': {ex}");
+        }
     }
 #endif
 }

@@ -21,7 +21,7 @@ public partial class PhysicalCountSessionListPage : ContentPage
 
     private void OnSessionSelected(object sender, SelectionChangedEventArgs e)
     {
-        if (e.CurrentSelection.FirstOrDefault() is PhysicalCountSessionSummaryDto session)
+        if (e.CurrentSelection.Count > 0 && e.CurrentSelection[0] is PhysicalCountSessionSummaryDto session)
         {
             ((CollectionView)sender).SelectedItem = null;
             _ = _vm.OpenSessionAsync(session);
