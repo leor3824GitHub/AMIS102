@@ -50,6 +50,7 @@
                 <HeaderContent>
                     <MudTh Style="cursor:pointer" @onclick='() => SetSort("LocationCode")'>Loc. Code @SortIcon("LocationCode")</MudTh>
                     <MudTh Style="cursor:pointer" @onclick='() => SetSort("Name")'>Name @SortIcon("Name")</MudTh>
+                    <MudTh Style="cursor:pointer" @onclick='() => SetSort("Address")'>Address @SortIcon("Address")</MudTh>
                     <MudTh Style="cursor:pointer" @onclick='() => SetSort("RegProvCode")'>Reg./Prov. @SortIcon("RegProvCode")</MudTh>
                     <MudTh>Status</MudTh>
                     <MudTh>Actions</MudTh>
@@ -63,6 +64,18 @@
                         }
                     </MudTd>
                     <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Address">
+                        @if (!string.IsNullOrWhiteSpace(context.Address))
+                        {
+                            <MudTooltip Text="@context.Address">
+                                <MudText Typo="Typo.body2" Class="text-truncate d-inline-block" Style="max-width: 260px; vertical-align: middle;">@context.Address</MudText>
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Default">—</MudText>
+                        }
+                    </MudTd>
                     <MudTd DataLabel="Reg./Prov.">
                         @if (!string.IsNullOrWhiteSpace(context.RegProvCode))
                         {
@@ -72,7 +85,7 @@
                     </MudTd>
                     <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip></MudTd>
                     <MudTd DataLabel="Actions">
-                        @if (IsOwnedByMe(context.OfficeCode) && (_canUpdate || _canDelete))
+                        @if (_canUpdate || _canDelete)
                         {
                             <MudStack Row="true" Spacing="1">
                                 @if (_canUpdate)
@@ -93,7 +106,7 @@
                         }
                         else
                         {
-                            <MudTooltip Text="@(string.IsNullOrWhiteSpace(context.OfficeCode) ? "Shared record — read only" : "Owned by another office — read only")">
+                            <MudTooltip Text="You don't have permission to modify offices">
                                 <MudIconButton Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Color="Color.Default" Disabled="true" />
                             </MudTooltip>
                         }
@@ -307,6 +320,8 @@
             ("Name", false)        => filtered.OrderByDescending(x => x.Name).ThenBy(x => x.Code).ToList(),
             ("LocationCode", true) => filtered.OrderBy(x => x.LocationCode).ThenBy(x => x.Name).ToList(),
             ("LocationCode", false)=> filtered.OrderByDescending(x => x.LocationCode).ThenBy(x => x.Name).ToList(),
+            ("Address", true)      => filtered.OrderBy(x => x.Address).ThenBy(x => x.Name).ToList(),
+            ("Address", false)     => filtered.OrderByDescending(x => x.Address).ThenBy(x => x.Name).ToList(),
             ("RegProvCode", true)  => filtered.OrderBy(x => x.RegProvCode).ThenBy(x => x.Name).ToList(),
             ("RegProvCode", false) => filtered.OrderByDescending(x => x.RegProvCode).ThenBy(x => x.Name).ToList(),
             _                     => filtered.OrderBy(x => x.Name).ToList()
