@@ -101,6 +101,9 @@ namespace AMIS.Blazor.ApiClient
     {
         [System.Text.Json.Serialization.JsonPropertyName("ownerOfficeCode")]
         public string? OwnerOfficeCode { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("officeAddress")]
+        public string? OfficeAddress { get; set; }
     }
 
     public partial class CreateEmployeeCommand

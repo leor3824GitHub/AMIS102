@@ -343,6 +343,7 @@ internal static class MasterDataLookupQueryBuilder
                 employee.OfficeId,
                 employee.Office != null ? employee.Office.Code : string.Empty,
                 employee.Office != null ? employee.Office.Name : string.Empty,
+                employee.Office != null ? employee.Office.Address : null,
                 employee.DepartmentId,
                 employee.Department != null ? employee.Department.Code : string.Empty,
                 employee.Department != null ? employee.Department.Name : string.Empty,

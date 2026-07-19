@@ -37,7 +37,7 @@
                               CoerceText="true"
                               CoerceValue="false"
                               MinCharacters="1"
-                              HelperText="Type to search offices — selecting one auto-fills the office code" />
+                              HelperText="Type to search offices — selecting one auto-fills the address and office code" />
 
                 <MudTextField @bind-Value="_form.ShortName"
                               Label="Short Name / Acronym"
@@ -55,7 +55,8 @@
                               Lines="2"
                               CharacterCounter="true"
                               MaxLength="400"
-                              Placeholder="e.g. NFA Complex, Visayas Avenue, Diliman, Quezon City" />
+                              Placeholder="e.g. NFA Complex, Visayas Avenue, Diliman, Quezon City"
+                              HelperText="Auto-filled from office selection — edit if the office record is out of date" />
 
                 <MudTextField @bind-Value="_form.LogoUrl"
                               Label="Logo URL"
@@ -377,11 +378,13 @@
     private void OnOfficeNameSelected()
     {
         if (string.IsNullOrWhiteSpace(_form.Name)) return;
-        if (_officesByName.TryGetValue(_form.Name, out var office) &&
-            !string.IsNullOrWhiteSpace(office.RegProvCode))
-        {
+        if (!_officesByName.TryGetValue(_form.Name, out var office)) return;
+
+        if (!string.IsNullOrWhiteSpace(office.RegProvCode))
             _form.AnnexECode = office.RegProvCode;
-        }
+
+        if (!string.IsNullOrWhiteSpace(office.Address))
+            _form.Address = office.Address;
     }
 
     private async Task SaveAsync()

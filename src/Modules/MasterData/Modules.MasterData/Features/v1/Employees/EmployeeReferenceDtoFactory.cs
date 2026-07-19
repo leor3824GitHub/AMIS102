@@ -24,6 +24,7 @@ internal static class EmployeeReferenceDtoFactory
             employee.OfficeId,
             employee.Office.Code,
             employee.Office.Name,
+            employee.Office.Address,
             employee.DepartmentId,
             employee.Department.Code,
             employee.Department.Name,

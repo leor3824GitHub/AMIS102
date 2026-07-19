@@ -13,6 +13,9 @@ public sealed record EmployeeReferenceDto(
     Guid OfficeId,
     string OfficeCode,
     string OfficeName,
+    // The office's street address, carried here so callers that print an "office / address" block
+    // (issuance reports, transfer forms) need no second lookup. Null when the office has none on file.
+    string? OfficeAddress,
     Guid DepartmentId,
     string DepartmentCode,
     string DepartmentName,

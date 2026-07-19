@@ -32,11 +32,14 @@
                              CoerceText="true" CoerceValue="true" Required="true" Placeholder="Search position..."
                              Clearable="true" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
 
-            <MudAutocomplete T="UserDto" Label="Linked Login Account" @bind-Value="_form.IdentityUser"
+            <MudAutocomplete T="UserDto" Label="Linked Login Account"
+                             Value="_form.IdentityUser" ValueChanged="OnIdentityUserChanged"
                              SearchFunc="@SearchIdentityUsers"
                              ToStringFunc="@(u => u == null ? string.Empty : $"{u.FirstName} {u.LastName} ({u.Email})")"
                              CoerceValue="true" Clearable="true" Placeholder="Search by name or email..."
-                             HelperText="@(_form.IdentityUser != null ? $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}" : "No account linked")"
+                             HelperText="@LinkedAccountHelperText"
+                             Error="@(_linkedAccountState is LinkedAccountState.Orphaned or LinkedAccountState.Unresolved)"
+                             ErrorText="@LinkedAccountHelperText"
                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
 
             <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
@@ -69,6 +72,36 @@
 
     private bool _isEdit => Existing != null;
 
+    private enum LinkedAccountState
+    {
+        None,        // nothing linked, or a link the user picked in this dialog
+        Resolved,    // stored id resolved to a real login account
+        Orphaned,    // stored id returned 404 — the account was deleted
+        Unresolved   // lookup failed for another reason; the link is intact but unreadable
+    }
+
+    private LinkedAccountState _linkedAccountState = LinkedAccountState.None;
+
+    private string LinkedAccountHelperText => _linkedAccountState switch
+    {
+        LinkedAccountState.Orphaned =>
+            "This login account no longer exists. Pick another account, or clear the field to unlink.",
+        LinkedAccountState.Unresolved =>
+            "Could not read the linked account right now. Leave it as-is to keep the link.",
+        _ when _form.IdentityUser != null =>
+            $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}".TrimEnd(),
+        _ => "No account linked"
+    };
+
+    // Stands in for an account we couldn't read, so the dangling id survives a save untouched.
+    private static UserDto PlaceholderUser(string identityUserId) => new()
+    {
+        Id = identityUserId,
+        FirstName = "Unknown",
+        LastName = "account",
+        Email = identityUserId.Length >= 8 ? identityUserId[..8] + "…" : identityUserId
+    };
+
     public class EmployeeForm
     {
         public string EmployeeNumber { get; set; } = string.Empty;
@@ -98,8 +131,27 @@
             UserDto? linkedUser = null;
             if (!string.IsNullOrWhiteSpace(Existing.IdentityUserId) && Guid.TryParse(Existing.IdentityUserId, out var identityGuid))
             {
-                try { linkedUser = await IdentityClient.UsersGetAsync(identityGuid); }
-                catch (Exception ex) { Snackbar.Add($"Could not load linked account: {ex.Message}", Severity.Warning); }
+                try
+                {
+                    linkedUser = await IdentityClient.UsersGetAsync(identityGuid);
+                    _linkedAccountState = LinkedAccountState.Resolved;
+                }
+                catch (ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // The login account was deleted after it was linked. Keep the dangling id bound to
+                    // a placeholder so saving doesn't silently unlink it — the user clears the field to
+                    // unlink deliberately, or picks a replacement account.
+                    linkedUser = PlaceholderUser(Existing.IdentityUserId);
+                    _linkedAccountState = LinkedAccountState.Orphaned;
+                }
+                catch (Exception ex)
+                {
+                    // Transient failure (network, 403). Same placeholder, so an unrelated save can't
+                    // wipe a link we simply failed to read.
+                    linkedUser = PlaceholderUser(Existing.IdentityUserId);
+                    _linkedAccountState = LinkedAccountState.Unresolved;
+                    Snackbar.Add($"Could not load linked account: {ex.Message}", Severity.Warning);
+                }
             }
 
             _form = new EmployeeForm
@@ -134,6 +186,13 @@
     {
         if (string.IsNullOrEmpty(value)) return Positions;
         return Positions.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    // Any deliberate pick or clear replaces whatever we failed to resolve, so the warning goes away.
+    private void OnIdentityUserChanged(UserDto? user)
+    {
+        _form.IdentityUser = user;
+        _linkedAccountState = user is null ? LinkedAccountState.None : LinkedAccountState.Resolved;
     }
 
     private async Task<IEnumerable<UserDto>> SearchIdentityUsers(string value, CancellationToken token)

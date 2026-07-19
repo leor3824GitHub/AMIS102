@@ -354,7 +354,7 @@ public sealed class AssetTransferProjectionTests
             {
                 [custodianId] = new(
                     custodianId, "EMP-CUST", CustodianLogin, "Property", "Custodian", null,
-                    Guid.NewGuid(), "OFF", "Office", Guid.NewGuid(), "DEP", "Dept",
+                    Guid.NewGuid(), "OFF", "Office", "Office Address", Guid.NewGuid(), "DEP", "Dept",
                     Guid.NewGuid(), "POS", "Custodian", null, null, null, true)
             });
 

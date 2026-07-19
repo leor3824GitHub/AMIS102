@@ -103,7 +103,7 @@ public sealed class GetMyPendingReturnedPropertyInspectionsTests
 
     private static EmployeeReferenceDto Employee(Guid id) => new(
         id, "EMP-1", null, "Test", "User", null,
-        Guid.NewGuid(), "OFF", "Office", Guid.NewGuid(), "DEP", "Dept",
+        Guid.NewGuid(), "OFF", "Office", "Office Address", Guid.NewGuid(), "DEP", "Dept",
         Guid.NewGuid(), "POS", "Position", null, null, null, true);
 
     private static AssetRegisterDbContext CreateDbContext()
