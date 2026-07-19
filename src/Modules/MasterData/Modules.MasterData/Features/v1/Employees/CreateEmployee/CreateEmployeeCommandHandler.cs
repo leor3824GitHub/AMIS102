@@ -62,7 +62,8 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             command.IdentityUserId,
             command.WorkEmail,
             command.DefaultUnitOfMeasureId,
-            command.IsActive);
+            command.IsActive,
+            await ResolveOwnerOfficeCodeAsync(command.OfficeCode, cancellationToken).ConfigureAwait(false));
 
         employee.CreatedBy = _currentUser.GetUserId().ToString();
 
@@ -76,6 +77,32 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             .ConfigureAwait(false);
 
         return result.ToReferenceDto();
+    }
+
+    /// <summary>
+    /// Resolves the owner-agency stamp for a new employee row: the caller's value when supplied,
+    /// otherwise this tenant's own agency code from the Organization Profile.
+    /// <para>
+    /// Server-stamped rather than trusted from the client so rows are owned correctly by construction
+    /// instead of depending on data entry. A null result means "shared" — under the convention shared by
+    /// the other MasterData reference tables, an unstamped row is editable by any agency.
+    /// </para>
+    /// </summary>
+    private async Task<string?> ResolveOwnerOfficeCodeAsync(string? requestedOfficeCode, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(requestedOfficeCode))
+        {
+            return requestedOfficeCode.Trim();
+        }
+
+        // OrganizationProfile is .IsMultiTenant(), so this reads the current tenant's profile only.
+        var annexECode = await _dbContext.OrganizationProfiles
+            .AsNoTracking()
+            .Select(x => x.AnnexECode)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return string.IsNullOrWhiteSpace(annexECode) ? null : annexECode.Trim();
     }
 
     private async Task EnsureReferencesExist(

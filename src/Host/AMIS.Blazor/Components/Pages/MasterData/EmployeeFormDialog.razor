@@ -3,6 +3,7 @@
 @inject IMaster_dataClient MasterDataClient
 @inject IIdentityClient IdentityClient
 @inject IUsersClient UsersClient
+@inject IOrganizationProfileState OrgProfileState
 
 <MudDialog>
     <DialogContent>
@@ -37,6 +38,12 @@
                              CoerceValue="true" Clearable="true" Placeholder="Search by name or email..."
                              HelperText="@(_form.IdentityUser != null ? $"Linked: {_form.IdentityUser.FirstName} {_form.IdentityUser.LastName}" : "No account linked")"
                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+
+            <MudTextField @bind-Value="_form.OfficeCode" Label="Owner Office Code"
+                          Placeholder="e.g. 100, NDO (leave blank for shared)" MaxLength="8"
+                          Disabled="@(_isEdit)"
+                          HelperText="@(_isEdit ? "Cannot be changed after creation" : "Defaults to your agency. Blank means shared — any agency may edit.")"
+                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
 
             <MudCheckBox @bind-Value="_form.IsActive" Label="Active" />
         </MudStack>
@@ -73,11 +80,19 @@
         public OfficeReferenceDto? Office { get; set; }
         public DepartmentReferenceDto? Department { get; set; }
         public PositionReferenceDto? Position { get; set; }
+        public string? OfficeCode { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
     protected override async Task OnInitializedAsync()
     {
+        if (Existing == null)
+        {
+            // Show which agency will own the new row. The server stamps this same value when the
+            // field is left blank, so this is a visible default rather than the source of truth.
+            _form.OfficeCode = OrgProfileState.Profile?.AnnexECode;
+        }
+
         if (Existing != null)
         {
             UserDto? linkedUser = null;
@@ -95,6 +110,7 @@
                 WorkEmail = Existing.WorkEmail,
                 IdentityUser = linkedUser,
                 IsActive = Existing.IsActive,
+                OfficeCode = Existing.OwnerOfficeCode,
                 Office = Offices.FirstOrDefault(o => o.Id == Existing.OfficeId),
                 Department = Departments.FirstOrDefault(d => d.Id == Existing.DepartmentId),
                 Position = Positions.FirstOrDefault(p => p.Id == Existing.PositionId)
@@ -192,7 +208,9 @@
                     OfficeId = _form.Office.Id,
                     DepartmentId = _form.Department.Id,
                     PositionId = _form.Position.Id,
-                    IsActive = _form.IsActive
+                    IsActive = _form.IsActive,
+                    // Blank is meaningful: it tells the server to stamp this tenant's own agency code.
+                    OfficeCode = string.IsNullOrWhiteSpace(_form.OfficeCode) ? null : _form.OfficeCode.Trim()
                 };
                 await MasterDataClient.EmployeesPostAsync(createCmd);
                 Snackbar.Add("Employee created", Severity.Success);

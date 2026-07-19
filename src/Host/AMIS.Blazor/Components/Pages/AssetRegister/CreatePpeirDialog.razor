@@ -5,6 +5,7 @@
 @using IssuanceNature = AMIS.Modules.AssetRegister.Contracts.v1.IssuanceNature
 @inject IArIssuanceReportClient Client
 @inject IArTransferOfferClient TransferClient
+@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
@@ -92,8 +93,29 @@
                 }
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudTextField @bind-Value="_form.IssuedToName" Label="Issued To (Name)" Variant="Variant.Outlined"
-                              MaxLength="200" Required="true" Dense="true" Margin="Margin.Dense" />
+                @* Employee records are deliberately shared across tenants, so the recipient at the
+                   destination agency is searchable here. Free text is still accepted — a transfer to an
+                   agency that is not on AMIS has no employee row to pick. *@
+                <MudAutocomplete T="EmployeeReferenceDto"
+                                 Value="_form.IssuedToEmployee"
+                                 ValueChanged="OnIssuedToEmployeeSelected"
+                                 Text="@_form.IssuedToName"
+                                 TextChanged="OnIssuedToNameChanged"
+                                 SearchFunc="SearchEmployeesAsync"
+                                 ToStringFunc="FormatEmployee"
+                                 Label="Issued To (Name)" Variant="Variant.Outlined"
+                                 Required="true" Clearable="true"
+                                 CoerceValue="false" CoerceText="false"
+                                 ResetValueOnEmptyText="false" MinCharacters="0" MaxLength="200"
+                                 Dense="true" Margin="Margin.Dense"
+                                 HelperText="Search an employee, or type any name for an agency not on AMIS">
+                    <ItemTemplate Context="e">
+                        <MudText Typo="Typo.body2">@FormatEmployee(e)</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @e.EmployeeNumber@(string.IsNullOrWhiteSpace(e.PositionName) ? "" : $" — {e.PositionName}")@(string.IsNullOrWhiteSpace(e.OfficeName) ? "" : $" — {e.OfficeName}")
+                        </MudText>
+                    </ItemTemplate>
+                </MudAutocomplete>
             </MudItem>
             <MudItem xs="12" md="6">
                 <MudTextField @bind-Value="_form.IssuedToDesignation" Label="Issued To (Designation)" Variant="Variant.Outlined"
@@ -212,9 +234,56 @@
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public string IssuedToName { get; set; } = "";
         public string? IssuedToDesignation { get; set; }
+        // Set only when the name was picked from the employee lookup. Null for a hand-typed
+        // recipient, which is why the printed name — not this — is the authoritative field.
+        public EmployeeReferenceDto? IssuedToEmployee { get; set; }
         public string IssuedToOfficeAddress { get; set; } = "";
         public string? Remarks { get; set; }
         public List<AssetRegistrySummaryDto> SelectedAssets { get; set; } = [];
+    }
+
+    private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.EmployeesGetAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                cancellationToken: ct);
+            return result?.Items ?? [];
+        }
+        catch { return []; }
+    }
+
+    // The printed name only — the employee number and position are shown in the dropdown's
+    // ItemTemplate instead, so that picking someone never drags an ID into the printed form.
+    private static string FormatEmployee(EmployeeReferenceDto? e) =>
+        e is null ? "" : $"{e.FirstName} {e.LastName}".Trim();
+
+    private void OnIssuedToEmployeeSelected(EmployeeReferenceDto? employee)
+    {
+        _form.IssuedToEmployee = employee;
+        if (employee is null)
+            return;
+
+        _form.IssuedToName = FormatEmployee(employee);
+        if (!string.IsNullOrWhiteSpace(employee.PositionName))
+            _form.IssuedToDesignation = employee.PositionName;
+    }
+
+    private void OnIssuedToNameChanged(string? text)
+    {
+        _form.IssuedToName = text ?? "";
+
+        // Editing the name after picking someone breaks the link: the snapshot must never claim an
+        // employee id whose name is not the one being printed on the form.
+        if (_form.IssuedToEmployee is not null &&
+            !string.Equals(_form.IssuedToName, FormatEmployee(_form.IssuedToEmployee), StringComparison.Ordinal))
+        {
+            _form.IssuedToEmployee = null;
+        }
     }
 
     private static bool IsTransferNature(IssuanceNature nature) =>
@@ -281,7 +350,12 @@
                     UserProfileState.EmployeeId,
                     UserProfileState.EmployeeFullName.Trim(),
                     string.IsNullOrWhiteSpace(UserProfileState.EmployeePositionName) ? null : UserProfileState.EmployeePositionName.Trim()),
-                new ArEmployeeRefDto(Guid.Empty, _form.IssuedToName.Trim(), _form.IssuedToDesignation),
+                // A hand-typed recipient has no employee row, so the id stays empty — the printed
+                // name is what the form is signed against either way.
+                new ArEmployeeRefDto(
+                    _form.IssuedToEmployee?.Id ?? Guid.Empty,
+                    _form.IssuedToName.Trim(),
+                    _form.IssuedToDesignation),
                 _form.IssuedToOfficeAddress.Trim(),
                 _form.Remarks?.Trim(),
                 _form.SelectedAssets.Select(a => a.Id).ToList(),

@@ -84,7 +84,7 @@
                                          Color="@(context.IsActive ? Color.Success : Color.Default)">@(context.IsActive ? "Active" : "Inactive")</MudChip>
                             </MudTd>
                             <MudTd DataLabel="Actions">
-                                @if (IsOwnedByMe(context.OfficeCode) && (_canUpdate || _canDelete))
+                                @if (IsEditable(context.OwnerOfficeCode) && (_canUpdate || _canDelete))
                                 {
                                     <MudStack Row="true" Spacing="1">
                                         @if (_canUpdate)
@@ -293,6 +293,12 @@
     private bool IsOwnedByMe(string? officeCode) =>
         !string.IsNullOrWhiteSpace(_myOfficeCode) &&
         string.Equals(officeCode, _myOfficeCode, StringComparison.OrdinalIgnoreCase);
+
+    // Editable when the record is shared (blank OfficeCode) or owned by my office.
+    // The blank case matters here: employee rows created before ownership was stamped are all
+    // unowned, and without it every one of them would become uneditable by every agency.
+    private bool IsEditable(string? officeCode) =>
+        string.IsNullOrWhiteSpace(officeCode) || IsOwnedByMe(officeCode);
 
     private void ApplyLocalFilters()
     {
