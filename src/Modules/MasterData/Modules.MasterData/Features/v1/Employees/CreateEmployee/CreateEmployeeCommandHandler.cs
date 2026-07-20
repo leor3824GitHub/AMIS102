@@ -20,7 +20,7 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
 
     public async ValueTask<EmployeeReferenceDto> Handle(CreateEmployeeCommand command, CancellationToken cancellationToken)
     {
-        await EnsureReferencesExist(command.OfficeId, command.DepartmentId, command.PositionId, command.DefaultUnitOfMeasureId, cancellationToken)
+        await EnsureReferencesExist(command.OfficeId, command.DepartmentId, command.PositionId, cancellationToken)
             .ConfigureAwait(false);
 
         var employeeNumberInUse = await _dbContext.Employees
@@ -61,7 +61,6 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             command.PositionId,
             command.IdentityUserId,
             command.WorkEmail,
-            command.DefaultUnitOfMeasureId,
             command.IsActive,
             await ResolveOwnerOfficeCodeAsync(command.OfficeCode, cancellationToken).ConfigureAwait(false));
 
@@ -109,7 +108,6 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
         Guid officeId,
         Guid departmentId,
         Guid positionId,
-        Guid? defaultUnitOfMeasureId,
         CancellationToken cancellationToken)
     {
         if (!await _dbContext.Offices.AnyAsync(x => x.Id == officeId, cancellationToken).ConfigureAwait(false))
@@ -133,15 +131,6 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             throw new FluentValidation.ValidationException(
             [
                 new FluentValidation.Results.ValidationFailure(nameof(CreateEmployeeCommand.PositionId), "Position not found.")
-            ]);
-        }
-
-        if (defaultUnitOfMeasureId.HasValue
-            && !await _dbContext.UnitOfMeasures.AnyAsync(x => x.Id == defaultUnitOfMeasureId.Value, cancellationToken).ConfigureAwait(false))
-        {
-            throw new FluentValidation.ValidationException(
-            [
-                new FluentValidation.Results.ValidationFailure(nameof(CreateEmployeeCommand.DefaultUnitOfMeasureId), "Unit of measure not found.")
             ]);
         }
     }

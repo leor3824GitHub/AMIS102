@@ -115,7 +115,11 @@ public sealed class AuthenticatedHttpHandler(
         if (string.IsNullOrEmpty(refreshToken))
             return new RefreshOutcome(null, Rejected: true);
 
-        using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/identity/token/refresh");
+        // Absolute URI is required: this goes through base.SendAsync (the inner handler) rather than
+        // the HttpClient, and BaseAddress is an HttpClient concept — a relative URI here throws
+        // InvalidOperationException instead of being resolved.
+        var refreshUri = new UriBuilder(options.BaseUrl) { Path = "api/v1/identity/token/refresh" }.Uri;
+        using var refreshRequest = new HttpRequestMessage(HttpMethod.Post, refreshUri);
         refreshRequest.Headers.Add("tenant", options.TenantId);
         refreshRequest.Headers.Add("X-Client-Id", GetClientId());
 

@@ -131,7 +131,7 @@ public sealed class IssueJobOrderNotificationTests
     private static EmployeeReferenceDto Inspector(Guid id, string? identityUserId) => new(
         id, "EMP-INSP", identityUserId, "Ima", "Inspector", null,
         Guid.NewGuid(), "OFF", "Office", "Office Address", Guid.NewGuid(), "DEP", "Dept",
-        Guid.NewGuid(), "POS", "Inspector", null, null, null, true);
+        Guid.NewGuid(), "POS", "Inspector", true);
 
     private static async Task<JobOrder> SeedPendingApprovalJobOrderAsync(
         AMIS.Modules.ProcurementAcquisition.Data.ProcurementDbContext db, Guid inspectorId)

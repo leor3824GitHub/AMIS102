@@ -13379,7 +13379,7 @@ namespace AMIS.Blazor.ApiClient
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<PagedResponseOfEmployeeReferenceDto> EmployeesGetAsync(string keyword = null, string identityUserId = null, System.Guid? officeId = null, System.Guid? departmentId = null, System.Guid? positionId = null, bool? isActive = null, int? pageNumber = null, int? pageSize = null, string sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<PagedResponseOfEmployeeReferenceDto> EmployeesGetAsync(string keyword = null, string identityUserId = null, System.Guid? officeId = null, System.Guid? departmentId = null, System.Guid? positionId = null, bool? isActive = null, int? pageNumber = null, int? pageSize = null, string sort = null, string ownerOfficeCode = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -13461,7 +13461,7 @@ namespace AMIS.Blazor.ApiClient
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PagedResponseOfEmployeeReferenceDto> EmployeesGetAsync(string keyword = null, string identityUserId = null, System.Guid? officeId = null, System.Guid? departmentId = null, System.Guid? positionId = null, bool? isActive = null, int? pageNumber = null, int? pageSize = null, string sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<PagedResponseOfEmployeeReferenceDto> EmployeesGetAsync(string keyword = null, string identityUserId = null, System.Guid? officeId = null, System.Guid? departmentId = null, System.Guid? positionId = null, bool? isActive = null, int? pageNumber = null, int? pageSize = null, string sort = null, string ownerOfficeCode = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -13512,6 +13512,10 @@ namespace AMIS.Blazor.ApiClient
                     if (sort != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("Sort")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(sort, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (ownerOfficeCode != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("OwnerOfficeCode")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(ownerOfficeCode, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     urlBuilder_.Length--;
 
@@ -18687,9 +18691,6 @@ namespace AMIS.Blazor.ApiClient
         [System.Text.Json.Serialization.JsonPropertyName("workEmail")]
         public string WorkEmail { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("defaultUnitOfMeasureId")]
-        public System.Guid? DefaultUnitOfMeasureId { get; set; }
-
         [System.Text.Json.Serialization.JsonPropertyName("isActive")]
         public bool IsActive { get; set; } = true;
 
@@ -19153,15 +19154,6 @@ namespace AMIS.Blazor.ApiClient
         [System.Text.Json.Serialization.JsonPropertyName("positionName")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string PositionName { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("defaultUnitOfMeasureId")]
-        public System.Guid? DefaultUnitOfMeasureId { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("defaultUnitOfMeasureCode")]
-        public string DefaultUnitOfMeasureCode { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("defaultUnitOfMeasureName")]
-        public string DefaultUnitOfMeasureName { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("isActive")]
         public bool IsActive { get; set; }
@@ -22016,9 +22008,6 @@ namespace AMIS.Blazor.ApiClient
 
         [System.Text.Json.Serialization.JsonPropertyName("workEmail")]
         public string WorkEmail { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("defaultUnitOfMeasureId")]
-        public System.Guid? DefaultUnitOfMeasureId { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("isActive")]
         public bool IsActive { get; set; }

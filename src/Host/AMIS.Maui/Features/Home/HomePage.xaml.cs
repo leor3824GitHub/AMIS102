@@ -21,7 +21,19 @@ public partial class HomePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _vm.LoadAsync();
+
+        // Because this override is async void, any exception that escapes is rethrown on the UI
+        // thread and hard-crashes the app before a window is ever shown on Windows. LoadAsync
+        // already handles the expected network failures, so this guard covers everything else.
+        try
+        {
+            await _vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HomePage] Dashboard load failed: {ex}");
+            _vm.ErrorMessage = "Could not load your dashboard. Pull down to retry.";
+        }
     }
 
     private void OnRecentTapped(object sender, TappedEventArgs e)

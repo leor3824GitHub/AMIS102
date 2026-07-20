@@ -149,7 +149,7 @@ public sealed class AccountabilityRenewalDigestJobTests
     private static EmployeeReferenceDto Receiver(Guid id, string? identityUserId) => new(
         id, "EMP-RECV", identityUserId, "End", "User", null,
         Guid.NewGuid(), "OFF", "Office", "Office Address", Guid.NewGuid(), "DEP", "Dept",
-        Guid.NewGuid(), "POS", "Engineer", null, null, null, true);
+        Guid.NewGuid(), "POS", "Engineer", true);
 
     private static Task SeedActiveParAsync(AssetRegisterDbContext db, Guid receiverId, string docNo, int expiresInDays)
         => SeedParAsync(db, receiverId, docNo, expiresInDays, accept: true);

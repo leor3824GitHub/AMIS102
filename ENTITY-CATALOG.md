@@ -183,13 +183,11 @@ Reference data. Most entities here are **shared** (not `.IsMultiTenant()`) excep
 | OfficeId | Guid | FK → Office |
 | DepartmentId | Guid | FK → Department |
 | PositionId | Guid | FK → Position |
-| DefaultUnitOfMeasureId | Guid? | FK → UnitOfMeasure |
 | OfficeCode | string? | owner office scoping |
 | IsActive | bool | default true |
 | Office | Office | nav (EF) |
 | Department | Department | nav (EF) |
 | Position | Position | nav (EF) |
-| DefaultUnitOfMeasure | UnitOfMeasure? | nav (EF) |
 - Methods: `Create(...)`, `LinkIdentity(userId)`, `UnlinkIdentity()`, `SetOwnerOfficeCode(code?)`, `Deactivate()`, `Activate()`, `Update(...)`, `SoftDelete(deletedBy)`
 
 ### OrganizationProfile

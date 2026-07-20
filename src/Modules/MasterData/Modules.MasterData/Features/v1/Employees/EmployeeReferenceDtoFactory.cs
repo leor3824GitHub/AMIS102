@@ -10,8 +10,7 @@ internal static class EmployeeReferenceDtoFactory
         query
             .Include(x => x.Office)
             .Include(x => x.Department)
-            .Include(x => x.Position)
-            .Include(x => x.DefaultUnitOfMeasure);
+            .Include(x => x.Position);
 
     public static EmployeeReferenceDto ToReferenceDto(this EmployeeProfile employee) =>
         new(
@@ -31,9 +30,6 @@ internal static class EmployeeReferenceDtoFactory
             employee.PositionId,
             employee.Position.Code,
             employee.Position.Name,
-            employee.DefaultUnitOfMeasureId,
-            employee.DefaultUnitOfMeasure?.Code,
-            employee.DefaultUnitOfMeasure?.Name,
             employee.IsActive,
             employee.OfficeCode);
 }

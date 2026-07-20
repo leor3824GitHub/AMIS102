@@ -22,9 +22,6 @@ public sealed record EmployeeReferenceDto(
     Guid PositionId,
     string PositionCode,
     string PositionName,
-    Guid? DefaultUnitOfMeasureId,
-    string? DefaultUnitOfMeasureCode,
-    string? DefaultUnitOfMeasureName,
     bool IsActive,
     string? OwnerOfficeCode = null);
 
@@ -69,7 +66,6 @@ public sealed record CreateEmployeeCommand(
     Guid PositionId,
     string? IdentityUserId = null,
     string? WorkEmail = null,
-    Guid? DefaultUnitOfMeasureId = null,
     bool IsActive = true,
     string? OfficeCode = null) : ICommand<EmployeeReferenceDto>;
 
@@ -83,7 +79,6 @@ public sealed record UpdateEmployeeCommand(
     Guid PositionId,
     string? IdentityUserId,
     string? WorkEmail,
-    Guid? DefaultUnitOfMeasureId,
     bool IsActive) : ICommand<EmployeeReferenceDto>;
 
 public sealed record DeleteEmployeeCommand(Guid Id) : ICommand<Unit>;
@@ -99,6 +94,22 @@ public sealed class SearchEmployeeReferencesQuery : IPagedQuery, IQuery<PagedRes
 {
     public string? Keyword { get; set; }
     public string? IdentityUserId { get; set; }
+
+    /// <summary>
+    /// Narrows results to employees stamped with this owner-agency code (Annex E), plus unstamped rows.
+    /// <para>
+    /// Unstamped (null <c>OwnerOfficeCode</c>) rows are deliberately included: under the MasterData
+    /// reference-data convention an unstamped row means "shared" and belongs to every agency. Excluding
+    /// them would hide employees created before the agency's Organization Profile was filled in.
+    /// </para>
+    /// <para>
+    /// This is a scoping filter for pickers, NOT a tenant boundary — <c>EmployeeProfile</c> is
+    /// intentionally not <c>.IsMultiTenant()</c> (see <c>EmployeeProfileConfiguration</c>), and the value
+    /// arrives from the caller.
+    /// </para>
+    /// </summary>
+    public string? OwnerOfficeCode { get; set; }
+
     public Guid? OfficeId { get; set; }
     public Guid? DepartmentId { get; set; }
     public Guid? PositionId { get; set; }

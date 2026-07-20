@@ -32,7 +32,6 @@ All entities inherit from `AuditableEntity` with soft-delete support.
 - OfficeId (Guid, FK)
 - DepartmentId (Guid, FK)
 - PositionId (Guid, FK)
-- DefaultUnitOfMeasureId (Guid?, optional FK)
 - IsActive (bool)
 - TenantId (string, soft-delete aware)
 - CreatedBy, CreatedOn, UpdatedBy, UpdatedOn (audit)

@@ -82,145 +82,196 @@
         </MudPaper>
 
         <MudPaper Elevation="1" Class="pa-4 mt-3">
-            <MudText Typo="Typo.h6" Class="mb-3">Key Officers</MudText>
+            <MudText Typo="Typo.h6">Key Officers</MudText>
+            <MudText Typo="Typo.body2" Class="text-muted mb-3">
+                Search by employee name — designation auto-fills from their position and can be overridden.
+            </MudText>
             <MudStack Spacing="2">
                 <MudGrid Spacing="2">
-                    <MudItem xs="8">
+                    <MudItem xs="7">
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          Value="_form.RegionalManager"
                                          ValueChanged="OnRegionalManagerChanged"
                                          Label="Approving Official"
+                                         Placeholder="@EmployeeSearchPlaceholder"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
                                          Variant="Variant.Outlined"
                                          Dense="true"
                                          Margin="Margin.Dense"
                                          SearchFunc="SearchEmployeesAsync"
                                          ToStringFunc="EmployeeDisplayName"
+                                         NoItemsTemplate="NoEmployeesFound()"
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
-                                         MinCharacters="1"
+                                         MinCharacters="2"
                                          Clearable="true" />
                     </MudItem>
-                    <MudItem xs="4">
-                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
-                            @(NullIfEmpty(_form.RegionalManagerDesignation) ?? "—")
-                        </MudField>
+                    <MudItem xs="5">
+                        <MudTextField @bind-Value="_form.RegionalManagerDesignation"
+                                      Label="Designation"
+                                      Placeholder="@DesignationPlaceholder"
+                                      Variant="Variant.Outlined"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      MaxLength="120" />
                     </MudItem>
                 </MudGrid>
 
                 <MudGrid Spacing="2">
-                    <MudItem xs="8">
+                    <MudItem xs="7">
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          Value="_form.AssistantRegionalManager"
                                          ValueChanged="OnAssistantRegionalManagerChanged"
                                          Label="Co-Approving Official"
+                                         Placeholder="@EmployeeSearchPlaceholder"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
                                          Variant="Variant.Outlined"
                                          Dense="true"
                                          Margin="Margin.Dense"
                                          SearchFunc="SearchEmployeesAsync"
                                          ToStringFunc="EmployeeDisplayName"
+                                         NoItemsTemplate="NoEmployeesFound()"
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
-                                         MinCharacters="1"
+                                         MinCharacters="2"
                                          Clearable="true" />
                     </MudItem>
-                    <MudItem xs="4">
-                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
-                            @(NullIfEmpty(_form.AssistantRegionalManagerDesignation) ?? "—")
-                        </MudField>
+                    <MudItem xs="5">
+                        <MudTextField @bind-Value="_form.AssistantRegionalManagerDesignation"
+                                      Label="Designation"
+                                      Placeholder="@DesignationPlaceholder"
+                                      Variant="Variant.Outlined"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      MaxLength="120" />
                     </MudItem>
                 </MudGrid>
 
                 <MudGrid Spacing="2">
-                    <MudItem xs="8">
+                    <MudItem xs="7">
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          Value="_form.Accountant"
                                          ValueChanged="OnAccountantChanged"
                                          Label="Accountant"
+                                         Placeholder="@EmployeeSearchPlaceholder"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
                                          Variant="Variant.Outlined"
                                          Dense="true"
                                          Margin="Margin.Dense"
                                          SearchFunc="SearchEmployeesAsync"
                                          ToStringFunc="EmployeeDisplayName"
+                                         NoItemsTemplate="NoEmployeesFound()"
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
-                                         MinCharacters="1"
+                                         MinCharacters="2"
                                          Clearable="true" />
                     </MudItem>
-                    <MudItem xs="4">
-                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
-                            @(NullIfEmpty(_form.AccountantDesignation) ?? "—")
-                        </MudField>
+                    <MudItem xs="5">
+                        <MudTextField @bind-Value="_form.AccountantDesignation"
+                                      Label="Designation"
+                                      Placeholder="@DesignationPlaceholder"
+                                      Variant="Variant.Outlined"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      MaxLength="120" />
                     </MudItem>
                 </MudGrid>
 
                 <MudGrid Spacing="2">
-                    <MudItem xs="8">
+                    <MudItem xs="7">
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          Value="_form.SupervisingAdminOfficer"
                                          ValueChanged="OnSupervisingAdminOfficerChanged"
                                          Label="Administrative Officer"
+                                         Placeholder="@EmployeeSearchPlaceholder"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
                                          Variant="Variant.Outlined"
                                          Dense="true"
                                          Margin="Margin.Dense"
                                          SearchFunc="SearchEmployeesAsync"
                                          ToStringFunc="EmployeeDisplayName"
+                                         NoItemsTemplate="NoEmployeesFound()"
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
-                                         MinCharacters="1"
+                                         MinCharacters="2"
                                          Clearable="true" />
                     </MudItem>
-                    <MudItem xs="4">
-                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
-                            @(NullIfEmpty(_form.SupervisingAdminOfficerDesignation) ?? "—")
-                        </MudField>
+                    <MudItem xs="5">
+                        <MudTextField @bind-Value="_form.SupervisingAdminOfficerDesignation"
+                                      Label="Designation"
+                                      Placeholder="@DesignationPlaceholder"
+                                      Variant="Variant.Outlined"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      MaxLength="120" />
                     </MudItem>
                 </MudGrid>
 
                 <MudGrid Spacing="2">
-                    <MudItem xs="8">
+                    <MudItem xs="7">
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          Value="_form.BudgetOfficer"
                                          ValueChanged="OnBudgetOfficerChanged"
                                          Label="Budget Officer"
+                                         Placeholder="@EmployeeSearchPlaceholder"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
                                          Variant="Variant.Outlined"
                                          Dense="true"
                                          Margin="Margin.Dense"
                                          SearchFunc="SearchEmployeesAsync"
                                          ToStringFunc="EmployeeDisplayName"
+                                         NoItemsTemplate="NoEmployeesFound()"
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
-                                         MinCharacters="1"
+                                         MinCharacters="2"
                                          Clearable="true"
                                          HelperText="Certifies budget availability (BURS Box B)" />
                     </MudItem>
-                    <MudItem xs="4">
-                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
-                            @(NullIfEmpty(_form.BudgetOfficerDesignation) ?? "—")
-                        </MudField>
+                    <MudItem xs="5">
+                        <MudTextField @bind-Value="_form.BudgetOfficerDesignation"
+                                      Label="Designation"
+                                      Placeholder="@DesignationPlaceholder"
+                                      Variant="Variant.Outlined"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      MaxLength="120" />
                     </MudItem>
                 </MudGrid>
 
                 <MudGrid Spacing="2">
-                    <MudItem xs="8">
+                    <MudItem xs="7">
                         <MudAutocomplete T="EmployeeReferenceDto"
                                          Value="_form.PropertyCustodian"
                                          ValueChanged="OnPropertyCustodianChanged"
                                          Label="Property Custodian"
+                                         Placeholder="@EmployeeSearchPlaceholder"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
                                          Variant="Variant.Outlined"
                                          Dense="true"
                                          Margin="Margin.Dense"
                                          SearchFunc="SearchEmployeesAsync"
                                          ToStringFunc="EmployeeDisplayName"
+                                         NoItemsTemplate="NoEmployeesFound()"
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
-                                         MinCharacters="1"
+                                         MinCharacters="2"
                                          Clearable="true"
                                          HelperText="Signs as receiving Property/Supply Custodian (ICS/PAR)" />
                     </MudItem>
-                    <MudItem xs="4">
-                        <MudField Label="Designation" Variant="Variant.Outlined" Margin="Margin.Dense">
-                            @(NullIfEmpty(_form.PropertyCustodianDesignation) ?? "—")
-                        </MudField>
+                    <MudItem xs="5">
+                        <MudTextField @bind-Value="_form.PropertyCustodianDesignation"
+                                      Label="Designation"
+                                      Placeholder="@DesignationPlaceholder"
+                                      Variant="Variant.Outlined"
+                                      Dense="true"
+                                      Margin="Margin.Dense"
+                                      MaxLength="120" />
                     </MudItem>
                 </MudGrid>
             </MudStack>
@@ -267,6 +318,19 @@
 </MudGrid>
 
 @code {
+    private const string EmployeeSearchPlaceholder = "Type name to search employees…";
+    private const string DesignationPlaceholder = "Auto-fills from position";
+
+    // A method, not a field — a field initializer can't reference _form, and the office scope must be
+    // named here: a silently narrowed picker otherwise reads as missing data.
+    private RenderFragment NoEmployeesFound() =>
+        @<MudText Typo="Typo.body2" Class="text-muted pa-3">
+            @(string.IsNullOrWhiteSpace(_form.AnnexECode)
+                ? "No active employee matches."
+                : $"No active employee matches in office {_form.AnnexECode}.")
+            Add them under Master Data → Employees.
+        </MudText>;
+
     private FormModel _form = new();
     private bool _busy;
     private Dictionary<string, OfficeReferenceDto> _officesByName = new(StringComparer.OrdinalIgnoreCase);
@@ -361,11 +425,14 @@
         if (string.IsNullOrWhiteSpace(value)) return [];
         try
         {
+            // Narrow to this agency's own employees (plus unstamped/shared rows) once an office is chosen.
+            // Blank while the profile is still being filled in — filtering on "" would empty the picker.
             var result = await LookupClient.EmployeesGetAsync(
                 keyword: value,
                 isActive: true,
                 pageNumber: 1,
                 pageSize: 20,
+                ownerOfficeCode: NullIfEmpty(_form.AnnexECode),
                 cancellationToken: ct);
             return result?.Items ?? [];
         }
@@ -435,44 +502,58 @@
 
     private void OnRegionalManagerChanged(EmployeeReferenceDto? employee)
     {
+        _form.RegionalManagerDesignation =
+            ResolveDesignation(_form.RegionalManager, employee, _form.RegionalManagerDesignation);
         _form.RegionalManager = employee;
-        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
-            _form.RegionalManagerDesignation = employee.PositionName;
     }
 
     private void OnAssistantRegionalManagerChanged(EmployeeReferenceDto? employee)
     {
+        _form.AssistantRegionalManagerDesignation =
+            ResolveDesignation(_form.AssistantRegionalManager, employee, _form.AssistantRegionalManagerDesignation);
         _form.AssistantRegionalManager = employee;
-        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
-            _form.AssistantRegionalManagerDesignation = employee.PositionName;
     }
 
     private void OnAccountantChanged(EmployeeReferenceDto? employee)
     {
+        _form.AccountantDesignation =
+            ResolveDesignation(_form.Accountant, employee, _form.AccountantDesignation);
         _form.Accountant = employee;
-        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
-            _form.AccountantDesignation = employee.PositionName;
     }
 
     private void OnSupervisingAdminOfficerChanged(EmployeeReferenceDto? employee)
     {
+        _form.SupervisingAdminOfficerDesignation =
+            ResolveDesignation(_form.SupervisingAdminOfficer, employee, _form.SupervisingAdminOfficerDesignation);
         _form.SupervisingAdminOfficer = employee;
-        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
-            _form.SupervisingAdminOfficerDesignation = employee.PositionName;
     }
 
     private void OnBudgetOfficerChanged(EmployeeReferenceDto? employee)
     {
+        _form.BudgetOfficerDesignation =
+            ResolveDesignation(_form.BudgetOfficer, employee, _form.BudgetOfficerDesignation);
         _form.BudgetOfficer = employee;
-        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
-            _form.BudgetOfficerDesignation = employee.PositionName;
     }
 
     private void OnPropertyCustodianChanged(EmployeeReferenceDto? employee)
     {
+        _form.PropertyCustodianDesignation =
+            ResolveDesignation(_form.PropertyCustodian, employee, _form.PropertyCustodianDesignation);
         _form.PropertyCustodian = employee;
-        if (employee is not null && !string.IsNullOrWhiteSpace(employee.PositionName))
-            _form.PropertyCustodianDesignation = employee.PositionName;
+    }
+
+    // Designations are free-text ("OIC-Regional Manager II", "Acting …"), so a manual edit must
+    // survive re-selecting an officer. Only overwrite when the current value is still the
+    // auto-filled position of the officer being replaced.
+    private static string ResolveDesignation(
+        EmployeeReferenceDto? previous,
+        EmployeeReferenceDto? current,
+        string designation)
+    {
+        var isUserEdited = !string.IsNullOrWhiteSpace(designation)
+            && !string.Equals(designation, previous?.PositionName, StringComparison.OrdinalIgnoreCase);
+
+        return isUserEdited ? designation : current?.PositionName ?? string.Empty;
     }
 
     private static string EmployeeDisplayName(EmployeeReferenceDto? e) =>

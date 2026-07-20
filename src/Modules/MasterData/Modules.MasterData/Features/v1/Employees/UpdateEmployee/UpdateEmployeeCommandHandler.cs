@@ -24,7 +24,7 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
             .ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Employee {command.Id} not found.");
 
-        await EnsureReferencesExist(command.OfficeId, command.DepartmentId, command.PositionId, command.DefaultUnitOfMeasureId, cancellationToken)
+        await EnsureReferencesExist(command.OfficeId, command.DepartmentId, command.PositionId, cancellationToken)
             .ConfigureAwait(false);
 
         var employeeNumberInUse = await _dbContext.Employees
@@ -65,7 +65,6 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
             command.PositionId,
             command.IdentityUserId,
             command.WorkEmail,
-            command.DefaultUnitOfMeasureId,
             command.IsActive);
 
         employee.LastModifiedBy = _currentUser.GetUserId().ToString();
@@ -85,7 +84,6 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
         Guid officeId,
         Guid departmentId,
         Guid positionId,
-        Guid? defaultUnitOfMeasureId,
         CancellationToken cancellationToken)
     {
         if (!await _dbContext.Offices.AnyAsync(x => x.Id == officeId, cancellationToken).ConfigureAwait(false))
@@ -109,15 +107,6 @@ public sealed class UpdateEmployeeCommandHandler : ICommandHandler<UpdateEmploye
             throw new FluentValidation.ValidationException(
             [
                 new FluentValidation.Results.ValidationFailure(nameof(UpdateEmployeeCommand.PositionId), "Position not found.")
-            ]);
-        }
-
-        if (defaultUnitOfMeasureId.HasValue
-            && !await _dbContext.UnitOfMeasures.AnyAsync(x => x.Id == defaultUnitOfMeasureId.Value, cancellationToken).ConfigureAwait(false))
-        {
-            throw new FluentValidation.ValidationException(
-            [
-                new FluentValidation.Results.ValidationFailure(nameof(UpdateEmployeeCommand.DefaultUnitOfMeasureId), "Unit of measure not found.")
             ]);
         }
     }

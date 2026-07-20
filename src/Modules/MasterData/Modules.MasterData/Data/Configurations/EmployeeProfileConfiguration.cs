@@ -41,11 +41,6 @@ public sealed class EmployeeProfileConfiguration : IEntityTypeConfiguration<Empl
             .HasForeignKey(x => x.PositionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.DefaultUnitOfMeasure)
-            .WithMany()
-            .HasForeignKey(x => x.DefaultUnitOfMeasureId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasIndex(x => x.EmployeeNumber).IsUnique();
         builder.HasIndex(x => x.IdentityUserId).IsUnique();
         builder.HasIndex(x => x.OfficeId);

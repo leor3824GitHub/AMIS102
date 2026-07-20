@@ -99,6 +99,7 @@ public sealed class SearchEmployeeReferencesQueryHandler(MasterDataDbContext dbC
                 dbContext,
                 keyword: query.Keyword,
                 identityUserId: query.IdentityUserId,
+                ownerOfficeCode: query.OwnerOfficeCode,
                 officeId: query.OfficeId,
                 departmentId: query.DepartmentId,
                 positionId: query.PositionId,
@@ -294,6 +295,7 @@ internal static class MasterDataLookupQueryBuilder
         System.Linq.Expressions.Expression<Func<AMIS.Modules.MasterData.Domain.EmployeeProfile, bool>>? employeeFilter = null,
         string? keyword = null,
         string? identityUserId = null,
+        string? ownerOfficeCode = null,
         Guid? officeId = null,
         Guid? departmentId = null,
         Guid? positionId = null,
@@ -306,6 +308,14 @@ internal static class MasterDataLookupQueryBuilder
 
         if (!string.IsNullOrWhiteSpace(identityUserId))
             employees = employees.Where(e => e.IdentityUserId == identityUserId);
+
+        // Unstamped rows are "shared" under the MasterData convention, so they stay visible to every agency.
+        if (!string.IsNullOrWhiteSpace(ownerOfficeCode))
+        {
+            var trimmedOwnerOfficeCode = ownerOfficeCode.Trim();
+            employees = employees.Where(e =>
+                e.OfficeCode == null || e.OfficeCode == trimmedOwnerOfficeCode);
+        }
 
         if (officeId.HasValue)
             employees = employees.Where(e => e.OfficeId == officeId.Value);
@@ -350,9 +360,6 @@ internal static class MasterDataLookupQueryBuilder
                 employee.PositionId,
                 employee.Position != null ? employee.Position.Code : string.Empty,
                 employee.Position != null ? employee.Position.Name : string.Empty,
-                employee.DefaultUnitOfMeasureId,
-                employee.DefaultUnitOfMeasure != null ? employee.DefaultUnitOfMeasure.Code : null,
-                employee.DefaultUnitOfMeasure != null ? employee.DefaultUnitOfMeasure.Name : null,
                 employee.IsActive,
                 employee.OfficeCode));
     }

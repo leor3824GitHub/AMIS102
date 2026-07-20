@@ -147,7 +147,7 @@ public sealed class IssueAccountabilityNotificationTests
     private static EmployeeReferenceDto Receiver(Guid id, string? identityUserId) => new(
         id, "EMP-RECV", identityUserId, "End", "User", null,
         Guid.NewGuid(), "OFF", "Office", "Office Address", Guid.NewGuid(), "DEP", "Dept",
-        Guid.NewGuid(), "POS", "Engineer", null, null, null, true);
+        Guid.NewGuid(), "POS", "Engineer", true);
 
     private static async Task<AssetRegistry> SeedAvailablePpeAsync(AssetRegisterDbContext db)
     {
