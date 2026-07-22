@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:AMIS.Maui.Features.Chat"
-             xmlns:svc="clr-namespace:AMIS.Maui.Services"
              xmlns:ctl="clr-namespace:AMIS.Maui.Controls"
              xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
              xmlns:beh="clr-namespace:AMIS.Maui.Behaviors"
@@ -57,7 +56,7 @@
                                             Hint="Channels you can access will show up here. Pull down to refresh." />
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="svc:ChatChannelDto">
+                        <DataTemplate x:DataType="vm:ChatChannelItem">
                             <Border Style="{StaticResource CardBorderStyle}" Margin="16,4" Padding="14,12">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
@@ -83,11 +82,18 @@
                                            Text="{Binding DisplayName}"
                                            FontFamily="InterSemiBold" FontSize="15"
                                            VerticalOptions="Center" />
-                                    <ctl:StatusPill Grid.Row="0" Grid.Column="2"
-                                                    Text="{Binding ScopeLabel}"
-                                                    PillBackground="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
-                                                    PillTextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                                                    FontSize="11" VerticalOptions="Center" />
+                                    <HorizontalStackLayout Grid.Row="0" Grid.Column="2"
+                                                           Spacing="8" VerticalOptions="Center">
+                                        <!-- Unread dot: device-local, see ChatUnreadService -->
+                                        <Ellipse Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                 WidthRequest="9" HeightRequest="9"
+                                                 VerticalOptions="Center"
+                                                 IsVisible="{Binding IsUnread}" />
+                                        <ctl:StatusPill Text="{Binding ScopeLabel}"
+                                                        PillBackground="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource Tertiary}}"
+                                                        PillTextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                                        FontSize="11" VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
 
                                     <Label Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                            Text="{Binding Topic}"

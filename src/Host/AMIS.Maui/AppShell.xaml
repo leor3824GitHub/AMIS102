@@ -2,9 +2,7 @@
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:home="clr-namespace:AMIS.Maui.Features.Home"
-       xmlns:inventory="clr-namespace:AMIS.Maui.Features.Inventory"
        xmlns:scan="clr-namespace:AMIS.Maui.Features.Scan"
-       xmlns:profile="clr-namespace:AMIS.Maui.Features.Profile"
        xmlns:count="clr-namespace:AMIS.Maui.Features.PhysicalCount"
        xmlns:chat="clr-namespace:AMIS.Maui.Features.Chat"
        xmlns:helpers="clr-namespace:AMIS.Maui.Helpers"
@@ -18,15 +16,6 @@
             <ShellContent.Icon>
                 <FontImageSource FontFamily="MaterialSymbols"
                                  Glyph="{x:Static helpers:MaterialIcons.Home}"
-                                 Size="22" />
-            </ShellContent.Icon>
-        </ShellContent>
-        <ShellContent Title="My Inventory"
-                      ContentTemplate="{DataTemplate inventory:InventoryPage}"
-                      Route="InventoryPage">
-            <ShellContent.Icon>
-                <FontImageSource FontFamily="MaterialSymbols"
-                                 Glyph="{x:Static helpers:MaterialIcons.Inventory}"
                                  Size="22" />
             </ShellContent.Icon>
         </ShellContent>
@@ -48,21 +37,14 @@
                                  Size="22" />
             </ShellContent.Icon>
         </ShellContent>
-        <ShellContent Title="Chat"
+        <!-- Icon is swapped for the unread variant from code-behind; Shell has no badge API. -->
+        <ShellContent x:Name="ChatTab"
+                      Title="Chat"
                       ContentTemplate="{DataTemplate chat:ChatChannelListPage}"
                       Route="ChatChannelListPage">
             <ShellContent.Icon>
                 <FontImageSource FontFamily="MaterialSymbols"
                                  Glyph="{x:Static helpers:MaterialIcons.ChatBubble}"
-                                 Size="22" />
-            </ShellContent.Icon>
-        </ShellContent>
-        <ShellContent Title="Profile"
-                      ContentTemplate="{DataTemplate profile:ProfilePage}"
-                      Route="ProfilePage">
-            <ShellContent.Icon>
-                <FontImageSource FontFamily="MaterialSymbols"
-                                 Glyph="{x:Static helpers:MaterialIcons.Person}"
                                  Size="22" />
             </ShellContent.Icon>
         </ShellContent>

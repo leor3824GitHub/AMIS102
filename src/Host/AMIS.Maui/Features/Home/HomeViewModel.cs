@@ -156,11 +156,13 @@ public sealed partial class HomeViewModel(
     [RelayCommand]
     private static Task GoToCountAsync() => Shell.Current.GoToAsync($"//{nameof(PhysicalCountSessionListPage)}");
 
+    // Inventory and Profile are no longer tabs — push them onto the Home stack so Shell gives
+    // each a back button and pops back here.
     [RelayCommand]
-    private static Task GoToInventoryAsync() => Shell.Current.GoToAsync($"//{nameof(InventoryPage)}");
+    private static Task GoToInventoryAsync() => Shell.Current.GoToAsync(nameof(InventoryPage));
 
     [RelayCommand]
-    private static Task GoToProfileAsync() => Shell.Current.GoToAsync($"//{nameof(ProfilePage)}");
+    private static Task GoToProfileAsync() => Shell.Current.GoToAsync(nameof(ProfilePage));
 
     [RelayCommand]
     private async Task ResumeSessionAsync()

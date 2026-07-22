@@ -44,7 +44,7 @@ public partial class App : Application
         // stack, expired token mid-refresh) and leave Home greeting "there" with empty counts.
         if (authState.Restore())
         {
-            SetRootPage(new AppShell());
+            SetRootPage(Resolve<AppShell>());
             _ = RefreshIdentityInBackgroundAsync();   // freshen best-effort; never blocks the shell
             return;
         }
@@ -52,7 +52,7 @@ public partial class App : Application
         // No cached identity yet (first resume after installing this change, or a cleared cache):
         // fetch it once before deciding. On a hard rejection the token is cleared → go to login.
         SetRootPage(await TryRehydrateSessionAsync()
-            ? new AppShell()
+            ? Resolve<AppShell>()
             : new NavigationPage(ResolvePage<LoginPage>()));
     }
 

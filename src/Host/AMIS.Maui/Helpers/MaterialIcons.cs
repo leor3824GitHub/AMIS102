@@ -15,6 +15,7 @@ public static class MaterialIcons
     public const string QrCodeScanner = "\uf206";
     public const string Checklist = "\ue6b1";
     public const string ChatBubble = "\ue0cb";
+    public const string MarkChatUnread = "\uf189";
     public const string Person = "\uf0d3";
 
     // Chevrons / arrows

@@ -92,6 +92,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IOcrService, OcrService>();
         builder.Services.AddSingleton<IFeedbackService, FeedbackService>();
         builder.Services.AddSingleton<ChatHubService>();
+        builder.Services.AddSingleton<ChatUnreadService>();
         builder.Services.AddTransient<AuthenticatedHttpHandler>();
 
         // S1481: consumed only by the DEBUG+ANDROID block below, so it reads as unused on other targets.
@@ -133,6 +134,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ChatConversationViewModel>();
 
         // Pages
+        builder.Services.AddTransient<AppShell>();
         builder.Services.AddTransient<HomePage>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddTransient<ProfilePage>();

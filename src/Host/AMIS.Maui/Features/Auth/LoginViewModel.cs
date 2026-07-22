@@ -8,7 +8,8 @@ public sealed partial class LoginViewModel(
     IApiClient apiClient,
     ITokenStorageService tokenStorage,
     AuthStateService authState,
-    ApiClientOptions apiOptions) : ObservableObject
+    ApiClientOptions apiOptions,
+    IServiceProvider services) : ObservableObject
 {
     [ObservableProperty] public partial string Tenant { get; set; } = Preferences.Default.Get(ApiClientOptions.TenantPreferenceKey, "root");
     [ObservableProperty] public partial string Email { get; set; } = "admin@root.com";
@@ -46,7 +47,8 @@ public sealed partial class LoginViewModel(
             // Persist only after a successful login so a typo never poisons the next session resume.
             Preferences.Default.Set(ApiClientOptions.TenantPreferenceKey, apiOptions.TenantId);
 
-            ((App)Application.Current!).SetRootPage(new AppShell());
+            // Resolved, not newed: AppShell now takes ChatUnreadService so the Chat tab can show unread.
+            ((App)Application.Current!).SetRootPage(services.GetRequiredService<AppShell>());
         }
         catch (HttpRequestException)
         {

@@ -10,7 +10,8 @@ public sealed partial class ProfileViewModel(
     AuthStateService authState,
     ITokenStorageService tokenStorage,
     IPhysicalCountSyncService syncService,
-    LocalDb localDb) : ObservableObject
+    LocalDb localDb,
+    ChatUnreadService chatUnread) : ObservableObject
 {
     [ObservableProperty] public partial string FullName { get; set; } = "";
     [ObservableProperty] public partial string Email { get; set; } = "";
@@ -128,6 +129,7 @@ public sealed partial class ProfileViewModel(
         await tokenStorage.ClearAsync();
         await localDb.ClearAllAsync();
         authState.Clear();
+        chatUnread.Clear(); // read markers are per-device; don't hand them to the next user
         var loginPage = Application.Current!.Handler!.MauiContext!.Services
             .GetRequiredService<Auth.LoginPage>();
         Application.Current!.Windows[0].Page = new NavigationPage(loginPage);

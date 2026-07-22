@@ -8,12 +8,13 @@ namespace AMIS.Maui.Features.Chat;
 
 public sealed partial class ChatChannelListViewModel(
     IApiClient apiClient,
-    ChatHubService hub) : ObservableObject
+    ChatHubService hub,
+    ChatUnreadService unread) : ObservableObject
 {
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ChannelCount))]
     [NotifyPropertyChangedFor(nameof(ShowSkeleton))]
-    public partial ObservableCollection<ChatChannelDto> Channels { get; set; } = [];
+    public partial ObservableCollection<ChatChannelItem> Channels { get; set; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowSkeleton))]
@@ -26,6 +27,26 @@ public sealed partial class ChatChannelListViewModel(
     // First-load skeleton only; RefreshView's spinner covers reloads.
     public bool ShowSkeleton => IsLoading && Channels.Count == 0;
 
+    private bool _subscribed;
+
+    /// <summary>Called from the page's OnAppearing: follow live unread changes while the list is shown.</summary>
+    public void Attach()
+    {
+        // Guarded: OnAppearing can fire more than once per OnDisappearing, and the service is a
+        // singleton — a double subscription would outlive this VM by one handler.
+        if (_subscribed) return;
+        unread.Changed += OnUnreadChanged;
+        _subscribed = true;
+    }
+
+    /// <summary>Called from the page's OnDisappearing: the unread service outlives this VM, so let go.</summary>
+    public void Detach()
+    {
+        if (!_subscribed) return;
+        unread.Changed -= OnUnreadChanged;
+        _subscribed = false;
+    }
+
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)
     {
@@ -37,7 +58,12 @@ public sealed partial class ChatChannelListViewModel(
             await hub.StartAsync(ct);
 
             var channels = await apiClient.GetChatChannelsAsync(ct);
-            Channels = new ObservableCollection<ChatChannelDto>(channels);
+
+            // Hand the service the list we just fetched instead of letting it request its own copy.
+            unread.Reconcile(channels);
+
+            Channels = new ObservableCollection<ChatChannelItem>(
+                channels.Select(channel => new ChatChannelItem(channel, unread.IsUnread(channel.Id))));
         }
         catch (OperationCanceledException)
         {
@@ -58,10 +84,24 @@ public sealed partial class ChatChannelListViewModel(
     }
 
     [RelayCommand]
-    private static async Task OpenChannelAsync(ChatChannelDto? channel)
+    private async Task OpenChannelAsync(ChatChannelItem? item)
     {
-        if (channel is null) return;
+        if (item is null) return;
+
+        // Clear the row's dot immediately — the conversation itself also marks the channel read, but
+        // doing it here means the list is already correct when the user navigates back.
+        unread.MarkRead(item.Id);
+
         await Shell.Current.GoToAsync(
-            $"{nameof(ChatConversationPage)}?ChannelId={channel.Id}&Title={Uri.EscapeDataString(channel.DisplayName)}");
+            $"{nameof(ChatConversationPage)}?ChannelId={item.Id}&Title={Uri.EscapeDataString(item.DisplayName)}");
+    }
+
+    // A message can land while the list is on screen; repaint the affected rows in place.
+    private void OnUnreadChanged()
+    {
+        foreach (var item in Channels)
+        {
+            item.IsUnread = unread.IsUnread(item.Id);
+        }
     }
 }

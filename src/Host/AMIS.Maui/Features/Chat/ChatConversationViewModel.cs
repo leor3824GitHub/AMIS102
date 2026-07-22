@@ -14,6 +14,7 @@ public sealed partial class ChatConversationViewModel : ObservableObject
     private readonly IApiClient _apiClient;
     private readonly ChatHubService _hub;
     private readonly AuthStateService _authState;
+    private readonly ChatUnreadService _unread;
 
     private Guid _channelGuid;
     private Guid? _nextCursor;
@@ -21,11 +22,16 @@ public sealed partial class ChatConversationViewModel : ObservableObject
     private IDispatcherTimer? _typingTimer;
     private bool _subscribed;
 
-    public ChatConversationViewModel(IApiClient apiClient, ChatHubService hub, AuthStateService authState)
+    public ChatConversationViewModel(
+        IApiClient apiClient,
+        ChatHubService hub,
+        AuthStateService authState,
+        ChatUnreadService unread)
     {
         _apiClient = apiClient;
         _hub = hub;
         _authState = authState;
+        _unread = unread;
     }
 
     /// <summary>Raised when the view should scroll to the newest message (initial load + new arrivals).</summary>
@@ -56,6 +62,10 @@ public sealed partial class ChatConversationViewModel : ObservableObject
             _subscribed = true;
         }
 
+        // Reading this channel clears its unread dot, and keeps it clear for messages that arrive
+        // while it's on screen.
+        _unread.SetOpenChannel(_channelGuid);
+
         await _hub.StartAsync();
         await _hub.JoinChannelAsync(_channelGuid);
         await LoadAsync();
@@ -64,6 +74,10 @@ public sealed partial class ChatConversationViewModel : ObservableObject
     /// <summary>Called from the page's OnDisappearing: stop listening (the hub connection stays alive).</summary>
     public void Teardown()
     {
+        // Everything shown up to now counts as read; later arrivals light the dot again.
+        _unread.MarkRead(_channelGuid);
+        _unread.ClearOpenChannel();
+
         if (_subscribed)
         {
             _hub.MessageCreated -= OnMessageCreated;
