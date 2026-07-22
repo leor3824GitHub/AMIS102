@@ -1,4 +1,5 @@
 using AMIS.Framework.Persistence;
+using Finbuckle.MultiTenant.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AMIS.Modules.MasterData.Domain;
@@ -8,7 +9,8 @@ namespace AMIS.Modules.MasterData.Data;
 
 internal sealed class MasterDataDbInitializer(
     ILogger<MasterDataDbInitializer> logger,
-    MasterDataDbContext context) : IDbInitializer
+    MasterDataDbContext context,
+    IMultiTenantContextAccessor<AppTenantInfo> tenantAccessor) : IDbInitializer
 {
     public async Task MigrateAsync(CancellationToken cancellationToken)
     {
@@ -737,7 +739,59 @@ internal sealed class MasterDataDbInitializer(
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        await SeedOrganizationProfileAsync(cancellationToken).ConfigureAwait(false);
+
         logger.LogInformation("[{Tenant}] seeded master data.", context.TenantInfo?.Identifier);
+    }
+
+    /// <summary>
+    /// Gives a newly provisioned tenant an Organization Profile already filled in from the office it was
+    /// linked to on creation, so its administrator only has to name the key officers — and can never point
+    /// the profile at a different office than inter-agency transfers are routed by.
+    /// <para>
+    /// Skipped when the tenant has no office link (root, or a tenant created before the link existed): those
+    /// still get the first-login setup dialog.
+    /// </para>
+    /// </summary>
+    private async Task SeedOrganizationProfileAsync(CancellationToken cancellationToken)
+    {
+        var tenant = tenantAccessor.MultiTenantContext.TenantInfo;
+
+        if (tenant?.OfficeId is not { } officeId || officeId == Guid.Empty)
+        {
+            return;
+        }
+
+        if (await context.OrganizationProfiles.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return;
+        }
+
+        var office = await context.Offices
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == officeId, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (office is null)
+        {
+            logger.LogWarning(
+                "[{Tenant}] linked office {OfficeId} not found — organization profile not seeded.",
+                tenant.Identifier, officeId);
+            return;
+        }
+
+        context.OrganizationProfiles.Add(OrganizationProfile.Create(
+            tenant.Id!,
+            office.Name,
+            shortName: null,
+            address: office.Address,
+            logoUrl: null,
+            annexECode: office.Code));
+
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        logger.LogInformation(
+            "[{Tenant}] seeded organization profile from office {OfficeCode}.", tenant.Identifier, office.Code);
     }
 
     // -- Funding source code CSV seed ------------------------------------------------------------

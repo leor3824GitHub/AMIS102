@@ -22,9 +22,25 @@
         <MudPaper Elevation="1" Class="pa-4">
             <MudText Typo="Typo.h6" Class="mb-3">Agency Details</MudText>
             <MudStack Spacing="2">
-                <MudAutocomplete T="string"
-                              @bind-Value="_form.Name"
-                              @bind-Value:after="OnOfficeNameSelected"
+                @if (_form.OfficeId.HasValue)
+                {
+                    <MudField Label="Linked Office" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                              HelperText="Linked by your system administrator on the Tenants page.">
+                        <MudChip T="string" Icon="@Icons.Material.Filled.Apartment" Color="Color.Secondary"
+                                 Size="Size.Small" Class="ma-0">
+                            @_form.AnnexECode — @_form.OfficeName
+                        </MudChip>
+                    </MudField>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        This agency isn't linked to an office. Property codes and record ownership need it —
+                        ask your system administrator to link it on the Tenants page.
+                    </MudAlert>
+                }
+
+                <MudTextField @bind-Value="_form.Name"
                               Label="Agency / Organization Name"
                               Variant="Variant.Outlined"
                               Dense="true"
@@ -32,12 +48,7 @@
                               Required="true"
                               MaxLength="200"
                               Placeholder="e.g. National Food Authority"
-                              SearchFunc="SearchOfficeNamesAsync"
-                              ResetValueOnEmptyText="false"
-                              CoerceText="true"
-                              CoerceValue="false"
-                              MinCharacters="1"
-                              HelperText="Type to search offices — selecting one auto-fills the address and office code" />
+                              HelperText="Printed as the agency name on official reports" />
 
                 <MudTextField @bind-Value="_form.ShortName"
                               Label="Short Name / Acronym"
@@ -56,7 +67,7 @@
                               CharacterCounter="true"
                               MaxLength="400"
                               Placeholder="e.g. NFA Complex, Visayas Avenue, Diliman, Quezon City"
-                              HelperText="Auto-filled from office selection — edit if the office record is out of date" />
+                              HelperText="Seeded from the linked office — edit if the office record is out of date" />
 
                 <MudTextField @bind-Value="_form.LogoUrl"
                               Label="Logo URL"
@@ -67,17 +78,16 @@
                               MaxLength="500"
                               Placeholder="https://..." />
 
-                <MudTextField @bind-Value="_form.AnnexECode"
+                <MudTextField Value="_form.AnnexECode"
+                              T="string"
                               Label="Office Code (Annex E)"
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
                               Dense="true"
-                              CharacterCounter="true"
-                              MaxLength="8"
-                              Placeholder="e.g. 00B"
+                              ReadOnly="true"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Tag"
-                              HelperText="Auto-filled from office selection — used in property code generation" />
+                              HelperText="From the linked office — used in property code generation" />
             </MudStack>
         </MudPaper>
 
@@ -333,7 +343,6 @@
 
     private FormModel _form = new();
     private bool _busy;
-    private Dictionary<string, OfficeReferenceDto> _officesByName = new(StringComparer.OrdinalIgnoreCase);
 
     private bool _canManage => UserProfileState.Permissions.Contains(MasterDataPermissions.OrganizationProfile.Manage);
 
@@ -356,6 +365,8 @@
                     Address = existing.Address ?? string.Empty,
                     LogoUrl = existing.LogoUrl ?? string.Empty,
                     AnnexECode = existing.AnnexECode ?? string.Empty,
+                    OfficeId = existing.OfficeId,
+                    OfficeName = existing.OfficeName ?? string.Empty,
                     RegionalManagerDesignation = existing.ApprovingOfficialDesignation ?? string.Empty,
                     AssistantRegionalManagerDesignation = existing.AssistantRegionalManagerDesignation ?? string.Empty,
                     AccountantDesignation = existing.AccountantDesignation ?? string.Empty,
@@ -403,23 +414,6 @@
         catch { }
     }
 
-    private async Task<IEnumerable<string>> SearchOfficeNamesAsync(string value, CancellationToken ct)
-    {
-        try
-        {
-            var response = await LookupClient.OfficesAsync(keyword: value, pageSize: 30);
-            var items = response?.Items ?? [];
-            _officesByName = items
-                .Where(o => !string.IsNullOrWhiteSpace(o.Name))
-                .ToDictionary(o => o.Name!, o => o, StringComparer.OrdinalIgnoreCase);
-            return _officesByName.Keys.OrderBy(n => n);
-        }
-        catch
-        {
-            return [];
-        }
-    }
-
     private async Task<IEnumerable<EmployeeReferenceDto>> SearchEmployeesAsync(string value, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(value)) return [];
@@ -442,18 +436,6 @@
         }
     }
 
-    private void OnOfficeNameSelected()
-    {
-        if (string.IsNullOrWhiteSpace(_form.Name)) return;
-        if (!_officesByName.TryGetValue(_form.Name, out var office)) return;
-
-        if (!string.IsNullOrWhiteSpace(office.RegProvCode))
-            _form.AnnexECode = office.RegProvCode;
-
-        if (!string.IsNullOrWhiteSpace(office.Address))
-            _form.Address = office.Address;
-    }
-
     private async Task SaveAsync()
     {
         if (string.IsNullOrWhiteSpace(_form.Name)) return;
@@ -466,7 +448,6 @@
                 NullIfEmpty(_form.ShortName),
                 NullIfEmpty(_form.Address),
                 NullIfEmpty(_form.LogoUrl),
-                NullIfEmpty(_form.AnnexECode),
                 _form.RegionalManager?.Id,
                 _form.RegionalManager is not null ? $"{_form.RegionalManager.FirstName} {_form.RegionalManager.LastName}" : null,
                 NullIfEmpty(_form.RegionalManagerDesignation),
@@ -488,6 +469,12 @@
 
             var result = await OrgProfileClient.UpsertAsync(command);
             OrgProfileState.SetProfile(result);
+
+            // The office fields are server-derived — echo back what was actually stamped.
+            _form.AnnexECode = result.AnnexECode ?? string.Empty;
+            _form.OfficeId = result.OfficeId;
+            _form.OfficeName = result.OfficeName ?? string.Empty;
+
             Snackbar.Add("Organization profile saved.", Severity.Success);
         }
         catch (Exception ex)
@@ -568,7 +555,11 @@
         public string ShortName { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string LogoUrl { get; set; } = string.Empty;
+
+        // Derived from the tenant's linked office — displayed, never edited here.
         public string AnnexECode { get; set; } = string.Empty;
+        public Guid? OfficeId { get; set; }
+        public string OfficeName { get; set; } = string.Empty;
         public EmployeeReferenceDto? RegionalManager { get; set; }
         public string RegionalManagerDesignation { get; set; } = string.Empty;
         public EmployeeReferenceDto? AssistantRegionalManager { get; set; }

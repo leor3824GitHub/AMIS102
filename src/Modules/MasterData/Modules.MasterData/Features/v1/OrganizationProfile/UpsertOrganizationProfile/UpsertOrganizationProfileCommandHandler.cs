@@ -1,12 +1,16 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace AMIS.Modules.MasterData.Features.v1.OrganizationProfile.UpsertOrganizationProfile;
 
-public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext db, ICurrentUser currentUser)
+public sealed class UpsertOrganizationProfileCommandHandler(
+    MasterDataDbContext db,
+    ICurrentUser currentUser,
+    AgencyOfficeResolver officeResolver)
     : ICommandHandler<UpsertOrganizationProfileCommand, OrganizationProfileDto>
 {
     public async ValueTask<OrganizationProfileDto> Handle(
@@ -16,11 +20,17 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        // Never taken from the client: the office a tenant represents is set by an administrator on the
+        // Tenants page and is what inter-agency transfers are routed by. The column is still written because
+        // ownership stamping reads it directly; an unlinked tenant keeps the code it already had.
+        var office = await officeResolver.GetLinkedOfficeAsync(cancellationToken).ConfigureAwait(false);
+        var agencyCode = office?.Code?.Trim() ?? existing?.AnnexECode;
+
         if (existing is null)
         {
             var tenantId = currentUser.GetTenant() ?? string.Empty;
             existing = Domain.OrganizationProfile.Create(
-                tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode,
+                tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, agencyCode,
                 command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
@@ -32,7 +42,7 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
         }
         else
         {
-            existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, command.AnnexECode,
+            existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, agencyCode,
                 command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
@@ -51,7 +61,7 @@ public sealed class UpsertOrganizationProfileCommandHandler(MasterDataDbContext 
             existing.AccountantId, existing.AccountantName, existing.AccountantDesignation,
             existing.SupervisingAdminOfficerId, existing.SupervisingAdminOfficerName, existing.SupervisingAdminOfficerDesignation,
             existing.BudgetOfficerId, existing.BudgetOfficerName, existing.BudgetOfficerDesignation,
-            existing.PropertyCustodianId, existing.PropertyCustodianName, existing.PropertyCustodianDesignation);
+            existing.PropertyCustodianId, existing.PropertyCustodianName, existing.PropertyCustodianDesignation,
+            office?.Id, office?.Name);
     }
 }
-

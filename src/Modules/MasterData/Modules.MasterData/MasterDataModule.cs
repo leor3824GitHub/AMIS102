@@ -3,6 +3,7 @@ using AMIS.Framework.Persistence;
 using AMIS.Framework.Shared.Constants;
 using AMIS.Framework.Web.Modules;
 using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data.Services;
 using AMIS.Modules.MasterData.Features.v1.Departments.CreateDepartment;
 using AMIS.Modules.MasterData.Features.v1.Departments.DeleteDepartment;
 using AMIS.Modules.MasterData.Features.v1.Departments.UpdateDepartment;
@@ -158,6 +159,7 @@ public class MasterDataModule : IModule
 
         services.AddHeroDbContext<MasterDataDbContext>();
         services.AddMemoryCache(); // backs the unpaged "all active" lookup handlers (idempotent)
+        services.AddScoped<AgencyOfficeResolver>();
         services.AddScoped<IDbInitializer, MasterDataDbInitializer>();
         services.AddHostedService<AMIS.Modules.MasterData.Provisioning.MasterDataDbInitializerHostedService>();
         services.AddIntegrationEventHandlers(typeof(MasterDataModule).Assembly);

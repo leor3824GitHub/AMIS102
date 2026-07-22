@@ -1,6 +1,7 @@
 using AMIS.Framework.Core.Context;
 using AMIS.Modules.MasterData.Contracts.v1.References;
 using AMIS.Modules.MasterData.Data;
+using AMIS.Modules.MasterData.Data.Services;
 using AMIS.Modules.MasterData.Domain;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +12,16 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
 {
     private readonly MasterDataDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
+    private readonly AgencyOfficeResolver _officeResolver;
 
-    public CreateEmployeeCommandHandler(MasterDataDbContext dbContext, ICurrentUser currentUser)
+    public CreateEmployeeCommandHandler(
+        MasterDataDbContext dbContext,
+        ICurrentUser currentUser,
+        AgencyOfficeResolver officeResolver)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
+        _officeResolver = officeResolver;
     }
 
     public async ValueTask<EmployeeReferenceDto> Handle(CreateEmployeeCommand command, CancellationToken cancellationToken)
@@ -80,7 +86,7 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
 
     /// <summary>
     /// Resolves the owner-agency stamp for a new employee row: the caller's value when supplied,
-    /// otherwise this tenant's own agency code from the Organization Profile.
+    /// otherwise the code of the office this tenant is linked to.
     /// <para>
     /// Server-stamped rather than trusted from the client so rows are owned correctly by construction
     /// instead of depending on data entry. A null result means "shared" — under the convention shared by
@@ -94,14 +100,22 @@ public sealed class CreateEmployeeCommandHandler : ICommandHandler<CreateEmploye
             return requestedOfficeCode.Trim();
         }
 
+        var agencyCode = await _officeResolver.GetAgencyCodeAsync(cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(agencyCode))
+        {
+            return agencyCode;
+        }
+
+        // Tenant not linked to an office yet — fall back to whatever the profile was set up with.
         // OrganizationProfile is .IsMultiTenant(), so this reads the current tenant's profile only.
-        var annexECode = await _dbContext.OrganizationProfiles
+        var storedCode = await _dbContext.OrganizationProfiles
             .AsNoTracking()
             .Select(x => x.AnnexECode)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return string.IsNullOrWhiteSpace(annexECode) ? null : annexECode.Trim();
+        return string.IsNullOrWhiteSpace(storedCode) ? null : storedCode.Trim();
     }
 
     private async Task EnsureReferencesExist(
