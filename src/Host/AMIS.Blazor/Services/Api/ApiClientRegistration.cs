@@ -226,6 +226,8 @@ internal static class ApiClientRegistration
             new ArTransferOfferClient(ResolveClient(sp)));
         services.AddTransient<IArSignedDocumentClient>(sp =>
             new ArSignedDocumentClient(ResolveClient(sp)));
+        services.AddTransient<ITenantOfficeClient>(sp =>
+            new TenantOfficeClient(ResolveClient(sp)));
         services.AddTransient<ILocationLookupClient>(sp =>
             new LocationLookupClient(ResolveClient(sp)));
         services.AddTransient<ILocationClient>(sp =>

@@ -1,4 +1,6 @@
+using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
+using AMIS.Modules.AssetRegister.Contracts.Permissions;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Issuance;
 using AMIS.Modules.AssetRegister.Contracts.v1.ValueObjects;
@@ -7,6 +9,7 @@ using AMIS.Modules.AssetRegister.Data.Services;
 using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Issuance;
 using AMIS.Modules.AssetRegister.Domain.Services;
+using AMIS.Modules.Identity.Contracts.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +21,9 @@ public sealed class CreateIssuanceReportCommandHandler(
     IIssuanceReportNumberGenerator numbers,
     ICountFreezeGuard freezeGuard,
     AssetTransferProjector projector,
+    TransferDestinationResolver destinationResolver,
+    ICurrentUser currentUser,
+    IUserPermissionService permissions,
     IMediator mediator)
     : ICommandHandler<CreateIssuanceReportCommand, PropertyIssuanceReportDto>
 {
@@ -103,6 +109,8 @@ public sealed class CreateIssuanceReportCommandHandler(
         // AssetTransferProjectionJob — the offer row is its own outbox.
         if (!string.IsNullOrWhiteSpace(cmd.DestinationTenantId))
         {
+            await EnsureMayOfferAsync(cancellationToken).ConfigureAwait(false);
+
             var offer = await BuildTransferOfferAsync(
                 cmd.DestinationTenantId, tenantId, org, report, assets, cancellationToken).ConfigureAwait(false);
             db.AssetTransferOffers.Add(offer);
@@ -112,6 +120,24 @@ public sealed class CreateIssuanceReportCommandHandler(
 
         await db.Entry(report).Collection(r => r.Lines).LoadAsync(cancellationToken).ConfigureAwait(false);
         return IssuanceMapper.ToDto(report);
+    }
+
+    /// <summary>
+    /// Raising an inter-agency offer is a separate privilege from posting an issuance report: it moves assets
+    /// onto another agency's books. The endpoint can only demand one permission
+    /// (<c>Issuance.Create</c>), and the UI's <c>Transfers.Offer</c> check is client-side only, so without
+    /// this a caller with nothing but issuance rights could post a destination straight to the API.
+    /// </summary>
+    private async Task EnsureMayOfferAsync(CancellationToken cancellationToken)
+    {
+        var userId = currentUser.GetUserId().ToString();
+
+        if (!await permissions
+                .HasPermissionAsync(userId, AssetRegisterPermissions.Transfers.Offer, cancellationToken)
+                .ConfigureAwait(false))
+        {
+            throw new ForbiddenException("You do not have permission to raise an inter-agency transfer offer.");
+        }
     }
 
     /// <summary>
@@ -154,6 +180,27 @@ public sealed class CreateIssuanceReportCommandHandler(
         if (string.Equals(destination.Identifier, tenantId, StringComparison.OrdinalIgnoreCase))
             throw new CustomException(
                 "An agency cannot transfer property to itself.", [], System.Net.HttpStatusCode.UnprocessableEntity);
+
+        // The recipient decides the destination. When the form names a real employee, their agency and the
+        // destination must be the same agency — otherwise a mis-pick would ship the assets, and their book
+        // values, onto a third party's books while the printed form names someone else entirely.
+        // A hand-typed recipient (Guid.Empty) has no agency to check against, so it is left alone.
+        if (report.IssuedTo.EmployeeId != Guid.Empty)
+        {
+            var recipientAgency = await destinationResolver
+                .ResolveForEmployeeAsync(report.IssuedTo.EmployeeId, tenantId, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (recipientAgency is not null
+                && !string.Equals(recipientAgency.TenantId, destination.Identifier, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new CustomException(
+                    $"Recipient '{report.IssuedTo.PrintedName}' belongs to {recipientAgency.AgencyName}, " +
+                    $"not {destination.Name ?? destination.Identifier}. Transfer to the recipient's own agency, " +
+                    "or name a recipient at the destination agency.",
+                    [], System.Net.HttpStatusCode.UnprocessableEntity);
+            }
+        }
 
         var offer = Domain.Transfers.AssetTransferOffer.CreateOutbound(
             tenantId,

@@ -9,4 +9,10 @@ public sealed class TenantDto
     public bool IsActive { get; set; }
     public DateTime ValidUpto { get; set; }
     public string? Issuer { get; set; }
+
+    /// <summary>The MasterData office this agency represents. Null when the tenant has not been linked yet.</summary>
+    public Guid? OfficeId { get; set; }
+
+    /// <summary>Display snapshot of the linked office's code.</summary>
+    public string? OfficeCode { get; set; }
 }

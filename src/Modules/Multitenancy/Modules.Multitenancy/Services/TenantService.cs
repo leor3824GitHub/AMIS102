@@ -59,7 +59,8 @@ public sealed class TenantService : ITenantService
     public async Task<string> CreateAsync(string id,
         string name,
         string? connectionString,
-        string adminEmail, string? issuer, CancellationToken cancellationToken)
+        string adminEmail, string? issuer, CancellationToken cancellationToken,
+        Guid? officeId = null, string? officeCode = null)
     {
         if (connectionString?.Trim() == _config.ConnectionString.Trim())
         {
@@ -67,9 +68,41 @@ public sealed class TenantService : ITenantService
         }
 
         AppTenantInfo tenant = new(id, name, connectionString, adminEmail, issuer);
+
+        if (officeId.HasValue && officeId.Value != Guid.Empty)
+        {
+            tenant.LinkOffice(officeId.Value, officeCode);
+        }
+
         await _tenantStore.AddAsync(tenant).ConfigureAwait(false);
 
         return tenant.Id;
+    }
+
+    public async Task<AppTenantInfo?> FindByIdAsync(string id, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return null;
+        }
+
+        return await _dbContext.TenantInfo
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<AppTenantInfo?> FindByOfficeIdAsync(Guid officeId, CancellationToken cancellationToken = default)
+    {
+        if (officeId == Guid.Empty)
+        {
+            return null;
+        }
+
+        return await _dbContext.TenantInfo
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.OfficeId == officeId, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task MigrateTenantAsync(AppTenantInfo tenant, CancellationToken cancellationToken)
@@ -175,6 +208,35 @@ public sealed class TenantService : ITenantService
         tenant.SetValidity(utcExpiryDate);
         await _tenantStore.UpdateAsync(tenant).ConfigureAwait(false);
         return tenant.ValidUpto;
+    }
+
+    /// <summary>
+    /// Deliberately goes through <see cref="TenantDbContext"/> rather than the Finbuckle store. With
+    /// <c>UseDistributedCacheStore</c> enabled the store is a cache: reading it misses any tenant the
+    /// current session has not resolved, and writing to it would update the cache entry while leaving the
+    /// registry table — the system of record this link is read back from — untouched.
+    /// </summary>
+    public async Task<AppTenantInfo> LinkOfficeAsync(string id, Guid officeId, string? officeCode, CancellationToken cancellationToken = default)
+    {
+        var tenant = await _dbContext.TenantInfo
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException($"{typeof(AppTenantInfo).Name} {id} Not Found.");
+
+        var claimant = await FindByOfficeIdAsync(officeId, cancellationToken).ConfigureAwait(false);
+        if (claimant is not null && !string.Equals(claimant.Id, tenant.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new CustomException($"Office is already linked to tenant '{claimant.Id}'.");
+        }
+
+        tenant.LinkOffice(officeId, officeCode);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        // Best-effort refresh so a cached copy of this tenant does not keep serving the old office.
+        // Routing always re-reads the registry, so a cache miss here is harmless.
+        await _tenantStore.UpdateAsync(tenant).ConfigureAwait(false);
+
+        return tenant;
     }
 
     private async Task<AppTenantInfo> GetTenantInfoAsync(string id, CancellationToken cancellationToken = default) =>

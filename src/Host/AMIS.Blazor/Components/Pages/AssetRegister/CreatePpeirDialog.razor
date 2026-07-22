@@ -21,7 +21,8 @@
                               HelperText="From the active pre-numbered accountable form series" />
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudSelect @bind-Value="_form.Nature" Label="Nature of Issuance" Variant="Variant.Outlined"
+                <MudSelect Value="_form.Nature" ValueChanged="OnNatureChanged" Label="Nature of Issuance"
+                           Variant="Variant.Outlined"
                            T="IssuanceNature" Required="true" Dense="true" Margin="Margin.Dense">
                     <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.TransferCO">Transfer to C.O.</MudSelectItem>
                     <MudSelectItem T="IssuanceNature" Value="@IssuanceNature.TransferRO">Transfer to R.O.</MudSelectItem>
@@ -50,18 +51,64 @@
                     </MudAlert>
                 </MudItem>
             }
+            @* The destination agency is derived from the recipient below, not asked for separately — the two
+               used to be independent inputs that could disagree. It stays on screen as a confirmation because
+               a transfer moves assets onto another agency's books and cannot be undone. *@
             @if (IsTransferNature(_form.Nature) && _canOffer)
             {
                 <MudItem xs="12">
-                    <MudSelect @bind-Value="_form.DestinationTenantId" Label="Destination Agency (linked transfer)"
-                               Variant="Variant.Outlined" T="string?" Clearable="true"
-                               Dense="true" Margin="Margin.Dense"
-                               HelperText="Optional. Pick an agency on AMIS to send them a linked transfer offer they can accept — carrying the book values across, with no re-keying. Leave blank for the manual paper handshake.">
-                        @foreach (var d in _destinations)
+                    @if (_resolvingDestination)
+                    {
+                        <MudAlert Severity="Severity.Normal" Dense="true">
+                            Checking the recipient's agency…
+                        </MudAlert>
+                    }
+                    else if (EffectiveDestination is { } destination)
+                    {
+                        <MudAlert Severity="Severity.Success" Dense="true"
+                                  Icon="@Icons.Material.Outlined.SwapHoriz">
+                            <MudText Typo="Typo.body2">
+                                Linked transfer to <b>@destination.AgencyName</b>@(_overrideDestination is null ? " — from the recipient's office" : " — chosen manually")
+                            </MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">
+                                They receive an offer to accept, carrying the book values across with no re-keying.
+                            </MudText>
+                            <MudCheckBox @bind-Value="_sendLinkedOffer" T="bool" Dense="true" Size="Size.Small"
+                                         Label="Send the linked offer" />
+                        </MudAlert>
+                    }
+                    else if (_sendLinkedOffer && _form.IssuedToEmployee is not null)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            The recipient's office is not linked to an agency on AMIS — this will be posted as a
+                            manual paper handshake.
+                        </MudAlert>
+                    }
+
+                    @* Escape hatch for the case the derivation cannot cover: the destination agency is on AMIS
+                       but the named recipient is not, so there is no employee row to derive from. *@
+                    @if (_sendLinkedOffer && _destinations.Count > 0)
+                    {
+                        @if (_showDestinationOverride)
                         {
-                            <MudSelectItem T="string?" Value="@d.TenantId">@d.AgencyName</MudSelectItem>
+                            <MudSelect @bind-Value="_overrideDestination" Label="Destination Agency"
+                                       Variant="Variant.Outlined" T="string?" Clearable="true"
+                                       Dense="true" Margin="Margin.Dense" Class="mt-2"
+                                       HelperText="Overrides the agency derived from the recipient. Clear it to go back to the derived one.">
+                                @foreach (var d in _destinations)
+                                {
+                                    <MudSelectItem T="string?" Value="@d.TenantId">@d.AgencyName</MudSelectItem>
+                                }
+                            </MudSelect>
                         }
-                    </MudSelect>
+                        else
+                        {
+                            <MudLink Component="button" Typo="Typo.caption" Class="mt-1"
+                                     OnClick="@(() => _showDestinationOverride = true)">
+                                Choose a different agency
+                            </MudLink>
+                        }
+                    }
                 </MudItem>
             }
 
@@ -204,6 +251,31 @@
 
     private IReadOnlyList<TransferDestinationDto> _destinations = [];
 
+    // Resolved from the recipient's office. Null means no agency on AMIS owns that office — or the
+    // recipient is in our own agency, which is an ordinary internal issuance rather than a transfer.
+    private TransferDestinationDto? _derivedDestination;
+    private bool _resolvingDestination;
+
+    // Unchecking posts the report with no linked offer, i.e. the manual paper handshake.
+    private bool _sendLinkedOffer = true;
+
+    private bool _showDestinationOverride;
+    private string? _overrideDestination;
+
+    // A manual override wins over the derived agency; clearing it falls back to the recipient's own.
+    private TransferDestinationDto? EffectiveDestination
+    {
+        get
+        {
+            if (!_sendLinkedOffer)
+                return null;
+
+            return _overrideDestination is { Length: > 0 } chosen
+                ? _destinations.FirstOrDefault(d => d.TenantId == chosen)
+                : _derivedDestination;
+        }
+    }
+
     // The last value this dialog wrote into the office/address field, so a hand-typed one is
     // distinguishable from an autofill and never overwritten.
     private string? _autoFilledOfficeAddress;
@@ -233,7 +305,6 @@
     private sealed class CreateFormModel
     {
         public IssuanceNature Nature { get; set; }
-        public string? DestinationTenantId { get; set; }
         public string FundCluster { get; set; } = "";
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public string IssuedToName { get; set; } = "";
@@ -266,17 +337,67 @@
     private static string FormatEmployee(EmployeeReferenceDto? e) =>
         e is null ? "" : $"{e.FirstName} {e.LastName}".Trim();
 
-    private void OnIssuedToEmployeeSelected(EmployeeReferenceDto? employee)
+    private async Task OnIssuedToEmployeeSelected(EmployeeReferenceDto? employee)
     {
         _form.IssuedToEmployee = employee;
         if (employee is null)
+        {
+            _derivedDestination = null;
             return;
+        }
 
         _form.IssuedToName = FormatEmployee(employee);
         if (!string.IsNullOrWhiteSpace(employee.PositionName))
             _form.IssuedToDesignation = employee.PositionName;
 
         FillOfficeAddress(employee);
+        await ResolveDestinationAsync();
+    }
+
+    // Who the property is issued to decides which agency's books it lands on, so the destination is looked
+    // up from the recipient rather than asked for a second time. Resolution is server-side because the
+    // office-to-agency mapping lives in the tenant registry, which the client cannot see.
+    private async Task ResolveDestinationAsync()
+    {
+        var employeeId = _form.IssuedToEmployee?.Id;
+        if (!_canOffer || employeeId is null || !IsTransferNature(_form.Nature))
+        {
+            _derivedDestination = null;
+            return;
+        }
+
+        _resolvingDestination = true;
+        try
+        {
+            _derivedDestination = await TransferClient.ResolveDestinationForEmployeeAsync(employeeId.Value);
+        }
+        catch
+        {
+            // Non-critical: without a derived agency the report still posts as a manual handshake, and the
+            // override picker is still available.
+            _derivedDestination = null;
+        }
+        finally
+        {
+            _resolvingDestination = false;
+        }
+    }
+
+    private async Task OnNatureChanged(IssuanceNature nature)
+    {
+        _form.Nature = nature;
+
+        // Switching away from a transfer nature must not leave a stale destination behind — the server
+        // rejects a destination on any other nature.
+        if (!IsTransferNature(nature))
+        {
+            _derivedDestination = null;
+            _overrideDestination = null;
+            _showDestinationOverride = false;
+            return;
+        }
+
+        await ResolveDestinationAsync();
     }
 
     // The recipient's office is the destination the form is printed against, so picking an employee
@@ -315,6 +436,10 @@
             !string.Equals(_form.IssuedToName, FormatEmployee(_form.IssuedToEmployee), StringComparison.Ordinal))
         {
             _form.IssuedToEmployee = null;
+
+            // The destination was derived from that employee, so it must not outlive the link. An explicit
+            // manual override is the user's own choice and is deliberately left standing.
+            _derivedDestination = null;
         }
     }
 
@@ -391,8 +516,9 @@
                 _form.IssuedToOfficeAddress.Trim(),
                 _form.Remarks?.Trim(),
                 _form.SelectedAssets.Select(a => a.Id).ToList(),
-                // Only meaningful on a Transfer* nature; the server rejects it otherwise.
-                IsTransferNature(_form.Nature) ? _form.DestinationTenantId : null);
+                // Derived from the recipient (or overridden by hand), and only meaningful on a Transfer*
+                // nature for a user who may offer — the server rejects it otherwise.
+                IsTransferNature(_form.Nature) && _canOffer ? EffectiveDestination?.TenantId : null);
 
             var created = await Client.CreateAsync(req);
             Snackbar.Add($"PPEIR {created.ReportNo} created. Assets transferred out.", Severity.Success);

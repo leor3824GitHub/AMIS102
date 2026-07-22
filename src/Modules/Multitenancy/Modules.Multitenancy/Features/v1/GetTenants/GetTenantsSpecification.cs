@@ -34,7 +34,9 @@ internal sealed class GetTenantsSpecification : Specification<AppTenantInfo, Ten
             AdminEmail = t.AdminEmail!,
             IsActive = t.IsActive,
             ValidUpto = t.ValidUpto,
-            Issuer = t.Issuer
+            Issuer = t.Issuer,
+            OfficeId = t.OfficeId,
+            OfficeCode = t.OfficeCode
         });
 
         // Default behavior: no tracking.

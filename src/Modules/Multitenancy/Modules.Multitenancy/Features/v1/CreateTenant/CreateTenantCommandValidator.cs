@@ -26,5 +26,15 @@ public sealed class CreateTenantCommandValidator : AbstractValidator<CreateTenan
         RuleFor(t => t.AdminEmail).Cascade(CascadeMode.Stop)
             .NotEmpty()
             .EmailAddress();
+
+        // A unique index enforces this at the database too, but catching it here turns a 500 into a
+        // readable validation message. One office can only ever represent one agency, otherwise resolving
+        // a recipient employee to a destination tenant would be ambiguous.
+        RuleFor(t => t.OfficeId).Cascade(CascadeMode.Stop)
+            .MustAsync(async (officeId, ct) =>
+                !officeId.HasValue
+                || officeId.Value == Guid.Empty
+                || await tenantService.FindByOfficeIdAsync(officeId.Value, ct).ConfigureAwait(false) is null)
+            .WithMessage("That office is already linked to another tenant.");
     }
 }

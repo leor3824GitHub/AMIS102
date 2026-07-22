@@ -1,3 +1,4 @@
+using AMIS.Framework.Core.Context;
 using AMIS.Framework.Core.Exceptions;
 using AMIS.Modules.AssetRegister.Contracts.v1;
 using AMIS.Modules.AssetRegister.Contracts.v1.Accountability;
@@ -10,7 +11,9 @@ using AMIS.Modules.AssetRegister.Domain.Assets;
 using AMIS.Modules.AssetRegister.Domain.Catalog;
 using AMIS.Modules.AssetRegister.Domain.Services;
 using AMIS.Modules.AssetRegister.Features.v1.Issuance.CreateIssuanceReport;
+using AMIS.Modules.Identity.Contracts.Services;
 using AMIS.Modules.MasterData.Contracts.v1.OrganizationProfile;
+using AMIS.Modules.MasterData.Contracts.v1.References;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -151,9 +154,124 @@ public sealed class CreateIssuanceReportTransferOfferTests
         });
     }
 
+    // ── Destination derived from the recipient ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task Post_WhenTheRecipientBelongsToADifferentAgencyThanTheDestination_IsRejected()
+    {
+        const string AgencyC = "agency-c";
+        using var host = new MultiTenantTestHost(null, AgencyA, AgencyB, AgencyC);
+        var assetId = await SeedAvailablePpeAsync(host);
+
+        // The recipient works at an office that agency C claims, but the form names agency B as the
+        // destination. Honouring that would put the assets on C's colleague's form and B's books.
+        var officeId = Guid.NewGuid();
+        host.TenantService.FindByOfficeIdAsync(officeId, Arg.Any<CancellationToken>())
+            .Returns(host.Tenant(AgencyC));
+
+        await host.AsTenantAsync(AgencyA, async db =>
+        {
+            var cmd = NewCommand(assetId, IssuanceNature.TransferRO, AgencyB) with
+            {
+                IssuedTo = new EmployeeRefDto(Guid.NewGuid(), "Receiving Officer", "Custodian")
+            };
+
+            var ex = await Should.ThrowAsync<CustomException>(() =>
+                NewHandler(host, db, EmployeeAt(officeId)).Handle(cmd, CancellationToken.None).AsTask());
+
+            ex.Message.ShouldContain("Agency AGENCY-C");
+        });
+
+        (await host.AsTenantAsync(AgencyA, db => db.AssetTransferOffers.AsNoTracking().CountAsync())).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Post_WhenTheRecipientBelongsToTheDestinationAgency_WritesTheOffer()
+    {
+        using var host = new MultiTenantTestHost(null, AgencyA, AgencyB);
+        var assetId = await SeedAvailablePpeAsync(host);
+
+        var officeId = Guid.NewGuid();
+        host.TenantService.FindByOfficeIdAsync(officeId, Arg.Any<CancellationToken>())
+            .Returns(host.Tenant(AgencyB));
+
+        await host.AsTenantAsync(AgencyA, async db =>
+        {
+            var cmd = NewCommand(assetId, IssuanceNature.TransferRO, AgencyB) with
+            {
+                IssuedTo = new EmployeeRefDto(Guid.NewGuid(), "Receiving Officer", "Custodian")
+            };
+
+            await NewHandler(host, db, EmployeeAt(officeId)).Handle(cmd, CancellationToken.None);
+        });
+
+        var offer = await host.AsTenantAsync(AgencyA, db =>
+            db.AssetTransferOffers.AsNoTracking().SingleOrDefaultAsync());
+
+        offer.ShouldNotBeNull();
+        offer.ToTenantId.ShouldBe(AgencyB);
+    }
+
+    [Fact]
+    public async Task Post_WithAHandTypedRecipient_SkipsTheAgencyCheck()
+    {
+        using var host = new MultiTenantTestHost(null, AgencyA, AgencyB);
+        var assetId = await SeedAvailablePpeAsync(host);
+
+        // Guid.Empty means the name was typed, not picked — there is no employee row and therefore no
+        // agency to reconcile against, so the transfer must still go through.
+        await host.AsTenantAsync(AgencyA, async db =>
+            await NewHandler(host, db).Handle(
+                NewCommand(assetId, IssuanceNature.TransferRO, AgencyB), CancellationToken.None));
+
+        (await host.AsTenantAsync(AgencyA, db => db.AssetTransferOffers.AsNoTracking().CountAsync())).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Post_WithDestination_WithoutTheOfferPermission_IsRejected()
+    {
+        using var host = new MultiTenantTestHost(null, AgencyA, AgencyB);
+        var assetId = await SeedAvailablePpeAsync(host);
+
+        // The endpoint only demands Issuance.Create, so raising an offer has to be checked in the handler
+        // — otherwise issuance rights alone would be enough to push assets onto another agency's books.
+        await host.AsTenantAsync(AgencyA, async db =>
+            await Should.ThrowAsync<ForbiddenException>(() =>
+                NewHandler(host, db, recipient: null, mayOffer: false)
+                    .Handle(NewCommand(assetId, IssuanceNature.TransferRO, AgencyB), CancellationToken.None)
+                    .AsTask()));
+
+        (await host.AsTenantAsync(AgencyA, db => db.AssetTransferOffers.AsNoTracking().CountAsync())).ShouldBe(0);
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────────────────────
 
-    private static CreateIssuanceReportCommandHandler NewHandler(MultiTenantTestHost host, AssetRegisterDbContext db)
+    /// <summary>A recipient employee assigned to <paramref name="officeId"/> — the office that decides their agency.</summary>
+    private static EmployeeReferenceDto EmployeeAt(Guid officeId) =>
+        new(
+            Id: Guid.NewGuid(),
+            EmployeeNumber: "EMP-001",
+            IdentityUserId: null,
+            FirstName: "Receiving",
+            LastName: "Officer",
+            WorkEmail: null,
+            OfficeId: officeId,
+            OfficeCode: "OFC",
+            OfficeName: "Receiving Office",
+            OfficeAddress: null,
+            DepartmentId: Guid.NewGuid(),
+            DepartmentCode: "DEP",
+            DepartmentName: "Supply",
+            PositionId: Guid.NewGuid(),
+            PositionCode: "POS",
+            PositionName: "Custodian",
+            IsActive: true);
+
+    private static CreateIssuanceReportCommandHandler NewHandler(
+        MultiTenantTestHost host,
+        AssetRegisterDbContext db,
+        EmployeeReferenceDto? recipient = null,
+        bool mayOffer = true)
     {
         var numbers = Substitute.For<IIssuanceReportNumberGenerator>();
         numbers.NextAsync(Arg.Any<IssuanceReportType>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
@@ -173,7 +291,25 @@ public sealed class CreateIssuanceReportTransferOfferTests
         var projector = new AssetTransferProjector(
             host.ScopeFactory, host.TenantService, NullLogger<AssetTransferProjector>.Instance);
 
-        return new CreateIssuanceReportCommandHandler(db, numbers, freezeGuard, projector, mediator);
+        if (recipient is not null)
+        {
+            mediator.Send(Arg.Any<GetEmployeeReferenceByIdQuery>(), Arg.Any<CancellationToken>())
+                .Returns(recipient);
+        }
+
+        var resolver = new TransferDestinationResolver(mediator, host.TenantService);
+
+        var currentUser = Substitute.For<ICurrentUser>();
+        currentUser.GetUserId().Returns(Guid.NewGuid());
+
+        // Most of these tests exercise the transfer rules, not authorization — the offer permission is
+        // granted by default so the guard never masks the behaviour under test.
+        var permissions = Substitute.For<IUserPermissionService>();
+        permissions.HasPermissionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(mayOffer);
+
+        return new CreateIssuanceReportCommandHandler(
+            db, numbers, freezeGuard, projector, resolver, currentUser, permissions, mediator);
     }
 
     private static CreateIssuanceReportCommand NewCommand(

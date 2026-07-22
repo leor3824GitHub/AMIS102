@@ -1,0 +1,133 @@
+@using AMIS.Blazor.ApiClient
+@inject ILookupClient LookupClient
+@inject ITenantOfficeClient TenantOfficeClient
+@inject ISnackbar Snackbar
+
+@* Points a tenant at the MasterData office it represents. This is the mapping an inter-agency transfer is
+   routed by: a PPEIR recipient's office is matched against it to work out whose books the assets land on. *@
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.LocationCity" Color="Color.Secondary" />
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h6" Class="fw-600">Link Agency Office</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">@TenantName</MudText>
+            </MudStack>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3" Style="min-width: 420px;">
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Property transferred to an employee of this office will be routed to this agency automatically.
+                One office can only be linked to one tenant.
+            </MudAlert>
+
+            <MudAutocomplete T="OfficeReferenceDto"
+                             Value="_selectedOffice"
+                             ValueChanged="@(o => _selectedOffice = o)"
+                             SearchFunc="SearchOfficesAsync"
+                             ToStringFunc="@(o => o is null ? "" : $"{o.Code} — {o.Name}")"
+                             Label="Agency Office"
+                             Variant="Variant.Outlined"
+                             Required="true"
+                             Clearable="true"
+                             Dense="true"
+                             Margin="Margin.Dense"
+                             HelperText="Search by code or name">
+                <ItemTemplate Context="office">
+                    <MudText Typo="Typo.body2">@office.Code — @office.Name</MudText>
+                    @if (!string.IsNullOrWhiteSpace(office.LocationCode) || !string.IsNullOrWhiteSpace(office.RegProvCode))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @(string.IsNullOrWhiteSpace(office.LocationCode) ? "" : $"Loc. {office.LocationCode}")@(string.IsNullOrWhiteSpace(office.RegProvCode) ? "" : $" · Reg./Prov. {office.RegProvCode}")
+                        </MudText>
+                    }
+                </ItemTemplate>
+            </MudAutocomplete>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel" Disabled="_busy">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit"
+                   Disabled="@(_busy || _selectedOffice is null)">
+            @if (_busy)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Linking...</span>
+            }
+            else
+            {
+                <span>Link Office</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string TenantId { get; set; } = "";
+    [Parameter] public string TenantName { get; set; } = "";
+    [Parameter] public Guid? CurrentOfficeId { get; set; }
+
+    private OfficeReferenceDto? _selectedOffice;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentOfficeId is not { } officeId) return;
+
+        // Show what is already linked so re-linking starts from the current value rather than blank.
+        try
+        {
+            var offices = await LookupClient.OfficesAsync(pageNumber: 1, pageSize: 200);
+            _selectedOffice = offices?.Items?.FirstOrDefault(o => o.Id == officeId);
+        }
+        catch
+        {
+            // Non-critical — the picker simply starts empty.
+        }
+    }
+
+    private async Task<IEnumerable<OfficeReferenceDto>> SearchOfficesAsync(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.OfficesAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                sort: null,
+                cancellationToken: ct);
+            return result?.Items ?? Enumerable.Empty<OfficeReferenceDto>();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (_selectedOffice is null) return;
+
+        _busy = true;
+        try
+        {
+            await TenantOfficeClient.LinkAsync(TenantId, _selectedOffice.Id, _selectedOffice.Code);
+            Snackbar.Add($"Linked {TenantName} to {_selectedOffice.Code} — {_selectedOffice.Name}.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

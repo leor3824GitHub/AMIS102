@@ -132,6 +132,7 @@ public class AssetRegisterModule : IModule
 
         // Inter-agency transfers: the only cross-tenant seam in this module, plus the job that drains it.
         services.AddScoped<AssetTransferProjector>();
+        services.AddScoped<TransferDestinationResolver>();
         services.AddScoped<AssetTransferProjectionJob>();
 
         // Weekly ICS/PAR renewal digest — pure read model, drops a "renewal due" notification per accountable person.
@@ -293,6 +294,7 @@ public class AssetRegisterModule : IModule
         var transfers = moduleGroup.MapGroup("/transfers");
         Features.v1.Transfers.SearchTransferOffers.SearchTransferOffersEndpoint.Map(transfers);
         Features.v1.Transfers.GetTransferDestinations.GetTransferDestinationsEndpoint.Map(transfers);
+        Features.v1.Transfers.ResolveTransferDestination.ResolveTransferDestinationEndpoint.Map(transfers);
         Features.v1.Transfers.GetTransferOffer.GetTransferOfferEndpoint.Map(transfers);
         Features.v1.Transfers.AcceptTransferOffer.AcceptTransferOfferEndpoint.Map(transfers);
         Features.v1.Transfers.RejectTransferOffer.RejectTransferOfferEndpoint.Map(transfers);

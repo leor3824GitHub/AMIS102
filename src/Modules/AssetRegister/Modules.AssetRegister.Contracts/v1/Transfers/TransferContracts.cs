@@ -89,6 +89,16 @@ public sealed record TransferDestinationDto(string TenantId, string AgencyName);
 public sealed record GetTransferDestinationsQuery : IQuery<IReadOnlyList<TransferDestinationDto>>;
 
 /// <summary>
+/// Resolves the agency a recipient employee belongs to, so the PPEIR form can derive the destination from
+/// who the property is being issued to instead of asking for it a second time.
+/// <para>
+/// Returns null whenever there is no linked destination — a hand-typed recipient, an office no tenant
+/// claims, or a colleague in the sender's own agency. Null is an ordinary answer, never an error.
+/// </para>
+/// </summary>
+public sealed record ResolveTransferDestinationQuery(Guid EmployeeId) : IQuery<TransferDestinationDto?>;
+
+/// <summary>
 /// The receiving agency's "Incoming Transfers" inbox. Returns only this tenant's own rows — the ambient
 /// tenant filter does the scoping, there is no cross-tenant read here.
 /// </summary>

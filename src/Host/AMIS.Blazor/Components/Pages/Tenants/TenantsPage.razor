@@ -124,6 +124,7 @@ else
                 <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.Name ?? string.Empty)">Tenant</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.AdminEmail ?? string.Empty)">Admin Email</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.ValidUpto)">Subscription</MudTableSortLabel></MudTh>
+                <MudTh>Office</MudTh>
                 <MudTh>Database</MudTh>
                 <MudTh><MudTableSortLabel T="TenantDto" SortBy="@(x => x.IsActive)">Status</MudTableSortLabel></MudTh>
                 <MudTh Style="text-align:right">Actions</MudTh>
@@ -164,6 +165,21 @@ else
                         }
                     </MudStack>
                 </MudTd>
+                @* An unlinked tenant cannot be an auto-derived destination for an inter-agency transfer,
+                   so the gap is shown here rather than only surfacing when a PPEIR fails to route. *@
+                <MudTd DataLabel="Office">
+                    @if (context.OfficeId.HasValue)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.LocationCity" Size="Size.Small" Class="mr-1" />
+                            @(string.IsNullOrWhiteSpace(context.OfficeCode) ? "Linked" : context.OfficeCode)
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Outlined">Not linked</MudChip>
+                    }
+                </MudTd>
                 <MudTd DataLabel="Database">
                     @if (!string.IsNullOrWhiteSpace(context.ConnectionString))
                     {
@@ -197,6 +213,12 @@ else
                                            Size="Size.Small"
                                            Color="Color.Primary"
                                            OnClick="@(() => GoToDetail(context.Id))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Link Agency Office">
+                            <MudIconButton Icon="@Icons.Material.Filled.LocationCity"
+                                           Size="Size.Small"
+                                           Color="Color.Secondary"
+                                           OnClick="@(() => LinkOffice(context))" />
                         </MudTooltip>
                         <MudTooltip Text="Upgrade Subscription">
                             <MudIconButton Icon="@Icons.Material.Filled.Upgrade"
@@ -480,6 +502,32 @@ else
         };
 
         var dialog = await DialogService.ShowAsync<CreateTenantDialog>("Create Tenant", options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task LinkOffice(TenantDto tenant)
+    {
+        var parameters = new DialogParameters<LinkTenantOfficeDialog>
+        {
+            { x => x.TenantId, tenant.Id },
+            { x => x.TenantName, tenant.Name ?? tenant.Id },
+            { x => x.CurrentOfficeId, tenant.OfficeId }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<LinkTenantOfficeDialog>("Link Agency Office", parameters, options);
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled)

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -2029,6 +2030,12 @@ public interface IArTransferOfferClient
     Task<AssetTransferOfferDto> RejectAsync(Guid id, string reason, CancellationToken ct = default);
     /// <summary>Active agencies this tenant may offer property to (identifier + display name only).</summary>
     Task<IReadOnlyList<TransferDestinationDto>> GetDestinationsAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// The agency a recipient employee belongs to, or null when there is no linked destination — a
+    /// hand-typed recipient, an office no tenant claims, or a colleague in this same agency.
+    /// </summary>
+    Task<TransferDestinationDto?> ResolveDestinationForEmployeeAsync(Guid employeeId, CancellationToken ct = default);
 }
 
 public sealed class ArTransferOfferClient(HttpClient http) : IArTransferOfferClient
@@ -2059,6 +2066,18 @@ public sealed class ArTransferOfferClient(HttpClient http) : IArTransferOfferCli
         var result = await http.GetFromJsonAsync<List<TransferDestinationDto>>(
             $"{Base}/destinations", ArJsonOptions.Default, ct);
         return result ?? [];
+    }
+
+    public async Task<TransferDestinationDto?> ResolveDestinationForEmployeeAsync(Guid employeeId, CancellationToken ct = default)
+    {
+        if (employeeId == Guid.Empty) return null;
+
+        // 204 is the ordinary "no linked destination" answer, so it must not be treated as a failure.
+        var resp = await http.GetAsync($"{Base}/destination-for-employee/{employeeId}", ct);
+        if (resp.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.NotFound) return null;
+        if (!resp.IsSuccessStatusCode) throw new InvalidOperationException(await ArErrorReader.ExtractAsync(resp, ct));
+
+        return await resp.Content.ReadFromJsonAsync<TransferDestinationDto>(ArJsonOptions.Default, cancellationToken: ct);
     }
 
     public async Task<AssetTransferOfferDto> AcceptAsync(Guid id, Guid receivingReportId, CancellationToken ct = default)

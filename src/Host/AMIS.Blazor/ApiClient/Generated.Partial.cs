@@ -117,5 +117,25 @@ namespace AMIS.Blazor.ApiClient
         [System.Text.Json.Serialization.JsonPropertyName("officeCode")]
         public string? OfficeCode { get; set; }
     }
+
+    // The MasterData office a tenant represents. This is what lets a PPEIR derive its destination agency
+    // from the recipient employee's office instead of asking for it separately.
+    public partial class TenantDto
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("officeId")]
+        public System.Guid? OfficeId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("officeCode")]
+        public string? OfficeCode { get; set; }
+    }
+
+    public partial class CreateTenantCommand
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("officeId")]
+        public System.Guid? OfficeId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("officeCode")]
+        public string? OfficeCode { get; set; }
+    }
 }
 

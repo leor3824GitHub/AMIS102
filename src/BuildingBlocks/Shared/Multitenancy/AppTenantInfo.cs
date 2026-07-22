@@ -40,6 +40,35 @@ public class AppTenantInfo : TenantInfo, IAppTenantInfo
     public DateTime ValidUpto { get; set; }
     public string? Issuer { get; set; }
 
+    /// <summary>
+    /// The MasterData Office this agency <i>is</i>. Soft reference: MasterData lives in a different
+    /// DbContext (and potentially a different database), so there is no foreign key.
+    /// <para>
+    /// Authoritative for routing inter-agency property transfers — an employee is resolved to their
+    /// destination tenant by matching <c>EmployeeProfile.OfficeId</c> against this column. Null means the
+    /// tenant has not been linked to an office yet and cannot be an auto-derived transfer destination.
+    /// </para>
+    /// </summary>
+    public Guid? OfficeId { get; set; }
+
+    /// <summary>
+    /// Display snapshot of the linked <c>Office.Code</c>, taken when the link was made. Never used for
+    /// matching — routing always goes through <see cref="OfficeId"/> — so drift here is cosmetic.
+    /// </summary>
+    public string? OfficeCode { get; set; }
+
+    /// <summary>Links this tenant to the MasterData office it represents.</summary>
+    public void LinkOffice(Guid officeId, string? officeCode)
+    {
+        if (officeId == Guid.Empty)
+        {
+            throw new InvalidOperationException("A tenant cannot be linked to an empty office id.");
+        }
+
+        OfficeId = officeId;
+        OfficeCode = string.IsNullOrWhiteSpace(officeCode) ? null : officeCode.Trim();
+    }
+
     public void AddValidity(int months) =>
         ValidUpto = ValidUpto.AddMonths(months);
 

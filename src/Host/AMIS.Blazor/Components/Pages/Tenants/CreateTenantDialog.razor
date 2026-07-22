@@ -1,5 +1,6 @@
 @using AMIS.Blazor.ApiClient
 @inject IV1Client V1Client
+@inject ILookupClient LookupClient
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -48,6 +49,23 @@
                                   AdornmentIcon="@Icons.Material.Filled.Business"
                                   HelperText="Display name for the tenant"
                                   Immediate="true" />
+                </MudItem>
+
+                @* The office this agency IS. Inter-agency property transfers are routed by matching a
+                   recipient employee's office against this, so an unlinked tenant can never be an
+                   auto-derived transfer destination. *@
+                <MudItem xs="12">
+                    <MudAutocomplete T="OfficeReferenceDto"
+                                     Value="_selectedOffice"
+                                     ValueChanged="OnOfficeSelected"
+                                     SearchFunc="SearchOfficesAsync"
+                                     ToStringFunc="@(o => o is null ? "" : $"{o.Code} — {o.Name}")"
+                                     Label="Agency Office"
+                                     Variant="Variant.Outlined"
+                                     Clearable="true"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.LocationCity"
+                                     HelperText="Optional. The office this agency represents — required for linked inter-agency transfers. One office per tenant." />
                 </MudItem>
 
                 @* Admin Account Section *@
@@ -150,10 +168,40 @@
     private MudForm? _form;
     private CreateTenantCommand _model = new();
     private bool _busy;
+    private OfficeReferenceDto? _selectedOffice;
 
     private void Cancel()
     {
         MudDialog.Cancel();
+    }
+
+    private async Task<IEnumerable<OfficeReferenceDto>> SearchOfficesAsync(string? value, CancellationToken ct)
+    {
+        try
+        {
+            var result = await LookupClient.OfficesAsync(
+                keyword: string.IsNullOrWhiteSpace(value) ? null : value,
+                isActive: true,
+                pageNumber: 1,
+                pageSize: 20,
+                sort: null,
+                cancellationToken: ct);
+            return result?.Items ?? Enumerable.Empty<OfficeReferenceDto>();
+        }
+        catch
+        {
+            // Non-critical: the office link is optional and can be set later from the tenants list.
+            return [];
+        }
+    }
+
+    private void OnOfficeSelected(OfficeReferenceDto? office)
+    {
+        _selectedOffice = office;
+        _model.OfficeId = office?.Id;
+
+        // Display snapshot only — the server routes transfers on OfficeId, never on this string.
+        _model.OfficeCode = office?.Code;
     }
 
     private async Task Submit()

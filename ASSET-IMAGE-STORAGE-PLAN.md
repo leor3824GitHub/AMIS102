@@ -1,7 +1,8 @@
 # Asset Image Storage — Implementation Plan
 
-> Status: **planned, not started.** Follow-up from the 2026-07-07 performance pass.
-> Owner: TBD. See also `project_perf_security_deferred` in agent memory.
+> Status: **✅ complete — all 3 phases delivered 2026-07-07.** Follow-up from the 2026-07-07 performance pass.
+> See also `project_perf_security_deferred` in agent memory. Retained as a record of the design; the
+> per-phase checklists below describe shipped code.
 
 ## Context / problem
 
@@ -101,9 +102,11 @@ files under `uploads/protected/{tenant}/asset-images`; list/detail queries are l
       (`development-phase-priorities` memory), so instead of a resumable base64→file job, the read paths keep a
       transparent base64-decode fallback (`AssetImageStorage.LoadAsync`/`ToDataUrlAsync`) so any pre-migration
       row still renders; re-uploading a photo migrates it to files. Revisit only if a prod dataset needs it.
-- [x] EF migration `20260707122931_AssetImageFileStorage` (`Migrations.PostgreSQL/AssetRegister/`): `AlterColumn`
-      `ImageUrl` 10 MB→1024 + `AddColumn ThumbnailUrl` (hand-corrected from EF's `AddColumn`, since `ImageUrl`
-      predates this migration).
+- [x] EF migration — originally `20260707122931_AssetImageFileStorage`: `AlterColumn` `ImageUrl` 10 MB→1024 +
+      `AddColumn ThumbnailUrl` (hand-corrected from EF's `AddColumn`, since `ImageUrl` predated it).
+      **That file no longer exists** — the later migration squash folded it into
+      `Migrations.PostgreSQL/AssetRegister/20260716120453_InitialCreate.cs`, where both `ImageUrl` and
+      `ThumbnailUrl` are created directly as `character varying(1024)`.
 - [x] Guardrail: Blazor capture path resizes client-side via `IBrowserFile.RequestImageFileAsync("image/jpeg",
       1280, 1280)` before upload (multi-MB phone photo → display-quality JPEG). **MAUI has no asset-photo upload
       path** (it only displays), so nothing to guard there.

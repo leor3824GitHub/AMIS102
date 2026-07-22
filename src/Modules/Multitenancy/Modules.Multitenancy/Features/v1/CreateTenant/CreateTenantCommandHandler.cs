@@ -18,7 +18,9 @@ public sealed class CreateTenantCommandHandler(ITenantService tenantService, ITe
             command.ConnectionString,
             command.AdminEmail,
             command.Issuer,
-            cancellationToken);
+            cancellationToken,
+            command.OfficeId,
+            command.OfficeCode);
 
         var provisioning = await provisioningService.StartAsync(tenantId, cancellationToken);
 

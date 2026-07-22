@@ -16,6 +16,7 @@ using AMIS.Modules.Multitenancy.Features.v1.GetPlatformSettings;
 using AMIS.Modules.Multitenancy.Features.v1.GetTenants;
 using AMIS.Modules.Multitenancy.Features.v1.GetTenantStatus;
 using AMIS.Modules.Multitenancy.Features.v1.GetTenantTheme;
+using AMIS.Modules.Multitenancy.Features.v1.UpdateTenantOffice;
 using AMIS.Modules.Multitenancy.Features.v1.ResetTenantTheme;
 using AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.GetTenantProvisioningStatus;
 using AMIS.Modules.Multitenancy.Features.v1.TenantProvisioning.RetryTenantProvisioning;
@@ -132,6 +133,7 @@ public sealed class MultitenancyModule : IModule
         GetTenantsEndpoint.Map(group);
         UpgradeTenantEndpoint.Map(group);
         CreateTenantEndpoint.Map(group);
+        UpdateTenantOfficeEndpoint.Map(group);
         GetTenantStatusEndpoint.Map(group);
         GetTenantProvisioningStatusEndpoint.Map(group);
         RetryTenantProvisioningEndpoint.Map(group);
