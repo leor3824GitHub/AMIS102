@@ -17,15 +17,25 @@ public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db, A
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        if (entity is null)
-        {
-            return null;
-        }
-
         // Resolved on read, not only on save: when an administrator re-links the tenant to another office the
         // profile follows immediately, without anyone having to open and re-save it. Falls back to the stored
         // code so an unlinked tenant keeps whatever it was set up with.
         var office = await officeResolver.GetLinkedOfficeAsync(cancellationToken).ConfigureAwait(false);
+
+        if (entity is null)
+        {
+            // An administrator links the tenant to its office before anyone fills the profile in, so reporting
+            // the link here is what stops a linked agency being told it "isn't linked to an office" until after
+            // its first save. Callers keep treating this as unconfigured: they gate on a blank name, not on
+            // null. Still null when there is no office either — nothing to report, and report headers stay
+            // hidden for a tenant that has set up neither.
+            return office is null
+                ? null
+                : new OrganizationProfileDto(
+                    Guid.Empty, string.Empty, null, null, null, office.Code?.Trim(),
+                    OfficeId: office.Id, OfficeName: office.Name);
+        }
+
         var agencyCode = office?.Code?.Trim() ?? entity.AnnexECode;
 
         return new OrganizationProfileDto(
