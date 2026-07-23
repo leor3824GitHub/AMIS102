@@ -14,6 +14,13 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
     /// <summary>3-character office code used in property code generation (e.g. "00B" for Caraga Regional Office).</summary>
     public string? AnnexECode { get; private set; }
 
+    /// <summary>
+    /// The office <see cref="Name"/> and <see cref="Address"/> were taken from, so a re-link of the tenant to
+    /// a different office can be told apart from an administrator's deliberate edit of those two fields.
+    /// Null on a profile whose details were typed by hand rather than seeded from an office.
+    /// </summary>
+    public Guid? SourceOfficeId { get; private set; }
+
     public Guid? ApprovingOfficialId { get; private set; }
     public string? ApprovingOfficialName { get; private set; }
     public string? ApprovingOfficialDesignation { get; private set; }
@@ -49,6 +56,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? address,
         string? logoUrl,
         string? annexECode = null,
+        Guid? sourceOfficeId = null,
         Guid? approvingOfficialId = null,
         string? approvingOfficialName = null,
         string? approvingOfficialDesignation = null,
@@ -77,6 +85,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
             Address = address,
             LogoUrl = logoUrl,
             AnnexECode = annexECode,
+            SourceOfficeId = sourceOfficeId,
             ApprovingOfficialId = approvingOfficialId,
             ApprovingOfficialName = approvingOfficialName,
             ApprovingOfficialDesignation = approvingOfficialDesignation,
@@ -106,6 +115,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         string? address,
         string? logoUrl,
         string? annexECode = null,
+        Guid? sourceOfficeId = null,
         Guid? approvingOfficialId = null,
         string? approvingOfficialName = null,
         string? approvingOfficialDesignation = null,
@@ -130,6 +140,7 @@ public sealed class OrganizationProfile : AggregateRoot<Guid>, IHasTenant, IAudi
         Address = address;
         LogoUrl = logoUrl;
         AnnexECode = annexECode;
+        SourceOfficeId = sourceOfficeId;
         ApprovingOfficialId = approvingOfficialId;
         ApprovingOfficialName = approvingOfficialName;
         ApprovingOfficialDesignation = approvingOfficialDesignation;

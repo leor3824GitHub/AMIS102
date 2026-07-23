@@ -356,6 +356,13 @@
         try
         {
             var existing = await OrgProfileClient.GetAsync();
+
+            // Refresh the per-circuit shared state so report headers pick up an office re-link (or an
+            // officer change) the moment the admin opens this page — the office code is resolved on read,
+            // so a re-link done elsewhere lands here without anyone re-saving. AMISLayout only loads it once
+            // at session start, and the office fields are derived, so this is the cheapest refresh point.
+            OrgProfileState.SetProfile(existing);
+
             if (existing is not null)
             {
                 _form = new FormModel

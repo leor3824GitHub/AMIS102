@@ -38,8 +38,21 @@ public sealed class GetOrganizationProfileQueryHandler(MasterDataDbContext db, A
 
         var agencyCode = office?.Code?.Trim() ?? entity.AnnexECode;
 
+        // Name and address are stored, but they were taken from whichever office the tenant was linked to at
+        // the time — so after a re-link they still describe the previous agency while the code beside them
+        // already shows the new one. Report the new office's details instead, on the same read-resolution the
+        // code uses, so the whole profile follows the link together rather than in pieces.
+        //
+        // Deliberate edits survive, because a save re-stamps SourceOfficeId to the office they were made
+        // against; only a *different* office means the stored text was left behind. ShortName and LogoUrl are
+        // agency-wide branding rather than office-specific, so a re-link leaves them alone.
+        var isFromAnotherOffice = office is not null && entity.SourceOfficeId != office.Id;
+
+        var name = isFromAnotherOffice ? office!.Name : entity.Name;
+        var address = isFromAnotherOffice ? office!.Address : entity.Address;
+
         return new OrganizationProfileDto(
-            entity.Id, entity.Name, entity.ShortName, entity.Address, entity.LogoUrl, agencyCode,
+            entity.Id, name, entity.ShortName, address, entity.LogoUrl, agencyCode,
             entity.ApprovingOfficialId, entity.ApprovingOfficialName, entity.ApprovingOfficialDesignation,
             entity.AssistantRegionalManagerId, entity.AssistantRegionalManagerName, entity.AssistantRegionalManagerDesignation,
             entity.AccountantId, entity.AccountantName, entity.AccountantDesignation,

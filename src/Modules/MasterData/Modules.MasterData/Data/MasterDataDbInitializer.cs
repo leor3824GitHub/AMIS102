@@ -786,7 +786,8 @@ internal sealed class MasterDataDbInitializer(
             shortName: null,
             address: office.Address,
             logoUrl: null,
-            annexECode: office.Code));
+            annexECode: office.Code,
+            sourceOfficeId: office.Id));
 
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

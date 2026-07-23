@@ -26,11 +26,17 @@ public sealed class UpsertOrganizationProfileCommandHandler(
         var office = await officeResolver.GetLinkedOfficeAsync(cancellationToken).ConfigureAwait(false);
         var agencyCode = office?.Code?.Trim() ?? existing?.AnnexECode;
 
+        // What is being saved is the agency name and address as they were shown for the office linked right
+        // now, so this is where they stop being the previous office's and become this one's. Recording it is
+        // what lets a later read tell a deliberate edit from details left behind by a re-link.
+        var sourceOfficeId = office?.Id;
+
         if (existing is null)
         {
             var tenantId = currentUser.GetTenant() ?? string.Empty;
             existing = Domain.OrganizationProfile.Create(
                 tenantId, command.Name, command.ShortName, command.Address, command.LogoUrl, agencyCode,
+                sourceOfficeId,
                 command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,
@@ -43,6 +49,7 @@ public sealed class UpsertOrganizationProfileCommandHandler(
         else
         {
             existing.Update(command.Name, command.ShortName, command.Address, command.LogoUrl, agencyCode,
+                sourceOfficeId,
                 command.ApprovingOfficialId, command.ApprovingOfficialName, command.ApprovingOfficialDesignation,
                 command.AssistantRegionalManagerId, command.AssistantRegionalManagerName, command.AssistantRegionalManagerDesignation,
                 command.AccountantId, command.AccountantName, command.AccountantDesignation,

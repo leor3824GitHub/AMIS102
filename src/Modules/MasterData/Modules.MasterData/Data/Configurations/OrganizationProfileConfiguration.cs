@@ -19,6 +19,7 @@ public sealed class OrganizationProfileConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.Address).HasMaxLength(400);
         builder.Property(x => x.LogoUrl).HasMaxLength(500);
         builder.Property(x => x.AnnexECode).HasMaxLength(8);
+        builder.Property(x => x.SourceOfficeId);
         builder.Property(x => x.ApprovingOfficialId);
         builder.Property(x => x.ApprovingOfficialName).HasMaxLength(200);
         builder.Property(x => x.ApprovingOfficialDesignation).HasMaxLength(200);
