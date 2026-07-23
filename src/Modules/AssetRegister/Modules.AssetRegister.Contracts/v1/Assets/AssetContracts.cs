@@ -53,6 +53,10 @@ public sealed record AssetRegistrySummaryDto(
     AssetCategory Category,
     string Description,
     decimal UnitCost,
+    // The asset's COA fund cluster code ("01".."07"). Carried on the summary so issuance/disposal
+    // forms can derive their own cluster from the selected assets instead of asking for it again —
+    // without a per-row detail fetch. See CreatePpeirDialog / IssueAccountabilityDialog.
+    string FundCluster,
     DateOnly AcquisitionDate,
     LifecycleState LifecycleState,
     AssetCondition CurrentCondition,

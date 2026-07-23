@@ -444,7 +444,10 @@
             { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)SelectedAssetIds() },
             // Pre-lock the picker to the ICS's current SE category so a low/high mix (COA §4.14) can't
             // be introduced from the picker. Null when nothing is attached yet or this is a PAR.
-            { x => x.LockedCategory, CurrentIcsCategory() }
+            { x => x.LockedCategory, CurrentIcsCategory() },
+            // Likewise for the fund cluster the form has already inherited from its items, so the picker
+            // can't introduce the mix that would force a manual — and possibly wrong — choice.
+            { x => x.LockedFundCluster, _fundClusterDerived ? _form.FundCluster : null }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
         var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>(

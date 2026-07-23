@@ -19,6 +19,13 @@
                 semi-expendable items are issued on separate ICS documents (COA 2022-004 §4.14).
             </span>
         }
+        @if (LockedFundCluster is { Length: > 0 } lockedCluster)
+        {
+            <span>
+                This report is under fund cluster <strong>@lockedCluster</strong> — only assets from that cluster
+                may be added.
+            </span>
+        }
     </Caption>
     <HeaderTemplate>
         <MudTh>Property No.</MudTh>
@@ -35,7 +42,7 @@
             }
             else if (row.IsLocked)
             {
-                <MudText Typo="Typo.caption" Color="Color.Warning">@CategoryLabel(row.Item.Category) — separate ICS</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Warning">@LockReason(row.Item)</MudText>
             }
         </MudTd>
         <MudTd Style="@RowStyle(row)">@row.Item.Description</MudTd>
@@ -55,6 +62,12 @@
     /// </summary>
     [Parameter] public ArContracts.AssetCategory? LockedCategory { get; set; }
 
+    /// <summary>
+    /// The fund cluster the caller's report is already committed to, so assets from another cluster can't
+    /// be ticked. Null = no assets on the report yet, and the first item ticked here sets the cluster.
+    /// </summary>
+    [Parameter] public string? LockedFundCluster { get; set; }
+
     private async Task<EntityPickerResult<AssetRegistrySummaryDto>> LoadAsync(EntityPickerRequest request)
     {
         var result = await AssetClient.SearchAsync(
@@ -67,16 +80,39 @@
         return new EntityPickerResult<AssetRegistrySummaryDto>(result.Items, result.TotalCount);
     }
 
-    // COA 2022-004 §4.14: one ICS may not mix low- and high-valued semi-expendable items. The active
-    // category is whatever the Issue dialog already holds (LockedCategory) or, failing that, the first
-    // item ticked in this picker. Rows of the other category stay disabled until the selection clears.
+    // Two cross-row rules, each following the same shape: the active value is whatever the calling dialog
+    // already holds, or failing that the first item ticked here; rows that disagree stay disabled.
+    //
+    // 1. COA 2022-004 §4.14 — one ICS may not mix low- and high-valued semi-expendable items (SE only).
+    // 2. Fund cluster — a property form is filed under exactly one cluster. Since the report inherits its
+    //    cluster from these assets, letting a mixed set through would force the user to pick one by hand
+    //    and thereby file the rest under a cluster they were never procured under.
     private bool CanSelect(AssetRegistrySummaryDto item, IReadOnlyCollection<AssetRegistrySummaryDto> selected)
     {
+        // Depends only on the selection, so it is the same for every row in a render pass. The picker calls
+        // this for a row immediately before rendering that row's template, so LockReason can read it back.
+        _activeCluster = LockedFundCluster is { Length: > 0 } locked
+            ? locked
+            : selected.Select(a => a.FundCluster).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c));
+
+        if (_activeCluster is { Length: > 0 } cluster &&
+            !string.Equals(item.FundCluster, cluster, StringComparison.OrdinalIgnoreCase))
+            return false;
+
         if (AssetType != ArContracts.AssetType.SE) return true;
 
-        var active = LockedCategory ?? selected.FirstOrDefault()?.Category;
-        return active is null || item.Category == active;
+        var activeCategory = LockedCategory ?? selected.FirstOrDefault()?.Category;
+        return activeCategory is null || item.Category == activeCategory;
     }
+
+    private string? _activeCluster;
+
+    // Which of the two rules disabled this row — the cluster mismatch is checked first, mirroring CanSelect.
+    private string LockReason(AssetRegistrySummaryDto item) =>
+        _activeCluster is { Length: > 0 } cluster &&
+        !string.Equals(item.FundCluster, cluster, StringComparison.OrdinalIgnoreCase)
+            ? $"Fund cluster {item.FundCluster} — separate report"
+            : $"{CategoryLabel(item.Category)} — separate ICS";
 
     private static string RowStyle(EntityPickerRow<AssetRegistrySummaryDto> row) => row.IsLocked ? "opacity:0.5;" : "";
 

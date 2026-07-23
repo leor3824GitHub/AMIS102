@@ -63,6 +63,7 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
                 a.Category,
                 a.Description,
                 a.UnitCost,
+                a.FundCluster,
                 a.AcquisitionDate,
                 a.LifecycleState,
                 a.CurrentCondition,
@@ -74,7 +75,7 @@ public sealed class SearchAssetsQueryHandler(AssetRegisterDbContext db)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var items = page.ConvertAll(a => new AssetRegistrySummaryDto(
-            a.Id, a.PropertyNo.Value, a.AssetType, a.Category, a.Description, a.UnitCost,
+            a.Id, a.PropertyNo.Value, a.AssetType, a.Category, a.Description, a.UnitCost, a.FundCluster,
             a.AcquisitionDate, a.LifecycleState, a.CurrentCondition, a.CurrentCustodianId, a.HasImage));
 
         return new PagedResponse<AssetRegistrySummaryDto>

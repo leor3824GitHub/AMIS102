@@ -10,7 +10,10 @@
                 <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUSP">IIRUSP (Semi-Expendable)</MudSelectItem>
                 <MudSelectItem T="UnserviceableReportType" Value="@UnserviceableReportType.IIRUP">IIRUP (PPE)</MudSelectItem>
             </MudSelect>
-            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
+            @* Not derivable here: the unserviceable items are picked onto the report after it is created,
+               so there is nothing to read a cluster from yet. A pick off master data at least keeps it to
+               a real COA code. *@
+            <FundClusterSelect @bind-Value="_form.FundCluster" Required="true" Clearable="false" />
             <MudTextField @bind-Value="_form.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
             <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
             <MudTextField @bind-Value="_form.AccountableOfficerName" Label="Accountable Officer (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
@@ -35,7 +38,7 @@
     private sealed class CreateFormModel
     {
         public UnserviceableReportType ReportType { get; set; }
-        public string FundCluster { get; set; } = "";
+        public string? FundCluster { get; set; }
         public string Station { get; set; } = "";
         public DateTime? AsAtNullable { get; set; }
         public string AccountableOfficerName { get; set; } = "";
@@ -47,6 +50,7 @@
     private async Task CreateReportAsync()
     {
         if (string.IsNullOrWhiteSpace(_form.AccountableOfficerName) ||
+            string.IsNullOrWhiteSpace(_form.FundCluster) ||
             string.IsNullOrWhiteSpace(_form.Station) || !_form.AsAtNullable.HasValue)
         {
             Snackbar.Add("All required fields must be filled.", Severity.Warning);
@@ -58,7 +62,7 @@
         {
             var req = new CreateUnserviceableReportRequest(
                 _form.ReportType,
-                _form.FundCluster,
+                _form.FundCluster.Trim(),
                 _form.Station.Trim(),
                 DateOnly.FromDateTime(_form.AsAtNullable.Value),
                 new ArEmployeeRefDto(Guid.Empty, _form.AccountableOfficerName.Trim(), _form.AccountableOfficerDesignation));

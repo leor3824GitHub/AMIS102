@@ -136,6 +136,9 @@ public sealed record AssetRegistrySummaryDto(
     ArContracts.AssetCategory Category,
     string Description,
     decimal UnitCost,
+    // COA fund cluster code ("01".."07"). Lets issuance/disposal dialogs auto-fill their own fund
+    // cluster from the picked assets rather than asking the user to retype it.
+    string FundCluster,
     DateOnly AcquisitionDate,
     LifecycleState LifecycleState,
     ArContracts.AssetCondition CurrentCondition,

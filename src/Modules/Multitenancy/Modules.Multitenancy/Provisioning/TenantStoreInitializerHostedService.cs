@@ -13,16 +13,15 @@ namespace AMIS.Modules.Multitenancy.Provisioning;
 public sealed class TenantStoreInitializerHostedService : IHostedService
 {
     /// <summary>
-    /// Demo tenants seeded alongside root. They deliberately reuse the root admin email so a single
-    /// set of credentials (<see cref="MultitenancyConstants.Root.EmailAddress"/> +
-    /// <see cref="MultitenancyConstants.DefaultPassword"/>) logs into every tenant — only the
-    /// <c>tenant</c> header/claim differs. Safe because the Identity tables are <c>.IsMultiTenant()</c>,
-    /// so each tenant gets its own isolated admin user row.
+    /// Demo tenants seeded alongside root. Each carries its own admin email; the shared
+    /// <see cref="MultitenancyConstants.DefaultPassword"/> applies to all of them. Identity tables are
+    /// <c>.IsMultiTenant()</c>, so each tenant gets its own isolated admin user row and the
+    /// <c>tenant</c> header/claim still selects which one you log into.
     /// </summary>
-    private static readonly (string Id, string Name)[] DemoTenants =
+    private static readonly (string Id, string Name, string AdminEmail)[] DemoTenants =
     [
-        ("sdsbo", "SDS BO"),
-        ("adsbo", "ADS BO")
+        ("sdsbo", "SDS BO", "leor3824@gmail.com"),
+        ("adsbo", "ADS BO", "leor3824@yahoo.com")
     ];
 
     private readonly IServiceProvider _serviceProvider;
@@ -48,11 +47,12 @@ public sealed class TenantStoreInitializerHostedService : IHostedService
             tenantDbContext,
             MultitenancyConstants.Root.Id,
             MultitenancyConstants.Root.Name,
+            MultitenancyConstants.Root.EmailAddress,
             cancellationToken).ConfigureAwait(false);
 
-        foreach (var (id, name) in DemoTenants)
+        foreach (var (id, name, adminEmail) in DemoTenants)
         {
-            await SeedTenantAsync(tenantDbContext, id, name, cancellationToken).ConfigureAwait(false);
+            await SeedTenantAsync(tenantDbContext, id, name, adminEmail, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -60,6 +60,7 @@ public sealed class TenantStoreInitializerHostedService : IHostedService
         TenantDbContext tenantDbContext,
         string id,
         string name,
+        string adminEmail,
         CancellationToken cancellationToken)
     {
         if (await tenantDbContext.TenantInfo.FindAsync([id], cancellationToken).ConfigureAwait(false) is not null)
@@ -71,7 +72,7 @@ public sealed class TenantStoreInitializerHostedService : IHostedService
             id,
             name,
             string.Empty,
-            MultitenancyConstants.Root.EmailAddress,
+            adminEmail,
             issuer: MultitenancyConstants.Root.Issuer);
 
         tenant.SetValidity(DateTime.UtcNow.AddYears(1));

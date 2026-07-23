@@ -30,8 +30,11 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" md="3">
-                <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined"
-                              MaxLength="50" Required="true" Dense="true" Margin="Margin.Dense" />
+                @* Derived from the assets being issued — see CreatePpeirDialog for the same pattern. *@
+                <FundClusterSelect Value="_form.FundCluster" ValueChanged="OnFundClusterChanged"
+                                   Required="true" Clearable="false"
+                                   ReadOnly="_fundClusterDerived"
+                                   HelperText="@FundClusterHelper" />
             </MudItem>
             <MudItem xs="12" md="3">
                 <MudDatePicker @bind-Date="_form.DateNullable" @bind-Date:after="PeekNumberAsync" Label="Date" Variant="Variant.Outlined"
@@ -117,7 +120,7 @@
                                 <td>
                                     <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                                    Color="Color.Error"
-                                                   OnClick="@(() => _form.SelectedAssets.Remove(asset))" />
+                                                   OnClick="@(() => RemoveAsset(asset))" />
                                 </td>
                             </tr>
                         }
@@ -161,6 +164,16 @@
         ? "Will be assigned on save"
         : "Next available — pre-assigned for this report";
 
+    // True while the fund cluster is taken from the selected assets, which renders it read-only.
+    // Falls back to a manual pick when the assets disagree — one report, one cluster.
+    private bool _fundClusterDerived;
+    private string? _fundClusterConflictMessage;
+
+    private string FundClusterHelper =>
+        _fundClusterDerived
+            ? "Auto-filled from the selected assets' fund cluster."
+            : _fundClusterConflictMessage ?? "Select the applicable fund cluster.";
+
     protected override Task OnInitializedAsync() => PeekNumberAsync();
 
     private async Task PeekNumberAsync()
@@ -173,7 +186,7 @@
     private sealed class CreateFormModel
     {
         public IssuanceNature Nature { get; set; }
-        public string FundCluster { get; set; } = "";
+        public string? FundCluster { get; set; }
         public DateTime? DateNullable { get; set; } = DateTime.Today;
         public string IssuedToName { get; set; } = "";
         public string? IssuedToDesignation { get; set; }
@@ -189,7 +202,9 @@
         var parameters = new DialogParameters<AvailableAssetsPickerDialog>
         {
             { x => x.AssetType, AMIS.Modules.AssetRegister.Contracts.v1.AssetType.SE },
-            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)_form.SelectedAssets.Select(a => a.Id).ToList() }
+            { x => x.ExcludeIds, (IReadOnlyCollection<Guid>)_form.SelectedAssets.Select(a => a.Id).ToList() },
+            // One report, one fund cluster — the picker greys out anything from another one.
+            { x => x.LockedFundCluster, _fundClusterDerived ? _form.FundCluster : null }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
         var dialog = await DialogService.ShowAsync<AvailableAssetsPickerDialog>("Available Semi-Expendable Assets", parameters, options);
@@ -199,7 +214,50 @@
 
         foreach (var asset in picked.Where(a => _form.SelectedAssets.All(x => x.Id != a.Id)))
             _form.SelectedAssets.Add(asset);
+
+        RecomputeFundCluster();
     }
+
+    private void RemoveAsset(AssetRegistrySummaryDto asset)
+    {
+        _form.SelectedAssets.Remove(asset);
+        RecomputeFundCluster();
+    }
+
+    // Takes the fund cluster from the assets on the form. Assets store the code ("01"); FundClusterSelect
+    // resolves the name for display, so nothing else has to be loaded here.
+    private void RecomputeFundCluster()
+    {
+        var wasDerived = _fundClusterDerived;
+
+        var codes = _form.SelectedAssets
+            .Where(a => !string.IsNullOrWhiteSpace(a.FundCluster))
+            .Select(a => a.FundCluster.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (codes.Count == 1)
+        {
+            _form.FundCluster = codes[0];
+            _fundClusterDerived = true;
+            _fundClusterConflictMessage = null;
+        }
+        else if (codes.Count > 1)
+        {
+            _fundClusterDerived = false;
+            _fundClusterConflictMessage =
+                $"Selected assets span multiple fund clusters ({string.Join(", ", codes)}). Pick the one that applies.";
+        }
+        else
+        {
+            _fundClusterDerived = false;
+            _fundClusterConflictMessage = null;
+            // Only clear a previously auto-filled value; a manual choice is the user's and stands.
+            if (wasDerived) _form.FundCluster = null;
+        }
+    }
+
+    private void OnFundClusterChanged(string? value) => _form.FundCluster = value;
 
     private async Task CreateAsync()
     {
@@ -237,7 +295,7 @@
             var req = new CreateIssuanceReportRequest(
                 SmirReportType,
                 DateOnly.FromDateTime(_form.DateNullable.Value),
-                _form.FundCluster,
+                _form.FundCluster!.Trim(),
                 _form.Nature,
                 new ArEmployeeRefDto(
                     UserProfileState.EmployeeId,
