@@ -1327,9 +1327,9 @@ internal sealed record ArUnserviceableReportDto(
     DateOnly? WitnessedOn,
     IReadOnlyCollection<ArUnserviceableReportItemDto> Items);
 
+// FundCluster is not sent: the server derives it from the first asset added (all items share a cluster).
 internal sealed record CreateUnserviceableReportRequest(
     UnserviceableReportType ReportType,
-    string FundCluster,
     string Station,
     DateOnly AsAt,
     ArEmployeeRefDto AccountableOfficer);
@@ -1338,8 +1338,8 @@ internal sealed record AddUnserviceableReportItemRequest(Guid AssetRegistryId, s
 
 internal sealed record SubmitUnserviceableReportRequest(ArEmployeeRefDto ApprovedBy);
 
+// FundCluster is derived from items, not hand-edited, so it is not part of the header edit.
 internal sealed record UpdateUnserviceableReportHeaderRequest(
-    string FundCluster,
     string Station,
     DateOnly AsAt,
     ArEmployeeRefDto AccountableOfficer);

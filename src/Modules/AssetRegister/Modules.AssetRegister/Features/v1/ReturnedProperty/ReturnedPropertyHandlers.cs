@@ -274,29 +274,41 @@ public sealed class AcceptReturnedPropertyReceiptCommandHandler(
             ? UnserviceableReportType.IIRUSP
             : UnserviceableReportType.IIRUP;
 
-        var draft = await db.UnserviceablePropertyReports
-            .Include(r => r.Items)
-            .Where(r => r.ReportType == reportType && r.Status == UnserviceableReportStatus.Draft)
-            .OrderByDescending(r => r.CreatedOnUtc)
-            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        // A disposal report is filed under exactly one fund cluster (the report derives it from its first
+        // item and rejects any that disagree). So the rolling worklist is per (reportType, cluster): group
+        // the returned candidates by the asset's cluster and find-or-open one draft for each group.
+        var linesByCluster = unserviceableLines
+            .Where(l => assets.ContainsKey(l.AssetRegistryId))
+            .GroupBy(l => assets[l.AssetRegistryId].FundCluster);
 
-        if (draft is null)
+        foreach (var group in linesByCluster)
         {
-            var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
-            var reportNo = await unserviceableNumbers.NextAsync(reportType, receipt.Date, cancellationToken).ConfigureAwait(false);
-            var seedAsset = assets[unserviceableLines[0].AssetRegistryId];
-            draft = Domain.Unserviceable.UnserviceablePropertyReport.CreateDraft(
-                tenantId, reportNo, reportType, seedAsset.FundCluster, station: string.Empty, receipt.Date, receivedBy);
-            db.UnserviceablePropertyReports.Add(draft);
-        }
+            var fundCluster = group.Key;
+            var draft = await db.UnserviceablePropertyReports
+                .Include(r => r.Items)
+                .Where(r => r.ReportType == reportType
+                    && r.Status == UnserviceableReportStatus.Draft
+                    && r.FundCluster == fundCluster)
+                .OrderByDescending(r => r.CreatedOnUtc)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
-        foreach (var line in unserviceableLines)
-        {
-            if (!assets.TryGetValue(line.AssetRegistryId, out var asset))
-                continue;
-            if (draft.Items.Any(i => i.AssetRegistryId == asset.Id))
-                continue; // already queued (e.g. added manually) — don't duplicate
-            draft.AddItem(asset, $"Auto-queued from {receipt.ReceiptType} return of {receipt.AccountabilityDocumentNo}.");
+            if (draft is null)
+            {
+                var tenantId = db.TenantInfo?.Identifier ?? string.Empty;
+                var reportNo = await unserviceableNumbers.NextAsync(reportType, receipt.Date, cancellationToken).ConfigureAwait(false);
+                // The cluster is stamped by the first AddItem below, not passed to CreateDraft.
+                draft = Domain.Unserviceable.UnserviceablePropertyReport.CreateDraft(
+                    tenantId, reportNo, reportType, station: string.Empty, receipt.Date, receivedBy);
+                db.UnserviceablePropertyReports.Add(draft);
+            }
+
+            foreach (var line in group)
+            {
+                var asset = assets[line.AssetRegistryId];
+                if (draft.Items.Any(i => i.AssetRegistryId == asset.Id))
+                    continue; // already queued (e.g. added manually) — don't duplicate
+                draft.AddItem(asset, $"Auto-queued from {receipt.ReceiptType} return of {receipt.AccountabilityDocumentNo}.");
+            }
         }
     }
 

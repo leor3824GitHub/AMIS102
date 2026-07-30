@@ -1,0 +1,6 @@
+# Blazor requires [Parameter] properties to be public, which forces any type used as a
+# parameter to be public too. CA1515 ("types in an app assembly can be internal") therefore
+# cannot be satisfied for the nav model — NavEntries.razor takes INavEntry/NavExpansionState
+# as parameters. Scoped to this folder so the rule stays active everywhere else.
+[*.cs]
+dotnet_diagnostic.CA1515.severity = none

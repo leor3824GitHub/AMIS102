@@ -9,6 +9,7 @@
                     KeySelector="a => a.Id"
                     DataProvider="LoadAsync"
                     ExcludeIds="ExcludeIds"
+                    RowSelectable="CanSelect"
                     SelectionMode="EntityPickerSelection.Multiple"
                     ConfirmText="Add"
                     ConfirmColor="Color.Primary"
@@ -16,6 +17,13 @@
     <Caption>
         Assets returned and inspected as <strong>Unserviceable</strong> that are back in the Available pool.
         Tick the ones to add to this report, then choose <strong>Add</strong>.
+        @if (LockedFundCluster is { Length: > 0 } lockedCluster)
+        {
+            <span>
+                This report is under fund cluster <strong>@lockedCluster</strong> — only assets from that
+                cluster may be added.
+            </span>
+        }
     </Caption>
     <HeaderTemplate>
         <MudTh>Property No.</MudTh>
@@ -23,9 +31,15 @@
         <MudTh Style="text-align:right">Unit Cost (@Money.Symbol)</MudTh>
     </HeaderTemplate>
     <RowTemplate Context="row">
-        <MudTd><strong>@row.Item.PropertyNo</strong></MudTd>
-        <MudTd>@row.Item.Description</MudTd>
-        <MudTd Style="text-align:right">@row.Item.UnitCost.ToString("N2")</MudTd>
+        <MudTd Style="@RowStyle(row)">
+            <strong>@row.Item.PropertyNo</strong>
+            @if (row.IsLocked)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Warning">Fund cluster @row.Item.FundCluster — separate report</MudText>
+            }
+        </MudTd>
+        <MudTd Style="@RowStyle(row)">@row.Item.Description</MudTd>
+        <MudTd Style="@($"text-align:right;{RowStyle(row)}")">@row.Item.UnitCost.ToString("N2")</MudTd>
     </RowTemplate>
 </EntityPickerDialog>
 
@@ -35,6 +49,12 @@
 
     /// <summary>Asset ids already on the report — rendered checked + disabled so they can't be re-added.</summary>
     [Parameter] public IReadOnlyCollection<Guid> ExcludeIds { get; set; } = [];
+
+    /// <summary>
+    /// The fund cluster the report is already committed to (from its existing items), so assets of another
+    /// cluster can't be ticked. Null/blank = no items yet, and the first item ticked here sets the cluster.
+    /// </summary>
+    [Parameter] public string? LockedFundCluster { get; set; }
 
     private async Task<EntityPickerResult<AssetRegistrySummaryDto>> LoadAsync(EntityPickerRequest request)
     {
@@ -48,4 +68,19 @@
 
         return new EntityPickerResult<AssetRegistrySummaryDto>(result.Items, result.TotalCount);
     }
+
+    // One report, one fund cluster (the domain derives it from the first item and rejects any that
+    // disagree). The active cluster is the report's existing cluster or, failing that, the first item
+    // ticked here; rows from any other cluster stay disabled.
+    private bool CanSelect(AssetRegistrySummaryDto item, IReadOnlyCollection<AssetRegistrySummaryDto> selected)
+    {
+        var active = LockedFundCluster is { Length: > 0 } locked
+            ? locked
+            : selected.Select(a => a.FundCluster).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c));
+
+        return active is not { Length: > 0 } cluster
+            || string.Equals(item.FundCluster, cluster, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string RowStyle(EntityPickerRow<AssetRegistrySummaryDto> row) => row.IsLocked ? "opacity:0.5;" : "";
 }

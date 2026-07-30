@@ -416,7 +416,9 @@
         var parameters = new DialogParameters<UnserviceableCandidatesPickerDialog>
         {
             { x => x.AssetType, assetType },
-            { x => x.ExcludeIds, excludeIds }
+            { x => x.ExcludeIds, excludeIds },
+            // One report, one fund cluster — grey out anything not matching what the report already holds.
+            { x => x.LockedFundCluster, string.IsNullOrWhiteSpace(_selected.FundCluster) ? null : _selected.FundCluster }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<UnserviceableCandidatesPickerDialog>("Add Unserviceable Candidates", parameters, options);

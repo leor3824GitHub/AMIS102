@@ -1,0 +1,35 @@
+@* Recursive renderer for a NavEntry tree. Renders itself for nested groups, so depth is a
+   property of the data rather than of the markup. Invisible entries are filtered before render,
+   which is what makes an empty group structurally impossible: a group only reaches this loop
+   when NavGroup.IsVisible already confirmed it has at least one visible descendant. *@
+
+@foreach (var entry in Entries.Where(e => e.IsVisible(Permissions)))
+{
+    if (entry is NavItem item)
+    {
+        <MudNavLink Href="@item.Href" Match="@item.Match" Icon="@item.Icon">@item.Label</MudNavLink>
+    }
+    else if (entry is NavGroup group)
+    {
+        <MudNavGroup Title="@group.Title" Icon="@group.Icon"
+                     Expanded="@State.IsExpanded(group, Path)"
+                     ExpandedChanged="@(expanded => State.Set(group, expanded))">
+            <NavEntries Entries="@group.Entries" Permissions="@Permissions"
+                        Path="@Path" State="@State" />
+        </MudNavGroup>
+    }
+}
+
+@code {
+    /// <summary>Entries to render at this level.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<INavEntry> Entries { get; set; } = [];
+
+    /// <summary>Effective permissions of the current user.</summary>
+    [Parameter, EditorRequired] public IReadOnlySet<string> Permissions { get; set; } = new HashSet<string>();
+
+    /// <summary>Current app-relative path, leading slash included (e.g. <c>/vehicle/vehicles</c>).</summary>
+    [Parameter, EditorRequired] public string Path { get; set; } = "/";
+
+    /// <summary>Shared open/closed state, owned by the top-level nav.</summary>
+    [Parameter, EditorRequired] public NavExpansionState State { get; set; } = new();
+}

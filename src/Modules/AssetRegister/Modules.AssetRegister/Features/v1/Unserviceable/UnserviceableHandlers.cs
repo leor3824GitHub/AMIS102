@@ -23,7 +23,7 @@ public sealed class CreateUnserviceableReportDraftCommandHandler(
             cmd.AccountableOfficer.EmployeeId, cmd.AccountableOfficer.PrintedName, cmd.AccountableOfficer.Designation);
 
         var report = UnserviceablePropertyReport.CreateDraft(
-            tenantId, reportNo, cmd.ReportType, cmd.FundCluster, cmd.Station, cmd.AsAt, officer);
+            tenantId, reportNo, cmd.ReportType, cmd.Station, cmd.AsAt, officer);
 
         db.UnserviceablePropertyReports.Add(report);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -63,7 +63,7 @@ public sealed class UpdateUnserviceableReportHeaderCommandHandler(AssetRegisterD
 
         var officer = EmployeeRef.Create(
             cmd.AccountableOfficer.EmployeeId, cmd.AccountableOfficer.PrintedName, cmd.AccountableOfficer.Designation);
-        report.UpdateHeader(cmd.FundCluster, cmd.Station, cmd.AsAt, officer);
+        report.UpdateHeader(cmd.Station, cmd.AsAt, officer);
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return UnserviceableMapper.ToDto(report);

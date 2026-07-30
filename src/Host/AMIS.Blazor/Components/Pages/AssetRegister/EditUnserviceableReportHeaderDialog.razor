@@ -8,7 +8,10 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2" Style="min-width: 420px;">
-            <MudTextField @bind-Value="_form.FundCluster" Label="Fund Cluster" Variant="Variant.Outlined" MaxLength="50" Required="true" />
+            @* Fund cluster is derived from the report's items and can't be hand-edited — shown read-only. *@
+            <MudTextField Value="@FundClusterDisplay" Label="Fund Cluster" Variant="Variant.Outlined"
+                          ReadOnly="true" Dense="true" Margin="Margin.Dense"
+                          HelperText="Set from the report's items — not editable." />
             <MudTextField @bind-Value="_form.Station" Label="Station / Location" Variant="Variant.Outlined" MaxLength="200" Required="true" />
             <MudDatePicker @bind-Date="_form.AsAtNullable" Label="As At" Variant="Variant.Outlined" DateFormat="MM/dd/yyyy" Required="true" />
             <MudTextField @bind-Value="_form.AccountableOfficerName" Label="Accountable Officer (Name)" Variant="Variant.Outlined" MaxLength="100" Required="true" />
@@ -30,6 +33,9 @@
     [Parameter, EditorRequired] public Guid ReportId { get; set; }
     [Parameter] public string FundCluster { get; set; } = "";
     [Parameter] public string Station { get; set; } = "";
+
+    private string FundClusterDisplay =>
+        string.IsNullOrWhiteSpace(FundCluster) ? "— (set when the first item is added)" : FundCluster;
     [Parameter] public DateOnly AsAt { get; set; }
     [Parameter] public string AccountableOfficerName { get; set; } = "";
     [Parameter] public string? AccountableOfficerDesignation { get; set; }
@@ -39,7 +45,6 @@
 
     private sealed class EditFormModel
     {
-        public string FundCluster { get; set; } = "";
         public string Station { get; set; } = "";
         public DateTime? AsAtNullable { get; set; }
         public string AccountableOfficerName { get; set; } = "";
@@ -48,7 +53,6 @@
 
     protected override void OnInitialized()
     {
-        _form.FundCluster = FundCluster;
         _form.Station = Station;
         _form.AsAtNullable = AsAt == default ? null : AsAt.ToDateTime(TimeOnly.MinValue);
         _form.AccountableOfficerName = AccountableOfficerName;
@@ -59,8 +63,7 @@
 
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(_form.FundCluster) ||
-            string.IsNullOrWhiteSpace(_form.Station) ||
+        if (string.IsNullOrWhiteSpace(_form.Station) ||
             string.IsNullOrWhiteSpace(_form.AccountableOfficerName) ||
             !_form.AsAtNullable.HasValue)
         {
@@ -72,7 +75,6 @@
         try
         {
             var req = new UpdateUnserviceableReportHeaderRequest(
-                _form.FundCluster.Trim(),
                 _form.Station.Trim(),
                 DateOnly.FromDateTime(_form.AsAtNullable.Value),
                 new ArEmployeeRefDto(Guid.Empty, _form.AccountableOfficerName.Trim(), _form.AccountableOfficerDesignation));

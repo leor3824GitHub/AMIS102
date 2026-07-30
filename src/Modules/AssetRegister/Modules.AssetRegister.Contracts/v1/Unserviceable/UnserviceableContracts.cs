@@ -49,9 +49,10 @@ public sealed record UnserviceablePropertyReportSummaryDto(
 
 // ── Commands ───────────────────────────────────────────────────────────────
 
+// FundCluster is intentionally absent: it is derived from the first asset added (all items on one report
+// share a cluster) rather than typed, so it can't disagree with the assets being disposed.
 public sealed record CreateUnserviceableReportDraftCommand(
     UnserviceableReportType ReportType,
-    string FundCluster,
     string Station,
     DateOnly AsAt,
     EmployeeRefDto AccountableOfficer) : ICommand<UnserviceablePropertyReportDto>;
@@ -61,10 +62,10 @@ public sealed record AddUnserviceableReportItemCommand(
     Guid AssetRegistryId,
     string? Remarks) : ICommand<UnserviceablePropertyReportDto>;
 
-/// <summary>Edits a Draft report's header fields. ReportType is immutable and not editable here.</summary>
+/// <summary>Edits a Draft report's header fields. ReportType and FundCluster are immutable here —
+/// the cluster is derived from the report's items, not hand-edited.</summary>
 public sealed record UpdateUnserviceableReportHeaderCommand(
     Guid ReportId,
-    string FundCluster,
     string Station,
     DateOnly AsAt,
     EmployeeRefDto AccountableOfficer) : ICommand<UnserviceablePropertyReportDto>;

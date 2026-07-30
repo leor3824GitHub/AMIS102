@@ -37,7 +37,7 @@ public static class UnserviceableEndpoints
                 Guid id, UpdateUnserviceableReportHeaderCommand cmd, IMediator mediator, CancellationToken ct) =>
                 TypedResults.Ok(await mediator.Send(cmd with { ReportId = id }, ct)))
             .WithModuleName<UpdateUnserviceableReportHeaderCommand>()
-            .WithSummary("Edit a draft unserviceable report's header (fund cluster, station, as-at, accountable officer)")
+            .WithSummary("Edit a draft unserviceable report's header (station, as-at, accountable officer)")
             .Produces<UnserviceablePropertyReportDto>()
             .RequirePermission(AssetRegisterPermissions.Unserviceable.File);
 

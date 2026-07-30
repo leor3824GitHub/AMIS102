@@ -44,7 +44,6 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
         string tenantId,
         string reportNo,
         UnserviceableReportType reportType,
-        string fundCluster,
         string station,
         DateOnly asAt,
         EmployeeRef accountableOfficer)
@@ -56,7 +55,8 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
             TenantId = tenantId,
             ReportNo = reportNo,
             ReportType = reportType,
-            FundCluster = fundCluster,
+            // Blank until the first item is added, which stamps it from that asset's cluster (see AddItem).
+            FundCluster = string.Empty,
             Station = station,
             AsAt = asAt,
             AccountableOfficer = accountableOfficer,
@@ -66,14 +66,14 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
     }
 
     /// <summary>Edits the report's header while it is still <see cref="UnserviceableReportStatus.Draft"/>.
-    /// ReportType is intentionally immutable — it binds the number series and the SE/PPE form.</summary>
-    public void UpdateHeader(string fundCluster, string station, DateOnly asAt, EmployeeRef accountableOfficer)
+    /// ReportType is immutable (it binds the number series and the SE/PPE form) and FundCluster is derived
+    /// from the items rather than hand-edited, so neither is a parameter here.</summary>
+    public void UpdateHeader(string station, DateOnly asAt, EmployeeRef accountableOfficer)
     {
         ArgumentNullException.ThrowIfNull(accountableOfficer);
         if (Status != UnserviceableReportStatus.Draft)
             throw new InvalidOperationException("Only Draft reports may have their header edited.");
 
-        FundCluster = fundCluster;
         Station = station;
         AsAt = asAt;
         AccountableOfficer = accountableOfficer;
@@ -90,6 +90,14 @@ public sealed class UnserviceablePropertyReport : AggregateRoot<Guid>, IHasTenan
         if (asset.AssetType != expected)
             throw new InvalidOperationException(
                 $"Report type {ReportType} requires {expected} assets; received {asset.AssetType}.");
+
+        // A disposal report is filed under exactly one fund cluster. The first item stamps it from the
+        // asset (inherited, never typed); every later item must match, so the report can't span clusters.
+        if (_items.Count == 0)
+            FundCluster = asset.FundCluster;
+        else if (!string.Equals(asset.FundCluster, FundCluster, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                $"This report is under fund cluster '{FundCluster}'; asset {asset.PropertyNo.Value} is under '{asset.FundCluster}'. Items on one report must share a fund cluster.");
 
         _items.Add(UnserviceablePropertyItem.Create(
             TenantId, Id, asset.Id, asset.Snapshot(),

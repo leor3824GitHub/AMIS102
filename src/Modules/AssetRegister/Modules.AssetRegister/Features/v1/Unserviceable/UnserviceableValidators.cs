@@ -9,7 +9,6 @@ public sealed class CreateUnserviceableReportDraftCommandValidator
     public CreateUnserviceableReportDraftCommandValidator()
     {
         RuleFor(x => x.ReportType).IsInEnum();
-        RuleFor(x => x.FundCluster).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Station).NotEmpty().MaximumLength(200);
         RuleFor(x => x.AsAt).NotEqual(default(DateOnly));
         RuleFor(x => x.AccountableOfficer).NotNull();
@@ -36,7 +35,6 @@ public sealed class UpdateUnserviceableReportHeaderCommandValidator
     public UpdateUnserviceableReportHeaderCommandValidator()
     {
         RuleFor(x => x.ReportId).NotEmpty();
-        RuleFor(x => x.FundCluster).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Station).NotEmpty().MaximumLength(200);
         RuleFor(x => x.AsAt).NotEqual(default(DateOnly));
         RuleFor(x => x.AccountableOfficer).NotNull();

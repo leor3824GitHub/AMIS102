@@ -1,8 +1,8 @@
 ﻿@using AMIS.Framework.Shared.Constants
 @using AMIS.Framework.Shared.Multitenancy
 @using AMIS.Modules.Chat.Contracts.Permissions
-@using AMIS.Modules.Vehicle.Contracts.Permissions
 @using AMIS.Modules.AssetRegister.Contracts.Permissions
+@using AMIS.Blazor.Components.Layout.Nav
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -333,44 +333,11 @@
             }
         </MudNavGroup>
 
-        <MudNavGroup Title="Vehicle" Icon="@Icons.Material.Outlined.DirectionsCar" @bind-Expanded="_vehicleExpanded">
-            @if (UserProfileState.Permissions.Contains(VehiclePermissions.MyVehicle.View))
-            {
-                <MudNavLink Href="/vehicle/my-vehicles" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.NoCrash">
-                    My Vehicle
-                </MudNavLink>
-            }
-            <MudNavLink Href="/vehicle/vehicles" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.DirectionsCarFilled">
-                Vehicles
-            </MudNavLink>
-            @* The shared "Maintenance" prefix moves up into the parent, so the three children
-               fit on one line each instead of wrapping. *@
-            <MudNavGroup Title="Maintenance" Icon="@Icons.Material.Outlined.Handyman"
-                         @bind-Expanded="_vehMaintenanceExpanded">
-                <MudNavLink Href="/vehicle/maintenance/schedules" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.EventRepeat">
-                    Schedules
-                </MudNavLink>
-                <MudNavLink Href="/vehicle/maintenance/due" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.WarningAmber">
-                    Due
-                </MudNavLink>
-                <MudNavLink Href="/vehicle/maintenance/logs" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.HistoryEdu">
-                    Logs
-                </MudNavLink>
-            </MudNavGroup>
-            <MudNavLink Href="/vehicle/fuel-odometer" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.LocalGasStation">
-                Fuel &amp; Odometer
-            </MudNavLink>
-            <MudNavLink Href="/vehicle/reports/inventory" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.ListAlt">
-                Inventory Report
-            </MudNavLink>
-        </MudNavGroup>
+        @* Vehicle is the data-driven prototype — its entries are declared in VehicleNav and
+           rendered generically. Empty groups are impossible here, and expansion tracks the
+           route on every navigation rather than once at circuit start. *@
+        <NavEntries Entries="@_vehicleNav" Permissions="@UserProfileState.Permissions"
+                    Path="@_path" State="@_navExpansion" />
 
         <!-- Master Data Section
              Grouped with inline section labels rather than nested MudNavGroups: reference data is
@@ -486,7 +453,6 @@
     private bool _isRootTenantAdmin;
     private bool _administrationExpanded;
     private bool _expendableExpanded;
-    private bool _vehicleExpanded;
     private bool _masterDataExpanded;
     private bool _procurementPlanningExpanded;
     private bool _procurementExpanded;
@@ -502,7 +468,13 @@
     private bool _arRegistryExpanded;
     private bool _arReportsExpanded;
     private bool _arSetupExpanded;
-    private bool _vehMaintenanceExpanded;
+
+    // --- Data-driven nav (Vehicle prototype) ---------------------------------------------
+    // One declaration drives visibility, nesting and expansion. No per-group bool, no
+    // hand-maintained route prefix list, no risk of an empty container.
+    private static readonly INavEntry[] _vehicleNav = [VehicleNav.Section];
+    private readonly NavExpansionState _navExpansion = new();
+    private string _path = "/";
 
     // A sub-group whose children are ALL permission-gated renders as an empty chevron for
     // users holding none of them. Gate the group itself on the union of its children.
@@ -512,10 +484,13 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        _path = CurrentPath();
+
         // Match on the app-relative path, not the raw URI. A bare Contains("/logs") also matches
         // /vehicle/maintenance/logs and would wrongly expand Administration; anchoring to a path
         // segment also keeps /procurement-planning from triggering the /procurement group.
-        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].TrimStart('/');
+        var path = _path;
 
         bool IsUnder(params string[] prefixes) => prefixes.Any(p =>
             path.Equals(p, StringComparison.OrdinalIgnoreCase) ||
@@ -524,7 +499,6 @@
         _administrationExpanded = IsUnder("/users", "/roles", "/groups", "/tenants",
                                           "/audits", "/health", "/logs");
         _expendableExpanded = IsUnder("/expendable");
-        _vehicleExpanded = IsUnder("/vehicle");
         _procurementPlanningExpanded = IsUnder("/procurement-planning");
         _procurementExpanded = IsUnder("/procurement");
         _financeExpanded = IsUnder("/budget-disbursement");
@@ -545,8 +519,21 @@
         _arReportsExpanded = IsUnder("/asset-register/reports");
         _arSetupExpanded = IsUnder("/asset-register/pperr-series", "/asset-register/ppeir-series")
                         || isPropertyCodeGenerator;
-        _vehMaintenanceExpanded = IsUnder("/vehicle/maintenance");
         await CheckRootTenantAdmin();
+    }
+
+    private static readonly char[] PathDelimiters = ['?', '#'];
+
+    /// <summary>Current app-relative path with a leading slash, query and fragment stripped.</summary>
+    private string CurrentPath() =>
+        "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split(PathDelimiters)[0].TrimStart('/');
+
+    // Only the data-driven section reacts to this; the hand-written groups above still compute
+    // their expansion once at circuit start and go stale after client-side navigation.
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _path = CurrentPath();
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task CheckRootTenantAdmin()
@@ -578,6 +565,10 @@
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose() => UserProfileState.OnProfileChanged -= OnProfileChanged;
+    public void Dispose()
+    {
+        UserProfileState.OnProfileChanged -= OnProfileChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
 }
 
