@@ -14,6 +14,23 @@
     opacity: 0.6;
 }
 
+/* Section label nested inside an expanded MudNavGroup. Chunks long reference-data
+   lists without adding another collapse level (see Master Data). */
+::deep .AMIS-nav-subsection-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--mud-palette-text-secondary);
+    padding: 12px 12px 4px 16px;
+    opacity: 0.6;
+}
+
+/* No leading gap on the first label — the group header already provides it. */
+::deep .AMIS-nav-subsection-title:first-child {
+    padding-top: 4px;
+}
+
 ::deep .AMIS-nav-menu {
     padding: 0;
 }

@@ -21,9 +21,12 @@
             My Inspections
         </MudNavLink>
 
-        <!-- Administration Section -->
+        <!-- Administration Section
+             Audit Logs, Health and Logs live here rather than as top-level entries: they are
+             admin-only concerns, and three separate root rows cost more scan cost than they earn. -->
         <MudNavGroup Title="Administration" Icon="@Icons.Material.Outlined.AdminPanelSettings"
                      @bind-Expanded="_administrationExpanded">
+            <div class="AMIS-nav-subsection-title">Access</div>
             <MudNavLink Href="/users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
                 Users
             </MudNavLink>
@@ -36,6 +39,7 @@
 
             @if (_isRootTenantAdmin)
             {
+                <div class="AMIS-nav-subsection-title">Tenancy</div>
                 <MudNavLink Href="/tenants" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.CorporateFare">
                     Tenants
                 </MudNavLink>
@@ -43,11 +47,18 @@
                     Tenant Settings
                 </MudNavLink>
             }
-        </MudNavGroup>
 
-        <MudNavLink Href="/audits" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.History">
-            Audit Logs
-        </MudNavLink>
+            <div class="AMIS-nav-subsection-title">Monitoring</div>
+            <MudNavLink Href="/audits" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.History">
+                Audit Logs
+            </MudNavLink>
+            <MudNavLink Href="/health" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MonitorHeart">
+                Health
+            </MudNavLink>
+            <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Terminal">
+                Logs
+            </MudNavLink>
+        </MudNavGroup>
 
         <MudNavGroup Title="Procurement Planning" Icon="@Icons.Material.Outlined.Assignment"
                      @bind-Expanded="_procurementPlanningExpanded">
@@ -99,7 +110,11 @@
                         Icon="@Icons.Material.Outlined.AssignmentInd">
                 My Accountability
             </MudNavLink>
-            <MudNavGroup Title="Receiving" Icon="@Icons.Material.Outlined.MoveToInbox">
+            @* Every lifecycle stage is a peer sub-group, so none of them reads as arbitrarily
+               more important than the others. Document-numbering config lives in Setup, not
+               inline with the transactions it numbers. *@
+            <MudNavGroup Title="Receiving" Icon="@Icons.Material.Outlined.MoveToInbox"
+                         @bind-Expanded="_arReceivingExpanded">
                 <MudNavLink Href="/asset-register/receiving/ppe" Match="NavLinkMatch.Prefix"
                             Icon="@Icons.Material.Outlined.MoveToInbox">
                     PPERR
@@ -108,12 +123,9 @@
                             Icon="@Icons.Material.Outlined.MoveToInbox">
                     SMRR
                 </MudNavLink>
-                <MudNavLink Href="/asset-register/pperr-series" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.FormatListNumbered">
-                    PPERR Form Series
-                </MudNavLink>
             </MudNavGroup>
-            <MudNavGroup Title="Issuance" Icon="@Icons.Material.Outlined.Receipt">
+            <MudNavGroup Title="Issuance" Icon="@Icons.Material.Outlined.Receipt"
+                         @bind-Expanded="_arIssuanceExpanded">
                 <MudNavLink Href="/asset-register/issuance/ppeir" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Receipt">
                     PPEIR
                 </MudNavLink>
@@ -124,10 +136,11 @@
                             Icon="@Icons.Material.Outlined.AssignmentInd">
                     ICS / PAR
                 </MudNavLink>
-                <MudNavLink Href="/asset-register/ppeir-series" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.FormatListNumbered">
-                    PPEIR Form Series
-                </MudNavLink>
+            </MudNavGroup>
+            @* A transfer is not an issuance — different document, different counterparty,
+               its own permission. Grouped with returns as asset movement. *@
+            <MudNavGroup Title="Movement" Icon="@Icons.Material.Outlined.SwapHoriz"
+                         @bind-Expanded="_arMovementExpanded">
                 @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Transfers.View))
                 {
                     <MudNavLink Href="/asset-register/transfers" Match="NavLinkMatch.Prefix"
@@ -135,45 +148,59 @@
                         Inter-Agency Transfers
                     </MudNavLink>
                 }
-            </MudNavGroup>
-            <MudNavLink Href="/asset-register/returned-property" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.AssignmentReturn">
-                Returned (RRSP / RRP)
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/assets" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.Inventory2">
-                Asset Registry
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/catalog" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.LibraryBooks">
-                Asset Catalog
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/locations" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.Place">
-                Locations
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/physical-count" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.FactCheck">
-                Physical Count
-            </MudNavLink>
-            <MudNavLink Href="/asset-register/incidents" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.ReportProblem">
-                Incident Reports
-            </MudNavLink>
-
-            <MudNavLink Href="/asset-register/unserviceable" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.DeleteSweep">
-                Unserviceable Reports
-            </MudNavLink>
-            @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Repair.View))
-            {
-                <MudNavLink Href="/asset-register/repairs" Match="NavLinkMatch.Prefix"
-                            Icon="@Icons.Material.Outlined.Build">
-                    Repairs (RPRI)
+                <MudNavLink Href="/asset-register/returned-property" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.AssignmentReturn">
+                    Returned (RRSP / RRP)
                 </MudNavLink>
-            }
+            </MudNavGroup>
+            <MudNavGroup Title="Maintenance &amp; Disposal" Icon="@Icons.Material.Outlined.Handyman"
+                         @bind-Expanded="_arMaintenanceExpanded">
+                @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Repair.View))
+                {
+                    <MudNavLink Href="/asset-register/repairs" Match="NavLinkMatch.Prefix"
+                                Icon="@Icons.Material.Outlined.Build">
+                        Repairs (RPRI)
+                    </MudNavLink>
+                }
+                <MudNavLink Href="/asset-register/incidents" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.ReportProblem">
+                    Incident Reports
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/unserviceable" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.DeleteSweep">
+                    Unserviceable Reports
+                </MudNavLink>
+            </MudNavGroup>
+            <MudNavGroup Title="Registry" Icon="@Icons.Material.Outlined.Storage"
+                         @bind-Expanded="_arRegistryExpanded">
+                <MudNavLink Href="/asset-register/assets" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.Inventory2">
+                    Asset Registry
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/catalog" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.LibraryBooks">
+                    Asset Catalog
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/locations" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.Place">
+                    Locations
+                </MudNavLink>
+                @* Physical Count sits with the records it verifies rather than with the
+                   transaction stages. *@
+                <MudNavLink Href="/asset-register/physical-count" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.FactCheck">
+                    Physical Count
+                </MudNavLink>
+            </MudNavGroup>
 
-            <MudNavGroup Title="Reports" Icon="@Icons.Material.Outlined.Assessment">
+            @* Every child here is permission-gated, so the group itself must be gated on the
+               union — otherwise a user with none of them gets an empty chevron. *@
+            @if (HasAny(AssetRegisterPermissions.Accountability.View,
+                        AssetRegisterPermissions.Issuance.View,
+                        AssetRegisterPermissions.Assets.View))
+            {
+            <MudNavGroup Title="Reports" Icon="@Icons.Material.Outlined.Assessment"
+                         @bind-Expanded="_arReportsExpanded">
                 @if (UserProfileState.Permissions.Contains(AssetRegisterPermissions.Accountability.View))
                 {
                     <MudNavLink Href="/asset-register/reports/rspi" Match="NavLinkMatch.Prefix"
@@ -212,10 +239,34 @@
                     </MudNavLink>
                 }
             </MudNavGroup>
+            }
+
+            @* Configure-once numbering setup, kept out of the daily transaction stages.
+               Property Code Generator keeps its /master-data/* route because the page is
+               backed by MasterData APIs and permissions. *@
+            <MudNavGroup Title="Setup" Icon="@Icons.Material.Outlined.Settings"
+                         @bind-Expanded="_arSetupExpanded">
+                <MudNavLink Href="/asset-register/pperr-series" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.FormatListNumbered">
+                    PPERR Form Series
+                </MudNavLink>
+                <MudNavLink Href="/asset-register/ppeir-series" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.FormatListNumbered">
+                    PPEIR Form Series
+                </MudNavLink>
+                <MudNavLink Href="/master-data/property-code-generator" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.QrCode2">
+                    Property Code Generator
+                </MudNavLink>
+            </MudNavGroup>
 
         </MudNavGroup>
 
         <MudNavGroup Title="Expendable" Icon="@Icons.Material.Outlined.Inventory2" @bind-Expanded="_expendableExpanded">
+            @* Split by audience: the first three are what a regular employee touches, the rest
+               is supply-officer work. Labels rather than nested groups — at 10 links this is
+               Master Data's size, so everything stays one click away. *@
+            <div class="AMIS-nav-subsection-title">Self-Service</div>
             <MudNavLink Href="/expendable/my-requests" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Inbox">
                 My Requests
@@ -228,9 +279,8 @@
                         Icon="@Icons.Material.Outlined.ShoppingCart">
                 Basket
             </MudNavLink>
-            <MudNavLink Href="/expendable/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Label">
-                Products
-            </MudNavLink>
+
+            <div class="AMIS-nav-subsection-title">Supply Management</div>
             <MudNavLink Href="/expendable/requests" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Description">
                 Supply Requests
@@ -239,13 +289,20 @@
                         Icon="@Icons.Material.Outlined.Warehouse">
                 Warehouse
             </MudNavLink>
+            <MudNavLink Href="/expendable/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Label">
+                Products
+            </MudNavLink>
+
+            <div class="AMIS-nav-subsection-title">Reports</div>
+            @* Named as a pair: both are the same issuance report cut a different way, which
+               the old "Issuance Report" / "Employee Issuance" labels hid. *@
             <MudNavLink Href="/expendable/reports/department" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Assessment">
-                Issuance Report
+                Issuance by Department
             </MudNavLink>
             <MudNavLink Href="/expendable/reports/employee" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.PersonSearch">
-                Employee Issuance
+                Issuance by Employee
             </MudNavLink>
             <MudNavLink Href="/expendable/reports/stock-card" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Inventory">
@@ -288,18 +345,23 @@
                         Icon="@Icons.Material.Outlined.DirectionsCarFilled">
                 Vehicles
             </MudNavLink>
-            <MudNavLink Href="/vehicle/maintenance/schedules" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.EventRepeat">
-                Maintenance Schedules
-            </MudNavLink>
-            <MudNavLink Href="/vehicle/maintenance/due" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.WarningAmber">
-                Maintenance Due
-            </MudNavLink>
-            <MudNavLink Href="/vehicle/maintenance/logs" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.HistoryEdu">
-                Maintenance Logs
-            </MudNavLink>
+            @* The shared "Maintenance" prefix moves up into the parent, so the three children
+               fit on one line each instead of wrapping. *@
+            <MudNavGroup Title="Maintenance" Icon="@Icons.Material.Outlined.Handyman"
+                         @bind-Expanded="_vehMaintenanceExpanded">
+                <MudNavLink Href="/vehicle/maintenance/schedules" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.EventRepeat">
+                    Schedules
+                </MudNavLink>
+                <MudNavLink Href="/vehicle/maintenance/due" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.WarningAmber">
+                    Due
+                </MudNavLink>
+                <MudNavLink Href="/vehicle/maintenance/logs" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Outlined.HistoryEdu">
+                    Logs
+                </MudNavLink>
+            </MudNavGroup>
             <MudNavLink Href="/vehicle/fuel-odometer" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.LocalGasStation">
                 Fuel &amp; Odometer
@@ -310,9 +372,23 @@
             </MudNavLink>
         </MudNavGroup>
 
-        <!-- Master Data Section -->
+        <!-- Master Data Section
+             Grouped with inline section labels rather than nested MudNavGroups: reference data is
+             visited rarely, so a third collapse level would hide the very label the user is hunting
+             for. Labels chunk the list while keeping every page one click away. -->
         <MudNavGroup Title="Master Data" Icon="@Icons.Material.Outlined.Dataset" HideExpandIcon="false"
                      @bind-Expanded="_masterDataExpanded">
+            <div class="AMIS-nav-subsection-title">Agency</div>
+            <MudNavLink Href="/master-data/organization-profile" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.AccountBalance">
+                Organization Profile
+            </MudNavLink>
+            <MudNavLink Href="/master-data/report-signatories" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.Draw">
+                Report Signatories
+            </MudNavLink>
+
+            <div class="AMIS-nav-subsection-title">Organization Structure</div>
             <MudNavLink Href="/master-data/departments" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Business">
                 Departments
@@ -329,22 +405,18 @@
                         Icon="@Icons.Material.Outlined.Person3">
                 Employees
             </MudNavLink>
-            <MudNavLink Href="/master-data/unit-of-measures" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.Straighten">
-                Units of Measure
-            </MudNavLink>
-            <MudNavLink Href="/masterdata/suppliers" Match="NavLinkMatch.Prefix"
+
+            <div class="AMIS-nav-subsection-title">Procurement</div>
+            <MudNavLink Href="/master-data/suppliers" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.LocalShipping">
                 Suppliers
-            </MudNavLink>
-            <MudNavLink Href="/masterdata/categories" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.Category">
-                Categories
             </MudNavLink>
             <MudNavLink Href="/master-data/modes-of-procurement" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Rule">
                 Modes of Procurement
             </MudNavLink>
+
+            <div class="AMIS-nav-subsection-title">Budget &amp; Funds</div>
             <MudNavLink Href="/master-data/fund-clusters" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.AccountBalanceWallet">
                 Fund Clusters
@@ -353,13 +425,15 @@
                         Icon="@Icons.Material.Outlined.Numbers">
                 Funding Source Codes
             </MudNavLink>
-            <MudNavLink Href="/master-data/report-signatories" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.Draw">
-                Report Signatories
+
+            <div class="AMIS-nav-subsection-title">Property &amp; Classification</div>
+            <MudNavLink Href="/master-data/categories" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.Category">
+                Categories
             </MudNavLink>
-            <MudNavLink Href="/master-data/organization-profile" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.AccountBalance">
-                Organization Profile
+            <MudNavLink Href="/master-data/unit-of-measures" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Outlined.Straighten">
+                Units of Measure
             </MudNavLink>
             <MudNavLink Href="/master-data/capitalization-thresholds" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Outlined.Policy">
@@ -369,17 +443,14 @@
                         Icon="@Icons.Material.Outlined.AccountTree">
                 Property Class Library
             </MudNavLink>
-            <MudNavLink Href="/master-data/property-code-generator" Match="NavLinkMatch.Prefix"
-                        Icon="@Icons.Material.Outlined.QrCode2">
-                Property Code Generator
-            </MudNavLink>
         </MudNavGroup>
 
-        <!-- Communication Section -->
-        <div class="AMIS-nav-section-title">Communication</div>
-
+        <!-- Communication Section — heading sits inside the permission check, otherwise a user
+             without Chat access gets a bare "COMMUNICATION" label with nothing under it. -->
         @if (UserProfileState.Permissions.Contains(ChatPermissions.Channels.View))
         {
+            <div class="AMIS-nav-section-title">Communication</div>
+
             <MudNavLink Href="/chat" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Chat">
                 Chat
             </MudNavLink>
@@ -387,16 +458,7 @@
 
         @* Notifications surface as a top-bar bell (cross-cutting workflow alerts), not a nav item. See Phase 3. *@
 
-        <!-- System Section -->
-        <div class="AMIS-nav-section-title">System</div>
-
-        <MudNavLink Href="/health" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.MonitorHeart">
-            Health
-        </MudNavLink>
-
-        <MudNavLink Href="/logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Terminal">
-            Logs
-        </MudNavLink>
+        @* System (Health, Logs) folded into Administration — see that group. *@
 
         <!-- Settings Section -->
         <div class="AMIS-nav-section-title">Settings</div>
@@ -431,22 +493,59 @@
     private bool _financeExpanded;
     private bool _assetRegisterExpanded;
 
+    // PPE & SE sub-groups. Without these the active page can sit behind a collapsed
+    // chevron with no visible highlight after a full page load.
+    private bool _arReceivingExpanded;
+    private bool _arIssuanceExpanded;
+    private bool _arMovementExpanded;
+    private bool _arMaintenanceExpanded;
+    private bool _arRegistryExpanded;
+    private bool _arReportsExpanded;
+    private bool _arSetupExpanded;
+    private bool _vehMaintenanceExpanded;
+
+    // A sub-group whose children are ALL permission-gated renders as an empty chevron for
+    // users holding none of them. Gate the group itself on the union of its children.
+    private bool HasAny(params string[] permissions) =>
+        permissions.Any(UserProfileState.Permissions.Contains);
+
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        var uri = Navigation.Uri;
-        _administrationExpanded = uri.Contains("/users", StringComparison.OrdinalIgnoreCase)
-                               || uri.Contains("/roles", StringComparison.OrdinalIgnoreCase)
-                               || uri.Contains("/groups", StringComparison.OrdinalIgnoreCase)
-                               || uri.Contains("/tenants", StringComparison.OrdinalIgnoreCase);
-        _expendableExpanded = uri.Contains("/expendable", StringComparison.OrdinalIgnoreCase);
-        _vehicleExpanded = uri.Contains("/vehicle", StringComparison.OrdinalIgnoreCase);
-        _procurementPlanningExpanded = uri.Contains("/procurement-planning", StringComparison.OrdinalIgnoreCase);
-        _procurementExpanded = uri.Contains("/procurement/", StringComparison.OrdinalIgnoreCase);
-        _financeExpanded = uri.Contains("/finance", StringComparison.OrdinalIgnoreCase);
-        _masterDataExpanded = uri.Contains("/master-data", StringComparison.OrdinalIgnoreCase)
-                           || uri.Contains("/masterdata", StringComparison.OrdinalIgnoreCase);
-        _assetRegisterExpanded = uri.Contains("/asset-register", StringComparison.OrdinalIgnoreCase);
+        // Match on the app-relative path, not the raw URI. A bare Contains("/logs") also matches
+        // /vehicle/maintenance/logs and would wrongly expand Administration; anchoring to a path
+        // segment also keeps /procurement-planning from triggering the /procurement group.
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].TrimStart('/');
+
+        bool IsUnder(params string[] prefixes) => prefixes.Any(p =>
+            path.Equals(p, StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith(p + "/", StringComparison.OrdinalIgnoreCase));
+
+        _administrationExpanded = IsUnder("/users", "/roles", "/groups", "/tenants",
+                                          "/audits", "/health", "/logs");
+        _expendableExpanded = IsUnder("/expendable");
+        _vehicleExpanded = IsUnder("/vehicle");
+        _procurementPlanningExpanded = IsUnder("/procurement-planning");
+        _procurementExpanded = IsUnder("/procurement");
+        _financeExpanded = IsUnder("/budget-disbursement");
+
+        // Property Code Generator keeps its /master-data/* route but is presented under PPE & SE,
+        // so it must expand that group instead of Master Data.
+        var isPropertyCodeGenerator = IsUnder("/master-data/property-code-generator");
+        _masterDataExpanded = IsUnder("/master-data") && !isPropertyCodeGenerator;
+        _assetRegisterExpanded = IsUnder("/asset-register") || isPropertyCodeGenerator;
+
+        _arReceivingExpanded = IsUnder("/asset-register/receiving");
+        _arIssuanceExpanded = IsUnder("/asset-register/issuance", "/asset-register/accountability");
+        _arMovementExpanded = IsUnder("/asset-register/transfers", "/asset-register/returned-property");
+        _arMaintenanceExpanded = IsUnder("/asset-register/repairs", "/asset-register/incidents",
+                                         "/asset-register/unserviceable");
+        _arRegistryExpanded = IsUnder("/asset-register/assets", "/asset-register/catalog",
+                                      "/asset-register/locations", "/asset-register/physical-count");
+        _arReportsExpanded = IsUnder("/asset-register/reports");
+        _arSetupExpanded = IsUnder("/asset-register/pperr-series", "/asset-register/ppeir-series")
+                        || isPropertyCodeGenerator;
+        _vehMaintenanceExpanded = IsUnder("/vehicle/maintenance");
         await CheckRootTenantAdmin();
     }
 

@@ -87,7 +87,10 @@
                 </MudItem>
             }
             <MudItem xs="12" md="3">
-                <MudTextField @bind-Value="_fundCluster" Label="Fund Cluster" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" />
+                @* The receiving report is the headwater: the cluster picked here is stamped onto every asset
+                   registered from this receipt, and every downstream ICS/PAR/PPEIR/disposal inherits it.
+                   A real COA code here keeps the whole chain clean; free-text would propagate everywhere. *@
+                <FundClusterSelect @bind-Value="_fundCluster" Clearable="true" />
             </MudItem>
             @if (_receiptType == ReceiptType.Purchase)
             {
