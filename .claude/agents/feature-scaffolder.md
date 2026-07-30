@@ -55,16 +55,19 @@ Show where to add endpoint mapping in the module's `MapEndpoints` method.
 public sealed record {Action}{Entity}Command(
     {Properties}) : ICommand<{Action}{Entity}Response>;
 
-// {Action}{Entity}Handler.cs
-public sealed class {Action}{Entity}Handler(
-    IRepository<{Entity}> repository,
+// {Action}{Entity}CommandHandler.cs
+// ⚠️ Inject the module DbContext. There is NO IRepository<T> in this codebase — it will not compile.
+public sealed class {Action}{Entity}CommandHandler(
+    {Module}DbContext dbContext,
     ICurrentUser currentUser) : ICommandHandler<{Action}{Entity}Command, {Action}{Entity}Response>
 {
     public async ValueTask<{Action}{Entity}Response> Handle(
         {Action}{Entity}Command command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        // Implementation
+        // Enforce invariants in the entity's factory/behavior methods, not here.
+        // Set CreatedBy/LastModifiedBy from currentUser — no interceptor does it for you.
+        // Always .ConfigureAwait(false).
     }
 }
 

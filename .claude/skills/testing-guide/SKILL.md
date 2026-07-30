@@ -33,7 +33,7 @@ public class ArchitectureTests
             .HaveDependencyOn("Modules.Multitenancy")
             .GetResult();
 
-        result.IsSuccessful.Should().BeTrue();
+        result.IsSuccessful.ShouldBeTrue();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class ArchitectureTests
             .HaveDependencyOn("Modules.Identity")
             .GetResult();
 
-        result.IsSuccessful.Should().BeTrue();
+        result.IsSuccessful.ShouldBeTrue();
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class ArchitectureTests
             .BeSealed()
             .GetResult();
 
-        result.IsSuccessful.Should().BeTrue();
+        result.IsSuccessful.ShouldBeTrue();
     }
 }
 ```
@@ -68,44 +68,58 @@ public class ArchitectureTests
 
 ### Handler Tests
 
+> ⚠️ **Use the libraries the repo actually uses.** All 12 test projects use **xunit + Shouldly**; 7 add
+> **NSubstitute** and 6 add **AutoFixture**. **No project references Moq or FluentAssertions** — do not
+> write `.Should()` or `Mock<T>`, they will not compile. And there is no `IRepository<T>` to mock:
+> handlers take the module `DbContext`, so give them a real one backed by EF InMemory or SQLite.
+
 ```csharp
-public class Create{Entity}HandlerTests
+using AutoFixture;
+using NSubstitute;
+using Shouldly;
+using Xunit;
+
+public sealed class Create{Entity}CommandHandlerTests
 {
-    private readonly Mock<IRepository<{Entity}>> _repositoryMock;
-    private readonly Mock<ICurrentUser> _currentUserMock;
-    private readonly Create{Entity}Handler _handler;
+    private readonly ICurrentUser _currentUser;
+    private readonly Fixture _fixture = new();
 
-    public Create{Entity}HandlerTests()
+    public Create{Entity}CommandHandlerTests()
     {
-        _repositoryMock = new Mock<IRepository<{Entity}>>();
-        _currentUserMock = new Mock<ICurrentUser>();
-        _currentUserMock.Setup(x => x.TenantId).Returns("test-tenant");
-
-        _handler = new Create{Entity}Handler(
-            _repositoryMock.Object,
-            _currentUserMock.Object);
+        _currentUser = Substitute.For<ICurrentUser>();
+        _currentUser.GetTenant().Returns("test-tenant-id");
+        _currentUser.GetUserId().Returns(Guid.NewGuid());
     }
 
+    private static {Module}DbContext NewDbContext() =>
+        new(new DbContextOptionsBuilder<{Module}DbContext>()
+            .UseInMemoryDatabase($"{Guid.NewGuid()}")   // unique name per test — no cross-test bleed
+            .Options);
+
     [Fact]
-    public async Task Handle_ValidCommand_Returns{Entity}Id()
+    public async Task Handle_ValidCommand_Persists{Entity}()
     {
         // Arrange
+        await using var dbContext = NewDbContext();
+        var handler = new Create{Entity}CommandHandler(dbContext, _currentUser);
         var command = new Create{Entity}Command("Test", 99.99m);
-        _repositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<{Entity}>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Id.Should().NotBeEmpty();
-        _repositoryMock.Verify(x => x.AddAsync(
-            It.Is<{Entity}>(e => e.Name == "Test" && e.Price == 99.99m),
-            It.IsAny<CancellationToken>()), Times.Once);
+        result.Id.ShouldNotBe(Guid.Empty);
+        var saved = await dbContext.{Entity}s.FindAsync(result.Id);
+        saved.ShouldNotBeNull();
+        saved!.Name.ShouldBe("Test");
+        saved.CreatedBy.ShouldNotBeNullOrWhiteSpace();   // handler sets this by hand
     }
 }
 ```
+
+**Multi-tenant handlers** need a Finbuckle tenant context, not just a DbContext. Reuse the existing
+harness rather than rebuilding one:
+[MultiTenantTestHost.cs](../../../src/Tests/AssetRegister.Tests/Integration/MultiTenantTestHost.cs).
 
 ### Validator Tests
 
@@ -120,8 +134,8 @@ public class Create{Entity}ValidatorTests
         var command = new Create{Entity}Command("", 99.99m);
         var result = _validator.Validate(command);
 
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "Name");
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.PropertyName == "Name");
     }
 
     [Fact]
@@ -130,8 +144,8 @@ public class Create{Entity}ValidatorTests
         var command = new Create{Entity}Command("Test", -1m);
         var result = _validator.Validate(command);
 
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "Price");
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.PropertyName == "Price");
     }
 
     [Theory]
@@ -142,7 +156,7 @@ public class Create{Entity}ValidatorTests
         var command = new Create{Entity}Command(name, price);
         var result = _validator.Validate(command);
 
-        result.IsValid.Should().BeTrue();
+        result.IsValid.ShouldBeTrue();
     }
 }
 ```
@@ -157,19 +171,17 @@ public class {Entity}Tests
     {
         var entity = {Entity}.Create("Test", 99.99m, "tenant-1");
 
-        entity.Id.Should().NotBeEmpty();
-        entity.Name.Should().Be("Test");
-        entity.Price.Should().Be(99.99m);
-        entity.TenantId.Should().Be("tenant-1");
-        entity.DomainEvents.Should().ContainSingle(e => e is {Entity}CreatedEvent);
+        entity.Id.ShouldNotBe(Guid.Empty);
+        entity.Name.ShouldBe("Test");
+        entity.Price.ShouldBe(99.99m);
+        entity.TenantId.ShouldBe("tenant-1");
+        entity.DomainEvents.OfType<{Entity}CreatedEvent>().ShouldHaveSingleItem();
     }
 
     [Fact]
     public void Create_EmptyName_ThrowsArgumentException()
     {
-        var act = () => {Entity}.Create("", 99.99m, "tenant-1");
-
-        act.Should().Throw<ArgumentException>();
+        Should.Throw<ArgumentException>(() => {Entity}.Create("", 99.99m, "tenant-1"));
     }
 
     [Fact]
@@ -180,10 +192,10 @@ public class {Entity}Tests
 
         entity.UpdateDetails("Updated", 75m, "New description");
 
-        entity.Name.Should().Be("Updated");
-        entity.Price.Should().Be(75m);
-        entity.Description.Should().Be("New description");
-        entity.DomainEvents.Should().ContainSingle(e => e is {Entity}UpdatedEvent);
+        entity.Name.ShouldBe("Updated");
+        entity.Price.ShouldBe(75m);
+        entity.Description.ShouldBe("New description");
+        entity.DomainEvents.OfType<{Entity}UpdatedEvent>().ShouldHaveSingleItem();
     }
 }
 ```
@@ -217,8 +229,9 @@ dotnet test --filter "FullyQualifiedName~Create{Entity}HandlerTests"
 
 1. **Architecture tests are mandatory** - They enforce module boundaries
 2. **Validators need tests** - Cover edge cases
-3. **Handlers need tests** - Mock dependencies
+3. **Handlers need tests** - Substitute collaborators, give the handler a real in-memory `DbContext`
 4. **Entities need tests** - Test factory methods and domain logic
-5. **Use FluentAssertions** - `.Should()` syntax
-6. **Use Moq for mocking** - `Mock<T>` pattern
+5. **Use Shouldly** - `x.ShouldBe(y)` syntax. **Not** FluentAssertions — it is not referenced anywhere
+6. **Use NSubstitute for mocking** - `Substitute.For<T>()`. **Not** Moq — it is not referenced anywhere
+7. **Use AutoFixture** for filling in irrelevant command properties (`_fixture.Build<T>().With(...)`)
 

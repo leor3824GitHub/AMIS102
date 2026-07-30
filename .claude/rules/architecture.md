@@ -185,16 +185,22 @@ Infrastructure Layer (Persistence/External Services)
 - AuditingDbContext
 - Your module DbContexts
 
-**Repository Pattern:**
+**Data access — no repository layer:**
+
+There is no `IRepository<T>` in this codebase. Handlers inject their module's `DbContext` directly:
 
 ```csharp
-public interface IRepository<T> where T : BaseEntity
+public sealed class CreateProductCommandHandler(
+    ExpendableDbContext dbContext,
+    ICurrentUser currentUser) : ICommandHandler<CreateProductCommand, ProductDto>
 {
-    Task<T?> GetByIdAsync(Guid id, CancellationToken ct);
-    Task<List<T>> ListAsync(Specification<T> spec, CancellationToken ct);
-    Task<T> AddAsync(T entity, CancellationToken ct);
-    Task UpdateAsync(T entity, CancellationToken ct);
-    Task DeleteAsync(T entity, CancellationToken ct);
+    public async ValueTask<ProductDto> Handle(CreateProductCommand command, CancellationToken ct)
+    {
+        var product = Product.Create(/* … */);
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return product.ToProductDto();
+    }
 }
 ```
 

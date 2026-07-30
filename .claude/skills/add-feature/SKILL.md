@@ -34,19 +34,44 @@ public sealed record Get{Entity}Query(Guid Id) : IQuery<{Entity}Dto>;
 
 ## Step 2: Create Handler
 
+Inject the **module `DbContext`** — there is no `IRepository<T>` in this codebase.
+
 ```csharp
-public sealed class Create{Entity}Handler(
-    IRepository<{Entity}> repository,
+public sealed class Create{Entity}CommandHandler(
+    {Module}DbContext dbContext,
     ICurrentUser currentUser) : ICommandHandler<Create{Entity}Command, Create{Entity}Response>
 {
     public async ValueTask<Create{Entity}Response> Handle(
         Create{Entity}Command command,
-        CancellationToken ct)
+        CancellationToken cancellationToken)
     {
-        var entity = {Entity}.Create(command.Name, command.Price, currentUser.TenantId);
-        await repository.AddAsync(entity, ct);
+        var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
+
+        var entity = {Entity}.Create(tenantId, command.Name, command.Price);
+        entity.CreatedBy = currentUser.GetUserId().ToString();
+
+        dbContext.{Entity}s.Add(entity);
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
         return new Create{Entity}Response(entity.Id);
     }
+}
+```
+
+For **read** handlers, project to the DTO in SQL and add `AsNoTracking()`:
+
+```csharp
+public sealed class Get{Entity}QueryHandler({Module}DbContext dbContext)
+    : IQueryHandler<Get{Entity}Query, {Entity}Dto>
+{
+    public async ValueTask<{Entity}Dto> Handle(Get{Entity}Query query, CancellationToken cancellationToken)
+        => await dbContext.{Entity}s
+            .AsNoTracking()
+            .Where(x => x.Id == query.Id)
+            .Select(x => new {Entity}Dto(x.Id, x.Name /* … */))
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false)
+           ?? throw new NotFoundException($"{Entity} {query.Id} not found");
 }
 ```
 

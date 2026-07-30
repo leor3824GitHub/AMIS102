@@ -54,7 +54,6 @@
     <PackageVersion Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
     <PackageVersion Include="MailKit" Version="4.16.0" />
-    <PackageVersion Include="Mapster" Version="7.4.0" />
     <PackageVersion Include="Mediator.Abstractions" Version="3.0.2" />
     <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.2" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
@@ -169,8 +168,18 @@
   <ItemGroup Label="Transitive security pins">
     <!-- NU1903 GHSA-hv8m-jj95-wg3x (was 2.5.192 via Aspire / OpenTelemetry) -->
     <PackageVersion Include="MessagePack" Version="2.5.302" />
-    <!-- NU1903 GHSA-37gx-xxp4-5rgx and GHSA-w3x6-4m5h-cxqf (was 10.0.0 via test deps) -->
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.7" />
+    <!-- NU1903 GHSA-37gx-xxp4-5rgx and GHSA-w3x6-4m5h-cxqf (was 10.0.0 via test deps).
+         Re-bumped 10.0.7 -> 10.0.10: 10.0.7 is itself affected by 5 further high-severity
+         advisories (CVE-2026-50648 / GHSA-23rf-6693-g89p, -8q5v-6pqq-x66h, -cvvh-rhrc-wg4q,
+         -g8r8-53c2-pm3f, -mmjf-rqrv-855v) — XML-encryption DoS via uncontrolled resource
+         consumption. Affected >=10.0.0,<=10.0.9; first patched 10.0.10.
+         Reaches the graph through NetArchTest.Rules -> Microsoft.CodeAnalysis in Architecture.Tests. -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
+    <!-- NU1903 GHSA-v5pm-xwqc-g5wc (CVE-2026-49451): Microsoft.OpenApi 2.0.0 stack-overflows on
+         circular schema references. Affected >=2.0.0-preview.11,<=2.7.4; 2.7.5 is the first patch
+         on the 2.x line (staying on 2.x avoids the 3.x breaking changes).
+         Pulled transitively by Microsoft.AspNetCore.OpenApi 10.0.7. -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <!-- NU1903 GHSA-2m69-gcr7-jv3q: SQLitePCLRaw.lib.e_sqlite3 <= 2.1.11 bundles a vulnerable SQLite.
          bundle_green/core/provider stay at 2.1.11 (managed, unaffected); only the native lib is pinned.
          3.50.3 is the restructured self-contained native package — it carries every platform's runtime

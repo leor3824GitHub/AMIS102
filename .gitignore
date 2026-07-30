@@ -502,3 +502,15 @@ tmpclaude**
 # Auto Claude data directory
 .auto-claude/
 src/Host/AMIS.Maui/appsettings.json
+
+# Build/run logs and captured output — never commit these (see Phase 0 repo hygiene)
+*.binlog
+build_*.txt
+full_build.txt
+apphost-run.log
+api_output.log
+coverage/
+TestResults/
+
+# Session cookies / credential jars captured while poking at local endpoints
+*.cookies

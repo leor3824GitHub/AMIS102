@@ -102,7 +102,6 @@
   <Folder Name="/Solution Items/">
     <File Path="../.gitignore" />
     <File Path=".editorconfig" />
-    <File Path="Architecture.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>

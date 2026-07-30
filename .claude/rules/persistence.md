@@ -6,7 +6,8 @@ paths:
 
 # Persistence Rules
 
-EF Core patterns and repository usage in AMIS.
+EF Core data-access patterns in AMIS. Handlers inject their module's `DbContext` directly — there is no
+repository layer.
 
 ## DbContext Pattern
 
@@ -86,40 +87,47 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 }
 ```
 
-## Repository Pattern
+## Data Access — Inject the Module DbContext
 
-### Generic Repository (Provided by BuildingBlocks)
-
-```csharp
-public interface IRepository<T> where T : BaseEntity
-{
-    Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<List<T>> ListAsync(CancellationToken ct = default);
-    Task<List<T>> ListAsync(Specification<T> spec, CancellationToken ct = default);
-    Task<T> AddAsync(T entity, CancellationToken ct = default);
-    Task UpdateAsync(T entity, CancellationToken ct = default);
-    Task DeleteAsync(T entity, CancellationToken ct = default);
-    Task<int> CountAsync(Specification<T> spec, CancellationToken ct = default);
-    Task<bool> AnyAsync(Specification<T> spec, CancellationToken ct = default);
-}
-```
+> ⚠️ **There is no `IRepository<T>` in this codebase.** No repository abstraction has ever existed here.
+> All 390+ handlers inject their module's `DbContext` directly. Do not scaffold, mock, or reference
+> `IRepository<T>` — it will not compile.
 
 ### Usage in Handlers
 
+Inject the module `DbContext` (plus `ICurrentUser` when you need tenant or user identity). Construct
+entities through their static factory method, add, save.
+
 ```csharp
-public class CreateProductHandler(IRepository<Product> productRepo) 
-    : ICommandHandler<CreateProductCommand, Guid>
+public sealed class CreateProductCommandHandler(
+    ExpendableDbContext dbContext,
+    ICurrentUser currentUser) : ICommandHandler<CreateProductCommand, ProductDto>
 {
-    public async ValueTask<Guid> Handle(CreateProductCommand cmd, CancellationToken ct)
+    public async ValueTask<ProductDto> Handle(CreateProductCommand command, CancellationToken cancellationToken)
     {
-        var product = Product.Create(cmd.Name, cmd.Description, cmd.Price);
-        
-        await productRepo.AddAsync(product, ct);
-        
-        return product.Id;
+        var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
+
+        var product = Product.Create(tenantId, command.StockNo, command.Name, command.UnitPrice /* … */);
+        product.CreatedBy = currentUser.GetUserId().ToString();
+
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        return product.ToProductDto();
     }
 }
 ```
+
+Rules:
+
+- **Always `.ConfigureAwait(false)`** on awaits in handlers — matches every existing handler.
+- **Enforce invariants in the entity's factory/behavior methods**, not the handler. The handler
+  translates domain exceptions into HTTP-shaped ones (see `.claude/skills/error-handling`).
+- **Uniqueness checks** that the database enforces with an index should *also* be caught on
+  `DbUpdateException` and rethrown as a `ValidationException` — the pre-check races.
+  `CreateProductCommandHandler` is the reference for this.
+
+Reference: [CreateProductCommandHandler.cs](../../src/Modules/Expendable/Modules.Expendable/Features/v1/Products/CreateProduct/CreateProductCommandHandler.cs)
 
 ## Specification Pattern
 
@@ -152,19 +160,29 @@ public class ActiveProductsSpec : Specification<Product>
 
 ### Using Specifications
 
+Apply a specification to the `DbContext`'s `DbSet` with `ApplySpecification`:
+
 ```csharp
-public class GetProductsHandler(IRepository<Product> repo) 
+public sealed class GetProductsQueryHandler(ExpendableDbContext dbContext)
     : IQueryHandler<GetProductsQuery, List<ProductDto>>
 {
     public async ValueTask<List<ProductDto>> Handle(GetProductsQuery query, CancellationToken ct)
     {
-        var spec = new ActiveProductsSpec();
-        var products = await repo.ListAsync(spec, ct);
-        
-        return products.Select(p => p.ToDto()).ToList();
+        return await dbContext.Products
+            .ApplySpecification(new ActiveProductsSpec())
+            .Select(p => new ProductDto(p.Id, p.Name /* … */))
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
     }
 }
 ```
+
+> **Reality check:** the specification engine in `BuildingBlocks/Persistence/Specifications` is fully
+> featured (`AsNoTracking` default-on, `AsSplitQuery`, `IgnoreQueryFilters`, includes, whitelisted
+> `ApplySortingOverride`, projected `ISpecification<T, TResult>`) but is currently used in **exactly one**
+> place: [GetTenantsSpecification.cs](../../src/Modules/Multitenancy/Modules.Multitenancy/Features/v1/GetTenants/GetTenantsSpecification.cs).
+> Every other query handler composes `IQueryable` inline. Both are acceptable; prefer a specification
+> when the same query shape is needed in more than one handler, and inline `IQueryable` for a one-off.
 
 ### Pagination Specification
 
@@ -184,50 +202,68 @@ public class ProductsPaginatedSpec : Specification<Product>
 
 ## Entity Base Classes
 
-### BaseEntity
+All of these live in `AMIS.Framework.Core.Domain` (`src/BuildingBlocks/Core/Domain/`). The signatures
+below are the **actual** ones — note every marker interface is **get-only**, so the backing properties on
+your entity stay `private set` and are mutated through domain methods.
+
+### `BaseEntity<TId>` / `AggregateRoot<TId>`
 
 ```csharp
-public abstract class BaseEntity
+public abstract class BaseEntity<TId> : IEntity<TId>, IHasDomainEvents
 {
-    public Guid Id { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public Guid? CreatedBy { get; set; }
-    public DateTime? ModifiedAt { get; set; }
-    public Guid? ModifiedBy { get; set; }
+    public TId Id { get; protected set; } = default!;
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
+    protected void AddDomainEvent(IDomainEvent @event);
+    public void ClearDomainEvents();
 }
 ```
 
-### IAuditable
+`AggregateRoot<TId>` is a marker subclass — use it for aggregate roots, `BaseEntity<TId>` for entities
+that are not roots. Note it is **generic**; there is no non-generic `BaseEntity`.
+
+### `IAuditableEntity`
 
 ```csharp
-public interface IAuditable
+public interface IAuditableEntity
 {
-    DateTime CreatedAt { get; set; }
-    Guid? CreatedBy { get; set; }
-    DateTime? ModifiedAt { get; set; }
-    Guid? ModifiedBy { get; set; }
+    DateTimeOffset  CreatedOnUtc        { get; }
+    string?         CreatedBy           { get; }
+    DateTimeOffset? LastModifiedOnUtc   { get; }
+    string?         LastModifiedBy      { get; }
 }
 ```
 
-### IMustHaveTenant
+⚠️ There is **no `AuditableEntity` base class** — each entity declares these four itself, and handlers
+currently set `CreatedBy`/`LastModifiedBy` by hand at ~114 sites. Follow the surrounding module's
+convention until that is automated.
+
+### `IHasTenant`
 
 ```csharp
-public interface IMustHaveTenant
+public interface IHasTenant
 {
-    Guid TenantId { get; set; }  // ✅ Automatically filtered by Finbuckle
+    string TenantId { get; }   // string, NOT Guid
 }
 ```
 
-### ISoftDelete
+⚠️ **Implementing this does not filter anything by itself.** Tenant filtering activates only when the
+entity's EF configuration calls `builder.ToTable(...).IsMultiTenant()` (Finbuckle). Without that call the
+entity leaks across tenants.
+
+### `ISoftDeletable`
 
 ```csharp
-public interface ISoftDelete
+public interface ISoftDeletable
 {
-    bool IsDeleted { get; set; }
-    DateTime? DeletedAt { get; set; }
-    Guid? DeletedBy { get; set; }
+    bool            IsDeleted     { get; }
+    DateTimeOffset? DeletedOnUtc  { get; }
+    string?         DeletedBy     { get; }
 }
 ```
+
+Expose a domain method `SoftDelete(string deletedBy)`; keep the three fields `private set` and never
+mutate them from a handler. See the query-filter rules in the Multi-Tenancy section below — on an
+`.IsMultiTenant()` entity the soft-delete filter **must** be the named form.
 
 ## Multi-Tenancy
 
@@ -332,36 +368,43 @@ AMIS uses a separate migrations project (`Migrations.PostgreSQL`) to:
 
 ### Implicit Transactions
 
-Commands automatically run in a transaction:
+A single `SaveChangesAsync` is one transaction — stage every change, then save once:
 ```csharp
 public async ValueTask<Guid> Handle(CreateOrderCommand cmd, CancellationToken ct)
 {
     var order = Order.Create(...);
-    await orderRepo.AddAsync(order, ct);
-    
+    dbContext.Orders.Add(order);
+
     var payment = Payment.Create(...);
-    await paymentRepo.AddAsync(payment, ct);
-    
-    // ✅ Both saved in one transaction automatically
+    dbContext.Payments.Add(payment);
+
+    // ✅ Both rows written in one transaction by the single save
+    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
     return order.Id;
 }
 ```
 
 ### Explicit Transactions
 
+Only needed when you must span **multiple** `SaveChangesAsync` calls (e.g. an allocated document number
+must commit before dependent rows):
+
 ```csharp
-await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+await using var transaction = await dbContext.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
 
 try
 {
-    await orderRepo.AddAsync(order, ct);
-    await paymentRepo.AddAsync(payment, ct);
-    
-    await transaction.CommitAsync(ct);
+    dbContext.Orders.Add(order);
+    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+
+    dbContext.Payments.Add(payment);
+    await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+
+    await transaction.CommitAsync(ct).ConfigureAwait(false);
 }
 catch
 {
-    await transaction.RollbackAsync(ct);
+    await transaction.RollbackAsync(ct).ConfigureAwait(false);
     throw;
 }
 ```
@@ -372,7 +415,7 @@ catch
 
 ```csharp
 // ❌ Bad: Load full entity, map in memory
-var products = await repo.ListAsync(spec, ct);
+var products = await dbContext.Products.Where(p => p.IsActive).ToListAsync(ct);
 return products.Select(p => new ProductDto(...)).ToList();
 
 // ✅ Good: Project in database
@@ -415,38 +458,49 @@ await dbContext.Products
 ### ❌ Tracking Issues
 
 ```csharp
-// ❌ Don't detach entities manually
+// ❌ Don't detach or set EntityState by hand
 dbContext.Entry(product).State = EntityState.Detached;
 
-// ✅ Use repository pattern
-await repo.UpdateAsync(product, ct);
+// ✅ A tracked entity you mutate is persisted by SaveChangesAsync — no Update() call needed
+var product = await dbContext.Products.FirstAsync(p => p.Id == id, ct).ConfigureAwait(false);
+product.Discontinue();                                    // domain method mutates state
+await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
 ```
+
+⚠️ Corollary: adding `AsNoTracking()` to a query whose results are later mutated will silently stop
+persisting those changes. That is why `AsNoTracking` is added per-handler after checking the write path,
+and never flipped on globally.
 
 ### ❌ N+1 Queries
 
 ```csharp
 // ❌ Bad: N+1
-var orders = await repo.ListAsync(ct);
+var orders = await dbContext.Orders.ToListAsync(ct);
 foreach (var order in orders)
 {
-    var customer = await customerRepo.GetByIdAsync(order.CustomerId, ct);  // N queries!
+    var customer = await dbContext.Customers.FindAsync(order.CustomerId, ct);  // N queries!
 }
 
-// ✅ Good: Eager loading
-var spec = new OrdersWithCustomersSpec();  // Includes .Include(o => o.Customer)
-var orders = await repo.ListAsync(spec, ct);
+// ✅ Good: batch-load then look up in memory (the prevailing pattern in this codebase)
+var customerIds = orders.Select(o => o.CustomerId).Distinct().ToList();
+var customers = await dbContext.Customers
+    .Where(c => customerIds.Contains(c.Id))
+    .ToDictionaryAsync(c => c.Id, ct)
+    .ConfigureAwait(false);
 ```
 
 ### ❌ Lazy Loading
 
 ```csharp
 // ❌ Lazy loading is DISABLED in AMIS
-var order = await repo.GetByIdAsync(orderId, ct);
+var order = await dbContext.Orders.FirstOrDefaultAsync(o => o.Id == id, ct);
 var customer = order.Customer;  // ❌ NULL! Not loaded
 
-// ✅ Explicit loading via specification
-var spec = new OrderByIdWithCustomerSpec(orderId);
-var order = await repo.FirstOrDefaultAsync(spec, ct);
+// ✅ Include explicitly
+var order = await dbContext.Orders
+    .Include(o => o.Customer)
+    .FirstOrDefaultAsync(o => o.Id == id, ct)
+    .ConfigureAwait(false);
 var customer = order.Customer;  // ✅ Loaded
 ```
 
@@ -454,12 +508,15 @@ var customer = order.Customer;  // ✅ Loaded
 
 1. **One DbContext per module**, separate schemas
 2. **Fluent API for configuration**, not data annotations
-3. **Repository pattern for writes**, direct DbContext for complex reads
-4. **Specifications for reusable queries**
-5. **Tenant isolation is automatic** (via IMustHaveTenant)
+3. **Inject the module `DbContext` directly** — there is no `IRepository<T>` in this codebase
+4. **Specifications for query shapes reused across handlers**; inline `IQueryable` for one-offs
+5. **Tenant isolation requires `.IsMultiTenant()` in the EF configuration** — the `IHasTenant`
+   interface alone filters nothing
 6. **Migrations in separate project** (Migrations.PostgreSQL)
-7. **AsNoTracking for read-only queries**
-8. **Project to DTOs in database** (avoid loading full entities)
+7. **`AsNoTracking()` on every read-only query** — currently missing from ~99 query handlers
+8. **Project to DTOs in the database** (`.Select(...)` before `ToListAsync`), never load full entities
+   and map in memory
+9. **`.ConfigureAwait(false)` on every await** in handlers
 
 ---
 

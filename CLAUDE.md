@@ -61,6 +61,8 @@ Modules/{Module}/Features/v1/{Feature}/
 | Use **Mediator** not MediatR        | Different library, different interfaces |
 | `ICommand<T>` / `IQuery<T>`         | NOT `IRequest<T>`                       |
 | `ValueTask<T>` return type          | NOT `Task<T>`                           |
+| Inject the module `DbContext`       | There is **no** `IRepository<T>` here — it will not compile |
+| `.ConfigureAwait(false)` on awaits  | Matches every existing handler          |
 | Every command needs validator       | FluentValidation, no exceptions         |
 | `.RequirePermission()` on endpoints | Explicit authorization                  |
 | Zero build warnings                 | CI blocks merges                        |
@@ -135,14 +137,21 @@ Delegate complex tasks to specialized agents.
 public sealed record CreateProductCommand(string Name, decimal Price)
     : ICommand<Guid>;
 
-// Handler
-public sealed class CreateProductHandler(IRepository<Product> repo)
+// Handler — inject the module DbContext. There is NO IRepository<T> in this codebase.
+public sealed class CreateProductCommandHandler(
+    ExpendableDbContext dbContext,
+    ICurrentUser currentUser)
     : ICommandHandler<CreateProductCommand, Guid>
 {
     public async ValueTask<Guid> Handle(CreateProductCommand cmd, CancellationToken ct)
     {
-        var product = Product.Create(cmd.Name, cmd.Price);
-        await repo.AddAsync(product, ct);
+        var tenantId = currentUser.GetTenant() ?? throw new InvalidOperationException("Tenant ID required");
+
+        var product = Product.Create(tenantId, cmd.Name, cmd.Price);
+        product.CreatedBy = currentUser.GetUserId().ToString();
+
+        dbContext.Products.Add(product);
+        await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
         return product.Id;
     }
 }

@@ -39,7 +39,7 @@ public async Task Handle_ValidCommand_ReturnsId()
     var result = await _handler.Handle(command, CancellationToken.None);
     
     // Assert
-    result.Id.Should().NotBeEmpty();
+    result.Id.ShouldNotBe(Guid.Empty);
 }
 ```
 
@@ -48,7 +48,8 @@ public async Task Handle_ValidCommand_ReturnsId()
 ### For Handlers
 - Happy path with valid input
 - Edge cases (empty, null, boundary values)
-- Repository interactions verified
+- Persistence verified by reading back from the in-memory `DbContext` the handler was given
+  (there is no repository to verify calls against)
 
 ### For Validators
 - Each validation rule has a test
@@ -62,9 +63,15 @@ public async Task Handle_ValidCommand_ReturnsId()
 
 ## Libraries
 
-- **xUnit** - Test framework
-- **FluentAssertions** - `.Should()` assertions
-- **Moq** - `Mock<T>` for dependencies
+These are the libraries actually referenced by all 12 test projects. **FluentAssertions and Moq are not
+referenced anywhere — do not use `.Should()` or `Mock<T>`.**
+
+- **xUnit** - test framework (12/12 projects)
+- **Shouldly** - `x.ShouldBe(y)` assertions (12/12)
+- **NSubstitute** - `Substitute.For<T>()` for dependencies (7/12)
+- **AutoFixture** - object generation (6/12)
+- **Microsoft.EntityFrameworkCore.InMemory** / **.Sqlite** - real `DbContext` in handler tests (6/12)
+- **NetArchTest.Rules** - architecture tests (2/12)
 
 ## Architecture Tests
 

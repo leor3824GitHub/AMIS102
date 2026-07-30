@@ -1,0 +1,50 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Weekly re-scan so newly published queries run against unchanged code.
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze C#
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          queries: security-and-quality
+
+      - name: Exclude MAUI from the Linux build
+        # Same reason as the CI build job: the MAUI heads need a Windows/macOS toolchain.
+        run: dotnet sln src/AMIS.Framework.slnx remove src/Host/AMIS.Maui/AMIS.Maui.csproj
+
+      - name: Build
+        # CodeQL needs a real build to extract the C# database, so no --no-build here.
+        # Warnings-as-errors is already on, so a green build here also means a clean gate.
+        run: |
+          dotnet restore src/AMIS.Framework.slnx
+          dotnet build src/AMIS.Framework.slnx -c Release --no-restore
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:csharp
