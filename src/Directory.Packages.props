@@ -102,6 +102,11 @@
     <PackageVersion Include="UAParser" Version="3.1.47" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <!-- HTTP-level integration testing (Api.IntegrationTests). Required because the authorization
+         defect these tests exist to catch lives in ASP.NET Core's endpoint-metadata resolution,
+         which only a real request through the real pipeline can exercise. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.7" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />

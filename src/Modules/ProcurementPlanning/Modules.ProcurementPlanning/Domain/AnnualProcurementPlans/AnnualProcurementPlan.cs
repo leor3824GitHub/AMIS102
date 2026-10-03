@@ -118,21 +118,34 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
         Touch();
     }
 
-    public void Publish()
+    /// <summary>Takes a consolidated PPMP (its source entry and all its line items) back out of a Draft or Returned APP.</summary>
+    public void RemovePpmp(Guid ppmpId)
+    {
+        if (Status is not (AppStatus.Draft or AppStatus.Returned))
+            throw new InvalidOperationException("PPMPs can only be removed from a Draft or Returned APP.");
+        if (_sourcePpmps.All(s => s.PpmpId != ppmpId))
+            throw new InvalidOperationException("That PPMP is not consolidated into this APP.");
+
+        _sourcePpmps.RemoveAll(s => s.PpmpId == ppmpId);
+        _lineItems.RemoveAll(i => i.SourcePpmpId == ppmpId);
+        Touch();
+    }
+
+    public void Submit()
     {
         if (Status is not (AppStatus.Draft or AppStatus.Returned))
             throw new InvalidOperationException("Only Draft or Returned APPs can be submitted for approval.");
         if (_lineItems.Count == 0)
-            throw new InvalidOperationException("APP must have at least one item before publishing.");
+            throw new InvalidOperationException("APP must have at least one item before submitting for approval.");
 
-        Status = AppStatus.Published;
+        Status = AppStatus.Submitted;
         Touch();
     }
 
     public void Approve(Guid approvedById)
     {
-        if (Status != AppStatus.Published)
-            throw new InvalidOperationException("Only Published APPs can be approved.");
+        if (Status != AppStatus.Submitted)
+            throw new InvalidOperationException("Only Submitted APPs can be approved.");
 
         Status = AppStatus.Approved;
         ApprovedById = approvedById;
@@ -142,8 +155,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     public void Recall()
     {
-        if (Status != AppStatus.Published)
-            throw new InvalidOperationException("Only Published APPs can be recalled.");
+        if (Status != AppStatus.Submitted)
+            throw new InvalidOperationException("Only Submitted APPs can be recalled.");
 
         Status = AppStatus.Draft;
         ReturnReason = null;
@@ -154,8 +167,8 @@ public sealed class AnnualProcurementPlan : AggregateRoot<Guid>, IAuditableEntit
 
     public void Return(string returnReason, Guid returnedById)
     {
-        if (Status != AppStatus.Published)
-            throw new InvalidOperationException("Only Published APPs can be returned for revision.");
+        if (Status != AppStatus.Submitted)
+            throw new InvalidOperationException("Only Submitted APPs can be returned for revision.");
 
         Status = AppStatus.Returned;
         ReturnReason = returnReason;

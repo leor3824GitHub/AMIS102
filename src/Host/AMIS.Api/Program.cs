@@ -83,6 +83,21 @@ if (builder.Environment.IsProduction())
         throw new InvalidOperationException(
             "JwtOptions:SigningKey must be at least 32 characters (256 bits) for HS256 in Production.");
     }
+
+    // The Hangfire dashboard is mounted at HangfireOptions:Route (default /jobs) BEFORE
+    // UseRouting/UseAuthentication, so HangfireCustomBasicAuthenticationFilter is its only
+    // protection — and it can enqueue, requeue and delete background jobs. The shipped defaults
+    // (admin / Secure1234!Me) are in the public repo, so a deploy that forgets to override them
+    // exposes the dashboard to anyone who read the source. Fail fast instead, exactly as the
+    // JWT signing key above does.
+    Require(config, "HangfireOptions:UserName");
+    Require(config, "HangfireOptions:Password");
+
+    if (string.Equals(config["HangfireOptions:Password"], AMIS.Framework.Jobs.HangfireOptions.DefaultPassword, StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException(
+            "HangfireOptions:Password is still the shipped default. Production requires a real secret from a secret store.");
+    }
 }
 
 builder.Services.AddMediator(o =>
@@ -170,4 +185,19 @@ app.MapGet("/", () => Results.Ok(new { message = "hello world!" }))
    .WithTags("Host")
    .AllowAnonymous();
 await app.RunAsync();
+
+/// <summary>
+/// Top-level statements compile into an <c>internal</c> Program class, which
+/// <c>WebApplicationFactory&lt;Program&gt;</c> in another assembly cannot reach. Declaring it public
+/// here is the standard opt-in that lets Api.IntegrationTests boot the real pipeline — middleware
+/// order, endpoint metadata and authorization included. Purely a visibility change; no behaviour.
+/// </summary>
+public partial class Program
+{
+    // Satisfies S1118 (utility classes must not expose a public constructor) without adding the
+    // rule to the global warnings baseline.
+    protected Program()
+    {
+    }
+}
 

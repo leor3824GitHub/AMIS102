@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/BuildingBlocks/">
     <Project Path="BuildingBlocks/Blazor.UI/Blazor.UI.csproj" Id="b8ed01df-1c7f-4be1-afa4-f41d3ac7208e" />
     <Project Path="BuildingBlocks/Caching/Caching.csproj" />
@@ -83,6 +83,7 @@
     <Project Path="Host/Migrations.PostgreSQL/Migrations.PostgreSQL.csproj" Id="2c21903e-5dfa-47e0-82d9-1a0bd627fcbd" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="Tests/Api.IntegrationTests/Api.IntegrationTests.csproj" />
     <Project Path="Tests/Architecture.Tests/Architecture.Tests.csproj" />
     <Project Path="Tests/AssetRegister.Tests/AssetRegister.Tests.csproj" />
     <Project Path="Tests/Auditing.Tests/Auditing.Tests.csproj" />

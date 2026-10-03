@@ -23,7 +23,7 @@ public sealed class DeleteAnnualProcurementPlanCommandHandler(
 
         if (app.Status != AppStatus.Draft)
             throw new CustomException(
-                "Only Draft APPs can be deleted. Published or Approved APPs must be recalled or amended.",
+                "Only Draft APPs can be deleted. Submitted or Approved APPs must be recalled or amended.",
                 Enumerable.Empty<string>(),
                 HttpStatusCode.Conflict);
 

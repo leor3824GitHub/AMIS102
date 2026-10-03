@@ -15,7 +15,7 @@ public static class RecallAnnualProcurementPlanEndpoint
             .WithName(nameof(RecallAppCommand))
             .WithSummary("Recall a submitted APP back to draft")
             .Produces<AnnualProcurementPlanDto>()
-            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Publish);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Submit);
 
     private static async Task<IResult> Handle(
         Guid id, IMediator mediator, CancellationToken ct)

@@ -9,7 +9,7 @@ namespace AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
 public enum AppStatus
 {
     Draft = 0,
-    Published = 1,
+    Submitted = 1,
     Approved = 2,
     Superseded = 3,
     Returned = 4
@@ -93,7 +93,13 @@ public sealed record ConsolidatePpmpsCommand(
     Guid AppId,
     IReadOnlyList<Guid> PpmpIds) : ICommand<AnnualProcurementPlanDto>;
 
-public sealed record PublishAnnualProcurementPlanCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
+/// <summary>Removes a consolidated PPMP from a Draft/Returned APP; the PPMP goes back to Approved.</summary>
+public sealed record RemovePpmpFromAppCommand(Guid AppId, Guid PpmpId) : ICommand<AnnualProcurementPlanDto>;
+
+/// <summary>Removes a consolidated PPMP from a Draft/Returned APP and returns it to its end-user for revision.</summary>
+public sealed record ReturnPpmpFromAppCommand(Guid AppId, Guid PpmpId, string ReturnReason) : ICommand<AnnualProcurementPlanDto>;
+
+public sealed record SubmitAnnualProcurementPlanCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;
 
 /// <summary>Promotes an Approved Indicative APP to a new Final draft (per-phase version reset to 1).</summary>
 public sealed record PromoteToFinalAppCommand(Guid Id) : ICommand<AnnualProcurementPlanDto>;

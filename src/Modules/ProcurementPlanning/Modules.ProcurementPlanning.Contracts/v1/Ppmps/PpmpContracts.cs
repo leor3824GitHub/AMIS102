@@ -130,6 +130,8 @@ public sealed record UpdatePpmpCommand(
 
 public sealed record SubmitPpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
+public sealed record DeletePpmpCommand(Guid Id) : ICommand<Unit>;
+
 public sealed record ApprovePpmpCommand(Guid Id) : ICommand<PpmpDto>;
 
 public sealed record RecallPpmpCommand(Guid Id) : ICommand<PpmpDto>;

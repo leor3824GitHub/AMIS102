@@ -478,7 +478,8 @@ and never flipped on globally.
 var orders = await dbContext.Orders.ToListAsync(ct);
 foreach (var order in orders)
 {
-    var customer = await dbContext.Customers.FindAsync(order.CustomerId, ct);  // N queries!
+    var customer = await dbContext.Customers
+        .FirstOrDefaultAsync(c => c.Id == order.CustomerId, ct);  // N queries!
 }
 
 // ✅ Good: batch-load then look up in memory (the prevailing pattern in this codebase)

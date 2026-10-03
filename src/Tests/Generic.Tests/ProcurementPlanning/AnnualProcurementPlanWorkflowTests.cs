@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
 using AMIS.Framework.Core.Context;
+using AMIS.Framework.Core.Exceptions;
 using AMIS.Framework.Shared.Multitenancy;
 using AMIS.Framework.Shared.Persistence;
 using AMIS.Modules.ProcurementPlanning.Contracts.v1.AnnualProcurementPlans;
@@ -13,10 +14,13 @@ using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.Create
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
-using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SubmitAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RemovePpmpFromApp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnPpmpFromApp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SearchAnnualProcurementPlans;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -54,7 +58,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
     }
 
     [Fact]
-    public async Task GetAnnualProcurementPlanQueryHandler_WhenPublished_ReturnsStoredAppLineItems()
+    public async Task GetAnnualProcurementPlanQueryHandler_WhenSubmitted_ReturnsStoredAppLineItems()
     {
         // Arrange
         await using var dbContext = CreateDbContext();
@@ -67,8 +71,8 @@ public sealed class AnnualProcurementPlanWorkflowTests
         dbContext.AnnualProcurementPlans.Add(app);
         await dbContext.SaveChangesAsync();
 
-        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext);
-        await publishHandler.Handle(new PublishAnnualProcurementPlanCommand(app.Id), CancellationToken.None);
+        var submitHandler = new SubmitAnnualProcurementPlanCommandHandler(dbContext);
+        await submitHandler.Handle(new SubmitAnnualProcurementPlanCommand(app.Id), CancellationToken.None);
 
         var ppmpItem = await dbContext.PpmpItems.SingleAsync();
         dbContext.Entry(ppmpItem).Property(x => x.GeneralDescription).CurrentValue = "Mutated Live Item";
@@ -81,7 +85,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var result = await queryHandler.Handle(new GetAnnualProcurementPlanQuery(app.Id), CancellationToken.None);
 
         // Assert
-        result.Status.ShouldBe(AppStatus.Published);
+        result.Status.ShouldBe(AppStatus.Submitted);
         result.Items.Count.ShouldBe(1);
         result.Items[0].GeneralDescription.ShouldBe("Original Laptop");
         result.Items[0].EstimatedBudget.ShouldBe(125000m);
@@ -102,8 +106,8 @@ public sealed class AnnualProcurementPlanWorkflowTests
         dbContext.AnnualProcurementPlans.Add(app);
         await dbContext.SaveChangesAsync();
 
-        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext);
-        await publishHandler.Handle(new PublishAnnualProcurementPlanCommand(app.Id), CancellationToken.None);
+        var submitHandler = new SubmitAnnualProcurementPlanCommandHandler(dbContext);
+        await submitHandler.Handle(new SubmitAnnualProcurementPlanCommand(app.Id), CancellationToken.None);
 
         var approveHandler = new ApproveAnnualProcurementPlanCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()));
         await approveHandler.Handle(new ApproveAppCommand(app.Id), CancellationToken.None);
@@ -137,7 +141,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var approvedById = Guid.NewGuid();
         var ppmp = CreateApprovedPpmp(preparedById, approvedById, "Network Switch", 64000m);
         var app = CreateDraftAppFrom(ppmp, "draft-user");
-        app.Publish();
+        app.Submit();
         app.Approve(Guid.NewGuid());
 
         dbContext.Ppmps.Add(ppmp);
@@ -192,7 +196,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         await using var dbContext = CreateDbContext();
         var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Searchable Item", 45000m);
         var originalApp = CreateDraftAppFrom(ppmp, "draft-user");
-        originalApp.Publish();
+        originalApp.Submit();
         originalApp.Approve(Guid.NewGuid());
 
         var amendment = originalApp.CreateUpdate("Annual adjustment", Guid.NewGuid());
@@ -238,7 +242,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         await using var dbContext = CreateDbContext();
         var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Versioned Item", 88000m);
         var originalApp = CreateDraftAppFrom(ppmp, "draft-user");
-        originalApp.Publish();
+        originalApp.Submit();
         originalApp.Approve(Guid.NewGuid());
 
         var amendment = originalApp.CreateUpdate("Updated requirement", Guid.NewGuid());
@@ -336,9 +340,9 @@ public sealed class AnnualProcurementPlanWorkflowTests
         ppmp.Approve(Guid.NewGuid());
         var app = AnnualProcurementPlan.Create("APP-003", 2026, AppPhase.Final);
         app.ConsolidatePpmps([ppmp], Guid.NewGuid());
-        app.Publish();
+        app.Submit();
 
-        // Act & Assert — cannot re-consolidate into a Published APP
+        // Act & Assert — cannot re-consolidate into a Submitted APP
         var ex = Should.Throw<InvalidOperationException>(() =>
             app.ConsolidatePpmps([ppmp], Guid.NewGuid()));
         ex.Message.ShouldContain("Draft or Returned");
@@ -381,7 +385,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var indicativeApp = AnnualProcurementPlan.Create("APP-005", 2026, AppPhase.Indicative);
         indicativeApp.CreatedBy = "test";
         indicativeApp.ConsolidatePpmps([ppmp], Guid.NewGuid());
-        indicativeApp.Publish();
+        indicativeApp.Submit();
         indicativeApp.Approve(Guid.NewGuid());
 
         dbContext.Ppmps.Add(ppmp);
@@ -455,9 +459,9 @@ public sealed class AnnualProcurementPlanWorkflowTests
         dbContext.AnnualProcurementPlans.Add(finalApp);
         await dbContext.SaveChangesAsync();
 
-        // Step 5: Publish and approve the Final APP
-        var publishHandler = new PublishAnnualProcurementPlanCommandHandler(dbContext);
-        await publishHandler.Handle(new PublishAnnualProcurementPlanCommand(finalApp.Id), CancellationToken.None);
+        // Step 5: Submit and approve the Final APP
+        var submitHandler = new SubmitAnnualProcurementPlanCommandHandler(dbContext);
+        await submitHandler.Handle(new SubmitAnnualProcurementPlanCommand(finalApp.Id), CancellationToken.None);
 
         var approveHandler = new ApproveAnnualProcurementPlanCommandHandler(dbContext, currentUser);
         await approveHandler.Handle(new ApproveAppCommand(finalApp.Id), CancellationToken.None);
@@ -482,7 +486,7 @@ public sealed class AnnualProcurementPlanWorkflowTests
         var finalApp = AnnualProcurementPlan.Create("APP-007", 2026, AppPhase.Final);
         finalApp.CreatedBy = "test";
         finalApp.ConsolidatePpmps([ppmp], Guid.NewGuid());
-        finalApp.Publish();
+        finalApp.Submit();
         finalApp.Approve(Guid.NewGuid());
 
         dbContext.Ppmps.Add(ppmp);
@@ -549,6 +553,185 @@ public sealed class AnnualProcurementPlanWorkflowTests
         lineItems[0].EstimatedBudget.ShouldBe(60000m);
     }
 
+    [Fact]
+    public async Task PromoteToFinalPpmp_WhenConsolidatedIntoApprovedIndicativeApp_CreatesFinalDraft()
+    {
+        // Arrange — Indicative PPMP consolidated into an approved Indicative APP
+        await using var dbContext = CreateDbContext();
+        var ppmp = CreatePpmpInPhase(PpmpPhase.Indicative, "Hybrid Inverter", 152000m);
+        ppmp.Approve(Guid.NewGuid());
+        var app = AnnualProcurementPlan.Create("APP-IND-001", 2026, AppPhase.Indicative);
+        app.ConsolidatePpmps([ppmp], Guid.NewGuid());
+        ppmp.MarkConsolidated();
+        app.Submit();
+        app.Approve(Guid.NewGuid());
+
+        dbContext.Ppmps.Add(ppmp);
+        dbContext.AnnualProcurementPlans.Add(app);
+        await dbContext.SaveChangesAsync();
+
+        var handler = new PromoteToFinalPpmpCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()));
+
+        // Act
+        var result = await handler.Handle(new PromoteToFinalPpmpCommand(ppmp.Id), CancellationToken.None);
+
+        // Assert
+        result.Phase.ShouldBe(PpmpPhase.Final);
+        result.Status.ShouldBe(PpmpStatus.Draft);
+        result.PreviousVersionId.ShouldBe(ppmp.Id);
+        (await dbContext.Ppmps.FindAsync(ppmp.Id))!.Status.ShouldBe(PpmpStatus.Superseded);
+    }
+
+    [Fact]
+    public async Task PromoteToFinalPpmp_WhenIndicativeAppNotYetApproved_ThrowsConflict()
+    {
+        // Arrange — Indicative PPMP consolidated into a still-Draft Indicative APP
+        await using var dbContext = CreateDbContext();
+        var ppmp = CreatePpmpInPhase(PpmpPhase.Indicative, "LFP Battery", 140000m);
+        ppmp.Approve(Guid.NewGuid());
+        var app = AnnualProcurementPlan.Create("APP-IND-002", 2026, AppPhase.Indicative);
+        app.ConsolidatePpmps([ppmp], Guid.NewGuid());
+        ppmp.MarkConsolidated();
+
+        dbContext.Ppmps.Add(ppmp);
+        dbContext.AnnualProcurementPlans.Add(app);
+        await dbContext.SaveChangesAsync();
+
+        var handler = new PromoteToFinalPpmpCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()));
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<CustomException>(async () =>
+            await handler.Handle(new PromoteToFinalPpmpCommand(ppmp.Id), CancellationToken.None));
+        ex.StatusCode.ShouldBe(System.Net.HttpStatusCode.Conflict);
+        (await dbContext.Ppmps.FindAsync(ppmp.Id))!.Status.ShouldBe(PpmpStatus.Consolidated);
+    }
+
+    [Fact]
+    public async Task RemovePpmpFromApp_WhenAppReturned_RemovesItemsAndPpmpBackToApproved()
+    {
+        // Arrange — consolidated PPMP in an APP that the approver returned
+        await using var dbContext = CreateDbContext();
+        var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Steel Cabinet", 8000m);
+        var app = CreateDraftAppFrom(ppmp, "bac-sec");
+        ppmp.MarkConsolidated();
+        app.Submit();
+        app.Return("pls update", Guid.NewGuid());
+        dbContext.Ppmps.Add(ppmp);
+        dbContext.AnnualProcurementPlans.Add(app);
+        await dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await new RemovePpmpFromAppCommandHandler(dbContext)
+            .Handle(new RemovePpmpFromAppCommand(app.Id, ppmp.Id), CancellationToken.None);
+
+        // Assert
+        result.Items.ShouldBeEmpty();
+        (await dbContext.AppSourcePpmps.CountAsync(x => x.AppId == app.Id)).ShouldBe(0);
+        (await dbContext.Ppmps.FindAsync(ppmp.Id))!.Status.ShouldBe(PpmpStatus.Approved);
+    }
+
+    [Fact]
+    public async Task ReturnPpmpFromApp_WhenAppDraft_RemovesItemsAndReturnsPpmpWithReason()
+    {
+        // Arrange
+        await using var dbContext = CreateDbContext();
+        var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Solar Panels", 120960m);
+        var app = CreateDraftAppFrom(ppmp, "bac-sec");
+        ppmp.MarkConsolidated();
+        dbContext.Ppmps.Add(ppmp);
+        dbContext.AnnualProcurementPlans.Add(app);
+        await dbContext.SaveChangesAsync();
+        var bacSec = Guid.NewGuid();
+
+        // Act
+        var result = await new ReturnPpmpFromAppCommandHandler(dbContext, new TestCurrentUser(bacSec))
+            .Handle(new ReturnPpmpFromAppCommand(app.Id, ppmp.Id, "  Revise quantities  "), CancellationToken.None);
+
+        // Assert
+        result.Items.ShouldBeEmpty();
+        var saved = (await dbContext.Ppmps.FindAsync(ppmp.Id))!;
+        saved.Status.ShouldBe(PpmpStatus.Returned);
+        saved.ReturnReason.ShouldBe("Revise quantities");
+        saved.ReturnedById.ShouldBe(bacSec);
+    }
+
+    [Fact]
+    public async Task ReturnPpmpFromApp_WhenAppSubmitted_ThrowsConflictAndChangesNothing()
+    {
+        // Arrange
+        await using var dbContext = CreateDbContext();
+        var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Printer", 15000m);
+        var app = CreateDraftAppFrom(ppmp, "bac-sec");
+        ppmp.MarkConsolidated();
+        app.Submit();
+        dbContext.Ppmps.Add(ppmp);
+        dbContext.AnnualProcurementPlans.Add(app);
+        await dbContext.SaveChangesAsync();
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<CustomException>(async () =>
+            await new ReturnPpmpFromAppCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()))
+                .Handle(new ReturnPpmpFromAppCommand(app.Id, ppmp.Id, "x"), CancellationToken.None));
+        ex.StatusCode.ShouldBe(System.Net.HttpStatusCode.Conflict);
+        (await dbContext.Ppmps.FindAsync(ppmp.Id))!.Status.ShouldBe(PpmpStatus.Consolidated);
+    }
+
+    [Fact]
+    public async Task ReturnPpmpFromApp_WhenPpmpAlsoInAnotherAppVersion_ThrowsConflict()
+    {
+        // Arrange — approved Final APP → Create Update copies its source PPMPs into an Updated draft
+        await using var dbContext = CreateDbContext();
+        var ppmp = CreateApprovedPpmp(Guid.NewGuid(), Guid.NewGuid(), "Router", 30000m);
+        var finalApp = CreateDraftAppFrom(ppmp, "bac-sec");
+        ppmp.MarkConsolidated();
+        finalApp.Submit();
+        finalApp.Approve(Guid.NewGuid());
+        var updatedApp = finalApp.CreateUpdate("mid-year", Guid.NewGuid());
+        finalApp.Supersede();
+        dbContext.Ppmps.Add(ppmp);
+        dbContext.AnnualProcurementPlans.AddRange(finalApp, updatedApp);
+        await dbContext.SaveChangesAsync();
+
+        // Act & Assert
+        var ex = await Should.ThrowAsync<CustomException>(async () =>
+            await new ReturnPpmpFromAppCommandHandler(dbContext, new TestCurrentUser(Guid.NewGuid()))
+                .Handle(new ReturnPpmpFromAppCommand(updatedApp.Id, ppmp.Id, "x"), CancellationToken.None));
+        ex.StatusCode.ShouldBe(System.Net.HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task UpdatePpmp_WhenItemAdded_PersistsAllItems()
+    {
+        // Arrange — a saved Draft PPMP, reloaded in a fresh context (as the API does per request)
+        var dbName = Guid.NewGuid().ToString();
+        var ppmp = Ppmp.Create("PPMP-UPD-001", 2026, PpmpPhase.Final, "ICT", "ICT Unit", Guid.NewGuid(),
+            [new PpmpItemData("LFP Battery", ProjectType.Goods, 1, "LOT", "Direct Acquisition", false,
+                "01/2026", "03/2026", "04/2026", "General Fund", 140000m, null, null)]);
+        await using (var seed = CreateDbContext(dbName))
+        {
+            seed.Ppmps.Add(ppmp);
+            await seed.SaveChangesAsync();
+        }
+
+        PpmpItemRequest Item(string description, decimal budget) => new(
+            description, ProjectType.Goods, 1, "LOT", "Direct Acquisition", false,
+            "01/2026", "03/2026", "04/2026", "General Fund", budget, null, null);
+
+        await using var dbContext = CreateDbContext(dbName);
+        var handler = new UpdatePpmpCommandHandler(dbContext);
+
+        // Act — keep the existing item and add a new one
+        var result = await handler.Handle(
+            new UpdatePpmpCommand(ppmp.Id, 2026, "ICT", "ICT Unit", ppmp.PreparedById,
+                [Item("LFP Battery", 140000m), Item("Solar Panels", 120960m)]),
+            CancellationToken.None);
+
+        // Assert
+        result.Items.Count.ShouldBe(2);
+        await using var verify = CreateDbContext(dbName);
+        (await verify.PpmpItems.CountAsync(x => x.PpmpId == ppmp.Id)).ShouldBe(2);
+    }
+
     private static Ppmp CreatePpmpInPhase(PpmpPhase phase, string description, decimal budget)
     {
         var ppmp = Ppmp.Create(
@@ -579,10 +762,10 @@ public sealed class AnnualProcurementPlanWorkflowTests
         return ppmp;
     }
 
-    private static ProcurementPlanningDbContext CreateDbContext()
+    private static ProcurementPlanningDbContext CreateDbContext(string? databaseName = null)
     {
         var options = new DbContextOptionsBuilder<ProcurementPlanningDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
             .Options;
 
         var tenant = new AppTenantInfo("test-tenant", "test-tenant", "Test Tenant")

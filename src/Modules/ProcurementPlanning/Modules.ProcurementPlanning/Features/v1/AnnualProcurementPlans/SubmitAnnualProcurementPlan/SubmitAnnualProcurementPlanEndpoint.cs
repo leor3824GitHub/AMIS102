@@ -6,20 +6,20 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using AMIS.Modules.ProcurementPlanning.Contracts.Permissions;
 
-namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SubmitAnnualProcurementPlan;
 
-public static class PublishAnnualProcurementPlanEndpoint
+public static class SubmitAnnualProcurementPlanEndpoint
 {
     public static RouteHandlerBuilder Map(this IEndpointRouteBuilder endpoints) =>
-        endpoints.MapPost("/{id:guid}/publish", Handle)
-            .WithName(nameof(PublishAnnualProcurementPlanCommand))
-            .WithSummary("Publish an APP (lock and make official)")
+        endpoints.MapPost("/{id:guid}/submit", Handle)
+            .WithName(nameof(SubmitAnnualProcurementPlanCommand))
+            .WithSummary("Submit an APP for approval (locks it read-only)")
             .Produces<AnnualProcurementPlanDto>()
-            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Publish);
+            .RequirePermission(ProcurementPlanningPermissions.AnnualProcurementPlans.Submit);
 
     private static async Task<IResult> Handle(Guid id, IMediator mediator, CancellationToken ct)
     {
-        var result = await mediator.Send(new PublishAnnualProcurementPlanCommand(id), ct);
+        var result = await mediator.Send(new SubmitAnnualProcurementPlanCommand(id), ct);
         return TypedResults.Ok(result);
     }
 }

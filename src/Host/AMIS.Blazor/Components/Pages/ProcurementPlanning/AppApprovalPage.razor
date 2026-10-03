@@ -10,7 +10,7 @@
 @inject IUserProfileState UserProfileState
 
 <AMISPageHeader Title="APP Approval Queue"
-               Description="Review and approve published Annual Procurement Plans" />
+               Description="Review and approve submitted Annual Procurement Plans" />
 
 <MudGrid Spacing="3">
 
@@ -177,7 +177,7 @@
                             <MudStack Spacing="0">
                                 <MudText Typo="Typo.h6" Style="font-weight:700">@_detail.AppNumber</MudText>
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Published for approval — v@(_detail.VersionNumber) — @_detail.Phase
+                                    Submitted for approval — v@(_detail.VersionNumber) — @_detail.Phase
                                 </MudText>
                             </MudStack>
                             <MudSpacer />
@@ -323,8 +323,8 @@
 
                 <MudDivider />
 
-                <!-- Action bar — only for Published APPs -->
-                @if (_detail.Status == AppStatus.Published)
+                <!-- Action bar — only for Submitted APPs -->
+                @if (_detail.Status == AppStatus.Submitted)
                 {
                     <MudCardActions Class="pa-3">
                         @if (_canApprove)
@@ -390,7 +390,7 @@
         _detail = null;
         try
         {
-            var result = await AppClient.SearchAsync(status: AppStatus.Published, page: 1, pageSize: 100);
+            var result = await AppClient.SearchAsync(status: AppStatus.Submitted, page: 1, pageSize: 100);
             _queue = result.Items.ToList();
         }
         catch (Exception ex) { Snackbar.Add($"Error loading queue: {ex.Message}", Severity.Error); }

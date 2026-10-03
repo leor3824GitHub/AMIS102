@@ -5,13 +5,13 @@ using AMIS.Modules.ProcurementPlanning.Data;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+namespace AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SubmitAnnualProcurementPlan;
 
-public sealed class PublishAnnualProcurementPlanCommandHandler(
-    ProcurementPlanningDbContext dbContext) : ICommandHandler<PublishAnnualProcurementPlanCommand, AnnualProcurementPlanDto>
+public sealed class SubmitAnnualProcurementPlanCommandHandler(
+    ProcurementPlanningDbContext dbContext) : ICommandHandler<SubmitAnnualProcurementPlanCommand, AnnualProcurementPlanDto>
 {
     public async ValueTask<AnnualProcurementPlanDto> Handle(
-        PublishAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
+        SubmitAnnualProcurementPlanCommand command, CancellationToken cancellationToken)
     {
         var app = await dbContext.AnnualProcurementPlans
             .Include(x => x.LineItems)
@@ -19,7 +19,7 @@ public sealed class PublishAnnualProcurementPlanCommandHandler(
             .ConfigureAwait(false)
             ?? throw new CustomException($"APP {command.Id} not found.", Enumerable.Empty<string>(), HttpStatusCode.NotFound);
 
-        app.Publish();
+        app.Submit();
 
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AppReadProjection.BuildDtoAsync(dbContext, app.Id, cancellationToken).ConfigureAwait(false);

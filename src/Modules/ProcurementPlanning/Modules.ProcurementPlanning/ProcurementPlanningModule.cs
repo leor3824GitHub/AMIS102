@@ -6,6 +6,7 @@ using AMIS.Modules.ProcurementPlanning.Data;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreatePpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.UpdatePpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SubmitPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.DeletePpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ApprovePpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
@@ -16,10 +17,12 @@ using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ConsolidatePpmps;
-using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PublishAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.SubmitAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ApproveAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RecallAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.RemovePpmpFromApp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ReturnPpmpFromApp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
@@ -43,6 +46,7 @@ public class ProcurementPlanningModule : IModule
         new("View PPMPs",    "View",    "ProcurementPlanning.Ppmps", IsBasic: true),
         new("Create PPMPs",  "Create",  "ProcurementPlanning.Ppmps"),
         new("Update PPMPs",  "Update",  "ProcurementPlanning.Ppmps"),
+        new("Delete PPMPs",  "Delete",  "ProcurementPlanning.Ppmps"),
         new("Submit PPMPs",  "Submit",  "ProcurementPlanning.Ppmps"),
         new("Approve PPMPs", "Approve", "ProcurementPlanning.Ppmps"),
         new("Return PPMPs",  "Return",  "ProcurementPlanning.Ppmps"),
@@ -53,7 +57,7 @@ public class ProcurementPlanningModule : IModule
         new("Create APPs",      "Create",      "ProcurementPlanning.Apps"),
         new("Delete APPs",      "Delete",      "ProcurementPlanning.Apps"),
         new("Consolidate APPs", "Consolidate", "ProcurementPlanning.Apps"),
-        new("Publish APPs",     "Publish",     "ProcurementPlanning.Apps"),
+        new("Submit APPs",      "Submit",      "ProcurementPlanning.Apps"),
         new("Approve APPs",     "Approve",     "ProcurementPlanning.Apps"),
         new("Return APPs",      "Return",      "ProcurementPlanning.Apps"),
         new("Promote APPs to Final", "PromoteToFinal", "ProcurementPlanning.Apps"),
@@ -93,6 +97,7 @@ public class ProcurementPlanningModule : IModule
         CreatePpmpEndpoint.Map(ppmpGroup);
         UpdatePpmpEndpoint.Map(ppmpGroup);
         SubmitPpmpEndpoint.Map(ppmpGroup);
+        DeletePpmpEndpoint.Map(ppmpGroup);
         ApprovePpmpEndpoint.Map(ppmpGroup);
         RecallPpmpEndpoint.Map(ppmpGroup);
         ReturnPpmpEndpoint.Map(ppmpGroup);
@@ -105,7 +110,9 @@ public class ProcurementPlanningModule : IModule
         // APPs
         CreateAnnualProcurementPlanEndpoint.Map(appGroup);
         ConsolidatePpmpsEndpoint.Map(appGroup);
-        PublishAnnualProcurementPlanEndpoint.Map(appGroup);
+        RemovePpmpFromAppEndpoint.Map(appGroup);
+        ReturnPpmpFromAppEndpoint.Map(appGroup);
+        SubmitAnnualProcurementPlanEndpoint.Map(appGroup);
         ApproveAnnualProcurementPlanEndpoint.Map(appGroup);
         RecallAnnualProcurementPlanEndpoint.Map(appGroup);
         ReturnAnnualProcurementPlanEndpoint.Map(appGroup);

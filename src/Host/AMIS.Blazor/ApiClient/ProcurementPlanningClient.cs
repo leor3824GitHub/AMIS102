@@ -7,6 +7,15 @@ using AMIS.Modules.ProcurementPlanning.Contracts.v1.Ppmps;
 
 namespace AMIS.Blazor.ApiClient;
 
+// The API serializes all enums as strings (global JsonStringEnumConverter in AMIS.Api/Program.cs).
+file static class Json
+{
+    internal static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+    };
+}
+
 file static class HttpExtensions
 {
     internal static async Task EnsureApiSuccessAsync(this HttpResponseMessage response, CancellationToken ct = default)
@@ -73,11 +82,18 @@ internal interface IPpmpClient
     Task<PpmpDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default);
     Task<PpmpDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default);
     Task<PpmpDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class PpmpClient(HttpClient http) : IPpmpClient
 {
     private const string Base = "api/v1/procurement-planning/ppmps";
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var r = await http.DeleteAsync($"{Base}/{id}", ct);
+        await r.EnsureApiSuccessAsync(ct);
+    }
 
     public Task<PagedResponse<PpmpSummaryDto>> SearchAsync(string? keyword = null, int? fiscalYear = null,
         PpmpStatus? status = null, PpmpPhase? phase = null, bool currentOnly = true,
@@ -91,34 +107,34 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
         q["CurrentVersionOnly"] = currentOnly.ToString().ToLowerInvariant();
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();
-        return http.GetFromJsonAsync<PagedResponse<PpmpSummaryDto>>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<PagedResponse<PpmpSummaryDto>>($"{Base}?{q}", Json.Options, ct)!;
     }
 
     public Task<PpmpDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<PpmpDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<PpmpDto>($"{Base}/{id}", Json.Options, ct);
 
     public Task<IReadOnlyList<PpmpSummaryDto>> GetVersionsAsync(Guid chainId, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<IReadOnlyList<PpmpSummaryDto>>($"{Base}/versions/{chainId}", ct)!;
+        http.GetFromJsonAsync<IReadOnlyList<PpmpSummaryDto>>($"{Base}/versions/{chainId}", Json.Options, ct)!;
 
     public async Task<PpmpDto> CreateAsync(CreatePpmpCommand command, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync(Base, command, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> UpdateAsync(Guid id, UpdatePpmpCommand command, CancellationToken ct = default)
     {
         using var r = await http.PutAsJsonAsync($"{Base}/{id}", command, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> SubmitAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/submit", null, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> ApproveAsync(Guid id, CancellationToken ct = default)
@@ -126,14 +142,14 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve",
             new ApprovePpmpCommand(id), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> RecallAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/recall", null, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default)
@@ -141,14 +157,14 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/return",
             new ReturnPpmpCommand(id, returnReason), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/promote-to-final", null, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 
     public async Task<PpmpDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default)
@@ -156,7 +172,7 @@ internal sealed class PpmpClient(HttpClient http) : IPpmpClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/create-update",
             new CreateUpdatePpmpCommand(id, reason), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<PpmpDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<PpmpDto>(Json.Options, ct))!;
     }
 }
 
@@ -172,7 +188,9 @@ internal interface IAppClient
     Task<IReadOnlyList<PpmpSummaryDto>> GetAvailablePpmpsAsync(int fiscalYear, Guid? appId = null, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> CreateAsync(CreateAnnualProcurementPlanCommand command, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> ConsolidateAsync(Guid id, IReadOnlyList<Guid> ppmpIds, CancellationToken ct = default);
-    Task<AnnualProcurementPlanDto> PublishAsync(Guid id, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> SubmitAsync(Guid id, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> RemovePpmpFromAppAsync(Guid id, Guid ppmpId, CancellationToken ct = default);
+    Task<AnnualProcurementPlanDto> ReturnPpmpFromAppAsync(Guid id, Guid ppmpId, string returnReason, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> RecallAsync(Guid id, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default);
@@ -197,27 +215,27 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         q["CurrentVersionOnly"] = currentOnly.ToString().ToLowerInvariant();
         q["PageNumber"] = page.ToString();
         q["PageSize"] = pageSize.ToString();
-        return http.GetFromJsonAsync<PagedResponse<AnnualProcurementPlanSummaryDto>>($"{Base}?{q}", ct)!;
+        return http.GetFromJsonAsync<PagedResponse<AnnualProcurementPlanSummaryDto>>($"{Base}?{q}", Json.Options, ct)!;
     }
 
     public Task<AnnualProcurementPlanDto?> GetAsync(Guid id, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<AnnualProcurementPlanDto>($"{Base}/{id}", ct);
+        http.GetFromJsonAsync<AnnualProcurementPlanDto>($"{Base}/{id}", Json.Options, ct);
 
     public Task<IReadOnlyList<AnnualProcurementPlanSummaryDto>> GetVersionsAsync(Guid chainId, CancellationToken ct = default) =>
-        http.GetFromJsonAsync<IReadOnlyList<AnnualProcurementPlanSummaryDto>>($"{Base}/versions/{chainId}", ct)!;
+        http.GetFromJsonAsync<IReadOnlyList<AnnualProcurementPlanSummaryDto>>($"{Base}/versions/{chainId}", Json.Options, ct)!;
 
     public Task<IReadOnlyList<PpmpSummaryDto>> GetAvailablePpmpsAsync(int fiscalYear, Guid? appId = null, CancellationToken ct = default)
     {
         var url = $"{Base}/available-ppmps?FiscalYear={fiscalYear}";
         if (appId.HasValue) url += $"&AppId={appId}";
-        return http.GetFromJsonAsync<IReadOnlyList<PpmpSummaryDto>>(url, ct)!;
+        return http.GetFromJsonAsync<IReadOnlyList<PpmpSummaryDto>>(url, Json.Options, ct)!;
     }
 
     public async Task<AnnualProcurementPlanDto> CreateAsync(CreateAnnualProcurementPlanCommand command, CancellationToken ct = default)
     {
         using var r = await http.PostAsJsonAsync(Base, command, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task<AnnualProcurementPlanDto> ConsolidateAsync(Guid id, IReadOnlyList<Guid> ppmpIds, CancellationToken ct = default)
@@ -225,14 +243,29 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/consolidate",
             new ConsolidatePpmpsCommand(id, ppmpIds), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
-    public async Task<AnnualProcurementPlanDto> PublishAsync(Guid id, CancellationToken ct = default)
+    public async Task<AnnualProcurementPlanDto> SubmitAsync(Guid id, CancellationToken ct = default)
     {
-        using var r = await http.PostAsync($"{Base}/{id}/publish", null, ct);
+        using var r = await http.PostAsync($"{Base}/{id}/submit", null, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
+    }
+
+    public async Task<AnnualProcurementPlanDto> RemovePpmpFromAppAsync(Guid id, Guid ppmpId, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsync($"{Base}/{id}/ppmps/{ppmpId}/remove", null, ct);
+        await r.EnsureApiSuccessAsync(ct);
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
+    }
+
+    public async Task<AnnualProcurementPlanDto> ReturnPpmpFromAppAsync(Guid id, Guid ppmpId, string returnReason, CancellationToken ct = default)
+    {
+        using var r = await http.PostAsJsonAsync($"{Base}/{id}/ppmps/{ppmpId}/return",
+            new ReturnPpmpFromAppCommand(id, ppmpId, returnReason), ct);
+        await r.EnsureApiSuccessAsync(ct);
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task<AnnualProcurementPlanDto> ApproveAsync(Guid id, CancellationToken ct = default)
@@ -240,14 +273,14 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/approve",
             new ApproveAppCommand(id), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task<AnnualProcurementPlanDto> RecallAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/recall", null, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task<AnnualProcurementPlanDto> ReturnAsync(Guid id, string returnReason, CancellationToken ct = default)
@@ -255,14 +288,14 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/return",
             new ReturnAppCommand(id, returnReason), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task<AnnualProcurementPlanDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default)
     {
         using var r = await http.PostAsync($"{Base}/{id}/promote-to-final", null, ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task<AnnualProcurementPlanDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default)
@@ -270,7 +303,7 @@ internal sealed class AppClient(HttpClient http) : IAppClient
         using var r = await http.PostAsJsonAsync($"{Base}/{id}/create-update",
             new CreateUpdateAppCommand(id, reason), ct);
         await r.EnsureApiSuccessAsync(ct);
-        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(ct))!;
+        return (await r.Content.ReadFromJsonAsync<AnnualProcurementPlanDto>(Json.Options, ct))!;
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)

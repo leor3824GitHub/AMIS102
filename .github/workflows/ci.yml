@@ -216,7 +216,10 @@ jobs:
     needs: test
     # Report only — deliberately NOT a gate. Gating on a threshold nobody has measured
     # just blocks PRs. Establish the trend first, then decide a floor worth enforcing.
-    if: always()
+    # always() so partial coverage is still reported when some tests fail, but skip when the
+    # test job never ran at all — otherwise this goes red for downloading zero artifacts,
+    # which reads as a coverage failure when the real failure was upstream.
+    if: always() && needs.test.result != 'skipped'
 
     steps:
       - name: Checkout
@@ -228,23 +231,39 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Download all coverage artifacts
+        # v4 errors when a pattern matches nothing. This job is report-only, so a missing
+        # coverage artifact must never read as a pipeline failure.
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           pattern: coverage-*
           path: coverage-raw
 
       - name: Merge into one report
+        id: merge
         run: |
+          # find, not a `**` glob — globstar is off by default in bash and the artifacts land
+          # two directories deep (coverage-raw/coverage-<Name>/<guid>/coverage.cobertura.xml),
+          # so a `**` guard would silently report "no coverage" every run.
+          # (ReportGenerator's own -reports: glob below is expanded by the tool, not the shell.)
+          if [ -z "$(find coverage-raw -name 'coverage.cobertura.xml' -print -quit 2>/dev/null)" ]; then
+            echo "No coverage files were produced — nothing to report."
+            echo "produced=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator \
             -reports:"coverage-raw/**/coverage.cobertura.xml" \
             -targetdir:"coverage-report" \
             -reporttypes:"Html;MarkdownSummaryGithub;TextSummary"
+          echo "produced=true" >> "$GITHUB_OUTPUT"
 
       - name: Publish summary
+        if: steps.merge.outputs.produced == 'true'
         run: cat coverage-report/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload HTML report
+        if: steps.merge.outputs.produced == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -254,7 +273,10 @@ jobs:
   publish-dev-containers:
     name: Publish Dev Containers
     runs-on: ubuntu-latest
-    needs: test
+    # security-audit gates publishing too — a red audit must block the image, not just show
+    # red in the UI. Shipping a container with a known high-severity CVE is the exact outcome
+    # the audit exists to prevent.
+    needs: [test, security-audit]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     steps:
@@ -307,7 +329,8 @@ jobs:
   publish-release:
     name: Publish Release (NuGet + Containers)
     runs-on: ubuntu-latest
-    needs: test
+    # Same gate as the dev containers — NuGet packages are even harder to unship than an image.
+    needs: [test, security-audit]
     if: |
       (github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch') ||
       startsWith(github.ref, 'refs/tags/v')

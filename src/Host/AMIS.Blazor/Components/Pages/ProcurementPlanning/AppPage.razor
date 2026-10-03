@@ -8,6 +8,7 @@
 @using AMIS.Blazor.ApiClient
 @using AMIS.Blazor.Components.Shared
 @inject IAppClient AppClient
+@inject IPpmpClient PpmpClient
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
@@ -95,11 +96,11 @@
                     <MudTd @onclick:stopPropagation="true">
                         @if (context.Status == AppStatus.Draft)
                         {
-                            @if (_canPublish)
+                            @if (_canSubmit)
                             {
-                                <MudTooltip Text="Publish">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Publish" Size="Size.Small"
-                                                   Color="Color.Primary" OnClick="@(() => QuickPublishAsync(context))" Disabled="_busy" />
+                                <MudTooltip Text="Submit for Approval">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small"
+                                                   Color="Color.Primary" OnClick="@(() => QuickSubmitAsync(context))" Disabled="_busy" />
                                 </MudTooltip>
                             }
                             @if (_canDelete)
@@ -110,7 +111,7 @@
                                 </MudTooltip>
                             }
                         }
-                        @if (context.Status == AppStatus.Published && _canPublish)
+                        @if (context.Status == AppStatus.Submitted && _canSubmit)
                         {
                             <MudTooltip Text="Recall (return to Draft)">
                                 <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small"
@@ -123,7 +124,7 @@
         </MudTabPanel>
 
         <!-- -- DETAIL / CREATE TAB -------------------------------------- -->
-        <MudTabPanel Text="@(_editing is null ? "+ New APP" : $"Manage {_editing.AppNumber}")"
+        <MudTabPanel Text="@(_editing is null ? "New APP" : $"Manage {_editing.AppNumber}")"
                      Icon="@(_editing is null ? Icons.Material.Outlined.Add : Icons.Material.Outlined.Description)">
 
             <!-- -- Action bar ------------------------------------------- -->
@@ -183,14 +184,14 @@
                     }
                     else
                     {
-                        @if ((_editing.Status is AppStatus.Draft or AppStatus.Returned) && _editing.Items.Count > 0 && _canPublish)
+                        @if ((_editing.Status is AppStatus.Draft or AppStatus.Returned) && _editing.Items.Count > 0 && _canSubmit)
                         {
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Publish"
-                                       OnClick="PublishAsync" Disabled="_busy" Size="Size.Small">
-                                Publish
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Send"
+                                       OnClick="SubmitAsync" Disabled="_busy" Size="Size.Small">
+                                Submit for Approval
                             </MudButton>
                         }
-                        @if (_editing.Status == AppStatus.Published && _canPublish)
+                        @if (_editing.Status == AppStatus.Submitted && _canSubmit)
                         {
                             <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Undo"
                                        OnClick="RecallAsync" Disabled="_busy" Size="Size.Small">
@@ -236,7 +237,7 @@
                     {
                         <div Class="mt-1"><em>"@_editing.ReturnReason"</em></div>
                     }
-                    Use <strong>Create Update</strong> to create a new version, or re-consolidate PPMPs below and re-publish to resubmit for approval.
+                    Address the feedback by consolidating approved PPMPs below (new or revised ones), then <strong>Submit for Approval</strong> again.
                 </MudAlert>
             }
             else if (_editing is not null && _editing.Status == AppStatus.Draft && _editing.Items.Count == 0)
@@ -246,7 +247,7 @@
                     No items yet. Select approved PPMPs below and click <strong>Consolidate</strong> to add items.
                 </MudAlert>
             }
-            else if (_editing is not null && _editing.Status is AppStatus.Published or AppStatus.Approved or AppStatus.Superseded)
+            else if (_editing is not null && _editing.Status is AppStatus.Submitted or AppStatus.Approved or AppStatus.Superseded)
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
                     This APP is <strong>@_editing.Status</strong>.
@@ -254,7 +255,8 @@
                     {
                         @if (_editing.Phase == AppPhase.Indicative)
                         {
-                            <span> Use <strong>Promote to Final</strong> to create the Final phase APP.</span>
+                            <span> Once the GAA is enacted, use <strong>Promote to Final</strong> to create the Final phase APP;
+                                end-users then promote and revise their own PPMPs to the approved allocation.</span>
                         }
                         else
                         {
@@ -324,6 +326,41 @@
                                 </MudItem>
                             }
                         </MudGrid>
+
+                        <!-- -- Final PPMP readiness (Final/Updated drafts) ------------- -->
+                        @if (_readiness is not null && _editing.Status is AppStatus.Draft or AppStatus.Returned
+                             && _editing.Phase is AppPhase.Final or AppPhase.Updated)
+                        {
+                            <MudPaper Outlined="true" Class="pa-3 mb-3">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Final PPMP readiness — FY @_editing.FiscalYear</MudText>
+                                @if (_readiness.Count == 0)
+                                {
+                                    <MudText Typo="Typo.caption" Class="text-muted">No PPMPs found for this fiscal year.</MudText>
+                                }
+                                @foreach (var (group, label, color, icon) in new[]
+                                {
+                                    (ReadinessGroup.Ready, "Ready to consolidate", Color.Success, Icons.Material.Filled.CheckCircle),
+                                    (ReadinessGroup.InProgress, "Final PPMP in progress", Color.Info, Icons.Material.Outlined.HourglassTop),
+                                    (ReadinessGroup.NotPromoted, "Not yet promoted to Final", Color.Warning, Icons.Material.Filled.Warning)
+                                })
+                                {
+                                    var rows = ReadinessOf(group);
+                                    if (rows.Count == 0) continue;
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                                        <MudIcon Icon="@icon" Color="@color" Size="Size.Small" />
+                                        <MudText Typo="Typo.body2" Style="min-width:200px">@label (@rows.Count)</MudText>
+                                        @foreach (var p in rows)
+                                        {
+                                            <MudTooltip Text="@($"{p.PpmpNumber} — {p.EndUserUnit} — {p.Phase} {p.Status}")">
+                                                <MudChip T="string" Size="Size.Small" Color="@color" Variant="Variant.Outlined" Label="true">
+                                                    @p.OfficeCode · @p.EndUserUnit
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    </MudStack>
+                                }
+                            </MudPaper>
+                        }
 
                         <!-- -- Consolidation Panel (Draft or Returned) ----------------- -->
                         @if (_editing.Status is AppStatus.Draft or AppStatus.Returned)
@@ -439,7 +476,10 @@
                         }
                         else
                         {
-                            var offices = _editing.Items.GroupBy(i => i.OfficeCode).OrderBy(g => g.Key).ToList();
+                            // One group per source PPMP — several sections can share an office code (e.g. 00B Admin + 00B Finance).
+                            var offices = _editing.Items.GroupBy(i => i.SourcePpmpId)
+                                .OrderBy(g => g.First().OfficeCode).ThenBy(g => g.First().EndUserUnit).ToList();
+                            var canReleasePpmps = _editing.Status is AppStatus.Draft or AppStatus.Returned && _canConsolidate;
 
                             @foreach (var officeGroup in offices)
                             {
@@ -449,7 +489,7 @@
                                          Style="background:var(--mud-palette-background-grey); border-bottom:1px solid var(--mud-palette-lines-default)">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                                             <MudText Typo="Typo.caption" Style="font-family:monospace; font-weight:700">
-                                                @officeGroup.Key
+                                                @officeGroup.First().OfficeCode
                                             </MudText>
                                             <MudText Typo="Typo.caption" Color="Color.Secondary">
                                                 — @officeGroup.First().EndUserUnit
@@ -458,6 +498,24 @@
                                             <MudText Typo="Typo.caption" Style="font-weight:600; color:var(--mud-palette-primary)">
                                                 @Money.Symbol@officeGroup.Sum(i => i.EstimatedBudget).ToString("N2")
                                             </MudText>
+                                            @if (canReleasePpmps)
+                                            {
+                                                var group = officeGroup.First();
+                                                <MudTooltip Text="Take this PPMP out of the APP and send it back to its end-user for revision">
+                                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Warning"
+                                                               StartIcon="@Icons.Material.Filled.Undo" Disabled="_busy" Class="ml-2"
+                                                               OnClick="@(() => ReturnPpmpToEndUserAsync(group.SourcePpmpId, group.OfficeCode, group.EndUserUnit))">
+                                                        Return to End-User
+                                                    </MudButton>
+                                                </MudTooltip>
+                                                <MudTooltip Text="Take this PPMP out of the APP; it stays Approved and can be consolidated again later">
+                                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error"
+                                                               StartIcon="@Icons.Material.Filled.RemoveCircleOutline" Disabled="_busy"
+                                                               OnClick="@(() => RemovePpmpFromAppAsync(group.SourcePpmpId, group.OfficeCode, group.EndUserUnit))">
+                                                        Remove
+                                                    </MudButton>
+                                                </MudTooltip>
+                                            }
                                         </MudStack>
                                     </div>
                                     <div style="overflow-x:auto">
@@ -555,6 +613,7 @@
     private AMISDataTable<AnnualProcurementPlanSummaryDto>? _table;
     private List<AnnualProcurementPlanSummaryDto> _versions = [];
     private AnnualProcurementPlanDto? _editing;
+    private Dictionary<ReadinessGroup, List<PpmpSummaryDto>>? _readiness;
     private bool _loadingPpmps;
     private bool _busy;
     private string? _search;
@@ -575,7 +634,7 @@
 
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Create);
     private bool _canDelete => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Delete);
-    private bool _canPublish => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Publish);
+    private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Submit);
     private bool _canPromote => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.PromoteToFinal);
     private bool _canCreateUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.CreateUpdate);
     private bool _canConsolidate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Consolidate);
@@ -649,9 +708,35 @@
         finally { _busy = false; }
     }
 
+    // Final/Updated APP drafts: which offices have an approved Final PPMP ready to consolidate, which are
+    // still revising, and which haven't promoted their Indicative PPMP yet.
+    private async Task LoadReadinessAsync()
+    {
+        _readiness = null;
+        if (_editing is not { Phase: AppPhase.Final or AppPhase.Updated, Status: AppStatus.Draft or AppStatus.Returned })
+            return;
+        try
+        {
+            var current = (await PpmpClient.SearchAsync(fiscalYear: _editing.FiscalYear, currentOnly: true, pageSize: 500)).Items;
+            _readiness = current
+                .GroupBy(p => p.Phase == PpmpPhase.Indicative ? ReadinessGroup.NotPromoted
+                    : p.Status is PpmpStatus.Approved or PpmpStatus.Consolidated ? ReadinessGroup.Ready
+                    : ReadinessGroup.InProgress)
+                .ToDictionary(g => g.Key, g => g.OrderBy(p => p.OfficeCode).ToList());
+        }
+        catch (Exception ex) { Snackbar.Add($"Could not load PPMP readiness: {ex.Message}", Severity.Warning); }
+    }
+
+    private List<PpmpSummaryDto> ReadinessOf(ReadinessGroup group) =>
+        _readiness is not null && _readiness.TryGetValue(group, out var list) ? list : [];
+
+    private enum ReadinessGroup { Ready, InProgress, NotPromoted }
+
     private async Task LoadAvailablePpmpsAsync()
     {
-        if (_editing is null || _editing.Status != AppStatus.Draft) return;
+        await LoadReadinessAsync();
+        // Returned APPs accept re-consolidation too (domain: ValidateForConsolidation allows Draft or Returned).
+        if (_editing is null || _editing.Status is not (AppStatus.Draft or AppStatus.Returned)) return;
         _loadingPpmps = true;
         _selectedPpmpIds.Clear();
         try
@@ -733,20 +818,70 @@
     }
 
     // -- Workflow actions ---------------------------------------------
-    private async Task PublishAsync()
+    private async Task SubmitAsync()
     {
         if (_editing is null) return;
         var confirmed = await DialogService.ShowMessageBox(
-            "Publish APP",
-            $"Publish {_editing.AppNumber}? It will be sent to the approval queue and become read-only.",
-            yesText: "Publish", cancelText: "Cancel");
+            "Submit APP for Approval",
+            $"Submit {_editing.AppNumber} for approval? It will be sent to the approval queue and become read-only.",
+            yesText: "Submit", cancelText: "Cancel");
         if (confirmed != true) return;
         _busy = true;
         try
         {
-            _editing = await AppClient.PublishAsync(_editing.Id);
+            _editing = await AppClient.SubmitAsync(_editing.Id);
             await LoadAsync();
-            Snackbar.Add($"{_editing.AppNumber} published for approval.", Severity.Success);
+            Snackbar.Add($"{_editing.AppNumber} submitted for approval.", Severity.Success);
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    // -- Release a consolidated PPMP from a Draft/Returned APP ----------
+    private async Task ReturnPpmpToEndUserAsync(Guid ppmpId, string officeCode, string endUserUnit)
+    {
+        if (_editing is null) return;
+        var parameters = new DialogParameters<ReasonInputDialog>
+        {
+            { x => x.Title, $"Return {officeCode} — {endUserUnit} to End-User" },
+            { x => x.Label, "What should the end-user revise?" },
+            { x => x.ConfirmText, "Return to End-User" },
+            { x => x.InitialReason, _editing.Status == AppStatus.Returned ? _editing.ReturnReason : null }
+        };
+        var dialog = await DialogService.ShowAsync<ReasonInputDialog>("Return to End-User", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled || result.Data is not string reason || string.IsNullOrWhiteSpace(reason))
+            return;
+
+        _busy = true;
+        try
+        {
+            _editing = await AppClient.ReturnPpmpFromAppAsync(_editing.Id, ppmpId, reason.Trim());
+            Snackbar.Add($"{officeCode} — {endUserUnit} removed from the APP and returned to the end-user for revision.", Severity.Success);
+            await LoadAvailablePpmpsAsync();
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
+    private async Task RemovePpmpFromAppAsync(Guid ppmpId, string officeCode, string endUserUnit)
+    {
+        if (_editing is null) return;
+        var confirmed = await DialogService.ShowMessageBox(
+            "Remove PPMP from APP",
+            $"Remove {officeCode} — {endUserUnit} and all its items from {_editing.AppNumber}? " +
+            "The PPMP stays Approved and can be consolidated again later.",
+            yesText: "Remove", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        _busy = true;
+        try
+        {
+            _editing = await AppClient.RemovePpmpFromAppAsync(_editing.Id, ppmpId);
+            Snackbar.Add($"{officeCode} — {endUserUnit} removed from the APP.", Severity.Success);
+            await LoadAvailablePpmpsAsync();
+            await LoadAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
@@ -866,19 +1001,19 @@
     }
 
     // -- Quick actions from list --------------------------------------
-    private async Task QuickPublishAsync(AnnualProcurementPlanSummaryDto row)
+    private async Task QuickSubmitAsync(AnnualProcurementPlanSummaryDto row)
     {
         var confirmed = await DialogService.ShowMessageBox(
-            "Publish APP",
-            $"Publish {row.AppNumber} for FY {row.FiscalYear}? It will be sent to the approval queue.",
-            yesText: "Publish", cancelText: "Cancel");
+            "Submit APP for Approval",
+            $"Submit {row.AppNumber} for FY {row.FiscalYear} for approval? It will be sent to the approval queue.",
+            yesText: "Submit", cancelText: "Cancel");
         if (confirmed != true) return;
         _busy = true;
         try
         {
-            await AppClient.PublishAsync(row.Id);
+            await AppClient.SubmitAsync(row.Id);
             await LoadAsync();
-            Snackbar.Add($"{row.AppNumber} published.", Severity.Success);
+            Snackbar.Add($"{row.AppNumber} submitted for approval.", Severity.Success);
             if (_editing?.Id == row.Id) _editing = await AppClient.GetAsync(row.Id);
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
@@ -918,10 +1053,11 @@
         @<MudChip T="string" Size="Size.Small" Color="@StatusColor(status)" Icon="@StatusIcon(status)" Label="true">@status
         </MudChip>;
 
+
     private static Color StatusColor(AppStatus s) => s switch
     {
         AppStatus.Draft => Color.Default,
-        AppStatus.Published => Color.Info,
+        AppStatus.Submitted => Color.Info,
         AppStatus.Approved => Color.Success,
         AppStatus.Superseded => Color.Warning,
         AppStatus.Returned => Color.Error,
@@ -931,7 +1067,7 @@
     private static string StatusIcon(AppStatus s) => s switch
     {
         AppStatus.Draft => Icons.Material.Outlined.EditNote,
-        AppStatus.Published => Icons.Material.Outlined.HourglassTop,
+        AppStatus.Submitted => Icons.Material.Outlined.HourglassTop,
         AppStatus.Approved => Icons.Material.Filled.CheckCircle,
         AppStatus.Superseded => Icons.Material.Outlined.History,
         AppStatus.Returned => Icons.Material.Filled.Undo,

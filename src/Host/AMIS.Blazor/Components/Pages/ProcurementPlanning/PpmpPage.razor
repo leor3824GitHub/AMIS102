@@ -39,14 +39,48 @@
         </MudText>
     </TitleContent>
     <DialogContent>
+        @if (ItemErrors.Count > 0)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-1 mb-2">
+                <strong>@ItemErrors.Count field@(ItemErrors.Count == 1 ? "" : "s") need@(ItemErrors.Count == 1 ? "s" : "") attention:</strong>
+                <ul style="margin:4px 0 0 18px; padding:0">
+                    @foreach (var message in ItemErrors.Values)
+                    {
+                        <li>@message</li>
+                    }
+                </ul>
+            </MudAlert>
+        }
         <MudGrid Spacing="2" Class="mt-1">
             <MudItem xs="12">
-                <MudAutocomplete T="string" @bind-Value="_itemForm.GeneralDescription" Label="Description / Objective"
-                                 Variant="Variant.Outlined" SearchFunc="SearchDescriptions" ResetValueOnEmptyText="false"
-                                 CoerceText="true" CoerceValue="true" Required="true"
-                                 Dense="true" Margin="Margin.Dense" Size="Size.Small"
-                                 HelperText="Start typing — previous descriptions will appear"
-                                 Placeholder="Describe the procurement item or objective" />
+                @* Plain multi-line text box (normal cursor/arrow/Home/End editing); previous descriptions are offered
+                   as chips below instead of an autocomplete popover, which hijacked arrow keys and select-all on focus. *@
+                <MudTextField T="string" @bind-Value="_itemForm.GeneralDescription" Label="Description / Objective"
+                              Variant="Variant.Outlined" Required="true"
+                              Lines="2" AutoGrow="true" MaxLines="5" MaxLength="1000" Counter="1000"
+                              Immediate="true" DebounceInterval="200"
+                              Margin="Margin.Dense"
+                              Error="@HasItemError(nameof(PpmpItemFormModel.GeneralDescription))"
+                              ErrorText="@ItemError(nameof(PpmpItemFormModel.GeneralDescription))"
+                              HelperText="Type freely, or pick a previously used description below"
+                              Placeholder="Describe the procurement item or objective" />
+                @{ var suggestions = DescriptionSuggestions(); }
+                @if (suggestions.Count > 0)
+                {
+                    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1" Class="mt-1">
+                        <MudText Typo="Typo.caption" Class="text-muted">Previously used:</MudText>
+                        @foreach (var suggestion in suggestions)
+                        {
+                            <MudTooltip Text="@suggestion" Disabled="@(suggestion.Length <= 60)">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                         Icon="@Icons.Material.Outlined.History"
+                                         OnClick="@(() => _itemForm.GeneralDescription = suggestion)">
+                                    @(suggestion.Length > 60 ? suggestion[..57] + "…" : suggestion)
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                }
             </MudItem>
 
             <MudItem xs="12" sm="6">
@@ -62,38 +96,57 @@
                                  Variant="Variant.Outlined" SearchFunc="SearchModesOfProcurement"
                                  ResetValueOnEmptyText="false" CoerceText="true" CoerceValue="true" Required="true"
                                  Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                                 Error="@HasItemError(nameof(PpmpItemFormModel.ModeOfProcurement))"
+                                 ErrorText="@ItemError(nameof(PpmpItemFormModel.ModeOfProcurement))"
                                  Placeholder="Select mode of procurement"
                                  HelperText="Sourced from Master Data" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudNumericField @bind-Value="_itemForm.Quantity" Label="Quantity" Variant="Variant.Outlined"
-                                 Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0.01m" />
+                                 Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0.01m" Required="true"
+                                 Error="@HasItemError(nameof(PpmpItemFormModel.Quantity))"
+                                 ErrorText="@ItemError(nameof(PpmpItemFormModel.Quantity))" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudAutocomplete T="string" @bind-Value="_itemForm.Unit" Label="Unit of Measure"
                                  Variant="Variant.Outlined" SearchFunc="SearchUnits" ResetValueOnEmptyText="false" CoerceText="true"
                                  CoerceValue="true" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="e.g. LOT, PCS, BOX..."
+                                 Required="true"
+                                 Error="@HasItemError(nameof(PpmpItemFormModel.Unit))"
+                                 ErrorText="@ItemError(nameof(PpmpItemFormModel.Unit))"
                                  HelperText="Select from master data or type a unit" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudNumericField @bind-Value="_itemForm.EstimatedBudget" Label="@($"Estimated Budget ({Money.Symbol})")"
-                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" Format="N2" />
+                                 Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="0m" Format="N2"
+                                 Required="true"
+                                 Error="@HasItemError(nameof(PpmpItemFormModel.EstimatedBudget))"
+                                 ErrorText="@ItemError(nameof(PpmpItemFormModel.EstimatedBudget))" />
             </MudItem>
 
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ProcurementStart" Label="Procurement Start"
-                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY"
+                              Required="true"
+                              Error="@HasItemError(nameof(PpmpItemFormModel.ProcurementStart))"
+                              ErrorText="@ItemError(nameof(PpmpItemFormModel.ProcurementStart))" />
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ProcurementEnd" Label="Procurement End" Variant="Variant.Outlined"
-                              Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
+                              Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY"
+                              Required="true"
+                              Error="@HasItemError(nameof(PpmpItemFormModel.ProcurementEnd))"
+                              ErrorText="@ItemError(nameof(PpmpItemFormModel.ProcurementEnd))" />
             </MudItem>
             <MudItem xs="12" sm="4">
                 <MudTextField @bind-Value="_itemForm.ExpectedDelivery" Label="Expected Delivery"
-                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY" />
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Placeholder="MM/YYYY"
+                              Required="true"
+                              Error="@HasItemError(nameof(PpmpItemFormModel.ExpectedDelivery))"
+                              ErrorText="@ItemError(nameof(PpmpItemFormModel.ExpectedDelivery))" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
@@ -114,7 +167,9 @@
 
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="_itemForm.SourceOfFunds" Label="Source of Funds"
-                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true"
+                              Error="@HasItemError(nameof(PpmpItemFormModel.SourceOfFunds))"
+                              ErrorText="@ItemError(nameof(PpmpItemFormModel.SourceOfFunds))"
                               HelperText="Auto-filled from the UACS code; editable" />
             </MudItem>
 
@@ -212,6 +267,13 @@
                                                OnClick="@(() => QuickSubmitAsync(context))" />
                             </MudTooltip>
                         }
+                        @if (context.Status == PpmpStatus.Draft && context.VersionNumber == 1 && context.Phase == PpmpPhase.Indicative && _canDelete)
+                        {
+                            <MudTooltip Text="Delete Draft">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => DeleteDraftAsync(context))" />
+                            </MudTooltip>
+                        }
                         @if (context.Status == PpmpStatus.Submitted && _canSubmit)
                         {
                             <MudTooltip Text="Recall (return to Draft)">
@@ -225,7 +287,7 @@
         </MudTabPanel>
 
         <!-- -- FORM TAB -------------------------------------------------- -->
-        <MudTabPanel Text="@(_editing is null ? "+ New PPMP" : $"Edit {_editing.PpmpNumber}")"
+        <MudTabPanel Text="@(_editing is null ? "New PPMP" : $"Edit {_editing.PpmpNumber}")"
                      Icon="@(_editing is null ? Icons.Material.Outlined.Add : Icons.Material.Outlined.Edit)">
 
             <!-- -- Action bar ------------------------------------------- -->
@@ -265,12 +327,21 @@
                     <MudSpacer />
 
                     <!-- Workflow actions -->
+                    @if (_hasUnsavedChanges)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined"
+                                 Icon="@Icons.Material.Outlined.EditNote" Label="true">
+                            Unsaved changes
+                        </MudChip>
+                    }
                     @if (_editing is not null && _editing.Status is PpmpStatus.Draft or PpmpStatus.Returned && _canSubmit)
                     {
-                        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send"
-                                   OnClick="SubmitAsync" Disabled="_busy" Size="Size.Small">
-                            Submit for Approval
-                        </MudButton>
+                        <MudTooltip Text="@(_hasUnsavedChanges ? "Saves your changes, then submits for approval" : "Submit for approval")">
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send"
+                                       OnClick="SubmitAsync" Disabled="_busy" Size="Size.Small">
+                                @(_hasUnsavedChanges && _canEdit ? "Save & Submit" : "Submit for Approval")
+                            </MudButton>
+                        </MudTooltip>
                     }
                     @if (_editing is not null && _editing.Status == PpmpStatus.Submitted && _canSubmit)
                     {
@@ -279,8 +350,8 @@
                             Recall
                         </MudButton>
                     }
-                    @if (_editing is not null && _editing.Phase == PpmpPhase.Indicative && _editing.Status ==
-                                                            PpmpStatus.Approved && _canPromote)
+                    @if (_editing is not null && _editing.Phase == PpmpPhase.Indicative && _editing.IsCurrentVersion
+                         && _editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated && _canPromote)
                     {
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.MoveUp" OnClick="PromoteToFinalAsync" Disabled="_busy"
@@ -301,16 +372,20 @@
                     @if (!_isReadOnly && _canEdit)
                     {
                         <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
-                                   OnClick="SaveAsync" Disabled="_busy" Size="Size.Small">
-                            @if (_busy)
-                            {
-                                <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
-                            }
-                            @(_editing is null ? "Create" : "Save")
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" OnClick="ClearForm" Disabled="_busy" Size="Size.Small">
-                            Cancel
+                        @* Save is only meaningful when the form differs from the saved draft; Create is always available. *@
+                        <MudTooltip Text="@(_editing is null ? "Create this PPMP as a Draft" : _hasUnsavedChanges ? "Save your changes to the draft" : "No changes to save")">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
+                                       OnClick="SaveAsync" Disabled="@(_busy || (_editing is not null && !_hasUnsavedChanges))" Size="Size.Small">
+                                @if (_busy)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
+                                }
+                                @(_editing is null ? "Create" : "Save")
+                            </MudButton>
+                        </MudTooltip>
+                        <MudButton Variant="Variant.Text" OnClick="CloseOrDiscardAsync" Disabled="_busy" Size="Size.Small"
+                                   Color="@(_hasUnsavedChanges ? Color.Error : Color.Default)">
+                            @(_editing is null ? "Cancel" : _hasUnsavedChanges ? "Discard Changes" : "Close")
                         </MudButton>
                     }
                 </MudStack>
@@ -334,7 +409,12 @@
                     This PPMP is <strong>@_editing.Status</strong> and cannot be edited.
                     @if (_editing.Status is PpmpStatus.Approved or PpmpStatus.Consolidated)
                     {
-                        @if (_editing.Phase == PpmpPhase.Indicative)
+                        @if (_editing.Phase == PpmpPhase.Indicative && _editing.Status == PpmpStatus.Consolidated)
+                        {
+                            <span> It is part of the Indicative APP. Once the GAA is enacted and the Indicative APP is approved,
+                                use <strong>Promote to Final</strong> to revise it to the approved allocation.</span>
+                        }
+                        else if (_editing.Phase == PpmpPhase.Indicative)
                         {
                             <span> Use <strong>Promote to Final</strong> to create the Final phase.</span>
                         }
@@ -346,10 +426,18 @@
                 </MudAlert>
             }
 
+            @if (_baseline is not null && !_isReadOnly)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.EditNote">
+                    Revising from <strong>@_baseline.Phase v@(_baseline.VersionNumber)</strong>. Adjust quantities and budgets to the
+                    approved allocation. Changes are not saved until you click <strong>Save</strong>.
+                </MudAlert>
+            }
+
             <!-- -- Details row ------------------------------------------ -->
             <MudGrid Spacing="2" Class="mb-3">
                 <MudItem xs="6" sm="3">
-                    <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year" Variant="Variant.Outlined"
+                    <MudNumericField @bind-Value="_form.FiscalYear" Label="Fiscal Year" Variant="Variant.Outlined" Immediate="true"
                                      Dense="true" Margin="Margin.Dense" Size="Size.Small" Min="2000" Max="2100" Disabled="_isReadOnly" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
@@ -360,12 +448,12 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudTextField @bind-Value="_form.OfficeCode" Label="Office Code" Variant="Variant.Outlined"
+                    <MudTextField @bind-Value="_form.OfficeCode" Label="Office Code" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300"
                                   Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" Disabled="_isReadOnly"
                                   HelperText="@(_orgOfficeCode != null ? "From Organization Profile" : null)" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudTextField @bind-Value="_form.EndUserUnit" Label="End-User / Section" Variant="Variant.Outlined"
+                    <MudTextField @bind-Value="_form.EndUserUnit" Label="End-User / Section" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300"
                                   Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" Disabled="_isReadOnly"
                                   HelperText="@(_employeeDepartment != null ? "From your employee profile" : null)" />
                 </MudItem>
@@ -440,8 +528,8 @@
                                             <MudText Typo="Typo.caption">@item.ModeOfProcurement</MudText>
                                             @if (!string.IsNullOrWhiteSpace(item.FundingSourceCode))
                                             {
-                                                <MudTooltip Text="@item.SourceOfFunds">
-                                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-family:monospace">@item.FundingSourceCode</MudText>
+                                                <MudTooltip Text="@item.SourceOfFunds" Inline="false">
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="display:block; font-family:monospace">@item.FundingSourceCode</MudText>
                                                 </MudTooltip>
                                             }
                                         </td>
@@ -459,6 +547,13 @@
                                         </td>
                                         <td style="vertical-align:middle; text-align:right; font-weight:600">
                                             @Money.Symbol@item.EstimatedBudget.ToString("N2")
+                                            @if (_baseline is not null)
+                                            {
+                                                var prior = BaselineItemFor(idx);
+                                                <MudText Typo="Typo.caption" Class="text-muted" Style="display:block; font-weight:400">
+                                                    @(prior is null ? "New item" : $"{_baseline.Phase}: {Money.Symbol}{prior.EstimatedBudget:N2}")
+                                                </MudText>
+                                            }
                                         </td>
                                         @if (!_isReadOnly)
                                         {
@@ -483,6 +578,20 @@
                             @Money.Symbol@_form.Items.Sum(i => i.EstimatedBudget).ToString("N2")
                         </MudText>
                     </MudStack>
+                    @if (_baseline is not null)
+                    {
+                        var change = _form.Items.Sum(i => i.EstimatedBudget) - _baseline.TotalEstimatedBudget;
+                        <MudStack Row="true" Class="px-2 pt-1" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.caption" Class="text-muted">
+                                @_baseline.Phase v@(_baseline.VersionNumber) total @Money.Symbol@_baseline.TotalEstimatedBudget.ToString("N2")
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.caption"
+                                     Color="@(change > 0 ? Color.Error : change < 0 ? Color.Success : Color.Default)">
+                                Change @(change > 0 ? "+" : change < 0 ? "−" : "")@Money.Symbol@Math.Abs(change).ToString("N2")
+                            </MudText>
+                        </MudStack>
+                    }
                 }
             </MudItem>
         </MudTabPanel>
@@ -495,6 +604,7 @@
     private AMISDataTable<PpmpSummaryDto>? _table;
     private List<PpmpSummaryDto> _versions = [];
     private PpmpDto? _editing;
+    private PpmpDto? _baseline;
     private bool _busy;
     private bool _isReadOnly => _editing is not null &&
         _editing.Status is not (PpmpStatus.Draft or PpmpStatus.Returned);
@@ -602,6 +712,7 @@
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Update);
     private bool _canEdit => _canCreate || _canUpdate;
+    private bool _canDelete => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Delete);
     private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Submit);
     private bool _canPromote => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.PromoteToFinal);
     private bool _canCreateUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.CreateUpdate);
@@ -713,6 +824,7 @@
     private void StartNew()
     {
         _editing = null;
+        _baseline = null;
         _versions.Clear();
         _form = new PpmpFormModel
         {
@@ -733,6 +845,7 @@
             _selectedVersionId = _editing.Id;
             _versions = (await PpmpClient.GetVersionsAsync(_editing.VersionChainId)).ToList();
             PopulateForm(_editing);
+            await LoadBaselineAsync();
             _activeTab = 1;
         }
         catch (Exception ex) { Snackbar.Add($"Error loading PPMP: {ex.Message}", Severity.Error); }
@@ -747,10 +860,38 @@
         {
             _editing = await PpmpClient.GetAsync(id);
             if (_editing is not null) PopulateForm(_editing);
+            await LoadBaselineAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
+
+    // Previous version of a Final/Updated PPMP — shown beside each item so revisions are easy to see.
+    private async Task LoadBaselineAsync()
+    {
+        _baseline = null;
+        if (_editing is not { PreviousVersionId: { } previousId, Phase: PpmpPhase.Final or PpmpPhase.Updated })
+            return;
+        try { _baseline = await PpmpClient.GetAsync(previousId); }
+        catch (Exception ex) { Snackbar.Add($"Could not load previous version: {ex.Message}", Severity.Warning); }
+    }
+
+    private PpmpItemDto? BaselineItemFor(int idx)
+    {
+        if (_baseline is null) return null;
+        var item = _form.Items[idx];
+        var byDescription = _baseline.Items.FirstOrDefault(b => SameDescription(b.GeneralDescription, item.GeneralDescription));
+        if (byDescription is not null) return byDescription;
+
+        // Description was edited: fall back to the same position, unless that prior item still matches another row.
+        var ordered = _baseline.Items.OrderBy(b => b.ItemNo).ToList();
+        if (idx >= ordered.Count) return null;
+        var positional = ordered[idx];
+        return _form.Items.Any(f => SameDescription(f.GeneralDescription, positional.GeneralDescription)) ? null : positional;
+    }
+
+    private static bool SameDescription(string? a, string? b) =>
+        string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private void PopulateForm(PpmpDto dto)
     {
@@ -780,13 +921,22 @@
 
         foreach (var item in _form.Items.Where(i => !string.IsNullOrWhiteSpace(i.GeneralDescription)))
             _usedDescriptions.Add(item.GeneralDescription);
+
+        MarkFormSaved();
     }
+
+    // -- Unsaved-changes tracking: snapshot of the form as last loaded/saved -------------
+    private string? _savedSnapshot;
+    private string FormSnapshot() => System.Text.Json.JsonSerializer.Serialize(_form);
+    private void MarkFormSaved() => _savedSnapshot = FormSnapshot();
+    private bool _hasUnsavedChanges => _editing is not null && !_isReadOnly && _savedSnapshot != FormSnapshot();
 
     // -- Item dialog --------------------------------------------------
     private void OpenAddItemDialog()
     {
         _editingItemIdx = null;
         _itemForm = new PpmpItemFormModel();
+        _itemSubmitAttempted = false;
         _itemDialogOpen = true;
     }
 
@@ -810,25 +960,62 @@
             EstimatedBudget = src.EstimatedBudget,
             Remarks = src.Remarks
         };
+        _itemSubmitAttempted = false;
         _itemDialogOpen = true;
     }
 
+    // -- Item validation (mirrors the API's PpmpItemRequestValidator) ---
+    private bool _itemSubmitAttempted;
+
+    private Dictionary<string, string> ValidateItem()
+    {
+        var f = _itemForm;
+        var errors = new Dictionary<string, string>();
+
+        if (string.IsNullOrWhiteSpace(f.GeneralDescription)) errors[nameof(f.GeneralDescription)] = "Description is required.";
+        else if (f.GeneralDescription.Length > 1000) errors[nameof(f.GeneralDescription)] = "Description must be 1,000 characters or fewer.";
+        if (string.IsNullOrWhiteSpace(f.ModeOfProcurement)) errors[nameof(f.ModeOfProcurement)] = "Select a mode of procurement.";
+        if (f.Quantity <= 0) errors[nameof(f.Quantity)] = "Quantity must be greater than zero.";
+        if (string.IsNullOrWhiteSpace(f.Unit)) errors[nameof(f.Unit)] = "Unit of measure is required.";
+        if (f.EstimatedBudget <= 0) errors[nameof(f.EstimatedBudget)] = "Estimated budget must be greater than zero.";
+        if (string.IsNullOrWhiteSpace(f.SourceOfFunds)) errors[nameof(f.SourceOfFunds)] = "Source of funds is required.";
+
+        var start = ParseMonth(f.ProcurementStart, nameof(f.ProcurementStart), "Procurement start", errors);
+        var end = ParseMonth(f.ProcurementEnd, nameof(f.ProcurementEnd), "Procurement end", errors);
+        var delivery = ParseMonth(f.ExpectedDelivery, nameof(f.ExpectedDelivery), "Expected delivery", errors);
+        if (start is not null && end is not null && end < start)
+            errors[nameof(f.ProcurementEnd)] = "Procurement end cannot be before procurement start.";
+        if (start is not null && delivery is not null && delivery < start)
+            errors[nameof(f.ExpectedDelivery)] = "Expected delivery cannot be before procurement start.";
+
+        return errors;
+    }
+
+    private static DateOnly? ParseMonth(string? value, string field, string label, Dictionary<string, string> errors)
+    {
+        if (string.IsNullOrWhiteSpace(value)) { errors[field] = $"{label} is required (MM/YYYY)."; return null; }
+        if (DateOnly.TryParseExact(value.Trim(), "MM/yyyy", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var month))
+            return month;
+        errors[field] = $"{label} must be a valid month in MM/YYYY format (e.g. 03/{DateTime.Now.Year + 1}).";
+        return null;
+    }
+
+    // Errors show only after the first Add/Update click, then update live as the user fixes fields.
+    private Dictionary<string, string> ItemErrors => _itemSubmitAttempted ? ValidateItem() : [];
+    private bool HasItemError(string field) => ItemErrors.ContainsKey(field);
+    private string? ItemError(string field) => ItemErrors.GetValueOrDefault(field);
+
     private void SaveItemDialog()
     {
-        if (string.IsNullOrWhiteSpace(_itemForm.GeneralDescription))
+        _itemSubmitAttempted = true;
+        var errors = ValidateItem();
+        if (errors.Count > 0)
         {
-            Snackbar.Add("Description is required.", Severity.Warning);
-            return;
-        }
-        if (_itemForm.EstimatedBudget <= 0)
-        {
-            Snackbar.Add("Estimated budget must be greater than zero.", Severity.Warning);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_itemForm.ModeOfProcurement))
-        {
-            Snackbar.Add("Please select a valid mode of procurement.", Severity.Warning);
+            Snackbar.Add(errors.Count == 1
+                    ? $"Please fix the highlighted field: {errors.Values.First()}"
+                    : $"Please fix the {errors.Count} highlighted fields before adding the item.",
+                Severity.Warning);
             return;
         }
 
@@ -889,18 +1076,20 @@
         return Task.FromResult<IEnumerable<string>>(matches);
     }
 
-    private Task<IEnumerable<string>> SearchDescriptions(string value, CancellationToken _)
+    // Up to 5 previously used descriptions matching what's typed (all recent ones when empty); hides an exact match.
+    private List<string> DescriptionSuggestions()
     {
+        var typed = _itemForm.GeneralDescription?.Trim() ?? string.Empty;
         var all = _usedDescriptions
             .Concat(_form.Items.Select(i => i.GeneralDescription))
             .Where(d => !string.IsNullOrWhiteSpace(d))
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(d => !string.Equals(d.Trim(), typed, StringComparison.OrdinalIgnoreCase));
 
-        if (string.IsNullOrWhiteSpace(value))
-            return Task.FromResult<IEnumerable<string>>(all.Take(15));
+        if (typed.Length > 0)
+            all = all.Where(d => d.Contains(typed, StringComparison.OrdinalIgnoreCase));
 
-        var matches = all.Where(d => d.Contains(value, StringComparison.OrdinalIgnoreCase)).Take(15);
-        return Task.FromResult<IEnumerable<string>>(matches);
+        return all.Take(5).ToList();
     }
 
     private Task<IEnumerable<string>> SearchModesOfProcurement(string value, CancellationToken _)
@@ -920,9 +1109,27 @@
     // -- CRUD ---------------------------------------------------------
     private void RemoveItem(int idx) => _form.Items.RemoveAt(idx);
 
+    // Close when clean; ask before throwing away unsaved edits (or items on a not-yet-created PPMP).
+    private async Task CloseOrDiscardAsync()
+    {
+        var losing = _editing is null ? _form.Items.Count > 0 : _hasUnsavedChanges;
+        if (losing)
+        {
+            var confirmed = await DialogService.ShowMessageBox(
+                "Discard Changes",
+                _editing is null
+                    ? "Discard this new PPMP? The line items you added have not been created yet and will be lost."
+                    : $"Discard your unsaved changes to {_editing.PpmpNumber}? The draft keeps its last saved version.",
+                yesText: "Discard", cancelText: "Keep Editing");
+            if (confirmed != true) return;
+        }
+        ClearForm();
+    }
+
     private void ClearForm()
     {
         _editing = null;
+        _baseline = null;
         _versions.Clear();
         _form = new PpmpFormModel
         {
@@ -944,44 +1151,97 @@
         _busy = true;
         try
         {
-            var items = _form.Items.Select(i => new PpmpItemRequest(
-                i.GeneralDescription, i.ProjectType, i.Quantity, i.Unit,
-                i.ModeOfProcurement, i.PreProcurementConference,
-                i.ProcurementStart, i.ProcurementEnd, i.ExpectedDelivery,
-                i.SourceOfFunds, i.EstimatedBudget,
-                null, i.Remarks, i.FundingSourceCode)).ToList();
-
             if (_editing is null)
             {
                 var cmd = new CreatePpmpCommand(_form.FiscalYear, _form.Phase,
-                    _form.OfficeCode, _form.EndUserUnit, _preparedById, items);
+                    _form.OfficeCode, _form.EndUserUnit, _preparedById, BuildItemRequests());
                 _editing = await PpmpClient.CreateAsync(cmd);
                 Snackbar.Add($"PPMP {_editing.PpmpNumber} created.", Severity.Success);
             }
             else
             {
-                var cmd = new UpdatePpmpCommand(_editing.Id, _form.FiscalYear,
-                    _form.OfficeCode, _form.EndUserUnit, _editing.PreparedById, items);
-                _editing = await PpmpClient.UpdateAsync(_editing.Id, cmd);
+                await SaveFormToEditingAsync();
                 Snackbar.Add("PPMP updated.", Severity.Success);
             }
+            MarkFormSaved();
             await LoadAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
 
+    private List<PpmpItemRequest> BuildItemRequests() =>
+        _form.Items.Select(i => new PpmpItemRequest(
+            i.GeneralDescription, i.ProjectType, i.Quantity, i.Unit,
+            i.ModeOfProcurement, i.PreProcurementConference,
+            i.ProcurementStart, i.ProcurementEnd, i.ExpectedDelivery,
+            i.SourceOfFunds, i.EstimatedBudget,
+            null, i.Remarks, i.FundingSourceCode)).ToList();
+
+    // Persists the open form onto the existing PPMP (Draft/Returned only).
+    private async Task SaveFormToEditingAsync()
+    {
+        if (_editing is null) return;
+        var cmd = new UpdatePpmpCommand(_editing.Id, _form.FiscalYear,
+            _form.OfficeCode, _form.EndUserUnit, _editing.PreparedById, BuildItemRequests());
+        _editing = await PpmpClient.UpdateAsync(_editing.Id, cmd);
+    }
+
     private async Task SubmitAsync()
     {
         if (_editing is null) return;
+        if (_form.Items.Count == 0) { Snackbar.Add("Add at least one line item.", Severity.Warning); return; }
+
+        // Submit sends the server copy, so unsaved edits are saved first — explicitly, via "Save & Submit".
+        var saveFirst = _hasUnsavedChanges;
+        if (saveFirst && !_canEdit)
+        {
+            Snackbar.Add("You have unsaved changes but no permission to save them. Cancel your edits, then submit.", Severity.Warning);
+            return;
+        }
+
+        var confirmed = await DialogService.ShowMessageBox(
+            saveFirst ? "Save & Submit for Approval" : "Submit for Approval",
+            saveFirst
+                ? $"Save your changes and submit {_editing.PpmpNumber} for approval? It will become read-only until approved or recalled."
+                : $"Submit {_editing.PpmpNumber} for approval? It will become read-only until approved or recalled.",
+            yesText: saveFirst ? "Save & Submit" : "Submit", cancelText: "Cancel");
+        if (confirmed != true) return;
+
         _busy = true;
         try
         {
-            _editing = await PpmpClient.SubmitAsync(_editing.Id);
-            Snackbar.Add("PPMP submitted for approval.", Severity.Success);
+            if (saveFirst)
+            {
+                try
+                {
+                    await SaveFormToEditingAsync();
+                    MarkFormSaved();
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Could not save changes — nothing was submitted. {ex.Message}", Severity.Error);
+                    return;
+                }
+            }
+
+            try
+            {
+                _editing = await PpmpClient.SubmitAsync(_editing!.Id);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(saveFirst
+                    ? $"Changes saved, but submit failed: {ex.Message}"
+                    : $"Submit failed: {ex.Message}", Severity.Error);
+                await LoadAsync();
+                return;
+            }
+
+            PopulateForm(_editing);
+            Snackbar.Add(saveFirst ? "Changes saved and PPMP submitted for approval." : "PPMP submitted for approval.", Severity.Success);
             await LoadAsync();
         }
-        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
         finally { _busy = false; }
     }
 
@@ -1024,6 +1284,22 @@
         finally { _busy = false; }
     }
 
+    private async Task DeleteDraftAsync(PpmpSummaryDto row)
+    {
+        if (!await DialogService.ShowDeleteConfirmAsync($"PPMP \"{row.PpmpNumber}\""))
+            return;
+
+        _busy = true;
+        try
+        {
+            await PpmpClient.DeleteAsync(row.Id);
+            Snackbar.Add($"{row.PpmpNumber} deleted.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
+        finally { _busy = false; }
+    }
+
     private async Task QuickRecallAsync(PpmpSummaryDto row)
     {
         var confirmed = await DialogService.ShowMessageBox(
@@ -1048,7 +1324,8 @@
         if (_editing is null) return;
         var confirmed = await DialogService.ShowMessageBox(
             "Promote to Final",
-            $"Promote {_editing.PpmpNumber} to Final phase? The current Indicative version will be superseded.",
+            $"Promote {_editing.PpmpNumber} to Final? A Final draft is created with the same items and the Indicative " +
+            "version is superseded. Revise quantities and budgets to the GAA-approved allocation, then Save and Submit.",
             yesText: "Promote", cancelText: "Cancel");
         if (confirmed != true) return;
         _busy = true;
@@ -1058,7 +1335,8 @@
             _versions = (await PpmpClient.GetVersionsAsync(_editing.VersionChainId)).ToList();
             _selectedVersionId = _editing.Id;
             PopulateForm(_editing);
-            Snackbar.Add($"Final draft v{_editing.VersionNumber} created.", Severity.Success);
+            await LoadBaselineAsync();
+            Snackbar.Add("Final draft created. Revise items to the approved allocation, then Save.", Severity.Success);
             await LoadAsync();
         }
         catch (Exception ex) { Snackbar.Add($"Error: {ex.Message}", Severity.Error); }
@@ -1084,6 +1362,7 @@
                 _versions = (await PpmpClient.GetVersionsAsync(_editing.VersionChainId)).ToList();
                 _selectedVersionId = _editing.Id;
                 PopulateForm(_editing);
+                await LoadBaselineAsync();
                 Snackbar.Add($"Updated v{_editing.VersionNumber} created.", Severity.Success);
                 await LoadAsync();
             }

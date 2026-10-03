@@ -67,8 +67,11 @@
 			S5693;S6667;S6966;
 			XA4301;MSG0005
 		</WarningsBaseline>
-		<!-- Collapse the formatted list above into the semicolon-delimited form NoWarn expects. -->
-		<NoWarn>$(NoWarn);$(WarningsBaseline.Replace('%0a', '').Replace('%0d', '').Replace(' ', ''))</NoWarn>
+		<!-- Collapse the formatted list above into the semicolon-delimited form NoWarn expects.
+		     Strips every kind of whitespace (newlines, CR, tabs, spaces) in one pass — a chain of
+		     .Replace() calls silently misses tabs, and this file is tab-indented, which leaves
+		     entries like ";<tab><tab>CA1002" that only work because Roslyn happens to trim them. -->
+		<NoWarn>$(NoWarn);$([System.Text.RegularExpressions.Regex]::Replace($(WarningsBaseline), '\s', ''))</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

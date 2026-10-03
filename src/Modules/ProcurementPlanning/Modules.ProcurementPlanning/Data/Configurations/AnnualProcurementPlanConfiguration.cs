@@ -40,6 +40,7 @@ internal sealed class AppSourcePpmpConfiguration : IEntityTypeConfiguration<AppS
         builder.ToTable("AppSourcePpmps", ProcurementPlanningModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).ValueGeneratedNever(); // app-assigned; appended to a loaded APP on consolidate
         builder.Property(x => x.PpmpNumber).HasMaxLength(64).IsRequired();
         builder.Property(x => x.OfficeCode).HasMaxLength(64).IsRequired();
         builder.Property(x => x.EndUserUnit).HasMaxLength(256).IsRequired();
@@ -57,6 +58,7 @@ internal sealed class AppLineItemConfiguration : IEntityTypeConfiguration<AppLin
         builder.ToTable("AppLineItems", ProcurementPlanningModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).ValueGeneratedNever(); // app-assigned; appended to a loaded APP on consolidate
         builder.Property(x => x.SourcePpmpNumber).HasMaxLength(64).IsRequired();
         builder.Property(x => x.OfficeCode).HasMaxLength(64).IsRequired();
         builder.Property(x => x.EndUserUnit).HasMaxLength(256).IsRequired();

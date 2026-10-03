@@ -245,11 +245,24 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         Touch();
     }
 
-    /// <summary>Promotes an Approved Indicative PPMP to a new Final draft. Caller must call Supersede() on this instance.</summary>
+    /// <summary>BAC Sec sends a consolidated PPMP back to its end-user for revision (it was pulled out of a Draft/Returned APP).</summary>
+    public void ReturnFromConsolidation(string returnReason, Guid returnedById)
+    {
+        if (Status != PpmpStatus.Consolidated)
+            throw new InvalidOperationException("Only Consolidated PPMPs can be returned from an APP.");
+
+        Status = PpmpStatus.Returned;
+        ReturnReason = returnReason;
+        ReturnedAt = DateTimeOffset.UtcNow;
+        ReturnedById = returnedById;
+        Touch();
+    }
+
+    /// <summary>Promotes an Approved or Consolidated Indicative PPMP to a new Final draft. Caller must call Supersede() on this instance.</summary>
     public Ppmp PromoteToFinal(Guid promotedById)
     {
-        if (Status is not PpmpStatus.Approved)
-            throw new InvalidOperationException("Only Approved PPMPs can be promoted to Final.");
+        if (Status is not (PpmpStatus.Approved or PpmpStatus.Consolidated))
+            throw new InvalidOperationException("Only Approved or Consolidated PPMPs can be promoted to Final.");
         if (Phase is not PpmpPhase.Indicative)
             throw new InvalidOperationException("Only Indicative PPMPs can be promoted to Final.");
 
@@ -316,6 +329,19 @@ public sealed class Ppmp : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             update._items.Add(PpmpItem.Clone(update.Id, itemNo++, item));
 
         return update;
+    }
+
+    /// <summary>Soft-deletes a Draft PPMP that is the first version of its chain.</summary>
+    public void SoftDelete(string deletedBy)
+    {
+        if (Status != PpmpStatus.Draft)
+            throw new InvalidOperationException("Only Draft PPMPs can be deleted.");
+        if (PreviousVersionId is not null)
+            throw new InvalidOperationException("Draft amendments of an approved PPMP cannot be deleted.");
+
+        IsDeleted = true;
+        DeletedOnUtc = DateTimeOffset.UtcNow;
+        DeletedBy = deletedBy;
     }
 
     public void Supersede()

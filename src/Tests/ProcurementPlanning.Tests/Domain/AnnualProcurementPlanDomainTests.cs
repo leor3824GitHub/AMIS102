@@ -31,13 +31,13 @@ public sealed class AnnualProcurementPlanDomainTests
     }
 
     [Fact]
-    public void ConsolidatePpmps_WhenPublished_Throws()
+    public void ConsolidatePpmps_WhenSubmitted_Throws()
     {
         var app = AnnualProcurementPlan.Create("APP-2025-001", 2025, AppPhase.Indicative);
         var ppmp = CreateApprovedPpmp(app.FiscalYear, PpmpPhase.Indicative);
 
         app.ConsolidatePpmps([ppmp], Guid.NewGuid());
-        app.Publish();
+        app.Submit();
 
         var act = () => app.ConsolidatePpmps([ppmp], Guid.NewGuid());
 

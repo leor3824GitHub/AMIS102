@@ -36,6 +36,9 @@ internal sealed class PpmpItemConfiguration : IEntityTypeConfiguration<PpmpItem>
         builder.ToTable("PpmpItems", ProcurementPlanningModuleConstants.SchemaName);
 
         builder.HasKey(x => x.Id);
+        // Domain assigns Id = Guid.NewGuid(). Without this, items appended to a loaded PPMP (Update → ReplaceItems)
+        // look "existing" to EF → UPDATE matches 0 rows → DbUpdateConcurrencyException. ValueGeneratedNever makes them INSERT.
+        builder.Property(x => x.Id).ValueGeneratedNever();
         builder.Property(x => x.GeneralDescription).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.Unit).HasMaxLength(64).IsRequired();
         builder.Property(x => x.ModeOfProcurement).HasMaxLength(200).IsRequired();
