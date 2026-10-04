@@ -550,6 +550,22 @@ internal sealed class MasterDataDbInitializer(
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // Annual Procurement Plan (GPPB APP form, RA 12009) — BAC Secretariat / BAC Chairperson / HoPE
+        if (!await context.ReportSignatories.AnyAsync(s => s.ReportType == "AnnualProcurementPlan", cancellationToken).ConfigureAwait(false))
+        {
+            var tenantId = context.TenantInfo?.Identifier ?? MultitenancyConstants.Root.Id;
+
+            var appSignatories = new[]
+            {
+                Domain.ReportSignatory.Create(tenantId, "AnnualProcurementPlan", 1, "Prepared by:", "Name of Employee", "Bids and Awards Committee Secretariat"),
+                Domain.ReportSignatory.Create(tenantId, "AnnualProcurementPlan", 2, "Recommended by: By the Authority of the Bids and Awards Committee:", "Name of Employee", "Bids and Awards Committee Chairperson"),
+                Domain.ReportSignatory.Create(tenantId, "AnnualProcurementPlan", 3, "Approved by:", "Name of Employee", "Head of the Procuring Entity"),
+            };
+
+            await context.ReportSignatories.AddRangeAsync(appSignatories, cancellationToken).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         // Property Classes — NFA COA GAM Annex A (Account codes per NFA chart of accounts)
         if (!await context.PropertyClasses.AnyAsync(cancellationToken).ConfigureAwait(false))
         {

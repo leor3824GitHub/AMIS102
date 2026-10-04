@@ -12,6 +12,7 @@ using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.RecallPpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ReturnPpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.CreateUpdatePpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.PromoteToFinalPpmp;
+using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.ExportPpmpXlsx;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.GetPpmpVersions;
 using AMIS.Modules.ProcurementPlanning.Features.v1.Ppmps.SearchPpmps;
@@ -26,6 +27,7 @@ using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.Return
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.CreateUpdateApp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.PromoteToFinalApp;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.DeleteAnnualProcurementPlan;
+using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.ExportAppXlsx;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAnnualProcurementPlan;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAppVersions;
 using AMIS.Modules.ProcurementPlanning.Features.v1.AnnualProcurementPlans.GetAvailablePpmps;
@@ -104,6 +106,7 @@ public class ProcurementPlanningModule : IModule
         CreateUpdatePpmpEndpoint.Map(ppmpGroup);
         PromoteToFinalPpmpEndpoint.Map(ppmpGroup);
         GetPpmpEndpoint.Map(ppmpGroup);
+        ExportPpmpXlsxEndpoint.Map(ppmpGroup);
         GetPpmpVersionsEndpoint.Map(ppmpGroup);
         SearchPpmpsEndpoint.Map(ppmpGroup);
 
@@ -119,6 +122,7 @@ public class ProcurementPlanningModule : IModule
         CreateUpdateAppEndpoint.Map(appGroup);
         PromoteToFinalAppEndpoint.Map(appGroup);
         GetAnnualProcurementPlanEndpoint.Map(appGroup);
+        ExportAppXlsxEndpoint.Map(appGroup);
         DeleteAnnualProcurementPlanEndpoint.Map(appGroup);
         GetAppVersionsEndpoint.Map(appGroup);
         GetAvailablePpmpsEndpoint.Map(appGroup);

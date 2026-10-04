@@ -33,7 +33,8 @@ internal static class PpmpMapper
                 i.Quantity, i.Unit, i.ModeOfProcurement, i.PreProcurementConference,
                 i.ProcurementStart, i.ProcurementEnd, i.ExpectedDelivery,
                 i.SourceOfFunds, i.EstimatedBudget, i.SupportingDocuments, i.Remarks,
-                i.FundingSourceCode))
+                i.FundingSourceCode, i.ProjectTitle, i.Section, i.IsEarlyProcurement,
+                i.BidEvaluationCriteria, i.ProcurementStrategy))
             .ToList(),
             ppmp.CreatedOnUtc,
             ppmp.CreatedBy,
@@ -44,6 +45,7 @@ internal static class PpmpMapper
             r.ModeOfProcurement, r.PreProcurementConference,
             r.ProcurementStart, r.ProcurementEnd, r.ExpectedDelivery,
             r.SourceOfFunds, r.EstimatedBudget, r.SupportingDocuments, r.Remarks,
-            r.FundingSourceCode);
+            r.FundingSourceCode, r.ProjectTitle, r.Section, r.IsEarlyProcurement,
+            r.BidEvaluationCriteria, r.ProcurementStrategy);
 }
 

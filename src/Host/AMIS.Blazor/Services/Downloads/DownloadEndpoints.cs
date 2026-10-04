@@ -19,9 +19,11 @@ internal static class DownloadEndpoints
                 return Results.NotFound();
             }
 
-            // No download filename → Content-Disposition inline, so the browser's PDF viewer opens it in
-            // the new tab (matches the previous data-URL behavior).
-            return Results.File(entry.Content, entry.ContentType);
+            // PDFs: no download filename → Content-Disposition inline, so the browser's PDF viewer opens it in
+            // the new tab (matches the previous data-URL behavior). Anything else (e.g. .xlsx) is an attachment.
+            return entry.ContentType == "application/pdf"
+                ? Results.File(entry.Content, entry.ContentType)
+                : Results.File(entry.Content, entry.ContentType, fileDownloadName: entry.FileName);
         })
         .RequireAuthorization();
     }

@@ -42,7 +42,12 @@ public sealed record AppItemDto(
     string ExpectedDelivery,
     string SourceOfFunds,
     decimal EstimatedBudget,
-    string? Remarks);
+    string? Remarks,
+    string? ProjectTitle = null,
+    AppSection Section = AppSection.GeneralRequirements,
+    bool IsEarlyProcurement = false,
+    BidEvaluationCriteria BidEvaluationCriteria = BidEvaluationCriteria.NotApplicable,
+    string? ProcurementStrategy = null);
 
 public sealed record AnnualProcurementPlanDto(
     Guid Id,

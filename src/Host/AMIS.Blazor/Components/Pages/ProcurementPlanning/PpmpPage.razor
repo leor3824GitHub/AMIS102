@@ -20,6 +20,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Project Procurement Management Plan (PPMP)"
                Description="Manage per-section procurement plans for the fiscal year">
@@ -53,6 +54,15 @@
         }
         <MudGrid Spacing="2" Class="mt-1">
             <MudItem xs="12">
+                <MudTextField T="string" @bind-Value="_itemForm.ProjectTitle" Label="Project Title"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                              MaxLength="500" Immediate="true" DebounceInterval="200"
+                              Error="@HasItemError(nameof(PpmpItemFormModel.ProjectTitle))"
+                              ErrorText="@ItemError(nameof(PpmpItemFormModel.ProjectTitle))"
+                              HelperText="APP Column 1 — leave blank to use the description"
+                              Placeholder="e.g. 2027 Security Services" />
+            </MudItem>
+            <MudItem xs="12">
                 @* Plain multi-line text box (normal cursor/arrow/Home/End editing); previous descriptions are offered
                    as chips below instead of an autocomplete popover, which hijacked arrow keys and select-all on focus. *@
                 <MudTextField T="string" @bind-Value="_itemForm.GeneralDescription" Label="Description / Objective"
@@ -84,7 +94,8 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="_itemForm.ProjectType" Label="Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="ProjectType">
+                <MudSelect Value="_itemForm.ProjectType" ValueChanged="@((ProjectType t) => OnItemProjectTypeChanged(t))"
+                           Label="Type" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" T="ProjectType">
                     <MudSelectItem Value="ProjectType.Goods">Goods</MudSelectItem>
                     <MudSelectItem Value="ProjectType.Infrastructure">Infrastructure</MudSelectItem>
                     <MudSelectItem Value="ProjectType.ConsultingServices">Consulting Services</MudSelectItem>
@@ -92,7 +103,8 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="string" @bind-Value="_itemForm.ModeOfProcurement" Label="Mode of Procurement"
+                <MudAutocomplete T="string" Value="_itemForm.ModeOfProcurement" ValueChanged="@((string m) => OnItemModeChanged(m))"
+                                 Label="Mode of Procurement"
                                  Variant="Variant.Outlined" SearchFunc="SearchModesOfProcurement"
                                  ResetValueOnEmptyText="false" CoerceText="true" CoerceValue="true" Required="true"
                                  Dense="true" Margin="Margin.Dense" Size="Size.Small"
@@ -173,11 +185,44 @@
                               HelperText="Auto-filled from the UACS code; editable" />
             </MudItem>
 
-            <MudItem xs="12" sm="3" Style="display:flex;align-items:center">
+            <MudItem xs="12" sm="4">
+                <MudSelect T="AppSection" Value="_itemForm.Section" ValueChanged="@((AppSection s) => { _itemForm.Section = s; _sectionTouched = true; })"
+                           Label="APP Section" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                           HelperText="Auto-set from the mode; change if needed">
+                    <MudSelectItem Value="AppSection.GeneralRequirements">General Requirements</MudSelectItem>
+                    <MudSelectItem Value="AppSection.DirectAcquisition">Misc. — Direct Acquisition (Sec 32.2)</MudSelectItem>
+                    <MudSelectItem Value="AppSection.CommonUseSupplies">CSE from PS-DBM</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudSelect T="BidEvaluationCriteria" Value="_itemForm.BidEvaluationCriteria"
+                           ValueChanged="@((BidEvaluationCriteria c) => { _itemForm.BidEvaluationCriteria = c; _criteriaTouched = true; })"
+                           Label="Criteria for Bid Evaluation" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small"
+                           Error="@HasItemError(nameof(PpmpItemFormModel.BidEvaluationCriteria))"
+                           ErrorText="@ItemError(nameof(PpmpItemFormModel.BidEvaluationCriteria))">
+                    <MudSelectItem Value="BidEvaluationCriteria.NotApplicable">N/A</MudSelectItem>
+                    <MudSelectItem Value="BidEvaluationCriteria.Lcrb">LCRB — Lowest Calculated Responsive Bid</MudSelectItem>
+                    <MudSelectItem Value="BidEvaluationCriteria.Mearb">MEARB — Most Economically Advantageous Responsive Bid</MudSelectItem>
+                    <MudSelectItem Value="BidEvaluationCriteria.Hrrb">HRRB — Highest Rated Responsive Bid</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4" Style="display:flex;flex-direction:column;justify-content:center">
+                <MudSwitch T="bool" @bind-Value="_itemForm.IsEarlyProcurement" Label="Early Procurement (EPA)" Color="Color.Warning" />
                 <MudCheckBox @bind-Value="_itemForm.PreProcurementConference" Label="Pre-Proc Conference"
-                             Color="Color.Primary" />
+                             Color="Color.Primary" Dense="true" />
             </MudItem>
 
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_itemForm.ProcurementStrategy" Label="Procurement Strategy or Tools"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="500"
+                              HelperText="APP Column 11 — e.g. framework agreement, e-reverse auction (optional)" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_itemForm.SupportingDocuments" Label="Attached Supporting Documents"
+                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" MaxLength="500"
+                              HelperText="PPMP Column 11 — e.g. technical specs, scope of work, market survey" />
+            </MudItem>
             <MudItem xs="12">
                 <MudTextField @bind-Value="_itemForm.Remarks" Label="Remarks" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Size="Size.Small" Lines="2" />
             </MudItem>
@@ -255,6 +300,13 @@
                     <MudTd DataLabel="Status">@StatusChip(context.Status)</MudTd>
                     <MudTd DataLabel="Total Budget">@Money.Symbol@context.TotalEstimatedBudget.ToString("N2")</MudTd>
                     <MudTd @onclick:stopPropagation="true">
+                        @if (context.ItemCount > 0 && _canView)
+                        {
+                            <MudMenu Icon="@Icons.Material.Filled.Print" Color="Color.Secondary" Size="Size.Small" Dense="true"
+                                     AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" ToolTip="Print or export PPMP">
+                                @PrintMenuItems(context.Id)
+                            </MudMenu>
+                        }
                         @if (context.Status is PpmpStatus.Draft or PpmpStatus.Returned)
                         {
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
@@ -367,15 +419,24 @@
                             Create Update
                         </MudButton>
                     }
+                    @* Prints the saved PPMP — save first so the document reflects what's on screen. *@
+                    @if (_editing is not null && _editing.Items.Count > 0 && _canView)
+                    {
+                        <MudMenu StartIcon="@Icons.Material.Filled.Print" Label="Print / Export" Variant="Variant.Outlined"
+                                 Color="Color.Secondary" Size="Size.Small" Dense="true" Disabled="_busy"
+                                 AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                            @PrintMenuItems(_editing.Id)
+                        </MudMenu>
+                    }
 
                     <!-- Edit actions -->
                     @if (!_isReadOnly && _canEdit)
                     {
                         <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
-                        @* Save is only meaningful when the form differs from the saved draft; Create is always available. *@
-                        <MudTooltip Text="@(_editing is null ? "Create this PPMP as a Draft" : _hasUnsavedChanges ? "Save your changes to the draft" : "No changes to save")">
+                        @* Save is only meaningful when the form differs from the saved draft; Create needs at least one line item. *@
+                        <MudTooltip Text="@(_editing is null ? (_form.Items.Count == 0 ? "Add at least one line item to create this PPMP" : "Create this PPMP as a Draft") : _hasUnsavedChanges ? "Save your changes to the draft" : "No changes to save")">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
-                                       OnClick="SaveAsync" Disabled="@(_busy || (_editing is not null && !_hasUnsavedChanges))" Size="Size.Small">
+                                       OnClick="SaveAsync" Disabled="@(_busy || (_editing is null ? _form.Items.Count == 0 : !_hasUnsavedChanges))" Size="Size.Small">
                                 @if (_busy)
                                 {
                                     <MudProgressCircular Size="Size.Small" Class="mr-1" Indeterminate="true" />
@@ -453,9 +514,11 @@
                                   HelperText="@(_orgOfficeCode != null ? "From Organization Profile" : null)" />
                 </MudItem>
                 <MudItem xs="6" sm="3">
-                    <MudTextField @bind-Value="_form.EndUserUnit" Label="End-User / Section" Variant="Variant.Outlined" Immediate="true" DebounceInterval="300"
-                                  Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" Disabled="_isReadOnly"
-                                  HelperText="@(_employeeDepartment != null ? "From your employee profile" : null)" />
+                    <MudAutocomplete T="string" @bind-Value="_form.EndUserUnit" Label="End-User / Section" Variant="Variant.Outlined"
+                                     SearchFunc="SearchDepartments" ResetValueOnEmptyText="false" CoerceText="true" CoerceValue="true"
+                                     Dense="true" Margin="Margin.Dense" Size="Size.Small" Required="true" Disabled="_isReadOnly"
+                                     MaxItems="20" Placeholder="Select a department or type a section"
+                                     HelperText="@(_employeeDepartment != null ? "From your employee profile" : "Select from departments or type a section")" />
                 </MudItem>
             </MudGrid>
 
@@ -509,11 +572,26 @@
                                             @(idx + 1)
                                         </td>
                                         <td style="vertical-align:middle">
+                                            @if (!string.IsNullOrWhiteSpace(item.ProjectTitle) && item.ProjectTitle != item.GeneralDescription)
+                                            {
+                                                <MudText Typo="Typo.body2" Style="font-weight:600">@item.ProjectTitle</MudText>
+                                            }
                                             <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
                                             @if (!string.IsNullOrWhiteSpace(item.Remarks))
                                             {
                                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
                                             }
+                                            <MudStack Row="true" Spacing="1" Class="mt-1">
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Label="true">@item.Section.ToDisplay()</MudChip>
+                                                @if (item.IsEarlyProcurement)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">EPA</MudChip>
+                                                }
+                                                @if (item.BidEvaluationCriteria != BidEvaluationCriteria.NotApplicable)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Label="true">@item.BidEvaluationCriteria.ToDisplay()</MudChip>
+                                                }
+                                            </MudStack>
                                         </td>
                                         <td style="vertical-align:middle">
                                             <MudChip T="string" Size="Size.Small" Color="Color.Default" Label="true">
@@ -622,6 +700,7 @@
     // -- Master data for autocomplete ---------------------------------
     private List<string> _unitCodes = [];
     private List<string> _modeOfProcurementNames = [];
+    private List<string> _departmentNames = [];
     private readonly HashSet<string> _usedDescriptions = new(StringComparer.OrdinalIgnoreCase);
 
     // -- Item dialog state --------------------------------------------
@@ -657,7 +736,14 @@
         // (01 = Regular Agency Fund). Nullable while the picker is optional.
         public string? FundingSourceCode { get; set; }
         public decimal EstimatedBudget { get; set; }
+        public string SupportingDocuments { get; set; } = string.Empty;
         public string Remarks { get; set; } = string.Empty;
+        // GPPB APP form (RA 12009) columns.
+        public string ProjectTitle { get; set; } = string.Empty;
+        public AppSection Section { get; set; } = AppSection.GeneralRequirements;
+        public bool IsEarlyProcurement { get; set; }
+        public BidEvaluationCriteria BidEvaluationCriteria { get; set; } = BidEvaluationCriteria.NotApplicable;
+        public string ProcurementStrategy { get; set; } = string.Empty;
     }
 
     // code → dto cache from the funding-source picker, used for item templates and auto-fill.
@@ -709,6 +795,7 @@
         values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
 
     // -- Lifecycle ----------------------------------------------------
+    private bool _canView => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.View);
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Create);
     private bool _canUpdate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.Ppmps.Update);
     private bool _canEdit => _canCreate || _canUpdate;
@@ -720,7 +807,21 @@
     protected override async Task OnInitializedAsync()
     {
         UserProfileState.OnProfileChanged += OnProfileChanged;
-        await Task.WhenAll(LoadDefaultsAsync(), LoadUnitsAsync(), LoadModesOfProcurementAsync(), LoadAsync());
+        await Task.WhenAll(LoadDefaultsAsync(), LoadUnitsAsync(), LoadModesOfProcurementAsync(), LoadDepartmentsAsync(), LoadAsync());
+    }
+
+    private async Task LoadDepartmentsAsync()
+    {
+        try
+        {
+            _departmentNames = (await LookupData.GetDepartmentsAsync())
+                .Where(d => d.IsActive && !string.IsNullOrWhiteSpace(d.Name))
+                .Select(d => d.Name.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n)
+                .ToList();
+        }
+        catch { /* non-critical — field still accepts free text */ }
     }
 
     private void OnProfileChanged() => InvokeAsync(StateHasChanged);
@@ -915,7 +1016,13 @@
                 SourceOfFunds = i.SourceOfFunds,
                 FundingSourceCode = i.FundingSourceCode,
                 EstimatedBudget = i.EstimatedBudget,
-                Remarks = i.Remarks ?? string.Empty
+                Remarks = i.Remarks ?? string.Empty,
+                SupportingDocuments = i.SupportingDocuments ?? string.Empty,
+                ProjectTitle = i.ProjectTitle ?? string.Empty,
+                Section = i.Section,
+                IsEarlyProcurement = i.IsEarlyProcurement,
+                BidEvaluationCriteria = i.BidEvaluationCriteria,
+                ProcurementStrategy = i.ProcurementStrategy ?? string.Empty
             }).ToList()
         };
 
@@ -936,8 +1043,33 @@
     {
         _editingItemIdx = null;
         _itemForm = new PpmpItemFormModel();
+        _sectionTouched = _criteriaTouched = false;
         _itemSubmitAttempted = false;
         _itemDialogOpen = true;
+    }
+
+    // Section / criteria follow the mode of procurement until the user picks them explicitly in this dialog.
+    private bool _sectionTouched;
+    private bool _criteriaTouched;
+
+    private void OnItemModeChanged(string? mode)
+    {
+        _itemForm.ModeOfProcurement = mode ?? string.Empty;
+        ApplyItemSuggestions();
+    }
+
+    private void OnItemProjectTypeChanged(ProjectType type)
+    {
+        _itemForm.ProjectType = type;
+        ApplyItemSuggestions();
+    }
+
+    private void ApplyItemSuggestions()
+    {
+        if (!_sectionTouched)
+            _itemForm.Section = ProcurementPlanRules.SuggestSection(_itemForm.ModeOfProcurement);
+        if (!_criteriaTouched)
+            _itemForm.BidEvaluationCriteria = ProcurementPlanRules.SuggestCriteria(_itemForm.ModeOfProcurement, _itemForm.ProjectType);
     }
 
     private void OpenEditItemDialog(int idx)
@@ -958,8 +1090,17 @@
             SourceOfFunds = src.SourceOfFunds,
             FundingSourceCode = src.FundingSourceCode,
             EstimatedBudget = src.EstimatedBudget,
-            Remarks = src.Remarks
+            Remarks = src.Remarks,
+            SupportingDocuments = src.SupportingDocuments,
+            ProjectTitle = src.ProjectTitle,
+            Section = src.Section,
+            IsEarlyProcurement = src.IsEarlyProcurement,
+            BidEvaluationCriteria = src.BidEvaluationCriteria,
+            ProcurementStrategy = src.ProcurementStrategy
         };
+        // An existing item keeps its saved classification; only an explicit mode change re-suggests it.
+        _sectionTouched = src.Section != ProcurementPlanRules.SuggestSection(src.ModeOfProcurement);
+        _criteriaTouched = src.BidEvaluationCriteria != ProcurementPlanRules.SuggestCriteria(src.ModeOfProcurement, src.ProjectType);
         _itemSubmitAttempted = false;
         _itemDialogOpen = true;
     }
@@ -979,6 +1120,9 @@
         if (string.IsNullOrWhiteSpace(f.Unit)) errors[nameof(f.Unit)] = "Unit of measure is required.";
         if (f.EstimatedBudget <= 0) errors[nameof(f.EstimatedBudget)] = "Estimated budget must be greater than zero.";
         if (string.IsNullOrWhiteSpace(f.SourceOfFunds)) errors[nameof(f.SourceOfFunds)] = "Source of funds is required.";
+        if (f.ProjectTitle?.Length > 500) errors[nameof(f.ProjectTitle)] = "Project title must be 500 characters or fewer.";
+        if (ProcurementPlanRules.IsCompetitiveBidding(f.ModeOfProcurement) && f.BidEvaluationCriteria == BidEvaluationCriteria.NotApplicable)
+            errors[nameof(f.BidEvaluationCriteria)] = "Select the criteria for bid evaluation for competitive bidding.";
 
         var start = ParseMonth(f.ProcurementStart, nameof(f.ProcurementStart), "Procurement start", errors);
         var end = ParseMonth(f.ProcurementEnd, nameof(f.ProcurementEnd), "Procurement end", errors);
@@ -1038,6 +1182,12 @@
             target.FundingSourceCode = _itemForm.FundingSourceCode;
             target.EstimatedBudget = _itemForm.EstimatedBudget;
             target.Remarks = _itemForm.Remarks;
+            target.SupportingDocuments = _itemForm.SupportingDocuments;
+            target.ProjectTitle = _itemForm.ProjectTitle;
+            target.Section = _itemForm.Section;
+            target.IsEarlyProcurement = _itemForm.IsEarlyProcurement;
+            target.BidEvaluationCriteria = _itemForm.BidEvaluationCriteria;
+            target.ProcurementStrategy = _itemForm.ProcurementStrategy;
         }
         else
         {
@@ -1055,7 +1205,13 @@
                 SourceOfFunds = _itemForm.SourceOfFunds,
                 FundingSourceCode = _itemForm.FundingSourceCode,
                 EstimatedBudget = _itemForm.EstimatedBudget,
-                Remarks = _itemForm.Remarks
+                Remarks = _itemForm.Remarks,
+                SupportingDocuments = _itemForm.SupportingDocuments,
+                ProjectTitle = _itemForm.ProjectTitle,
+                Section = _itemForm.Section,
+                IsEarlyProcurement = _itemForm.IsEarlyProcurement,
+                BidEvaluationCriteria = _itemForm.BidEvaluationCriteria,
+                ProcurementStrategy = _itemForm.ProcurementStrategy
             });
         }
 
@@ -1064,7 +1220,54 @@
 
     private void CloseItemDialog() => _itemDialogOpen = false;
 
+    // -- Print / export (GPPB PPMP form) ------------------------------
+    private RenderFragment PrintMenuItems(Guid ppmpId) =>
+        @<text>
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => PrintPpmpAsync(ppmpId, "longbond"))">View PDF — Long Bond (8.5×13)</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => PrintPpmpAsync(ppmpId, "legal"))">View PDF — Legal (8.5×14)</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => PrintPpmpAsync(ppmpId, "a4"))">View PDF — A4</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.TableView" OnClick="@(() => ExportPpmpXlsxAsync(ppmpId))">Export to Excel (.xlsx)</MudMenuItem>
+        </text>;
+
+    private async Task PrintPpmpAsync(Guid ppmpId, string paperSize)
+    {
+        try
+        {
+            var bytes = await PpmpClient.GetPdfAsync(ppmpId, paperSize);
+            await PdfDownload.OpenInNewTabAsync(bytes, "PPMP.pdf");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportPpmpXlsxAsync(Guid ppmpId)
+    {
+        try
+        {
+            var bytes = await PpmpClient.GetXlsxAsync(ppmpId);
+            await PdfDownload.DownloadAsync(bytes, "PPMP.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            Snackbar.Add("Excel file ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
     // -- Autocomplete search functions --------------------------------
+    private Task<IEnumerable<string>> SearchDepartments(string value, CancellationToken _)
+    {
+        IEnumerable<string> matches = string.IsNullOrWhiteSpace(value)
+            ? _departmentNames
+            : _departmentNames.Where(n => n.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(matches.Take(20));
+    }
+
     private Task<IEnumerable<string>> SearchUnits(string value, CancellationToken _)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -1176,7 +1379,11 @@
             i.ModeOfProcurement, i.PreProcurementConference,
             i.ProcurementStart, i.ProcurementEnd, i.ExpectedDelivery,
             i.SourceOfFunds, i.EstimatedBudget,
-            null, i.Remarks, i.FundingSourceCode)).ToList();
+            string.IsNullOrWhiteSpace(i.SupportingDocuments) ? null : i.SupportingDocuments.Trim(),
+            i.Remarks, i.FundingSourceCode,
+            string.IsNullOrWhiteSpace(i.ProjectTitle) ? null : i.ProjectTitle.Trim(),
+            i.Section, i.IsEarlyProcurement, i.BidEvaluationCriteria,
+            string.IsNullOrWhiteSpace(i.ProcurementStrategy) ? null : i.ProcurementStrategy.Trim())).ToList();
 
     // Persists the open form onto the existing PPMP (Draft/Returned only).
     private async Task SaveFormToEditingAsync()

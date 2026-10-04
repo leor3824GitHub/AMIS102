@@ -18,7 +18,12 @@ public sealed record PpmpItemData(
     decimal EstimatedBudget,
     string? SupportingDocuments,
     string? Remarks,
-    string? FundingSourceCode = null);
+    string? FundingSourceCode = null,
+    string? ProjectTitle = null,
+    AppSection Section = AppSection.GeneralRequirements,
+    bool IsEarlyProcurement = false,
+    BidEvaluationCriteria BidEvaluationCriteria = BidEvaluationCriteria.NotApplicable,
+    string? ProcurementStrategy = null);
 
 public sealed class PpmpItem
 {
@@ -43,6 +48,13 @@ public sealed class PpmpItem
     // free-text SourceOfFunds column; nullable while historical/legacy rows are backfilled.
     public string? FundingSourceCode { get; private set; }
 
+    // GPPB APP form (RA 12009) columns. ProjectTitle falls back to GeneralDescription when not supplied.
+    public string ProjectTitle { get; private set; } = default!;
+    public AppSection Section { get; private set; }
+    public bool IsEarlyProcurement { get; private set; }
+    public BidEvaluationCriteria BidEvaluationCriteria { get; private set; }
+    public string? ProcurementStrategy { get; private set; }
+
     private PpmpItem() { }
 
     internal static PpmpItem Create(Guid ppmpId, int itemNo, PpmpItemData data) =>
@@ -64,7 +76,12 @@ public sealed class PpmpItem
             EstimatedBudget = data.EstimatedBudget,
             SupportingDocuments = data.SupportingDocuments,
             Remarks = data.Remarks,
-            FundingSourceCode = data.FundingSourceCode
+            FundingSourceCode = data.FundingSourceCode,
+            ProjectTitle = string.IsNullOrWhiteSpace(data.ProjectTitle) ? data.GeneralDescription : data.ProjectTitle.Trim(),
+            Section = data.Section,
+            IsEarlyProcurement = data.IsEarlyProcurement,
+            BidEvaluationCriteria = data.BidEvaluationCriteria,
+            ProcurementStrategy = string.IsNullOrWhiteSpace(data.ProcurementStrategy) ? null : data.ProcurementStrategy.Trim()
         };
 
     internal static PpmpItem Clone(Guid ppmpId, int itemNo, PpmpItem source) =>
@@ -86,7 +103,12 @@ public sealed class PpmpItem
             EstimatedBudget = source.EstimatedBudget,
             SupportingDocuments = source.SupportingDocuments,
             Remarks = source.Remarks,
-            FundingSourceCode = source.FundingSourceCode
+            FundingSourceCode = source.FundingSourceCode,
+            ProjectTitle = source.ProjectTitle,
+            Section = source.Section,
+            IsEarlyProcurement = source.IsEarlyProcurement,
+            BidEvaluationCriteria = source.BidEvaluationCriteria,
+            ProcurementStrategy = source.ProcurementStrategy
         };
 }
 

@@ -29,6 +29,85 @@ public enum ProjectType
     ConsultingServices = 2
 }
 
+/// <summary>Grouping of a line item on the GPPB APP form (RA 12009).</summary>
+public enum AppSection
+{
+    /// <summary>General Requirements — projects procured through the regular modes.</summary>
+    GeneralRequirements = 0,
+
+    /// <summary>Miscellaneous Items (for Direct Acquisition only), Sec 32.2 of RA No. 12009.</summary>
+    DirectAcquisition = 1,
+
+    /// <summary>Common-Use Supplies and Equipment (CSE) to be purchased from PS-DBM.</summary>
+    CommonUseSupplies = 2
+}
+
+/// <summary>Criteria for bid evaluation printed in Column 6 of the APP form.</summary>
+public enum BidEvaluationCriteria
+{
+    NotApplicable = 0,
+
+    /// <summary>Lowest Calculated Responsive Bid.</summary>
+    Lcrb = 1,
+
+    /// <summary>Most Economically Advantageous Responsive Bid (RA 12009).</summary>
+    Mearb = 2,
+
+    /// <summary>Highest Rated Responsive Bid (consulting services).</summary>
+    Hrrb = 3
+}
+
+/// <summary>Defaults shared by the API and the UI so a PPMP item is pre-classified the same way everywhere.</summary>
+public static class ProcurementPlanRules
+{
+    public static bool IsCompetitiveBidding(string? modeOfProcurement) =>
+        !string.IsNullOrWhiteSpace(modeOfProcurement) &&
+        (modeOfProcurement.Contains("Competitive Bidding", StringComparison.OrdinalIgnoreCase) ||
+         modeOfProcurement.Contains("Public Bidding", StringComparison.OrdinalIgnoreCase));
+
+    public static AppSection SuggestSection(string? modeOfProcurement)
+    {
+        if (string.IsNullOrWhiteSpace(modeOfProcurement))
+            return AppSection.GeneralRequirements;
+        if (modeOfProcurement.Contains("Direct Acquisition", StringComparison.OrdinalIgnoreCase))
+            return AppSection.DirectAcquisition;
+        if (modeOfProcurement.Contains("PS-DBM", StringComparison.OrdinalIgnoreCase) ||
+            modeOfProcurement.Contains("Procurement Service", StringComparison.OrdinalIgnoreCase))
+            return AppSection.CommonUseSupplies;
+        return AppSection.GeneralRequirements;
+    }
+
+    public static BidEvaluationCriteria SuggestCriteria(string? modeOfProcurement, ProjectType projectType)
+    {
+        if (!IsCompetitiveBidding(modeOfProcurement))
+            return BidEvaluationCriteria.NotApplicable;
+        return projectType == ProjectType.ConsultingServices ? BidEvaluationCriteria.Hrrb : BidEvaluationCriteria.Lcrb;
+    }
+
+    public static string ToDisplay(this BidEvaluationCriteria criteria) => criteria switch
+    {
+        BidEvaluationCriteria.Lcrb => "LCRB",
+        BidEvaluationCriteria.Mearb => "MEARB",
+        BidEvaluationCriteria.Hrrb => "HRRB",
+        _ => "N/A"
+    };
+
+    /// <summary>Section heading row exactly as printed on the GPPB APP form.</summary>
+    public static string ToFormTitle(this AppSection section) => section switch
+    {
+        AppSection.DirectAcquisition => "Miscellaneous Items (for Direct Acquisition only) Sec 32.2 of RA No. 12009",
+        AppSection.CommonUseSupplies => "Common Use Supplies and Equipment (CSE) to be purchased from PS-DBM (kindly indicate the summary/total amounts only)",
+        _ => "General Requirements"
+    };
+
+    public static string ToDisplay(this AppSection section) => section switch
+    {
+        AppSection.DirectAcquisition => "Direct Acquisition",
+        AppSection.CommonUseSupplies => "CSE (PS-DBM)",
+        _ => "General"
+    };
+}
+
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
 public sealed record PpmpItemDto(
@@ -47,7 +126,12 @@ public sealed record PpmpItemDto(
     decimal EstimatedBudget,
     string? SupportingDocuments,
     string? Remarks,
-    string? FundingSourceCode = null);
+    string? FundingSourceCode = null,
+    string? ProjectTitle = null,
+    AppSection Section = AppSection.GeneralRequirements,
+    bool IsEarlyProcurement = false,
+    BidEvaluationCriteria BidEvaluationCriteria = BidEvaluationCriteria.NotApplicable,
+    string? ProcurementStrategy = null);
 
 public sealed record PpmpDto(
     Guid Id,
@@ -108,7 +192,12 @@ public sealed record PpmpItemRequest(
     decimal EstimatedBudget,
     string? SupportingDocuments,
     string? Remarks,
-    string? FundingSourceCode = null);
+    string? FundingSourceCode = null,
+    string? ProjectTitle = null,
+    AppSection Section = AppSection.GeneralRequirements,
+    bool IsEarlyProcurement = false,
+    BidEvaluationCriteria BidEvaluationCriteria = BidEvaluationCriteria.NotApplicable,
+    string? ProcurementStrategy = null);
 
 // ── Commands ─────────────────────────────────────────────────────────────────
 

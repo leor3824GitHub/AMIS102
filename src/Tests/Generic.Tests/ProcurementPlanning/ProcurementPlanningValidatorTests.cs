@@ -109,6 +109,52 @@ public sealed class ProcurementPlanningValidatorTests
     }
 
     [Fact]
+    public void CreatePpmp_CompetitiveBiddingWithoutCriteria_Fails()
+    {
+        var validator = new CreatePpmpCommandValidator();
+        var item = new PpmpItemRequest("Security services", ProjectType.Goods, 1, "lot", "Competitive Bidding",
+            false, "01/2027", "03/2027", "04/2027", "General Fund", 10_000m, null, null,
+            BidEvaluationCriteria: BidEvaluationCriteria.NotApplicable);
+        var command = new CreatePpmpCommand(2027, PpmpPhase.Indicative, "ICT", "ICT Unit",
+            Guid.NewGuid(), [item]);
+
+        var result = validator.Validate(command);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.PropertyName.Contains("BidEvaluationCriteria"));
+    }
+
+    [Fact]
+    public void CreatePpmp_CompetitiveBiddingWithLcrb_Passes()
+    {
+        var validator = new CreatePpmpCommandValidator();
+        var item = new PpmpItemRequest("Security services", ProjectType.Goods, 1, "lot", "Competitive Bidding",
+            false, "01/2027", "03/2027", "04/2027", "General Fund", 10_000m, null, null,
+            ProjectTitle: "2027 Security Services", IsEarlyProcurement: true,
+            BidEvaluationCriteria: BidEvaluationCriteria.Lcrb);
+        var command = new CreatePpmpCommand(2027, PpmpPhase.Indicative, "ICT", "ICT Unit",
+            Guid.NewGuid(), [item]);
+
+        validator.Validate(command).IsValid.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void CreatePpmp_ProjectTitleTooLong_Fails()
+    {
+        var validator = new CreatePpmpCommandValidator();
+        var item = new PpmpItemRequest("Laptop", ProjectType.Goods, 1, "lot", "Shopping",
+            false, "01/2027", "03/2027", "04/2027", "General Fund", 10_000m, null, null,
+            ProjectTitle: new string('x', 501));
+        var command = new CreatePpmpCommand(2027, PpmpPhase.Indicative, "ICT", "ICT Unit",
+            Guid.NewGuid(), [item]);
+
+        var result = validator.Validate(command);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.PropertyName.Contains("ProjectTitle"));
+    }
+
+    [Fact]
     public void CreatePpmp_ZeroQuantity_Fails()
     {
         var validator = new CreatePpmpCommandValidator();

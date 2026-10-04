@@ -72,6 +72,11 @@ public sealed class AppLineItem
     public decimal EstimatedBudget { get; private set; }
     public string? SupportingDocuments { get; private set; }
     public string? Remarks { get; private set; }
+    public string ProjectTitle { get; private set; } = default!;
+    public AppSection Section { get; private set; }
+    public bool IsEarlyProcurement { get; private set; }
+    public BidEvaluationCriteria BidEvaluationCriteria { get; private set; }
+    public string? ProcurementStrategy { get; private set; }
     public DateTimeOffset ConsolidatedAt { get; private set; }
 
     private AppLineItem() { }
@@ -105,6 +110,11 @@ public sealed class AppLineItem
             EstimatedBudget = source.EstimatedBudget,
             SupportingDocuments = source.SupportingDocuments,
             Remarks = source.Remarks,
+            ProjectTitle = source.ProjectTitle,
+            Section = source.Section,
+            IsEarlyProcurement = source.IsEarlyProcurement,
+            BidEvaluationCriteria = source.BidEvaluationCriteria,
+            ProcurementStrategy = source.ProcurementStrategy,
             ConsolidatedAt = consolidatedAt
         };
 
@@ -132,6 +142,11 @@ public sealed class AppLineItem
             EstimatedBudget = source.EstimatedBudget,
             SupportingDocuments = source.SupportingDocuments,
             Remarks = source.Remarks,
+            ProjectTitle = source.ProjectTitle,
+            Section = source.Section,
+            IsEarlyProcurement = source.IsEarlyProcurement,
+            BidEvaluationCriteria = source.BidEvaluationCriteria,
+            ProcurementStrategy = source.ProcurementStrategy,
             ConsolidatedAt = source.ConsolidatedAt
         };
 }

@@ -5,7 +5,7 @@ namespace AMIS.Modules.MasterData.Features.v1.ReportSignatories.UpdateReportSign
 
 public sealed class UpdateReportSignatoryCommandValidator : AbstractValidator<UpdateReportSignatoryCommand>
 {
-    private static readonly string[] AllowedReportTypes = ["VehicleInventory", "PhysicalCount", "DepartmentIssuance", "StockCard", "EmployeeIssuance"];
+    private static readonly string[] AllowedReportTypes = ["VehicleInventory", "PhysicalCount", "DepartmentIssuance", "StockCard", "EmployeeIssuance", "AbstractOfCanvass", "AnnualProcurementPlan"];
 
     public UpdateReportSignatoryCommandValidator()
     {

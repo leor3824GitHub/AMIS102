@@ -29,6 +29,13 @@ internal sealed class PpmpItemRequestValidator : AbstractValidator<PpmpItemReque
         RuleFor(x => x.ExpectedDelivery).NotEmpty().Matches(@"^\d{2}/\d{4}$").WithMessage("ExpectedDelivery must be MM/YYYY.");
         RuleFor(x => x.SourceOfFunds).NotEmpty().MaximumLength(256);
         RuleFor(x => x.FundingSourceCode).MaximumLength(32);
+        RuleFor(x => x.ProjectTitle).MaximumLength(500);
+        RuleFor(x => x.ProcurementStrategy).MaximumLength(500);
+        RuleFor(x => x.Section).IsInEnum();
+        RuleFor(x => x.BidEvaluationCriteria).IsInEnum()
+            .NotEqual(BidEvaluationCriteria.NotApplicable)
+            .When(x => ProcurementPlanRules.IsCompetitiveBidding(x.ModeOfProcurement))
+            .WithMessage("Criteria for bid evaluation is required for competitive bidding.");
     }
 }
 

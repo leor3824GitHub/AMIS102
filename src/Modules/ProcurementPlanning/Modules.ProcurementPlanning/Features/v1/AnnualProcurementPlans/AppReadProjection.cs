@@ -41,7 +41,12 @@ internal static class AppReadProjection
                 x.ExpectedDelivery,
                 x.SourceOfFunds,
                 x.EstimatedBudget,
-                x.Remarks))
+                x.Remarks,
+                x.ProjectTitle,
+                x.Section,
+                x.IsEarlyProcurement,
+                x.BidEvaluationCriteria,
+                x.ProcurementStrategy))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

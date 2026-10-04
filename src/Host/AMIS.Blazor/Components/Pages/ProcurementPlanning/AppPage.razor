@@ -12,6 +12,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IUserProfileState UserProfileState
+@inject IPdfDownloadService PdfDownload
 
 <AMISPageHeader Title="Annual Procurement Plan (APP)"
                Description="Consolidate approved PPMPs and manage the annual procurement plan">
@@ -94,6 +95,13 @@
                         @Money.Symbol@context.TotalEstimatedBudget.ToString("N2")
                     </MudTd>
                     <MudTd @onclick:stopPropagation="true">
+                        @if (context.ItemCount > 0 && _canView)
+                        {
+                            <MudMenu Icon="@Icons.Material.Filled.Print" Color="Color.Secondary" Size="Size.Small" Dense="true"
+                                     AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" ToolTip="Print or export APP">
+                                @PrintMenuItems(context.Id)
+                            </MudMenu>
+                        }
                         @if (context.Status == AppStatus.Draft)
                         {
                             @if (_canSubmit)
@@ -212,6 +220,14 @@
                                        OnClick="ShowCreateUpdateDialogAsync" Disabled="_busy" Size="Size.Small">
                                 Create Update
                             </MudButton>
+                        }
+                        @if (_editing.Items.Count > 0 && _canView)
+                        {
+                            <MudMenu StartIcon="@Icons.Material.Filled.Print" Label="Print / Export" Variant="Variant.Outlined"
+                                     Color="Color.Secondary" Size="Size.Small" Dense="true" Disabled="_busy"
+                                     AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                                @PrintMenuItems(_editing.Id)
+                            </MudMenu>
                         }
                         @if (_editing.Status == AppStatus.Draft && _canDelete)
                         {
@@ -539,7 +555,24 @@
                                                     <tr>
                                                         <td style="color:var(--mud-palette-text-secondary)">@item.ItemNo</td>
                                                         <td>
-                                                            <MudText Typo="Typo.body2">@item.GeneralDescription</MudText>
+                                                            <MudText Typo="Typo.body2" Style="font-weight:600">@(string.IsNullOrWhiteSpace(item.ProjectTitle) ? item.GeneralDescription : item.ProjectTitle)</MudText>
+                                                            @if (!string.IsNullOrWhiteSpace(item.ProjectTitle) && item.ProjectTitle != item.GeneralDescription)
+                                                            {
+                                                                <MudText Typo="Typo.caption">@item.GeneralDescription</MudText>
+                                                            }
+                                                            <MudStack Row="true" Spacing="1" Class="mt-1">
+                                                                <MudChip T="string" Size="Size.Small" Color="@SectionColor(item.Section)" Variant="Variant.Outlined" Label="true">
+                                                                    @item.Section.ToDisplay()
+                                                                </MudChip>
+                                                                @if (item.IsEarlyProcurement)
+                                                                {
+                                                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Label="true">EPA</MudChip>
+                                                                }
+                                                                @if (item.BidEvaluationCriteria != BidEvaluationCriteria.NotApplicable)
+                                                                {
+                                                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Label="true">@item.BidEvaluationCriteria.ToDisplay()</MudChip>
+                                                                }
+                                                            </MudStack>
                                                             @if (!string.IsNullOrWhiteSpace(item.Remarks))
                                                             {
                                                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@item.Remarks</MudText>
@@ -594,6 +627,21 @@
                                 }
                                 <MudDivider />
                                 <MudStack Row="true" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.body2">Early Procurement (EPA) projects</MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.body2" Style="font-weight:600">
+                                        @Money.Symbol@_editing.Items.Where(i => i.IsEarlyProcurement).Sum(i => i.EstimatedBudget).ToString("N2")
+                                    </MudText>
+                                </MudStack>
+                                <MudStack Row="true" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.body2">CSEs to be purchased from PS-DBM</MudText>
+                                    <MudSpacer />
+                                    <MudText Typo="Typo.body2" Style="font-weight:600">
+                                        @Money.Symbol@_editing.Items.Where(i => i.Section == AppSection.CommonUseSupplies).Sum(i => i.EstimatedBudget).ToString("N2")
+                                    </MudText>
+                                </MudStack>
+                                <MudDivider />
+                                <MudStack Row="true" AlignItems="AlignItems.Center">
                                     <MudText Typo="Typo.subtitle1" Style="font-weight:700">Grand Total</MudText>
                                     <MudSpacer />
                                     <MudText Typo="Typo.subtitle1" Color="Color.Primary" Style="font-weight:700">
@@ -632,6 +680,7 @@
 
     private readonly int[] _fiscalYears = Enumerable.Range(DateTime.Now.Year - 2, 5).ToArray();
 
+    private bool _canView => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.View);
     private bool _canCreate => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Create);
     private bool _canDelete => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Delete);
     private bool _canSubmit => UserProfileState.Permissions.Contains(ProcurementPlanningPermissions.AnnualProcurementPlans.Submit);
@@ -1048,7 +1097,53 @@
     private async Task OnStatusFilterChanged(AppStatus? val) { _filterStatus = val; await LoadAsync(); }
     private async Task OnPhaseFilterChanged(AppPhase? val) { _filterPhase = val; await LoadAsync(); }
 
+    // -- Print (GPPB APP form, QuestPDF) -------------------------------
+    private RenderFragment PrintMenuItems(Guid appId) =>
+        @<text>
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => PrintAppAsync(appId, "longbond"))">View PDF — Long Bond (8.5×13)</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => PrintAppAsync(appId, "legal"))">View PDF — Legal (8.5×14)</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.PictureAsPdf" OnClick="@(() => PrintAppAsync(appId, "a4"))">View PDF — A4</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.TableView" OnClick="@(() => ExportAppXlsxAsync(appId))">Export to Excel (.xlsx)</MudMenuItem>
+        </text>;
+
+    private async Task ExportAppXlsxAsync(Guid appId)
+    {
+        try
+        {
+            var bytes = await AppClient.GetXlsxAsync(appId);
+            await PdfDownload.DownloadAsync(bytes, "AnnualProcurementPlan.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            Snackbar.Add("Excel file ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excel export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task PrintAppAsync(Guid appId, string paperSize)
+    {
+        try
+        {
+            var bytes = await AppClient.GetPdfAsync(appId, paperSize);
+            await PdfDownload.OpenInNewTabAsync(bytes, "AnnualProcurementPlan.pdf");
+            Snackbar.Add("PDF ready.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"PDF generation failed: {ex.Message}", Severity.Error);
+        }
+    }
+
     // -- Helpers ------------------------------------------------------
+    private static Color SectionColor(AppSection section) => section switch
+    {
+        AppSection.DirectAcquisition => Color.Info,
+        AppSection.CommonUseSupplies => Color.Tertiary,
+        _ => Color.Primary
+    };
+
     private RenderFragment StatusChip(AppStatus status) =>
         @<MudChip T="string" Size="Size.Small" Color="@StatusColor(status)" Icon="@StatusIcon(status)" Label="true">@status
         </MudChip>;

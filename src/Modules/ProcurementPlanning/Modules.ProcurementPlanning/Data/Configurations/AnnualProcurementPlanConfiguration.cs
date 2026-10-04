@@ -72,6 +72,8 @@ internal sealed class AppLineItemConfiguration : IEntityTypeConfiguration<AppLin
         builder.Property(x => x.EstimatedBudget).HasColumnType("numeric(18,2)");
         builder.Property(x => x.SupportingDocuments).HasMaxLength(500);
         builder.Property(x => x.Remarks).HasMaxLength(500);
+        builder.Property(x => x.ProjectTitle).HasMaxLength(500).IsRequired();
+        builder.Property(x => x.ProcurementStrategy).HasMaxLength(500);
 
         builder.HasIndex(x => x.AppId);
         builder.HasIndex(x => x.SourcePpmpId);

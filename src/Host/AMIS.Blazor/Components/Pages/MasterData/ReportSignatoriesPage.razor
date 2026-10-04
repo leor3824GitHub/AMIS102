@@ -37,6 +37,7 @@
                     <MudSelectItem Value="@("StockCard")">Stock Card</MudSelectItem>
                     <MudSelectItem Value="@("EmployeeIssuance")">Employee Issuance</MudSelectItem>
                     <MudSelectItem Value="@("AbstractOfCanvass")">Abstract of Canvass</MudSelectItem>
+                    <MudSelectItem Value="@("AnnualProcurementPlan")">Annual Procurement Plan</MudSelectItem>
                 </MudSelect>
             </MudStack>
 
@@ -197,6 +198,7 @@
         "StockCard" => "Stock Card",
         "EmployeeIssuance" => "Emp. Issuance",
         "AbstractOfCanvass" => "Canvass",
+        "AnnualProcurementPlan" => "APP",
         _ => reportType
     };
 
@@ -205,6 +207,7 @@
         "VehicleInventory" => Color.Info,
         "PhysicalCount" => Color.Success,
         "AbstractOfCanvass" => Color.Warning,
+        "AnnualProcurementPlan" => Color.Primary,
         _ => Color.Default
     };
 }

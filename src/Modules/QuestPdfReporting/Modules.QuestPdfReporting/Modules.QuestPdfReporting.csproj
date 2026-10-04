@@ -33,6 +33,7 @@
 		<ProjectReference Include="..\..\AssetRegister\Modules.AssetRegister.Contracts\Modules.AssetRegister.Contracts.csproj" />
 		<ProjectReference Include="..\..\BudgetDisbursement\Modules.BudgetDisbursement.Contracts\Modules.BudgetDisbursement.Contracts.csproj" />
 		<ProjectReference Include="..\..\ProcurementAcquisition\Modules.ProcurementAcquisition.Contracts\Modules.ProcurementAcquisition.Contracts.csproj" />
+		<ProjectReference Include="..\..\ProcurementPlanning\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>

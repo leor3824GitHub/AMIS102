@@ -13,6 +13,9 @@ namespace AMIS.Blazor.Services.Downloads;
 internal interface IPdfDownloadService
 {
     Task OpenInNewTabAsync(byte[] content, string fileName = "report.pdf", CancellationToken cancellationToken = default);
+
+    /// <summary>Saves any generated file (e.g. .xlsx) via the same token hand-off, served as an attachment.</summary>
+    Task DownloadAsync(byte[] content, string fileName, string contentType, CancellationToken cancellationToken = default);
 }
 
 internal sealed class PdfDownloadService : IPdfDownloadService
@@ -32,12 +35,26 @@ internal sealed class PdfDownloadService : IPdfDownloadService
     {
         ArgumentNullException.ThrowIfNull(content);
 
-        var authState = await _authProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-
-        var token = _cache.Store(content, fileName, "application/pdf", userId);
+        var token = await StoreAsync(content, fileName, "application/pdf");
 
         // Only the tiny token URL crosses the circuit; the PDF itself travels over native HTTP.
         await _js.InvokeVoidAsync("open", cancellationToken, $"/bff/download/{token}", "_blank");
+    }
+
+    public async Task DownloadAsync(byte[] content, string fileName, string contentType, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        var token = await StoreAsync(content, fileName, contentType);
+
+        // Served with Content-Disposition: attachment, so the browser saves it and the page stays put.
+        await _js.InvokeVoidAsync("open", cancellationToken, $"/bff/download/{token}", "_self");
+    }
+
+    private async Task<string> StoreAsync(byte[] content, string fileName, string contentType)
+    {
+        var authState = await _authProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        return _cache.Store(content, fileName, contentType, userId);
     }
 }

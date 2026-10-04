@@ -9,8 +9,12 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="ProcurementPlanning.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="ClosedXML" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -22,6 +26,7 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\Persistence\Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Web\Web.csproj" />
     <ProjectReference Include="..\Modules.ProcurementPlanning.Contracts\Modules.ProcurementPlanning.Contracts.csproj" />
+    <ProjectReference Include="..\..\MasterData\Modules.MasterData.Contracts\Modules.MasterData.Contracts.csproj" />
   </ItemGroup>
 </Project>
 

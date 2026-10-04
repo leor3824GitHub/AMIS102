@@ -83,11 +83,25 @@ internal interface IPpmpClient
     Task<PpmpDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default);
     Task<PpmpDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default);
+    Task<byte[]> GetXlsxAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class PpmpClient(HttpClient http) : IPpmpClient
 {
     private const string Base = "api/v1/procurement-planning/ppmps";
+
+    // GPPB PPMP form — PDF rendered by QuestPdfReporting (landscape; Long Bond 8.5×13 by default).
+    public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = $"api/v1/quest-pdf-reporting/procurement-planning/ppmps/{id}/pdf";
+        if (!string.IsNullOrWhiteSpace(pageWidth)) url += $"?pageWidth={Uri.EscapeDataString(pageWidth)}";
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    // Same GPPB PPMP form as an editable workbook (landscape, 8.5×13 Folio page setup).
+    public Task<byte[]> GetXlsxAsync(Guid id, CancellationToken ct = default) =>
+        http.GetByteArrayAsync($"{Base}/{id}/xlsx", ct);
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
@@ -197,11 +211,25 @@ internal interface IAppClient
     Task<AnnualProcurementPlanDto> PromoteToFinalAsync(Guid id, CancellationToken ct = default);
     Task<AnnualProcurementPlanDto> CreateUpdateAsync(Guid id, string reason, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default);
+    Task<byte[]> GetXlsxAsync(Guid id, CancellationToken ct = default);
 }
 
 internal sealed class AppClient(HttpClient http) : IAppClient
 {
     private const string Base = "api/v1/procurement-planning/apps";
+
+    // GPPB APP form — rendered by QuestPdfReporting (landscape; Long Bond 8.5×13 by default).
+    public Task<byte[]> GetPdfAsync(Guid id, string? pageWidth = null, CancellationToken ct = default)
+    {
+        var url = $"api/v1/quest-pdf-reporting/procurement-planning/apps/{id}/pdf";
+        if (!string.IsNullOrWhiteSpace(pageWidth)) url += $"?pageWidth={Uri.EscapeDataString(pageWidth)}";
+        return http.GetByteArrayAsync(url, ct);
+    }
+
+    // Same GPPB APP form as an editable workbook (landscape, 8.5×13 Folio page setup).
+    public Task<byte[]> GetXlsxAsync(Guid id, CancellationToken ct = default) =>
+        http.GetByteArrayAsync($"{Base}/{id}/xlsx", ct);
 
     public Task<PagedResponse<AnnualProcurementPlanSummaryDto>> SearchAsync(string? keyword = null,
         int? fiscalYear = null, AppStatus? status = null, AppPhase? phase = null, bool currentOnly = true,
